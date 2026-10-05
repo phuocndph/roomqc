@@ -1,0 +1,83 @@
+{
+  "title": "Quản lý Khách sạn",
+  "list": "Danh sách khách sạn",
+  "addNew": "Thêm khách sạn mới",
+  "editHotel": "Chỉnh sửa khách sạn",
+  "viewHotel": "Chi tiết khách sạn",
+  "performance": "Hiệu suất khách sạn",
+  "switcher": {
+    "title": "Chọn khách sạn",
+    "allHotels": "Tất cả khách sạn",
+    "searchPlaceholder": "Tìm kiếm khách sạn...",
+    "noHotels": "Chưa có khách sạn nào",
+    "createFirst": "Tạo khách sạn đầu tiên"
+  },
+  "fields": {
+    "name": "Tên khách sạn",
+    "code": "Mã khách sạn",
+    "address": "Địa chỉ",
+    "city": "Thành phố",
+    "country": "Quốc gia",
+    "phone": "Điện thoại",
+    "email": "Email",
+    "website": "Website",
+    "totalRooms": "Tổng số phòng",
+    "totalFloors": "Tổng số tầng",
+    "manager": "Quản lý",
+    "status": "Trạng thái",
+    "type": "Loại hình",
+    "description": "Mô tả"
+  },
+  "type": {
+    "hotel": "Khách sạn",
+    "resort": "Resort",
+    "apartment": "Căn hộ",
+    "hostel": "Hostel",
+    "other": "Khác"
+  },
+  "status": {
+    "active": "Đang hoạt động",
+    "inactive": "Tạm ngưng",
+    "maintenance": "Bảo trì"
+  },
+  "stats": {
+    "totalRooms": "Tổng phòng",
+    "totalUsers": "Nhân viên",
+    "totalItems": "Tài sản",
+    "occupancyRate": "Tỷ lệ lấp đầy"
+  },
+  "messages": {
+    "createSuccess": "Tạo khách sạn thành công",
+    "updateSuccess": "Cập nhật khách sạn thành công",
+    "deleteSuccess": "Xóa khách sạn thành công",
+    "switchSuccess": "Đã chuyển sang khách sạn",
+    "noHotels": "Chưa có khách sạn nào"
+  },
+  "filters": {
+    "all": "Tất cả",
+    "byStatus": "Theo trạng thái",
+    "search": "Tìm kiếm khách sạn..."
+  },
+  "form": {
+    "step": "Bước {{current}} / {{total}}",
+    "codeDescription": "Mã gồm 2-20 ký tự (chữ in hoa, số, dấu gạch ngang)",
+    "codePlaceholder": "VD: HN01, SGN-01, DA001",
+    "namePlaceholder": "Grand Hotel Hanoi",
+    "selectType": "Chọn loại hình",
+    "cityPlaceholder": "Hà Nội",
+    "countryPlaceholder": "Việt Nam",
+    "selectStatus": "Chọn trạng thái"
+  },
+  "validation": {
+    "codeMinLength": "Mã phải có ít nhất 2 ký tự",
+    "codeMaxLength": "Mã không được quá 20 ký tự",
+    "codeFormat": "Mã chỉ được chứa chữ in hoa, số và dấu gạch ngang",
+    "nameMinLength": "Tên phải có ít nhất 2 ký tự",
+    "cityRequired": "Thành phố là bắt buộc",
+    "countryRequired": "Quốc gia là bắt buộc",
+    "minRooms": "Phải có ít nhất 1 phòng",
+    "minFloors": "Phải có ít nhất 1 tầng",
+    "invalidEmail": "Email không hợp lệ",
+    "invalidUrl": "URL không hợp lệ"
+  }
+}

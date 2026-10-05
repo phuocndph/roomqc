@@ -1,0 +1,37 @@
+{
+  "title": "Thông báo",
+  "noNotifications": "Không có thông báo",
+  "markAllRead": "Đánh dấu tất cả đã đọc",
+  "markAsRead": "Đánh dấu đã đọc",
+  "deleteAll": "Xóa tất cả",
+  "viewAll": "Xem tất cả",
+  "settings": "Cài đặt thông báo",
+  "unread": "Chưa đọc",
+  "read": "Đã đọc",
+  "all": "Tất cả",
+  "types": {
+    "lowStock": "Cảnh báo tồn kho",
+    "maintenance": "Bảo trì",
+    "laundry": "Giặt là",
+    "system": "Hệ thống",
+    "task": "Công việc",
+    "approval": "Phê duyệt"
+  },
+  "actions": {
+    "viewInventory": "Xem kho",
+    "createOrder": "Đặt hàng",
+    "viewRequest": "Xem yêu cầu",
+    "assignTask": "Phân công"
+  },
+  "preferences": {
+    "title": "Cài đặt thông báo",
+    "push": "Thông báo đẩy",
+    "email": "Thông báo email",
+    "inApp": "Thông báo trong ứng dụng",
+    "lowStockAlert": "Cảnh báo tồn kho thấp",
+    "maintenanceAlert": "Cảnh báo bảo trì",
+    "laundryAlert": "Cảnh báo giặt là",
+    "dailyReport": "Báo cáo hàng ngày",
+    "weeklyReport": "Báo cáo hàng tuần"
+  }
+}

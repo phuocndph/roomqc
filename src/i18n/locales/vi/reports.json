@@ -1,0 +1,247 @@
+{
+  "title": "Báo cáo & Thống kê",
+  "description": "Xem và tải xuống các báo cáo thống kê",
+  "view": "Xem",
+  "download": "Tải xuống",
+  "refresh": "Làm mới",
+  "exportAll": "Xuất tất cả",
+  "dataRefreshed": "Đã cập nhật dữ liệu báo cáo",
+  "selectReportType": "Chọn loại báo cáo",
+  "selectReportTypeDesc": "Nhấp vào để xem chi tiết từng loại báo cáo",
+  "reportTypes": "loại báo cáo",
+  "viewReport": "Xem báo cáo",
+  "allHotels": "Tổng hợp tất cả khách sạn",
+  "hotel": "Khách sạn",
+  "notSelected": "Chưa chọn",
+  "stats": {
+    "totalItems": "Tổng đồ dùng",
+    "totalItemsDesc": "Số lượng đồ dùng trong kho",
+    "inStock": "Trong kho",
+    "inStockDesc": "Đồ dùng sẵn có",
+    "lowStock": "Tồn kho thấp",
+    "lowStockDesc": "Cần nhập thêm",
+    "activeBatches": "Lô giặt đang xử lý",
+    "activeBatchesDesc": "Chờ nhận hoặc đang giặt"
+  },
+  "quickReport": {
+    "title": "Báo cáo nhanh",
+    "description": "Số liệu tổng hợp theo thời gian",
+    "today": "Hôm nay",
+    "week": "Tuần này",
+    "month": "Tháng này"
+  },
+  "types": {
+    "inventory": {
+      "title": "Báo cáo Tồn kho",
+      "description": "Hiện trạng tồn kho, vòng quay hàng hóa, phân tích ABC",
+      "stats": ["Tổng giá trị", "Vòng quay", "Cảnh báo"]
+    },
+    "financial": {
+      "title": "Báo cáo Tài chính",
+      "description": "Chi phí hoạt động, giá trị tài sản, ROI, so sánh chi phí",
+      "stats": ["Doanh thu", "Chi phí", "Lợi nhuận"]
+    },
+    "operations": {
+      "title": "Báo cáo Hoạt động",
+      "description": "Giao dịch nhập xuất, kiểm kê, lịch sử hoạt động",
+      "stats": ["Nhập kho", "Xuất kho", "Điều chỉnh"]
+    },
+    "laundry": {
+      "title": "Báo cáo Giặt là",
+      "description": "Chi phí giặt ủi, hiệu suất, đánh giá nhà cung cấp",
+      "stats": ["Lô giặt", "Chi phí", "Đánh giá"]
+    },
+    "rooms": {
+      "title": "Báo cáo Phòng",
+      "description": "Tình trạng sử dụng, thiếu hụt đồ dùng, lịch sử kiểm tra",
+      "stats": ["Tổng phòng", "Đang dùng", "Bảo trì"],
+      "pageTitle": "Báo cáo Phòng",
+      "pageDescription": "Phân tích sử dụng, doanh thu và thiếu hụt đồ dùng phòng",
+      "back": "Quay lại",
+      "exportPdf": "Xuất PDF",
+      "exportExcel": "Xuất Excel",
+      "reportPeriod": "Kỳ báo cáo:",
+      "tabs": {
+        "overview": "Tổng quan",
+        "utilization": "Sử dụng",
+        "revenue": "Doanh thu",
+        "deficiency": "Thiếu hụt",
+        "checks": "Kiểm tra"
+      },
+      "stats": {
+        "totalRooms": "Tổng phòng",
+        "vacant": "Phòng trống",
+        "cleaning": "Đang dọn",
+        "maintenance": "Bảo trì",
+        "occupancyRate": "Tỷ lệ lấp đầy",
+        "totalRevenue": "Tổng doanh thu",
+        "roomNights": "Đêm phòng",
+        "avgRevenue": "Doanh thu TB/phòng",
+        "totalBookings": "Tổng booking",
+        "totalChecks": "Tổng kiểm tra",
+        "avgScore": "Điểm TB",
+        "issuesFound": "Vấn đề phát hiện"
+      },
+      "comparison": {
+        "previousPeriod": "Kỳ trước",
+        "occupancyRate": "Tỷ lệ lấp đầy",
+        "revenue": "Doanh thu",
+        "bookings": "Số booking",
+        "avgScore": "Điểm kiểm tra TB"
+      },
+      "charts": {
+        "roomStatus": "Trạng thái phòng",
+        "occupancyTrend": "Xu hướng lấp đầy",
+        "topIssues": "Vấn đề thường gặp",
+        "utilizationByType": "Tỷ lệ sử dụng theo loại phòng",
+        "revenueByType": "Doanh thu theo loại phòng",
+        "checksByType": "Kiểm tra theo loại",
+        "staffPerformance": "Hiệu suất nhân viên"
+      },
+      "tables": {
+        "roomType": "Loại phòng",
+        "total": "Tổng",
+        "occupied": "Đang dùng",
+        "vacantCol": "Trống",
+        "rate": "Tỷ lệ",
+        "revenueCol": "Doanh thu",
+        "room": "Phòng",
+        "bookings": "Bookings",
+        "nights": "Đêm",
+        "issueType": "Loại",
+        "missing": "Thiếu",
+        "damaged": "Hỏng",
+        "lost": "Mất",
+        "count": "Số lượng",
+        "value": "Giá trị",
+        "staff": "Nhân viên",
+        "checksCount": "Số kiểm tra",
+        "avgScoreCol": "Điểm TB",
+        "issues": "Vấn đề"
+      },
+      "noData": "Không có dữ liệu"
+    },
+    "maintenance": {
+      "title": "Báo cáo Bảo trì",
+      "description": "Yêu cầu bảo trì, chi phí sửa chữa, thời gian xử lý",
+      "stats": ["Yêu cầu", "Hoàn thành", "Chi phí"]
+    },
+    "expenses": {
+      "title": "Báo cáo chi phí",
+      "description": "Tổng hợp chi phí giặt là và bảo trì"
+    },
+    "performance": {
+      "title": "Báo cáo hiệu suất",
+      "description": "Đánh giá hiệu suất làm việc của nhân viên"
+    },
+    "summary": {
+      "title": "Báo cáo tổng hợp",
+      "description": "Tổng quan toàn bộ hoạt động"
+    },
+    "stockAudit": {
+      "title": "Báo cáo Kiểm kê",
+      "description": "Kết quả kiểm kê định kỳ, phân tích chênh lệch"
+    }
+  },
+  "stockAudit": {
+    "pageTitle": "Báo cáo Kiểm kê Kho",
+    "pageDescription": "Phân tích kết quả kiểm kê, chênh lệch và điều tra",
+    "stats": {
+      "totalAudits": "Tổng phiếu kiểm kê",
+      "accuracyRate": "Tỷ lệ chính xác",
+      "discrepancyValue": "Giá trị chênh lệch",
+      "investigation": "Điều tra"
+    },
+    "tabs": {
+      "overview": "Tổng quan",
+      "audits": "Phiếu kiểm kê",
+      "discrepancy": "Phân tích chênh lệch",
+      "investigation": "Điều tra & Bồi thường"
+    },
+    "charts": {
+      "accuracyDistribution": "Phân bổ kết quả kiểm kê",
+      "monthlyTrend": "Xu hướng theo tháng",
+      "discrepancyByCategory": "Chênh lệch theo danh mục"
+    },
+    "tables": {
+      "auditsList": "Danh sách phiếu kiểm kê",
+      "discrepancyByCategory": "Chênh lệch theo danh mục"
+    }
+  },
+  "custom": {
+    "title": "Chọn loại báo cáo",
+    "description": "Chọn các thông số để tạo báo cáo theo nhu cầu của bạn",
+    "developing": "Tính năng đang phát triển",
+    "comingSoon": "Tạo báo cáo tùy chỉnh sẽ sớm được cung cấp"
+  },
+  "tip": "Mẹo",
+  "warehouse": {
+    "noData": "Chưa có dữ liệu kho",
+    "totalWarehouses": "Tổng số kho",
+    "totalItems": "Tổng loại đồ",
+    "totalValue": "Tổng giá trị",
+    "lowStockItems": "Tồn kho thấp",
+    "comparisonChart": "So sánh giữa các kho",
+    "stockByWarehouse": "Tồn kho theo vị trí",
+    "lowStockAlerts": "Cảnh báo tồn kho thấp",
+    "quantity": "Số lượng",
+    "value": "Giá trị",
+    "name": "Tên kho",
+    "items": "Loại",
+    "qty": "SL",
+    "low": "Thấp",
+    "default": "Mặc định",
+    "noLowStock": "Không có items tồn thấp",
+    "moreItems": "items khác"
+  },
+  "operations": {
+    "pageTitle": "Báo cáo Hoạt động",
+    "pageDescription": "Phân tích giao dịch nhập xuất và kiểm kê",
+    "back": "Quay lại",
+    "exportPdf": "Xuất PDF",
+    "exportExcel": "Xuất Excel",
+    "reportPeriod": "Kỳ báo cáo:",
+    "tabs": {
+      "transactions": "Giao dịch",
+      "stocktake": "Kiểm kê",
+      "efficiency": "Hiệu suất"
+    },
+    "stats": {
+      "inbound": "Nhập kho",
+      "outbound": "Xuất kho",
+      "totalTransactions": "Tổng GD",
+      "transactions": "giao dịch",
+      "netChange": "Biến động ròng",
+      "inPeriod": "trong kỳ"
+    },
+    "chart": {
+      "title": "Xu hướng giao dịch theo tháng",
+      "inbound": "Nhập kho",
+      "outbound": "Xuất kho",
+      "adjustment": "Điều chỉnh"
+    },
+    "topItems": {
+      "title": "Top Items theo vòng quay",
+      "rank": "#",
+      "item": "Đồ dùng",
+      "inbound": "Nhập",
+      "outbound": "Xuất",
+      "turnover": "Vòng quay",
+      "trend": "Xu hướng"
+    },
+    "stocktake": {
+      "checkCount": "Số lần kiểm kê",
+      "itemsChecked": "Items đã kiểm",
+      "accuracy": "Tỷ lệ chính xác",
+      "adjustmentValue": "Giá trị điều chỉnh",
+      "recentResults": "Kết quả kiểm kê gần đây",
+      "noData": "Dữ liệu kiểm kê sẽ được hiển thị tại đây"
+    },
+    "efficiency": {
+      "avgProcessingTime": "Thời gian xử lý TB",
+      "onTime": "Đúng hạn",
+      "errorRate": "Tỷ lệ lỗi",
+      "staffProductivity": "Năng suất nhân viên"
+    }
+  }
+}

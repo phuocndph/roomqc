@@ -1,0 +1,57 @@
+{
+  "_doc": "Snapshot chữ ký RPC critical. Khi DB thay đổi → chạy lại scripts/audit/dump-db-schema.sh + extract-all.mjs, đối chiếu test 'rpc signature drift', cập nhật file này VÀ các docs/architecture/01-modules/*.md tương ứng.",
+  "_lastSyncedAt": "2026-09-20",
+  "expected": {
+    "transition_room_status": [
+      "_room_id uuid, _to_status text, _reason text DEFAULT NULL::text, _dnd_until timestamp with time zone DEFAULT NULL::timestamp with time zone, _oos_until timestamp with time zone DEFAULT NULL::timestamp with time zone, _force boolean DEFAULT false"
+    ],
+    "transition_booking_status": [
+      "_booking_id uuid, _to_status text, _reason text DEFAULT NULL::text, _amount_owed numeric DEFAULT NULL::numeric"
+    ],
+    "transition_task_status": [
+      "_task_id uuid, _to_status text, _reason text DEFAULT NULL::text, _force boolean DEFAULT false"
+    ],
+    "perform_checkin": [
+      "p_booking_id uuid, p_room_id uuid, p_early_checkin_charge numeric DEFAULT 0"
+    ],
+    "perform_checkout": [
+      "p_booking_id uuid, p_room_id uuid, p_late_checkout_charge numeric DEFAULT 0, p_service_charges numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_damage_charges numeric DEFAULT 0, p_damage_notes text DEFAULT NULL::text, p_damage_items jsonb DEFAULT '[]'::jsonb, p_new_amount_paid numeric DEFAULT NULL::numeric, p_check_out_date date DEFAULT NULL::date"
+    ],
+    "prepare_checkout_amounts": [
+      "p_booking_id uuid, p_room_id uuid, p_late_checkout_charge numeric DEFAULT 0, p_service_charges numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_damage_charges numeric DEFAULT 0, p_damage_notes text DEFAULT NULL::text, p_damage_items jsonb DEFAULT '[]'::jsonb"
+    ],
+    "prepare_group_checkout_amounts": [
+      "p_checkouts jsonb"
+    ],
+    "perform_group_checkout": [
+      "p_checkouts jsonb"
+    ],
+    "perform_quick_room_check": [
+      "_room_id uuid, _check_type text DEFAULT 'daily'::text, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[]"
+    ],
+    "undo_quick_room_check": [
+      "_check_id uuid, _reason text DEFAULT NULL::text"
+    ],
+    "reopen_room_check": [
+      "_check_id uuid, _reason text DEFAULT NULL::text"
+    ],
+    "submit_room_check_lean": [
+      "_room_id uuid, _check_type text, _started_at timestamp with time zone, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[], _items_missing jsonb DEFAULT '[]'::jsonb, _items_damaged jsonb DEFAULT '[]'::jsonb, _items_lost jsonb DEFAULT '[]'::jsonb, _items_consumed jsonb DEFAULT '[]'::jsonb, _items_replaced jsonb DEFAULT '[]'::jsonb, _items_sent_to_laundry jsonb DEFAULT '[]'::jsonb, _task_id uuid DEFAULT NULL::uuid"
+    ],
+    "cancel_booking": [
+      "p_booking_id uuid, p_room_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text, p_refund_deposit boolean DEFAULT false"
+    ],
+    "has_user_permission": [
+      "p_user_id uuid, p_module text, p_action text"
+    ],
+    "lift_expired_dnd_oos": [
+      ""
+    ],
+    "apply_room_standards": [
+      "p_room_id uuid, p_user_id uuid DEFAULT NULL::uuid"
+    ]
+  },
+  "_knownIssues": {
+    "has_role": "Có 3 entry trong DB nhưng 2 là từ extension (sql lang, secdef=f). App-defined chỉ là (_user_id uuid, _role app_role)."
+  }
+}

@@ -1,0 +1,44 @@
+# This is the namespace used by the existing local Docker stack. It keeps
+# `supabase status` attached to the current volume instead of creating a new DB.
+# Production projects are selected explicitly with `supabase link --project-ref <ref>`.
+project_id = "ehjtoajnlnuvuiwkpmbp"
+
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.check-subscription-status]
+    verify_jwt = false
+  [functions.cleanup-sessions]
+    verify_jwt = false
+  [functions.execute-workflow]
+    verify_jwt = false
+  [functions.expire-pending-payments]
+    verify_jwt = false
+  [functions.mobile-scan-upload]
+    verify_jwt = false
+  [functions.notify-new-message]
+    verify_jwt = false
+  [functions.notify-chargeable]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.reset-password-with-otp]
+    verify_jwt = false
+  [functions.scan-guest-document]
+    verify_jwt = false
+  [functions.send-password-reset]
+    verify_jwt = false
+  [functions.send-push-notification]
+    verify_jwt = false
+  [functions.send-telegram-notification]
+    verify_jwt = false
+  [functions.sepay-webhook]
+    verify_jwt = false
+  [functions.sync-sepay-transactions]
+    verify_jwt = false
+  [functions.tbltkbtt-submit]
+    verify_jwt = false
+  [functions.telegram-webhook]
+    verify_jwt = false
+  [functions.verify-otp]
+    verify_jwt = false

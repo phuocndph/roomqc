@@ -1,0 +1,22 @@
+services:
+  roomqc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ROOMQC_ENVIRONMENT: "${ROOMQC_ENVIRONMENT:-local}"
+        VITE_SUPABASE_URL: "${VITE_SUPABASE_URL:?Set VITE_SUPABASE_URL in .env.vps}"
+        VITE_SUPABASE_PUBLISHABLE_KEY: "${VITE_SUPABASE_PUBLISHABLE_KEY:?Set VITE_SUPABASE_PUBLISHABLE_KEY in .env.vps}"
+        VITE_SUPABASE_PROJECT_ID: "${VITE_SUPABASE_PROJECT_ID:?Set VITE_SUPABASE_PROJECT_ID in .env.vps}"
+        VITE_VAPID_PUBLIC_KEY: "${VITE_VAPID_PUBLIC_KEY:?Set VITE_VAPID_PUBLIC_KEY in .env.vps}"
+        VITE_ENABLE_DEMO_DATA: "${VITE_ENABLE_DEMO_DATA:-false}"
+    ports:
+      # Keep the VPS service private by default; set ROOMQC_BIND=0.0.0.0 for local LAN testing.
+      - "${ROOMQC_BIND:-127.0.0.1}:${ROOMQC_PORT:-8082}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

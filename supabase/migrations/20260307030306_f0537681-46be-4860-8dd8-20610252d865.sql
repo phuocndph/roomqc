@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_transactions ADD COLUMN IF NOT EXISTS reference_type VARCHAR;

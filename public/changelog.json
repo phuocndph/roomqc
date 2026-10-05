@@ -1,0 +1,3203 @@
+{
+  "current": "1.1.97",
+  "versions": [
+    {
+      "version": "1.1.97",
+      "date": "2026-09-20",
+      "title": "Ổn định đăng nhập và onboarding RoomQC",
+      "highlights": [
+        "Sửa lỗi đăng ký mới bị trả Tenant not found do trigger quota chạy trước khi tenant được tạo.",
+        "Sửa onboarding owner đầu tiên bị trigger phân quyền chặn; provisioning được giới hạn trong RPC trusted và transaction hiện tại.",
+        "Thu hồi các quyền gọi RPC nhạy cảm từ anon và bump cache-buster để PWA tự nhận bản sửa sau deploy."
+      ]
+    },
+    {
+      "version": "1.1.96",
+      "date": "2026-06-06",
+      "title": "Mobile: confirm xoá + getFriendlyError ở 2 chỗ còn sót",
+      "highlights": [
+        "**MobileCategoryCard & MobileItemCard** — Nút Xoá mở AlertDialog xác nhận thay vì xoá ngay lập tức, tránh thao tác nhầm trên mobile.",
+        "**ReconciliationPage & ReceptionQuickDialog** — Thay `description: error.message` bằng `getFriendlyError(e)` để hiển thị lỗi tiếng Việt thân thiện."
+      ]
+    },
+    {
+      "version": "1.1.95",
+      "date": "2026-06-06",
+      "title": "Bảng giá: gộp 3 trang thành 1 hub có tabs",
+      "highlights": [
+        "**Sidebar** — Thay 3 mục `pricingV2` / `seasonalRules` / `pricingRules` bằng 1 mục `Bảng giá` duy nhất → `/settings/pricing`.",
+        "**PricingHubPage** — Thêm tab `Quy tắc phụ thu` (PricingRulesPage) cạnh `Lịch giá theo ngày` / `Giá mặc định` / `Quy tắc mùa`.",
+        "**Backward-compat redirect** — `/settings/pricing-rules` → `/settings/pricing?tab=rules`; `/settings/pricing/seasonal` → `/settings/pricing?tab=seasonal`."
+      ]
+    },
+    {
+      "version": "1.1.94",
+      "date": "2026-06-06",
+      "title": "Layout: ưu tiên 1 banner cùng lúc qua useActiveBanner",
+      "highlights": [
+        "**Hook mới `useActiveBanner`** — Chọn banner priority cao nhất theo thứ tự suspended → grace_expired → read_only → quota_warning → announcement.",
+        "**MainLayout** — Chỉ render duy nhất banner thắng priority; `ShiftStatusBanner` vẫn luôn hiện vì liên quan ca làm việc.",
+        "**Dismiss tạm thời** — `GracePeriodBanner` (grace) và `QuotaWarningBanner` nhận prop `onDismiss`, lưu vào sessionStorage để banner tiếp theo trong hàng đợi tự động hiển thị.",
+        "**Suspended không thể dismiss** — Phải gia hạn để gỡ trạng thái."
+      ]
+    },
+    {
+      "version": "1.1.93",
+      "date": "2026-06-06",
+      "title": "Cài đặt thông báo: thêm card 'Loại thông báo' theo sự kiện",
+      "highlights": [
+        "**Card mới `NotificationEventTypesCard`** — Hiển thị 5 sự kiện (Đặt phòng/Check-in/Check-out, Bảo trì mới, Tồn kho thấp, Giặt là sắp trễ, Việc giao cho tôi) với toggle riêng và badge kênh Push/Telegram/Email.",
+        "**Schema** — Bảng `notification_preferences` thêm `inapp_booking_events` và `inapp_laundry_delayed` (mặc định bật).",
+        "**Cảnh báo tổng** — Khi push bị tắt và toàn bộ sự kiện đều off, hiển thị warning 'Bạn đang tắt toàn bộ thông báo. Bạn có thể bỏ lỡ các công việc được giao.'",
+        "**Áp dụng cả desktop & mobile** — `NotificationSettingsPage.tsx` và `MobileNotificationSettingsPage.tsx` cùng dùng chung component."
+      ]
+    },
+    {
+      "version": "1.1.92",
+      "date": "2026-06-06",
+      "title": "Toast lỗi: thay raw error.message bằng getFriendlyError() tiếng Việt",
+      "highlights": [
+        "**Helper `src/lib/errorMessage.ts`** — `getFriendlyError(error)` map các lỗi Supabase/Postgres/Network phổ biến (`duplicate key`, `foreign key`, `not-null`, `JWT/token`, `network/fetch`, `permission/policy`, `timeout`) sang câu thông báo tiếng Việt thân thiện; fallback 'Đã xảy ra lỗi. Vui lòng thử lại hoặc liên hệ hỗ trợ.'.",
+        "**Codemod toàn repo (64 file)** — Thay `description: error.message` / `description: err.message` → `description: getFriendlyError(error|err)` ở mọi toast/alert (hooks, dialog, page settings, super-admin, room check, booking wizard…). Tự thêm `import { getFriendlyError } from '@/lib/errorMessage'`.",
+        "**Lợi ích** — Không còn leak chi tiết schema/Postgres ra UI vận hành; thông báo nhất quán tiếng Việt cho khách sạn; vẫn giữ raw error trong console để debug."
+      ]
+    },
+    {
+      "version": "1.1.91",
+      "date": "2026-06-06",
+      "title": "Dashboard: routing theo department + ẩn stat inventory cho staff",
+      "highlights": [
+        "**Housekeeping mobile redirect** — Staff có `position.department === 'housekeeping'` mở app trên mobile sẽ vào thẳng `/staff/housekeeping` thay vì dashboard inventory không liên quan.",
+        "**Desktop staff focus view** — Staff không có quyền `items/inventory` (check qua `useUserModulePermissions` RPC) sẽ thấy `ShiftCheckInCard` full-width + danh sách `StaffTasksTab` hôm nay, ẩn 4 stat card kho/giặt/cảnh báo.",
+        "**Mobile non-housekeeping** — Vẫn render `MobileDashboard` (đã có `ShiftCheckInCard` ưu tiên ở đầu)."
+      ]
+    },
+    {
+      "version": "1.1.90",
+      "date": "2026-06-06",
+      "title": "Booking Wizard: autosave draft 24h vào localStorage",
+      "highlights": [
+        "**Autosave `booking_wizard_draft_v1`** — `useBookingForm` tự lưu state vào `localStorage` debounce 1000ms mỗi lần đổi, TTL 24h. Đóng dialog / refresh / mất mạng giữa chừng không còn mất dữ liệu đã nhập (loại đặt, ngày, phòng đã chọn + giá tuỳ chỉnh, khách, OTA, VAT/phí dịch vụ, ghi chú).",
+        "**Restore prompt 1-shot khi mở wizard** — Mount kiểm tra draft; nếu còn hạn → sonner toast 'Bạn có bản nháp đặt phòng chưa hoàn thành' với 2 nút **Tiếp tục** (restore state) và **Bỏ qua** (xoá draft). Toast 12s, không tự popup lặp.",
+        "**Skip-reset guard** — `skipResetsRef` chặn 2 useEffect (OTA defaults + clear-rooms theo dates/type) chạy ngay sau khi restore, tránh tự xoá `selectedRooms` vừa khôi phục.",
+        "**Field nhạy cảm KHÔNG lưu** — `guestIdImageUrl` và `guestIdNumber` bị strip trước khi `JSON.stringify` (giữ ID giấy tờ ngoài localStorage). Date fields (`checkInDate/checkOutDate/hourlyDate/monthlyStartDate`) revive về `Date` khi đọc.",
+        "**Auto-clear sau submit / reset** — `submit` thành công và `reset()` (đóng dialog) đều gọi `clearDraftStorage()`. Thêm `discardDraft` export trong API hook để parent chủ động xoá khi cần."
+      ]
+    },
+    {
+      "version": "1.1.89",
+      "date": "2026-06-06",
+      "title": "Hợp nhất /admin/* và /super-admin/* — một router duy nhất cho Super Admin",
+      "highlights": [
+        "**Canonical path = `/super-admin/*`** — Toàn bộ trang Super Admin (Dashboard, Tenants, Approval, Promo Codes, Campaigns, Reminders, Pricing, Payments, Analytics, Settings, Announcements) chỉ còn một bộ route duy nhất gắn `SuperAdminLayout` + `SuperAdminErrorBoundary`. Trước đây cùng các trang đó còn được mount lần 2 dưới `/admin/*` trong `RootRoute` (sidebar app thường), gây lệch UI giữa Sidebar (`/admin/*`) và SuperAdminLayout (`/super-admin/*`).",
+        "**Legacy `/admin/*` → 301-style Navigate redirect** — Mọi path `/admin`, `/admin/dashboard`, `/admin/tenants`, `/admin/approval`, `/admin/promo-codes`, `/admin/campaigns`, `/admin/reminders`, `/admin/payments`, `/admin/pricing`, `/admin/analytics`, `/admin/settings`, `/admin/announcements` đều `Navigate replace` sang `/super-admin/...` tương ứng. Bookmark cũ / link Telegram / email cũ vẫn hoạt động và đáp vào đúng SuperAdminLayout.",
+        "**Bổ sung `/super-admin/payments`** — Trang `PaymentSettingsPage` trước chỉ có ở nhánh `/admin/payments`, nay được thêm chính thức vào `SuperAdminLayout` children để đồng bộ với nav của layout.",
+        "**Sidebar trỏ về canonical** — Mục `superAdmin` trong `Sidebar.tsx` cập nhật toàn bộ href sang `/super-admin/*` (adminDashboard → `/super-admin`). Khi super_admin bấm sidebar sẽ chuyển hẳn sang shell SuperAdminLayout, không còn render trong sidebar app thường.",
+        "**`SuperAdminQuickActions` + `route-prefetch` đồng bộ** — Các nút Tạo mã KM / Khởi chạy chiến dịch / Gửi thông báo điều hướng sang `/super-admin/*`. `loaders` trong `route-prefetch.ts` thay key `/admin/*` bằng `/super-admin/*` + thêm `/super-admin/payments`, `/approval`, `/analytics`, `/settings`, `/announcements` để prefetch hoạt động đúng.",
+        "**Dọn dụng cụ trùng** — Bỏ 7 block `RoleGuard` wrap thủ công trong RootRoute (giờ guard nằm ở SuperAdminLayout). Không còn rủi ro 2 route render khác layout cho cùng 1 trang."
+      ]
+    },
+    {
+      "version": "1.1.88",
+      "date": "2026-06-06",
+      "title": "Batch 5B: Sidebar UX — tách Đặt phòng & Khách, giảm auto-collapse, fix active state",
+      "highlights": [
+        "**Tách nhóm 'Đặt phòng & Khách' khỏi 'Phòng'** — Sidebar có thêm 1st-level menu `reservations` (icon `CalendarDays`) gồm: Đặt phòng, Khách hàng, Hóa đơn khách, Khai báo lưu trú. Nhóm 'Phòng' giờ chỉ còn Housekeeping / Danh sách phòng / Tiêu chuẩn / Thêm phòng / Lost & Found — gọn và đúng nghiệp vụ hơn.",
+        "**Bớt auto-collapse khi đổi route (#8)** — Trước: mỗi lần đổi tab, mọi group khác bị đóng (`setExpandedItems([matched])`). Giờ: chỉ tự MỞ group chứa route active, KHÔNG đóng các group user tự bung. `toggleExpanded` cũng cho phép mở/đóng độc lập, không ép chế độ accordion 1-group.",
+        "**Fix active state khi `anyExpanded` (#7)** — Trước: link top-level đang active sẽ chuyển sang `bg-accent` mờ khi có bất kỳ group nào đang mở, gây nhầm lẫn 'mình đang ở đâu'. Giờ: route active luôn `bg-primary text-primary-foreground`, bất kể group khác có mở hay không.",
+        "**Đổi icon 'Tạo phiếu Linen' (#13)** — `newLinenBatch` đổi từ `Plus` (trùng 'Tạo phiếu mới') sang `Shirt` để phân biệt nhanh trong submenu Giặt là.",
+        "**Module map cập nhật** — Thêm `'reservations': 'rooms'` vào `NAVIGATION_MODULE_MAP` để permission gate hoạt động đúng với nhóm mới."
+      ]
+    },
+    {
+      "version": "1.1.87",
+      "date": "2026-06-06",
+      "title": "Batch 5A: Fix logic gấp (RoomCheckRouter, /settings redirect, Dashboard gating, shift handover roles)",
+      "highlights": [
+        "**RoomCheckRouter có spinner thay vì màn trắng** — `return null` + `Suspense fallback={null}` được thay bằng `RouterFallback` (Loader2 + 'Đang mở phòng…'). Hết tình trạng nhấn 'Kiểm tra phòng' bị màn trắng 1-2s khi đợi `useRoom` + `useRoomCheckLeanConfig`.",
+        "**/settings redirect thông minh theo role** — Tạo `SettingsRedirect`: Owner / Hotel Manager / Department Manager (có `manage_settings`) → `/settings/general` như cũ. Staff không có `manage_settings` → `/settings/change-password` (ai cũng có) thay vì bị `PermissionRoute` chặn → blank.",
+        "**Dashboard ẩn KPI Kho/Giặt theo permission** — `canViewInventory` (view_items) gate 3 thẻ Tổng giá trị / Tổng item / Sắp hết. `canViewLaundry` (view_laundry) gate thẻ Đang giặt. Department Manager mất `view_laundry` sẽ chỉ thấy 3 thẻ Kho. `TopItemsTable` cũng gated theo view_items, `ExpenseChart` theo `view_reports`. Hết tình trạng staff thấy số liệu họ không có quyền xem.",
+        "**Sidebar — `shiftHandoverReport` thêm role filter** — Item `/staff/shift-handover` trước thiếu `roles:` → mọi staff đều thấy. Giờ giới hạn `['owner','hotel_manager','department_manager']` để chỉ cấp quản lý mới thấy báo cáo bàn giao ca."
+      ]
+    },
+
+    {
+      "version": "1.1.86",
+      "date": "2026-06-06",
+      "title": "Batch 4D: Slim RoomQuickViewDialog & tách MobileRoomsPage",
+      "highlights": [
+        "**RoomQuickViewDialog gọn lại** — Tách 4 sub-component dùng chung: `QuickViewBookingCard` (countdown trả phòng), `QuickViewGroupSiblings` (chip cùng đoàn), `QuickViewItemsStatus` (vật tư + lần kiểm cuối), `QuickViewFooter` (3 action: Kiểm tra / Chi tiết / Giao việc). File chính từ 303 → ~140 LOC, dễ tái dùng cho cả desktop QuickView & mobile bottom-sheet sau này.",
+        "**MobileRoomsPage tách 3 component** — `MobileRoomCard` (card phòng + long-press 500ms vào selection mode), `MobileRoomStatsBar` (8 thẻ stats scroll ngang), `MobileRoomStatusFilterBar` (pill filter sticky). File chính từ 597 → ~280 LOC, render từng card không kéo theo toàn bộ logic page → cuộn mượt hơn trên list dài.",
+        "**Không đổi behavior** — Giữ nguyên long-press 500ms + vibrate(30ms), selection ring primary, priority border trái 3px đỏ/amber, gate session người khác đang kiểm. Tất cả memo/hook giữ cùng vị trí để không trigger re-render thêm."
+      ]
+    },
+
+    {
+      "version": "1.1.85",
+      "date": "2026-06-06",
+      "title": "Batch 4 A-C: Kho gọn menu, TodoCard sort severity, Phòng gate vào ca + subgroup",
+      "highlights": [
+        "**Kho — menu sidebar gọn lại** — Bỏ sub-tab 'Thêm tài sản' khỏi tab Tài sản (mở qua dropdown Khác / nút + trong danh sách). Gom 'Giao dịch kho' về nhóm 'Xuất nhập kho', rename nhóm 'Sản phẩm' → 'Tài sản' cho khớp tab. Legacy URL `?tab=assets&sub=new` tự redirect sang `/items/new`.",
+        "**Kho — header desktop sạch hơn** — Ẩn breadcrumb ở topbar khi đã có sidebar (tránh 2 lớp nav trùng). Nút 'Xuất kho' đổi sang outline để 'Nhập kho' là CTA primary duy nhất. Mobile dashboard có thêm `InventoryQuickSearch` sticky để tìm item ngay không cần vào sub-tab.",
+        "**Kho — TodoCard sort theo severity** — Sắp xếp danger → warning → info, cap 5 mục + dòng 'Còn N mục khác'. Phiếu xuất kho chờ >24h tự nâng tone lên đỏ (badge mới `distributionsStale`). Toast tạo phiếu từ supplement giờ kèm action 'Mở phiếu' để nhảy thẳng vào chi tiết.",
+        "**Phòng — gate vào ca trực quan** — Nút 'Kiểm tra' trên card phòng (lưới HK) đi qua `useRequireShift.guard`. Staff/Department Manager chưa vào ca thấy tooltip 'Bạn cần vào ca trước', click mở dialog 'Vào ca ngay' tại chỗ thay vì navigate vào route mới rồi mới chặn.",
+        "**Phòng — section Bình thường có subgroup** — Tách 'Sẵn sàng' (clean/available) / 'Đang có khách' (occupied) / 'Khác' với header chấm semantic, giúp Trưởng buồng scan nhanh khi nhóm normal có hàng chục phòng.",
+        "**Phòng — UX nhỏ** — Ẩn `RoomFilters` ở view 'Lịch đặt phòng' và 'Sơ đồ tình trạng' (filters không thực sự áp dụng → bớt confuse). Subtitle role-hint thêm câu 'Giữ Shift+Click / Giữ lâu để chọn nhiều phòng' cho cả desktop & mobile."
+      ]
+    },
+
+    {
+      "version": "1.1.84",
+      "date": "2026-06-06",
+      "title": "Audit /inventory Batch 3: fix badge sai status, count 'đã hết' chuẩn, navigate đúng đích",
+      "highlights": [
+        "**Fix bug `adjustmentsPending` luôn = 0** — `useInventoryHubBadges` đang lọc `stock_adjustments.status = 'pending'` nhưng enum thực tế là `draft | in_progress | approved | completed` (không có `pending`). TodoCard 'X phiếu kiểm kê đang xử lý' giờ đã hiển thị đúng cho `draft + in_progress + approved`",
+        "**Fix bug `distributionsPending` bỏ sót `released`** — Filter cũ `['pending','approved']` (giá trị `approved` không tồn tại cho distribution). Đổi sang `['pending','released']` để manager thấy cả phiếu đã xuất kho chờ phòng confirm",
+        "**Count 'Đã hết hàng' chuẩn cho tenant lớn** — Hook mới `useOutOfStockCount` head-only `count:'exact'` trực tiếp trên `items WHERE quantity_in_stock = 0`, không bị cap 200 dòng như `useLowStockItems`. Có realtime UPDATE items. `useStockoutItems.outOfStockCount` ưu tiên giá trị này, fallback về lowItems khi chưa load",
+        "**Navigate đúng đích** — Tile 'Sắp hết <7d' trong `CombinedStockAlerts` đổi từ `analytics?sub=consumption` (chỉ xem chart) → `operations?sub=reorder` (đặt thêm được luôn), đồng bộ với TodoCard"
+      ]
+    },
+
+    {
+      "version": "1.1.83",
+      "date": "2026-06-06",
+      "title": "Bảo mật: gỡ password plaintext, vá XSS hoá đơn, khoá AI scan & sửa lương",
+      "highlights": [
+        "**Gỡ lưu password plaintext (P0)** — `credential-manager` không còn ghi `{email,password}` XOR vào localStorage. Auto-login PWA dùng refresh token Supabase + PasswordCredential API; legacy key `app_saved_credential_v1` được purge ngay lần gọi đầu",
+        "**Vá XSS hoá đơn (P0)** — Thêm helper `esc()` HTML-escape mọi field do khách nhập (tên, SĐT, địa chỉ, MST, công ty, mô tả line-item, tên/MST khách sạn, số hoá đơn, label QR) trong cả template biên lai K58/K80, A4/A5, sync legacy và cửa sổ in/QR slip",
+        "**Khoá AI scan giấy tờ (P1)** — `scan-guest-document` edge function bắt buộc Bearer JWT, verify qua `auth.getUser`, lấy `tenant_id` từ bảng `users` (bỏ tham số `tenantId` do client gửi). Request ẩn danh → 401 'Yêu cầu đăng nhập'",
+        "**Email nội bộ chỉ người nhận đọc (P1)** — RLS `email_notifications` siết về `user_id = auth.uid()` cho nhân viên; tenant_owner/manager/super_admin vẫn xem được toàn bộ tenant",
+        "**Chặn tự sửa lương (P0)** — Trigger `prevent_unauthorized_salary_change` trên `users` raise `SALARY_CHANGE_NOT_ALLOWED` / `WAGE_CHANGE_NOT_ALLOWED` khi không phải tenant_owner/super_admin sửa `monthly_salary_vnd`/`hourly_wage_vnd`"
+      ]
+    },
+    {
+      "version": "1.1.82",
+      "date": "2026-06-05",
+      "title": "Audit /inventory Batch 2: dedup snapshot server-side, realtime items, chuẩn pagination",
+      "highlights": [
+        "**RPC `get_latest_consumption_snapshots(p_tenant_id, p_hotel_id, p_limit)`** — `DISTINCT ON (item_id)` server-side, trả đúng 1 dòng latest/item. Bỏ pattern client tự dedup từ 500 dòng raw (truncate khi tenant >500 item). `useLatestConsumptionSnapshots` chuyển sang gọi RPC này, `useStockoutItems` không cần dedup nữa",
+        "**Realtime `items.quantity_in_stock`** — `useInventoryHubBadges` subscribe thêm bảng `items` (UPDATE event) để KPI 'Low stock' / 'Đã hết hàng' tự refresh khi staff adjust trực tiếp, không cần F5",
+        "**Pagination chuẩn `p_page` / `p_page_size`** — `get_inventory_transactions_filtered` nhận thêm cặp tham số mới (giữ backward-compat `p_limit`/`p_offset`). `useInventoryTransactions` đổi sang gọi page-based, đồng bộ với `get_laundry_batches_filtered` đã refactor ở Sprint A3+B",
+        "**Hotfix changelog.json** — Vá lỗi cú pháp JSON dup `{` lọt qua Batch 1 (line 17-18) làm bản /changelog không parse được"
+      ]
+    },
+    {
+      "version": "1.1.81",
+      "date": "2026-06-05",
+      "title": "Audit /inventory Batch 1: fix số liệu sai, gỡ widget trùng, đồng bộ mobile",
+      "highlights": [
+        "**Fix logic P0** — KPI 'Sắp hết (7 ngày)' đang bị thổi phồng vì `useLatestConsumptionSnapshots(500)` trả nhiều dòng/item (mỗi ngày 1 snapshot). Tạo hook trung tâm `useStockoutItems()` dedup latest-per-item một lần, expose `soonOutCount/forecast14dCount/outOfStockCount/forecastTopRows`. Áp dụng cho `InventoryTodoCard`, `InventoryKpiGrid`, `InventoryForecastWidget`, `CombinedStockAlerts`",
+        "**Fix logic P0** — `useInventoryHubBadges.distributionsPending` đang đếm cả `in_progress` (đã ai đó nhận xử lý) → label 'phiếu xuất kho cần xử lý' sai. Đổi còn `pending + approved` thôi",
+        "**Gỡ trùng UI P1** — Tile KpiGrid 'Sắp hết (7 ngày)' đổi thành 'Đã hết hàng' (đếm món `quantity_in_stock = 0` từ `get_low_stock_items`), tránh trùng số với TodoCard và CombinedStockAlerts",
+        "**Mobile đồng bộ hub v3** — `MobileInventoryDashboard` giờ render `InventoryTodoCard` + `CombinedStockAlerts` (cùng widget với desktop). Bỏ button 'Cảnh báo tồn kho' badge sai ngữ nghĩa (đếm reorder thay vì low-stock) và `RestockAlertSheet` riêng cho mobile",
+        "**Dọn legacy** — Xóa `LowStockAlert.tsx`, `InventoryAlertsWidget.tsx`, `RestockAlertSheet.tsx`, `MobileLowStockSection.tsx` (đã bị thay bằng `CombinedStockAlerts`/`InventoryTodoCard` từ hub v2/v3)",
+        "**Code hygiene** — Bỏ `console.error('Submit error:', err)` còn sót trong `MobileOutboundForm` (lỗi đã được mutation hook hiển thị toast)"
+      ]
+    },
+    {
+      "version": "1.1.80",
+      "date": "2026-06-05",
+      "title": "Hotfix: get_laundry_batches_filtered tham chiếu cột logo_url không tồn tại",
+      "highlights": [
+        "Sửa hồi quy phát hiện sau Sprint A3+B: RPC `get_laundry_batches_filtered(...p_page,p_page_size)` chọn `lv.logo_url` nhưng bảng `laundry_vendors` không có cột này → mọi request /laundry list bị 500. Đổi sang `(lv.contract_info->>'logo_url')` đúng như overload cũ",
+        "QA pagination trực tiếp trên DB (tenant 14 lô): page=1/2/3 size=5 trả 5+5+4=14 rows, page=4 trống, total_count=14 nhất quán, không có overlap khi size=3 chạy 3 trang; thứ tự khớp baseline (draft trước → created_at DESC)",
+        "QA filter: search `20251216` → 4 rows, status `stocked` → 8 rows, date range → 5 rows (gồm 3 draft NULL delivery_date theo logic gốc `OR delivery_date IS NULL`)"
+      ]
+    },
+    {
+
+      "version": "1.1.79",
+      "date": "2026-06-05",
+      "title": "Sprint A3 + B audit overload RPC: dọn 7 overload cuối — whitelist về 0",
+      "highlights": [
+        "DROP 7 overload legacy còn lại theo F-RPC-OVERLOAD-02: `create_distribution_order(...6 args)`, `create_inbound_transaction(...12 args)`, `create_outbound_transaction(...14 args)`, `create_laundry_loss_transaction(p_batch_id,p_batch_code,p_item_id,p_quantity,...)`, `create_laundry_return_transaction(p_batch_id,p_batch_code,p_item_id,p_quantity,...)`, `get_laundry_batches_filtered(...p_limit,p_offset)`, `setup_new_tenant(p_tenant_id,p_hotel_name,...)` — giữ phiên bản đầy đủ tham số (auto_release, supplement_request_ids, warehouse_id, jsonb items, pagination page/page_size)",
+        "Refactor 3 caller dùng narrower sig: `useRoomSupplements.ts` + `useSupplementRequests.ts` thêm `p_recipient_name/p_recipient_signature/p_documents/p_photos: null` khi gọi `create_outbound_transaction`; `useLaundryBatches.ts` chuyển pagination từ `p_limit/p_offset` sang `p_search/p_page/p_page_size` (giữ nguyên field `total_count` và contract page-size)",
+        "Backup rollback tại `supabase/migrations/_rollback/20260605_sprint_a3_b_restore_legacy_overloads.sql` (CREATE OR REPLACE FUNCTION cho 7 signature đã drop)",
+        "Whitelist `ALLOWED_OVERLOADS` còn **0 entry** (giảm từ 7 → 0); test `rpc-signature-drift.test.ts` pass 16/16. Mọi overload RPC mới thêm vào DB sau này sẽ fail test → bắt buộc audit trước khi merge"
+      ]
+    },
+    {
+
+      "version": "1.1.78",
+      "date": "2026-06-05",
+      "title": "Sprint A2 audit overload RPC: dọn 5 mutation RPC theo F-RPC-OVERLOAD-02",
+      "highlights": [
+        "DROP 5 overload legacy: `apply_room_standards(p_room_id)`, `setup_room_initial(p_room_id,p_reset_quantities)`, `undo_room_delivery_confirmation(p_distribution_order_room_id)`, `handover_batch(p_batch_id,p_actor_id)`, `settle_batch_compensation(_batch_id)` — giữ phiên bản có actor/user/adjustments",
+        "Refactor caller `useSetupRoom.ts`: thêm `p_user_id: user?.id ?? null` để khớp signature mới; 4 caller còn lại (`useBulkRoomActions`, `useRoomStandards`, `useRouteBatch`, `useRoomDistributionHistory`, `useLaundryCompensation`) đã dùng signature đầy đủ — không cần đổi",
+        "Backup rollback tại `supabase/migrations/_rollback/20260605_sprint_a2_restore_legacy_overloads.sql` (CREATE OR REPLACE FUNCTION cho 5 signature đã drop)",
+        "Cập nhật `scripts/audit/rpc-signatures.snapshot.json`: bỏ overload cũ của `apply_room_standards` và knownIssue tương ứng; whitelist `ALLOWED_OVERLOADS` còn 7 entry (giảm từ 12). Test `rpc-signature-drift.test.ts` pass 16/16"
+      ]
+    },
+    {
+
+      "version": "1.1.77",
+      "date": "2026-06-05",
+      "title": "Sprint A1 audit overload RPC: dọn 5 read-only RPC theo F-RPC-OVERLOAD-02",
+      "highlights": [
+        "DROP 5 overload legacy: `get_categories_with_stats(p_tenant_id)`, `get_monthly_expenses(p_tenant_id,p_months)`, `get_recent_activities(p_tenant_id,p_limit)`, `get_distribution_orders_filtered(...6 args)`, `get_items_filtered(...8 args không có p_warehouse_id)` — giữ phiên bản đầy đủ tham số",
+        "Cập nhật 2 caller dùng narrower sig: `useDistributionOrders.ts` thêm `p_floor/p_shift_date/p_shift_code: null`; `ItemFilters.tsx` (export) thêm `p_warehouse_id: null`",
+        "Backup rollback tại `supabase/migrations/_rollback/20260605_sprint_a1_restore_legacy_overloads.sql` (chứa CREATE OR REPLACE FUNCTION của 5 signature đã drop)",
+        "Whitelist `ALLOWED_OVERLOADS` còn 12 entry (giảm từ 17); test `rpc-signature-drift.test.ts` pass 16/16"
+      ]
+    },
+    {
+      "version": "1.1.76",
+      "date": "2026-06-05",
+      "title": "Dọn overload `deliver_stop` legacy + migrate `useRouteBatch` sang signature mới",
+      "highlights": [
+        "Migrate `useDeliverStop` (src/hooks/useRouteBatch.ts) sang RPC `deliver_stop(p_stop_id, p_actor_id)`; bỏ tham số `p_items_confirmed` (signature mới đọc thẳng `distribution_order_items.quantity_actual`)",
+        "Migration DROP overload `deliver_stop(uuid, jsonb, uuid)` (legacy `p_room_order_id`) — chấm dứt rủi ro PostgREST chọn nhầm overload",
+        "Xoá `deliver_stop` khỏi `ALLOWED_OVERLOADS` trong `rpc-signature-drift.test.ts`; regenerate `docs/architecture/_generated/db-functions.tsv`; test drift pass 16/16",
+        "Giữ nguyên tham số `itemsConfirmed` ở mutation input (đánh dấu deprecated) để callers `StopCard`/`UnifiedRoomList` không phải đổi — cả 2 caller hiện không truyền field này"
+      ]
+    },
+    {
+      "version": "1.1.75",
+      "date": "2026-06-05",
+      "title": "Sprint 3 audit menu Kho: tách 2 sub-components Outbound + reuse formatCurrency",
+      "highlights": [
+        "P1 Tách `OutboundPage` (539 → ~306 dòng) thành 2 component con: `src/components/inventory/outbound/LaundryBatchFields.tsx` (toàn bộ block lô giặt — ngày giao/nhận, nhân viên, list `laundry_items` + summary chi phí) và `StandardItemsFields.tsx` (block items + ảnh + ghi chú dùng chung cho maintenance/disposal/other)",
+        "Form contract giữ nguyên: schema `OutboundFormData`, `useForm`, `useFieldArray('items'|'laundry_items')` đều move xuống sub-component — không phá hợp đồng RPC `create_outbound_transaction`/`create_laundry_batch`",
+        "Reuse `formatCurrency` từ `src/lib/utils.ts` thay cho `new Intl.NumberFormat('vi-VN', { currency: 'VND' })` inline trong LaundryBatchFields (giảm 2 lần khởi tạo formatter, đỡ lặp)",
+        "TransactionList: server-side pagination đã sẵn ở RPC `get_inventory_transactions_filtered` (limit/offset, total_count) — không cần thay đổi data layer ở sprint này"
+      ]
+    },
+    {
+      "version": "1.1.74",
+      "date": "2026-06-05",
+      "title": "Sprint 2 audit menu Kho: schema Outbound ổn định + Hub mobile gọn + ẩn bottom nav trong form",
+      "highlights": [
+        "P0 #3 Tách schema `OutboundPage` ra `src/lib/inventory/outboundFormSchema.ts` (`buildOutboundSchema(t)`) và bọc `useMemo` theo `i18n.language` — chấm dứt việc tạo Zod schema mới mỗi render, giữ stable identity cho `useForm`/`zodResolver`, tránh re-validate dư thừa",
+        "P1 #8 Sửa legacy redirect `?sub=distributions` ở `InventoryDashboardPage` bằng `useRef` guard — chỉ chạy 1 lần duy nhất, hết loop khi user back/forward giữa các tab",
+        "P1 #6 Rút gọn description hub mobile (`PageHeader`) để giảm chiều cao header trước list trên iPhone SE",
+        "P1 Ẩn `MobileBottomNav` ở các route form Nhập/Xuất/Chuyển/Kiểm kê (`/inventory/inbound/<id>`, `/inventory/outbound/<id>`, `/inventory/transfer/<id>`, `/inventory/adjustments/new|<id>`) để không che nút Lưu",
+        "Test: bổ sung `src/lib/inventory/__tests__/outboundFormSchema.test.ts` — 7 case bao phủ 5 business_type (room_assign/laundry/maintenance/disposal/other) + invalid discriminator + vượt tồn kho"
+      ]
+    },
+
+    {
+      "version": "1.1.73",
+      "date": "2026-06-05",
+      "title": "Sprint 1 audit menu Kho: form mobile single-page + Adjustment FSM",
+      "highlights": [
+        "P0 #1 Bỏ wizard 3 bước ở `MobileInboundForm` và 4 bước ở `MobileOutboundForm` — toàn bộ field render trên 1 trang dọc, 1 nút submit duy nhất, Zod validate đồng thời (tuân thủ Core rule single-page forms)",
+        "P0 #2 Hợp nhất Inbound schema giữa desktop + mobile qua `src/lib/inventory/inboundFormSchema.ts` — cả 2 platform giờ dùng `to_warehouse_id: uuid`, mobile auto-pick `defaultWarehouse` thay vì text tự do (chấm dứt rò dữ liệu không gắn kho)",
+        "P0 #5 Thêm RPC `transition_adjustment_status(_id, _to, _reason, _force)` + `fn_is_valid_adjustment_transition` cho phiếu kiểm kê — luồng draft → in_progress → completed → approved/rejected có guard quyền `manage_inventory`, log audit qua `log_state_transition`. Chưa revoke UPDATE cột `status` (sẽ làm ở Sprint 4 sau khi migrate hết hooks)",
+        "Mobile Outbound: validator per-step gộp thành `validateStep(stepKey)` chạy cho tất cả step khi bấm Xác nhận → user thấy lỗi ngay, không bị chặn ở step trước",
+        "Reset state-machine cho stock_adjustments là staged rollout — RPC sẵn sàng, hooks legacy vẫn chạy song song để không break tính năng đang dùng"
+      ]
+    },
+    {
+      "version": "1.1.72",
+      "date": "2026-06-05",
+      "title": "Sprint 4+ audit menu Phòng: perf sâu #32 + #33",
+      "highlights": [
+        "#33 RPC `get_room_items_with_standards` mở rộng trả về sẵn `is_chargeable`, `unit_price`, `asset_group`, `default_item_type` — LeanInspectionPage bỏ hẳn query `items.in(ids)` thứ 2 (tiết kiệm 1 round-trip mỗi lần mở /inspection, ~150–300ms 4G)",
+        "#33 LeanInspectionPage enrich items qua `useMemo` thay vì `useEffect+setState` async → render đồng bộ ngay từ frame đầu, không còn skeleton enrich",
+        "#32 `useRoom`: bỏ `staleTime: 0` + `refetchOnMount: 'always'` → `staleTime: 30s` + `refetchOnMount: true`. Wizard Lean (Overview → Inspection → Review → Success) trước đây refetch 4×3 query, giờ chia sẻ cache → chỉ 3 query cho cả luồng (giảm ~75% network)",
+        "Type `RoomItemWithDetails` mở rộng: thêm `item_type`, `category_id`, `is_chargeable`, `unit_price`, `asset_group`, `default_item_type`, `unit` để các trang khác dùng chung dữ liệu enriched"
+      ]
+    },
+    {
+      "version": "1.1.71",
+      "date": "2026-06-05",
+      "title": "Sprint 4 audit menu Phòng: dọn dẹp + test cứng",
+      "highlights": [
+        "#31 RoomsPage lazy-load `RoomTapeChart` (1,190 dòng) và `RoomFloorMapView` (849 dòng) — chỉ tải khi viewMode = floor/map, tiết kiệm ~2k LOC ở lần render đầu",
+        "#27 Tách `src/lib/rooms/roomFormSchema.ts` — desktop (`RoomFormPage`) và mobile (`MobileRoomFormPage`) dùng chung 1 nguồn Zod (`buildRoomFormSchema(t)` + `roomFormSchema`), tránh drift validation",
+        "#5 `RoomCheckPage` (legacy 1,619 dòng): thêm header `@deprecated` ghi rõ chỉ còn dùng cho inspection/distribution_order_id/room_order_id, không xoá vì 3 luồng chưa có biến thể Lean",
+        "Test: thêm `roomFormSchema.test.ts` (8 case) + `roomCheckRouter.test.ts` (10 case bảng quyết định) — pure logic, không phụ thuộc React Router, chạy 15ms",
+        "Cleanup: tách hàm `decideRoomCheckRoute()` pure để dễ test, giữ component cũ làm wrapper"
+      ]
+    },
+    {
+      "version": "1.1.70",
+      "date": "2026-06-05",
+      "title": "Sprint 3 audit menu Phòng: hardening picker chuẩn phòng + realtime tenant filter",
+      "highlights": [
+        "#15 RoomStandardsPage picker: bỏ pageSize=1000 client-side; lift search + category lên page, đẩy xuống `useItems` filters (server-side qua RPC `get_items_filtered`). Mặc định 50 item, nút `Tải thêm (x/y)` tăng dần 50 — chịu được tenant >1000 SKU",
+        "#34 useRoomCheckSession realtime channel: filter theo `tenant_id` thay vì `room_id` (đúng chuẩn isolation 3 lớp), client-side narrow theo room_id trong handler; channel name kèm tenantId tránh leak event cross-tenant",
+        "RoomStandardItemPicker chuyển thành controlled component: parent quản search/category/pagination; loại bỏ `categoryStats` đếm client (giờ chỉ hiện tên danh mục), tránh hiển thị số đếm sai khi data đã phân trang"
+      ]
+    },
+    {
+      "version": "1.1.69",
+      "date": "2026-06-05",
+      "title": "Sprint 2 audit menu Phòng: UX mobile/desktop còn lại",
+      "highlights": [
+        "#18 RoomDetailPage cleaning banner: nhận diện đủ 3 trạng thái dirty (`cleaning`, `occupied_dirty`, `vacant_dirty`) theo state machine v2 thay vì chỉ `cleaning` hardcode",
+        "#25 RoomDetailPage: chuyển `h-[calc(100vh-7rem)] min-h-[680px]` cứng → `min-h-[calc(100dvh-7rem)]` co giãn theo nội dung; xài `dvh` cho mobile address-bar dynamic",
+        "#26 RoomsPage toolbar: thêm `flex-wrap` cho cả filter row và tab group; label tab `Lưới/Danh sách/Lịch/Sơ đồ` ẩn dưới breakpoint `lg`, chỉ giữ icon — không còn tràn ngang ở laptop 13\"/tablet",
+        "#17 Reset phòng: `AlertDialogAction` thêm `disabled={isPending}` + early return → spam Enter không trigger 2 lần",
+        "#28 RoomStandardsPage: input số lượng dùng `Number.isFinite` chống NaN, snap về 1 khi blur kèm toast cảnh báo `Số lượng tối thiểu là 1`; tăng input height 32→36px"
+      ]
+    },
+    {
+      "version": "1.1.68",
+      "date": "2026-06-05",
+      "title": "Sprint 1 audit menu Phòng: vá 6 vấn đề nghiêm trọng",
+      "highlights": [
+        "#2 Periodic session: bỏ downgrade thầm lặng `periodic → daily` ở `RoomCheckOverviewPage`; mở rộng `RoomCheckType` & `CheckType` để bảng `room_check_sessions` ghi đúng loại kiểm",
+        "#4 Permission: route `/rooms/:id` không còn yêu cầu action `update` — nhân viên view-only đã có thể xem chi tiết phòng theo đúng menu sidebar",
+        "#6 Delivery delta: ItemRow hiển thị rõ `Đặt N · Nhận M · Thiếu K`, màu semantic xanh/cam/đỏ; touch target nút +/- tăng từ 32px lên 44px (chuẩn Apple HIG)",
+        "#7 Replenish kho trống: banner cảnh báo khi có món `quantity_in_stock = 0`; thêm shortcut `Bổ sung đủ theo gợi ý` cho mọi món thiếu (đối xứng với `Nhận đủ tất cả` ở Delivery)",
+        "#8 Quick path clear draft: sau khi gửi nhanh `Phòng OK hoàn toàn`, tự động xoá draft autosave 24h để Overview lần sau không hiện ResumeDraftSheet rác",
+        "#1 Xác nhận KHÔNG có double-bookkeeping (đọc trigger `trg_room_check_issues_outbox_fanout`: bucket `missing_replace` không có fan-out outbox) — chỉ thêm code comment kiến trúc",
+        "UX: terminology nhất quán `Phòng OK hoàn toàn` (thay `Phòng ổn, gửi nhanh`); step label động ở Overview (`allowQuickPath` ẩn `Bước 1/3`); back button có fallback `/my-tasks` khi `history.length <= 1` (mở từ deep link)",
+        "Hardening: `returnTo` whitelist chỉ accept path nội bộ (chặn open redirect); input số dùng `Number.isFinite` thay `parseInt` raw để chống NaN khi paste"
+      ]
+    },
+    {
+      "version": "1.1.67",
+      "date": "2026-06-05",
+      "title": "Lean Replenish/Delivery rollout cuối + cleanup task navigators (C4 Phase 4)",
+      "highlights": [
+        "TaskCard, StaffTaskRow, TaskDetailDialog: thay `DeliveryConfirmationModal` (dialog 2 bước) bằng điều hướng URL `?type=delivery&room_order_id=&task_id=&returnTo=/my-tasks` — router tự đẩy vào trang Lean `/check-delivery` cho toàn bộ flow xác nhận giao hàng từ /my-tasks và task detail",
+        "Gỡ import + state + JSX modal khỏi 3 file navigator: thân file ngắn lại, không còn 2 đường code song song cho cùng nghiệp vụ",
+        "Hoàn thành C4: Lean phủ 100% các check-type chính (daily/checkin/checkout/maintenance/replenish/delivery); legacy `RoomCheckPage` (1.619 dòng) + `DeliveryConfirmationModal` giữ lại làm fallback qua `&lean=0` hoặc per-hotel flag `use_lean=false`, sẽ gỡ ở đợt dọn dẹp sau khi có ≥2 tuần traffic Lean ổn định",
+        "Không cần migration. Smoke test 2 RPC `submit_replenish_lean` & `submit_delivery_lean` đã pass ở 1.1.65/1.1.66"
+      ]
+    },
+    {
+      "version": "1.1.66",
+      "date": "2026-06-05",
+      "title": "Lean Delivery UI: trang nhận hàng 1 màn hình (C4 Phase 3)",
+      "highlights": [
+        "Thêm trang mới `/rooms/:id/check-delivery` (RoomDeliveryLeanPage): 1 màn hình mobile-first thay thế `DeliveryConfirmationModal` cho flow nhận hàng từ phiếu giao kho",
+        "Mặc định 'Nhận đủ tất cả' 1-tap → bỏ qua items_actual (RPC forward sang `confirm_delivery_from_room_check`); stepper +/− từng món để báo nhận thiếu, footer hiển thị tổng nhận / tổng đặt",
+        "Bắt buộc ghi chú khi báo thiếu (validation client), banner amber cảnh báo; submit gọi `useSubmitDeliveryLean` (atomic: room_check + confirm + đóng task delivery_confirmation + audit log)",
+        "RoomCheckRouter: `?type=delivery` (kèm `room_order_id`/`distribution_order_id`) giờ tự redirect sang `/check-delivery` khi flag `use_lean` bật — entry từ `/inventory/distributions` (UnifiedRoomList, StopCard) tự động dùng Lean; fallback wizard cũ qua `&lean=0` hoặc tắt flag",
+        "Hook `useSubmitDeliveryLean` đã có sẵn từ Phase 1, không cần migration mới"
+      ]
+    },
+    {
+      "version": "1.1.65",
+      "date": "2026-06-05",
+      "title": "Polish Lean Replenish: bật mặc định + auto-close task (C4 Phase 2.1)",
+      "highlights": [
+        "RoomCheckRouter: `?type=replenish` giờ tự redirect sang `/check-replenish` khi flag `settings.room_check.use_lean` bật (mặc định ON) — không còn cần `&lean=1`; vẫn có thể fallback wizard cũ bằng `&lean=0` hoặc tắt flag per-hotel",
+        "Mọi entry point từ task (TaskCard, StaffTaskRow, TaskDetailDialog — cả Start lẫn Continue) giờ truyền `&task_id=${task.id}` qua URL → Lean tự đóng task `amenity_request` qua `transition_task_status` thay vì phải đợi user bấm hoàn thành tay",
+        "Smoke test RPC `submit_replenish_lean` trên dữ liệu thật (jwt-claims simulate auth user): trả `{check_id, room_id, issue_count:1}` — fan-out issue + cleaning_requested + audit chạy đúng, không leak tenant",
+        "Legacy `RoomCheckPage` wizard cho replenish vẫn còn nguyên cho rollback nhanh; sẽ gỡ ở Phase 4 sau khi đủ traffic Lean"
+      ]
+    },
+    {
+      "version": "1.1.64",
+      "date": "2026-06-05",
+      "title": "Lean Replenish UI: trang bổ sung đồ 1 màn hình (C4 Phase 2 — opt-in)",
+      "highlights": [
+        "Thêm trang mới `/rooms/:id/check-replenish` (RoomReplenishLeanPage): 1 màn hình mobile-first thay thế wizard 3 bước của RoomCheckPage legacy cho flow replenish",
+        "Tự prefill số lượng = số thiếu (clamp theo tồn kho), hiển thị 2 nhóm rõ ràng: 'Đồ thiếu' (đỏ, dùng useRoomSupplements) và 'Bổ sung thêm consumables' (xám); stepper +/− 8x8, input số đồng bộ",
+        "Submit gọi 2 mutation atomic: useCreateRoomSupplement (xuất kho + cộng room_items qua create_outbound_transaction) → useSubmitReplenishLean (insert room_check lean + fan-out room_check_issues + đóng task amenity_request + audit log)",
+        "RoomCheckRouter: thêm rẽ nhánh `?type=replenish&lean=1` → tự redirect sang `/check-replenish` (giữ task_id, returnTo, các param khác); flow legacy mặc định không đổi để rollout an toàn",
+        "Hotfix kèm: bỏ cột `tenant_id` không tồn tại khỏi `room_items` INSERT trong useCreateRoomSupplement (cùng nguyên nhân với bug delivery vừa fix ở 1.1.63) — trước đây khi item chưa từng có trong phòng thì supplement bị fail",
+        "Footer sticky: hiển thị tổng số món + badge yêu cầu dọn dẹp; nút Submit disabled khi chưa chọn món nào và chưa bật cleaning",
+        "Phase 3 (Delivery UI) + Phase 4 (rollout/cleanup) sẽ làm tiếp; legacy `/check?type=replenish` không có `lean=1` vẫn chạy wizard cũ"
+      ]
+    },
+
+    {
+      "version": "1.1.63",
+      "date": "2026-06-05",
+      "title": "Hotfix: RPC xác nhận giao hàng vào phòng (confirm_delivery_from_room_check)",
+      "highlights": [
+        "Sửa lỗi nghiêm trọng khiến nút 'Xác nhận đã nhận đủ hàng' (DeliveryConfirmationModal, PendingDeliveriesSection) luôn fail trên production: hàm RPC chèn cột room_items.tenant_id không tồn tại — bỏ tham chiếu cột này (room_items đã enforce tenant qua room_id + RLS)",
+        "Sửa thêm 2 vi phạm constraint phát hiện qua smoke test: transaction_category đổi từ 'room_receive' (không hợp lệ) sang 'other_in', và distribution_order_rooms.status đổi từ 'completed' (không hợp lệ) sang 'confirmed'",
+        "Smoke test happy-path: RPC trả về {success:true, items_updated:2, all_confirmed:true} — flow giao hàng cũ + flow Lean delivery (submit_delivery_lean forward sang RPC này) đều hoạt động trở lại",
+        "Không thay đổi UI, không cần redeploy frontend cho fix này — chỉ migration DB"
+      ]
+    },
+
+    {
+      "version": "1.1.62",
+      "date": "2026-06-04",
+      "title": "Lean Replenish + Delivery: nền tảng RPC (Batch 3 — C4 Phase 1)",
+      "highlights": [
+        "Thêm 2 hàm RPC atomic chuẩn Lean: submit_replenish_lean (bổ sung amenity) và submit_delivery_lean (xác nhận giao kho theo phòng) — gộp insert room_check + room_check_issues + đóng task + audit log vào 1 transaction, không còn 4 mutation rời như flow legacy",
+        "submit_delivery_lean tái dùng confirm_warehouse_delivery / confirm_delivery_from_room_check sẵn có để cộng tồn + đổi trạng thái distribution_order_rooms — không trùng logic kho",
+        "Cả 2 RPC validate tenant qua users.tenant_id, REVOKE PUBLIC + GRANT authenticated, search_path cố định public, ghi audit qua log_state_transition",
+        "Hook React Query mới: useSubmitReplenishLean và useSubmitDeliveryLean (tự invalidate rooms / room-checks / distribution-orders / housekeeping-tasks, xoá draft localStorage, toast tiếng Việt)",
+        "Phase 1 KHÔNG đụng UI hiện tại — RoomCheckPage legacy 1.619 dòng cho replenish/delivery vẫn chạy nguyên; Phase 2-3 sẽ wire 2 page mới rồi mới rollout feature flag"
+      ]
+    },
+
+    {
+      "version": "1.1.61",
+      "date": "2026-06-04",
+      "title": "Tape Chart: refresh theo Navy Trust + click phòng mở chi tiết (Batch 3 — B3)",
+      "highlights": [
+        "Bảng băng booking đổi sang palette Navy Trust: đang lưu trú = navy đậm chữ trắng (nổi bật nhất), đã cọc đủ = emerald nhạt + viền trái xanh, cọc một phần = amber nhạt, chưa cọc = orange nhạt, đã trả phòng = slate mờ, còn nợ = đỏ đậm — tạo hierarchy rõ ràng giữa hiện tại / tương lai / quá khứ",
+        "Header ngày polish: hôm nay có ring + underline navy + chữ primary, cuối tuần slate-100 nhạt, ngày lễ rose + tên rút gọn; nền sticky đổi sang slate-50/95 + backdrop-blur cho viền trong khi scroll",
+        "Cột phòng giờ là button click được — mở thẳng chi tiết phòng /rooms/:id, có icon Eye hiển thị khi hover, hover row sáng nền accent",
+        "Source badge trong bar booking dùng `bg-black/10 text-current` để hiển thị tốt cả trên bar tối (navy/đỏ) lẫn bar sáng (emerald/amber/orange), không còn bị mất chữ trên tint nhạt",
+        "Color-blind pattern overlay cập nhật theo màu nền mới (overlay tối hơn cho bar sáng, overlay sáng hơn cho bar tối)"
+      ]
+    },
+
+
+    {
+      "version": "1.1.60",
+      "date": "2026-06-04",
+      "title": "Phòng mobile: thêm tab Sơ đồ Lễ tân + đồng bộ header chi tiết (Batch 3 — B5/A2)",
+      "highlights": [
+        "Mobile /rooms: thêm tab 'Sơ đồ' bên cạnh 'Lưới HK' và 'Công việc' — render trực tiếp RoomFloorMapView (KPI bucket + chấm semantic + Quick View Lễ tân) ngay trên điện thoại, không cần đổi sang tablet/desktop",
+        "Thành phần dùng chung 'RoomDetailTitleBlock' cho cả 3 trang chi tiết phòng (RoomDetailPage desktop, MobileRoomDetailPage, StaffRoomDetailPage): tiêu đề + status badge + dòng meta (loại phòng · tầng · diện tích · giường · view · giá) thống nhất 100%, có popover 'i' chứa amenities/notes",
+        "Loại bỏ 3 block duplicate header (~24 dòng) — đổi 1 field meta giờ chỉ sửa RoomMetaSubtitle"
+      ]
+    },
+
+    {
+      "version": "1.1.59",
+      "date": "2026-06-04",
+      "title": "Sơ đồ phòng: tối ưu cho khách sạn ≥200 phòng (Batch 3 — D1/B2/D2)",
+      "highlights": [
+        "Lazy render từng tầng bằng CSS `content-visibility: auto` + `contain-intrinsic-size` ước tính theo cols×height — trình duyệt tự skip render tầng ngoài viewport, scroll giữ vị trí ổn định, mượt với 200 phòng / nhiều tầng",
+        "Xoá dead code STATUS_STYLE/getStatusStyle (12 status legacy) trong RoomFloorMapView — RoomTooltip dùng chung getRoomStatusMeta + getRoomStatusTextClass với phần còn lại của app",
+        "Xác nhận useFloorPlanLive đã subscribe realtime đúng 4 bảng (rooms / room_bookings / housekeeping_tasks / maintenance_requests) với debounce 400ms — không phải polling"
+      ]
+    },
+    {
+      "version": "1.1.58",
+      "date": "2026-06-04",
+      "title": "Phòng: Multi-select shortcuts + đoàn nhiều phòng trong Quick View (Batch 2)",
+      "highlights": [
+        "Desktop /rooms: Shift+Click để chọn 1 dải phòng theo thứ tự ưu tiên, Cmd/Ctrl+Click để toggle nhanh — không cần dùng checkbox riêng",
+        "Mobile /rooms: nhấn giữ 500ms vào 1 ô phòng để bật chế độ chọn hàng loạt + tự chọn luôn phòng đó (có rung haptic), không phải bấm nút 'Chọn' trên header nữa",
+        "Quick View phòng hiển thị danh sách 'Cùng đoàn' khi booking có nhiều phòng (booking_group_id) — click chip để nhảy sang phòng anh em, dấu chấm màu đồng bộ trạng thái",
+        "useActiveRoomBookings nay select thêm booking_group_id để tính đoàn ngay client, không cần round-trip thêm"
+      ]
+    },
+
+    {
+      "version": "1.1.57",
+      "date": "2026-06-04",
+      "title": "Phòng: Cleanup batch 1 — dedupe màu + header dùng chung + đổi tên tab",
+      "highlights": [
+        "Hai helper màu duy nhất cho mọi nơi: getRoomStatusDotClass / getRoomStatusTextClass (suy từ ROOM_STATUS_META_V2). Đổi 1 màu giờ chỉ sửa 1 chỗ",
+        "Thành phần shared 'RoomQuickHeader' dùng cho cả 2 popup phòng (Lưới HK & Sơ đồ Lễ tân) — pattern header đồng bộ 100%",
+        "Đổi tên tab cho rõ vai trò: 'Lịch phòng' → 'Lịch đặt phòng' (icon Calendar), 'Sơ đồ (Lễ tân)' → 'Sơ đồ tình trạng' (icon LayoutGrid) để tránh nhầm",
+        "Dọn dead code: xoá src/pages/Rooms.tsx (không còn route), bỏ TYPE_BORDER không dùng trong RoomFloorMapView"
+      ]
+    },
+    {
+      "version": "1.1.56",
+      "date": "2026-06-04",
+      "title": "Sơ đồ phòng (Lễ tân): đồng bộ Quick View với Lưới",
+      "highlights": [
+        "Header popup phòng trên Sơ đồ Lễ tân giờ dùng cùng pattern với Lưới HK: chấm trạng thái + 'Phòng 101' + nhãn trạng thái màu semantic — bỏ nền tinted gây nặng mắt",
+        "Bổ sung 'Xem chi tiết phòng' và 'Kiểm tra phòng' vào menu ⋯ ngay trong popup Lễ tân — không cần đi qua trang khác",
+        "Thống nhất visual giữa 2 view (Lưới HK ↔ Sơ đồ Lễ tân) trong khi vẫn giữ nội dung chuyên biệt (giá / khách / tài chính) cho lễ tân"
+      ]
+    },
+    {
+      "version": "1.1.55",
+      "date": "2026-06-04",
+      "title": "Phòng: Đồng bộ trải nghiệm Quick View + phân vai tab + mobile gọn lại",
+      "highlights": [
+        "Ô phòng (cả desktop & mobile) giờ chỉ còn 1 nút 'Kiểm tra' — các thao tác 'Giao việc' và 'Xem chi tiết' gom hết vào popup Xem nhanh khi bấm ô phòng",
+        "Tab phân vai rõ ràng: 'Lưới (HK)' cho Buồng phòng, 'Sơ đồ (Lễ tân)' cho quầy lễ tân — thêm mô tả ngắn dưới tab",
+        "Mặc định mở 'Sơ đồ phòng' cho Quản lý/Chủ khách sạn, mở 'Lưới ưu tiên' cho Trưởng bộ phận (vẫn nhớ lựa chọn của user)",
+        "Mobile: card phòng theo cùng pattern desktop — chấm trạng thái + số phòng + nhãn semantic; bỏ pill chọn trạng thái trong header, bỏ giá phòng — tránh nhiễu",
+        "Bấm vào card mobile mở popup Xem nhanh thay vì điều hướng — thao tác nhanh hơn trên iPhone"
+      ]
+    },
+    {
+      "version": "1.1.54",
+      "date": "2026-06-04",
+      "title": "Phòng: Card gọn hơn + Xem nhanh khi bấm vào ô phòng",
+      "highlights": [
+        "Trạng thái phòng chuyển thành nhãn chữ ngắn cạnh số phòng (vd 'P104 · Trống – chưa dọn') — bỏ pill lớn gây vỡ layout",
+        "Bấm vào ô phòng mở popup 'Xem nhanh': trạng thái, lý do cần xử lý, khách đang ở, vật tư thiếu, lần kiểm gần nhất — không cần điều hướng",
+        "Popup có 2 nút riêng biệt: 'Kiểm tra phòng' (đi tới flow kiểm tra) và 'Xem chi tiết phòng' (đi tới trang chi tiết) — giảm nhầm lẫn",
+        "Vẫn cho phép đổi trạng thái nhanh ngay trong popup mà không rời trang danh sách"
+      ]
+    },
+    {
+      "version": "1.1.53",
+      "date": "2026-06-03",
+      "title": "Kho: Trung tâm điều hành lấy việc làm trọng tâm",
+      "highlights": [
+        "Thêm thẻ 'Việc cần làm hôm nay' lên đầu trang Kho — gộp phiếu xuất chờ, món sắp hết 7 ngày, đề xuất đặt hàng và phiếu kiểm kê chờ xử lý vào một danh sách hành động duy nhất",
+        "Đưa 2 nút Nhập kho và Xuất kho ra header chính, bỏ menu 'Thao tác' gộp — giảm số lần bấm cho thao tác thường ngày",
+        "Đổi nhãn KPI sang ngôn ngữ vận hành: 'Số SKU' → 'Loại hàng', 'Tồn ứ đọng ≥90d' → 'Tồn lâu (>3 tháng)', 'Sắp hết · <7 ngày' → 'Sắp hết (7 ngày)'",
+        "Gọn lại lưới KPI thành 4 ô đồng cỡ, ẩn breadcrumb dư thừa khi đang ở Tổng quan",
+        "Lazy-load phần 'Phân bổ theo khách sạn' (chỉ hiện ở chế độ chuỗi) để trang nhẹ hơn cho khách sạn đơn"
+      ]
+    },
+    {
+      "version": "1.1.52",
+      "date": "2026-06-02",
+      "title": "Giá theo ngày: nhận đúng Giá KM trên sơ đồ phòng",
+      "highlights": [
+        "Sửa RPC resolve_daily_prices_bulk: nếu ô giá theo ngày chỉ có Giá KM (sale_price) thì dùng Giá KM làm giá hiệu lực",
+        "Sơ đồ phòng và danh sách phòng nay hiển thị 2.500.000 ₫ thay vì quay về giá mặc định 30.000.000 ₫",
+        "Lưu giá theo ngày tự làm mới cache giá hôm nay, phòng khả dụng và sơ đồ phòng"
+      ]
+    },
+    {
+      "version": "1.1.51",
+      "date": "2026-06-02",
+      "title": "Mùa giá: ghi đè đúng giá mặc định khi đặt giá tuyệt đối",
+      "highlights": [
+        "Sửa RPC calculate_booking_price: quy tắc mùa 'Ghi đè + Đặt giá tuyệt đối' nay áp đúng giá mùa (vd 2.500.000 ₫/đêm) thay vì lấy giá mặc định",
+        "Quy tắc mùa 'Ghi đè + Phần trăm' nay tính đúng = giá nền × (1 + %/100)",
+        "Form Quy tắc mùa giá: mặc định 'Đặt giá mùa (₫)', tự khoá chế độ Ghi đè khi chọn đặt giá tuyệt đối, có gợi ý số tiền/đêm",
+        "Lưu/xóa quy tắc mùa nay refresh ngay giá hiển thị ở Quản lý phòng (sơ đồ + bảng) và Lịch giá theo ngày"
+      ]
+    },
+    {
+      "version": "1.1.50",
+      "date": "2026-06-02",
+      "title": "Cockpit Trưởng buồng phòng (Pha 3.1): Dải vận hành liên quan",
+      "highlights": [
+        "Thêm hàng 'Vận hành liên quan' trong /housekeeping: Yêu cầu bảo trì đang xử lý (kèm cảnh báo khẩn cấp), Đồ thất lạc đang giữ, Lô giặt đang xử lý (kèm số lô cần đền bù), Phiếu giao đồ chờ",
+        "Mỗi ô click sang module tương ứng (/maintenance/requests, /lost-found, /laundry, /inventory)",
+        "Realtime cập nhật khi có thay đổi ở maintenance_requests / lost_found_items / laundry_batches / distribution_orders"
+      ]
+    },
+    {
+      "version": "1.1.49",
+      "date": "2026-06-02",
+      "title": "Cockpit Trưởng buồng phòng (Pha 3): Bố cục đầy đủ theo nghiệp vụ",
+      "highlights": [
+        "Hàng 1: 7 KPI lớn có icon + tỉ lệ % (Tổng / Đang có khách / Trống-sạch / Đang dọn / Bẩn-chờ dọn / Bảo trì / Đặt trước)",
+        "Hàng 2: 4 panel — Phòng cần xử lý ngay, Check-out hôm nay, Tiến độ dọn (donut chart), Hiệu suất nhân viên",
+        "Hàng 3: Sơ đồ phòng lớn theo tầng, có filter tầng + loại phòng, mỗi ô hiển thị số phòng + trạng thái rút gọn",
+        "Hàng 4: Dải tổng cộng, đồng bộ realtime với KPI"
+      ]
+    },
+    {
+      "version": "1.1.48",
+      "date": "2026-06-02",
+      "title": "Cockpit Trưởng buồng phòng (Pha 2.1): Sơ đồ phòng mini",
+      "highlights": [
+        "Thêm hàng 'Sơ đồ phòng' trong /housekeeping: nhóm phòng theo tầng, chấm màu theo trạng thái",
+        "Click vào ô phòng mở thẳng trang chi tiết phòng",
+        "Legend trạng thái ở chân khối: Trống sạch / Cần dọn / Đang dọn / Có khách / DND / Hỏng / Tạm khóa",
+        "Realtime cập nhật khi đổi trạng thái phòng"
+      ]
+    },
+    {
+      "version": "1.1.47",
+      "date": "2026-06-02",
+      "title": "Cockpit Trưởng buồng phòng (Pha 1): KPI + Cần xử lý ngay",
+      "highlights": [
+        "Trang mới /housekeeping: gom 6 KPI nghiệp vụ (Tổng phòng, Đang có khách, Trả phòng hôm nay, Cần dọn, Bảo trì, Thiếu đồ)",
+        "Click KPI nhảy thẳng vào tập con phòng/booking/bảo trì tương ứng",
+        "4 bucket 'Cần xử lý ngay': Trả phòng chưa dọn, Thiếu đồ, QC không đạt, Task khẩn",
+        "Realtime cập nhật khi rooms/bookings/tasks thay đổi",
+        "Sidebar nhóm 'Phòng' có mục mới 'Tổng quan buồng phòng' ở đầu",
+        "Pha 2 (sơ đồ phòng mini + tiến độ nhân viên) sẽ phát hành tiếp theo"
+      ]
+    },
+    {
+      "version": "1.1.46",
+      "date": "2026-06-02",
+      "title": "Lưới phòng: hiện booking trên phòng đang ở, gom 'Bình thường' mặc định",
+      "highlights": [
+        "Phòng đang có khách (occupied/DND/sleep_out): hiện dòng 'Trả 12:00 · Tên khách' thay cho thông tin items",
+        "Tự động cảnh báo cam khi ≤ 2h tới giờ trả phòng và đỏ khi quá giờ ('Quá giờ trả X phút')",
+        "Quá giờ trả → đẩy phòng lên section 'Cần xử lý ngay'; sắp trả (≤30 phút) → section 'Theo dõi'",
+        "Section 'Bình thường' mặc định thu gọn, click header để mở rộng — trạng thái lưu theo từng khách sạn",
+        "Realtime cập nhật khi check-in/checkout: card phản ánh ngay không cần F5",
+        "Recompute countdown mỗi phút để màu cam/đỏ luôn đúng"
+      ]
+    },
+
+    {
+      "version": "1.1.45",
+      "date": "2026-06-02",
+      "title": "Lưới phòng: bỏ giá, số phòng luôn hiển thị, thêm điều chỉnh cỡ chữ",
+      "highlights": [
+        "Bỏ hoàn toàn giá phòng khỏi card Lưới (đồng bộ với module Buồng phòng — giá thuộc về Lễ tân)",
+        "Số phòng luôn hiển thị đầy đủ: bỏ truncate, dồn checkbox + Trạng thái ở góc phải, wrap khi chật",
+        "Thêm điều khiển 'Cỡ hiển thị' (Nhỏ / Vừa / Lớn + slider 85–140%) cho Lưới và Danh sách, lưu theo từng khách sạn",
+        "Phím tắt Ctrl/Cmd + / − / 0 để phóng to/thu nhỏ/đặt lại — tương tự Sơ đồ phòng",
+        "Cỡ chữ áp dụng đồng bộ cho số phòng, lý do ưu tiên, dòng việc cần làm và meta của card"
+      ]
+    },
+    {
+      "version": "1.1.44",
+      "date": "2026-06-02",
+      "title": "Lưới phòng: card gọn 4 dòng, ẩn giá với Trưởng buồng phòng",
+      "highlights": [
+        "Tái cấu trúc card phòng: 4 dòng (Số phòng → Lý do ưu tiên → Việc cần làm → Meta + Giá)",
+        "Ẩn giá phòng với role Trưởng bộ phận (department_manager) — chỉ Owner/Hotel Manager/Lễ tân thấy giá",
+        "Gộp Loại phòng • Khách • Giường • m² vào 1 dòng meta xám gọn, không còn grid 3 cột rườm rà",
+        "Bỏ badge \"Khẩn\"/\"Theo dõi\" trùng lặp (section header đã có) — chỉ giữ viền trái màu",
+        "Ẩn dòng \"Đã kiểm X\" khi đã có lý do ưu tiên — không lặp thông tin",
+        "Nút \"Kiểm tra\" full-width là primary; nút giao việc thu thành icon — \"Xem chi tiết\" gỡ khỏi footer (click card để vào)",
+        "Lưới chặt hơn: hỗ trợ tới 5 cột ở màn 2xl, padding p-3"
+      ]
+    },
+
+    {
+      "version": "1.1.43",
+      "date": "2026-06-01",
+      "title": "Lưới phòng: ưu tiên xử lý + tách view theo vai trò",
+      "highlights": [
+        "Sắp xếp phòng theo độ ưu tiên: Cần xử lý ngay → Theo dõi → Bình thường, có viền màu trái",
+        "Badge \"Khẩn\"/\"Theo dõi\" + lý do ưu tiên hiển thị ngay trên card (vd: \"Quá hạn kiểm 45 ngày\")",
+        "Fix mâu thuẫn dữ liệu: phòng đã dọn mà thiếu món → \"Chờ bổ sung X món\" (amber) thay vì \"Thiếu items\" (đỏ)",
+        "Phòng khách đang ở: không hiển thị cảnh báo thiếu items (không actionable lúc đó)",
+        "Thời gian kiểm tra: <7 ngày muted, 7–30 ngày amber, >30 ngày đỏ đậm",
+        "Staff (HK) tự động chuyển sang /my-tasks — không còn lạc vào danh sách toàn bộ phòng"
+      ]
+    },
+    {
+      "version": "1.1.42",
+      "date": "2026-06-01",
+      "title": "Tối ưu lưới phòng cho nhân viên buồng phòng",
+      "highlights": [
+        "Card phòng cho HK staff & Trưởng bộ phận: số phòng cực to + chấm màu trạng thái",
+        "Ẩn giá phòng với vai trò tác nghiệp — chỉ Owner/Manager/Lễ tân còn thấy",
+        "Gộp loại phòng • sức chứa • giường • diện tích thành 1 dòng gọn",
+        "Thêm dòng \"Đã kiểm X giờ trước / Chưa kiểm hôm nay\" (cảnh báo amber khi >12h)",
+        "Footer 1 nút Kiểm tra full-width, bỏ Xem chi tiết & dropdown task cho HK"
+      ]
+    },
+    {
+      "version": "1.1.40",
+      "date": "2026-06-01",
+      "title": "Khách hàng v2: KPI dashboard, segment, bảng/desktop + card/mobile, gộp trùng SĐT, export CSV",
+      "highlights": [
+        "Thêm dải KPI: Tổng khách, VIP, Mới 30 ngày, Quay lại, Sinh nhật tháng, Tổng chi tiêu — bấm để lọc nhanh",
+        "Tabs segment: Tất cả / VIP / Mới / Quay lại / Sinh nhật / Blacklist với badge số lượng",
+        "Desktop: bảng có sort theo Họ tên / Lần ở / Chi tiêu / Lần cuối + phân trang 50/trang",
+        "Mobile: giữ card list nâng cấp, dropdown thao tác nhanh",
+        "Dropdown thao tác: Sửa nhanh, đổi hạng VIP/Vàng/Thường, Blacklist, Gộp khách trùng",
+        "Gộp khách trùng SĐT: RPC merge_guests an toàn — chuyển booking, cộng dồn lần ở/chi tiêu, fill thông tin còn thiếu, xoá nguồn",
+        "Xuất CSV (UTF-8 BOM) tương thích Excel Việt Nam",
+        "Thêm/Sửa khách qua dialog ngay trên trang, không cần vào trang chi tiết"
+      ]
+    },
+    {
+      "version": "1.1.39",
+      "date": "2026-06-01",
+      "title": "Sơ đồ phòng: slider Cỡ chữ + nút Lưu vĩnh viễn theo khách sạn",
+      "highlights": [
+        "Thêm thanh kéo Cỡ chữ (80%–160%) trong popover kích thước — chữ trong ô tự co giãn không cần thay đổi chiều cao ô",
+        "Nút Lưu giờ ghi vào hotels.settings.floor_map_cell_size → áp dụng cho mọi user/thiết bị của cùng khách sạn, không bị mất khi đăng nhập máy khác",
+        "Đặt lại đưa về preset Vừa + cỡ chữ 100%",
+        "Fallback localStorage khi DB lỗi, không chặn UX"
+      ]
+    },
+    {
+      "version": "1.1.38",
+      "date": "2026-05-31",
+      "title": "Refactor menu Cài đặt: gom 5 nhóm rõ ràng, bỏ header lặp, đổi tên dễ hiểu",
+      "highlights": [
+        "Sidebar Cài đặt: sắp xếp lại 17 mục thành 6 nhóm liền mạch (Tài khoản / Khách sạn / Bảng giá & Phụ thu / Vận hành / Thanh toán & Gói / Hệ thống) — mỗi label nhóm chỉ xuất hiện 1 lần",
+        "Đổi tên: 'Bảng giá 4 trục' → 'Bảng giá phòng', 'Quy tắc mùa giá' → 'Mùa giá', 'Cấu hình khai báo BCA' → 'Khai báo lưu trú (BCA)', 'Cấu hình khách sạn' → 'Chính sách khách sạn', thêm 'Thông tin khách sạn'",
+        "Bỏ 'Phân loại tài sản' khỏi Cài đặt (route /settings/asset-group-migration vẫn truy cập được trực tiếp)",
+        "Gộp nhóm 'Thông báo' và 'Pháp lý' vào 'Hệ thống' / 'Vận hành' để giảm phân mảnh"
+      ]
+    },
+    {
+      "version": "1.1.37",
+      "date": "2026-05-31",
+      "title": "Đặt phòng từ sơ đồ phòng bắt đầu từ bước chọn loại (ngày / giờ / tháng)",
+      "highlights": [
+        "ReceptionQuickDialog: nút 'Đặt phòng' và 'Check-in nhanh' mở AddBookingDialog (wizard) — Bước 1 chọn Theo ngày / Theo giờ / Theo tháng trước khi chọn phòng",
+        "BookingsPage: deep-link /bookings?action=new tự mở dialog wizard"
+      ]
+    },
+    {
+      "version": "1.1.36",
+      "date": "2026-05-31",
+      "title": "Refactor BookingsPage dùng bookingFlowDecisions làm nguồn quyết định duy nhất",
+      "highlights": [
+        "handleCheckInClick & handleCheckOutClick giờ gọi decideCheckIn / decideCheckoutAction — loại bỏ logic phân nhánh trùng lặp",
+        "Single source of truth cho group booking, overdue, occupied/maintenance/not-ready — đã được phủ unit test"
+      ]
+    },
+    {
+      "version": "1.1.35",
+      "date": "2026-05-31",
+      "title": "Thống nhất luồng Check-in / Checkout giữa sơ đồ phòng và danh sách đặt phòng",
+      "highlights": [
+        "Sơ đồ phòng (ReceptionQuickDialog): nút Checkout / Check-in dùng đúng cùng luồng với màn Quản lý đặt phòng — có dialog xác nhận, tính phụ thu, phát hiện group booking, đề nghị gia hạn khi quá hạn",
+        "Ô phòng trống có booking đến hôm nay: nút Check-in hiện tên khách và đi thẳng vào dialog xác nhận thay vì mở wizard tạo mới",
+        "Bookings deep-link: /bookings?action=checkin|checkout&bookingId=... tự nạp booking và trigger đúng dialog (single hoặc group)"
+      ]
+    },
+    {
+      "version": "1.1.34",
+      "date": "2026-05-31",
+      "title": "Đặt phòng dùng giá thống nhất theo Bảng giá (Đêm/Giờ/Tháng)",
+      "highlights": [
+        "Wizard Đặt phòng lấy giá Đêm/Giờ/Tháng từ Bảng giá mặc định (room_type_rates) — không còn dùng giá cũ trên Phòng",
+        "Phòng chưa cấu hình giá hiện link 'Cấu hình giá', không cho chọn cho đến khi cấu hình xong",
+        "RPC tính giá: Mùa cao điểm và Lịch giá theo ngày chỉ áp lên đặt theo đêm — đặt theo giờ/tháng dùng giá cố định",
+        "Nút 'Áp dụng giá theo bảng' vẫn dùng để tính chính xác theo khoảng ngày/giờ và mùa cao điểm"
+      ]
+    },
+    {
+      "version": "1.1.33",
+      "date": "2026-05-31",
+      "title": "Gọn 3 loại giá: Đêm (linh hoạt) · Giờ · Tháng (cố định)",
+      "highlights": [
+        "Bảng giá mặc định gộp còn 3 cột: Giá đêm, Giá giờ, Giá tháng (bỏ cột Qua đêm trùng lặp)",
+        "Quy tắc mùa & Lịch giá theo ngày CHỈ áp lên Giá đêm — Giá giờ / Giá tháng cố định",
+        "Lễ tân (Sơ đồ phòng + Quick Dialog) hiển thị giá đêm hôm nay đã áp Mùa/Override, có badge nguồn giá",
+        "Danh sách phòng bỏ cột Giá trùng — chỉ còn Giá đêm hôm nay với gạch giá gốc khi giảm/tăng",
+        "Loại phòng chưa cấu hình giá → hiện nút 'Cấu hình giá' để vào Settings nhanh"
+      ]
+    },
+    {
+      "version": "1.1.32",
+      "date": "2026-05-31",
+      "title": "Sửa lỗi giá phòng không hiển thị ở Danh sách phòng & Sơ đồ phòng",
+      "highlights": [
+        "Sửa lỗi SQL ở hàm tính giá hôm nay (resolve_today_prices_for_hotel) — trước đây trả lỗi nên các màn phòng không có giá",
+        "Sau khi sửa Giá mặc định, các màn Lịch giá / Danh sách phòng / Sơ đồ phòng cập nhật ngay lập tức",
+        "Đồng bộ pipeline giá: Giá mặc định → Quy tắc mùa → Giá theo ngày → Đóng bán"
+      ]
+    },
+    {
+      "version": "1.1.31",
+      "date": "2026-05-31",
+      "title": "Sửa lỗi không hiện giá trên sơ đồ phòng",
+      "highlights": [
+        "Nguyên nhân: rooms.room_type lưu \"deluxe\" nhưng room_types.name là \"Phòng Deluxe\" — không khớp khoá",
+        "Sửa: RPC trả thêm code, hook đánh chỉ mục đa khoá (tên đầy đủ / tên rút gọn / mã)",
+        "Giá hôm nay giờ hiển thị đúng trên cả sơ đồ tầng và danh sách phòng"
+      ]
+    },
+    {
+      "version": "1.1.30",
+      "date": "2026-05-31",
+      "title": "Sơ đồ phòng: hiển thị Giá hôm nay trên từng ô phòng",
+      "highlights": [
+        "Sơ đồ tầng (Floor Map): ô phòng trống hiện giá hôm nay đã áp quy tắc mùa",
+        "Chấm vàng (●) báo phòng đang chịu điều chỉnh giá theo mùa",
+        "Phòng \"Đóng bán\" hiển thị trực tiếp trên ô, không phải mở chi tiết mới biết"
+      ]
+    },
+    {
+      "version": "1.1.29",
+      "date": "2026-05-31",
+      "title": "Liên kết Phòng ↔ Giá: Giá hôm nay & Cảnh báo trùng ưu tiên",
+      "highlights": [
+        "Danh sách phòng: thêm cột \"Giá hôm nay\" hiển thị giá đã áp quy tắc mùa/override",
+        "Chấm cam (●Mùa) và chấm xanh (●Ngày) báo phòng đang chịu điều chỉnh giá",
+        "Trạng thái \"Đóng bán\" hiển thị trực tiếp trên hàng phòng",
+        "Dialog quy tắc mùa: cảnh báo trùng ưu tiên với quy tắc khác cùng phạm vi/thời gian",
+        "RPC mới resolve_today_prices_for_hotel — 1 call lấy giá hôm nay cho toàn bộ hạng phòng"
+      ]
+    },
+    {
+      "version": "1.1.28",
+      "date": "2026-05-31",
+      "title": "Đường ống giá thống nhất — Phòng ↔ Giá mặc định ↔ Lịch ↔ Mùa",
+      "highlights": [
+        "RPC resolver mới: mọi nơi tính giá theo cùng một chuỗi (override → seasonal → giá nền)",
+        "Lịch giá theo ngày hiện chấm cam + giá đã áp quy tắc mùa, hover xem chi tiết từng quy tắc",
+        "Banner cảnh báo ở Hub giá: hạng phòng thiếu giá mặc định / cặp quy tắc mùa trùng ưu tiên",
+        "Trigger DB: xóa hạng phòng còn phòng đang dùng tự chuyển sang lưu trữ thay vì xóa cứng",
+        "Trigger DB: tạo/sửa phòng tự đồng bộ vào bảng hạng phòng pricing",
+        "Link điều hướng chéo giữa 3 tab Giá mặc định / Lịch / Mùa"
+      ]
+    },
+    {
+      "version": "1.1.27",
+      "date": "2026-05-31",
+      "title": "Lịch giá theo ngày — sửa lỗi nhập số tiền bị nối chuỗi",
+      "highlights": [
+        "Auto-select toàn bộ giá trị khi focus ô giá / giá KM / số phòng — gõ là thay thế, không bị nối vào số cũ thành con số khổng lồ",
+        "Bulk panel: ô Giá & Giá KM tự format thiên phân vị (1.700.000) khi gõ, dễ đọc, khó nhầm 7 vs 8 số 0"
+      ]
+    },
+    {
+      "version": "1.1.26",
+      "date": "2026-05-31",
+      "title": "Lịch giá theo ngày — đồng bộ hạng phòng từ Quản lý phòng",
+      "highlights": [
+        "Đồng bộ Standard/Deluxe/Suite/VIP đang dùng trong Quản lý phòng vào bảng hạng phòng của module giá",
+        "Số phòng để bán mặc định nay đếm theo rooms.room_type và khách sạn đang chọn, đúng với dữ liệu phòng hiện hữu",
+        "Sửa hàm tạo gói giá chuẩn để lấy tenant từ bảng người dùng hiện tại và tạo gói không lỗi kiểu dữ liệu"
+      ]
+    },
+    {
+      "version": "1.1.25",
+      "date": "2026-05-31",
+      "title": "Lịch giá theo ngày — empty state hạng phòng",
+      "highlights": [
+        "Hiển thị thông báo rõ ràng + nút 'Tạo hạng phòng' khi tab Lịch giá theo ngày chưa có hạng phòng nào",
+        "Vô hiệu hóa dropdown chọn hạng phòng khi danh sách rỗng để tránh nhầm lẫn"
+      ]
+    },
+    {
+      "version": "1.1.24",
+      "date": "2026-05-31",
+      "title": "Lịch giá theo ngày — tự động kế thừa từ Quản lý phòng",
+      "highlights": [
+        "Khi chưa có gói giá riêng, Lịch giá tự động hiển thị 'Giá tiêu chuẩn' lấy từ Giá mặc định của hạng phòng",
+        "Số phòng để bán mặc định = số phòng vật lý đang có (đếm từ Quản lý phòng)",
+        "Lần đầu chỉnh sửa giá ngày sẽ tự tạo gói chuẩn trong DB (RPC ensure_default_rate_plan) — không cần thao tác thủ công",
+        "Cột rate_plans.is_default + unique index để mỗi hạng phòng chỉ có 1 gói mặc định"
+      ]
+    },
+    {
+      "version": "1.1.23",
+      "date": "2026-05-31",
+      "title": "Quản lý giá phòng — Lịch giá theo ngày",
+      "highlights": [
+        "Trang /settings/pricing gộp 3 tab: Lịch giá theo ngày (mới), Giá mặc định, Quy tắc mùa",
+        "Lịch giá theo ngày: lưới calendar 14/30 ngày, kéo-chọn, fill handle, copy/paste, bulk edit theo dải ngày + thứ trong tuần",
+        "Quản lý rate plan theo từng hạng phòng với inclusions, policies, sale price; tồn kho mở/đóng theo ngày",
+        "3 bảng mới rate_plans, rate_plan_daily_prices, room_type_availability với RLS + tenant isolation, RPC bulk upsert atomic"
+      ]
+    },
+    {
+      "version": "1.1.22",
+      "date": "2026-05-31",
+      "title": "Trang Kho — bố cục Bento cho laptop",
+      "highlights": [
+        "Tổng quan Kho dựng lại theo lưới Bento: hero tile tổng giá trị tồn với gradient navy + 4 KPI nhịp khác nhau",
+        "Sidebar Kho và topbar gọn lại trên laptop: bỏ tab ngang trùng lặp, breadcrumb inline cạnh tên trang",
+        "Áp font Sora cho số liệu KPI và Manrope cho body trong khu /inventory, thêm bộ token Navy Trust + shadow tile"
+      ]
+    },
+    {
+      "version": "1.1.21",
+      "date": "2026-05-31",
+      "title": "Mở rộng gác ca cho Giặt ủi, Bảo trì, Giao kho",
+      "highlights": [
+        "Nhận lô giặt, đổi trạng thái lô giặt và nhập kho từ lô giặt nay cũng yêu cầu nhân viên đã vào ca",
+        "Tiếp nhận, bắt đầu, hoàn thành và hủy yêu cầu bảo trì đều đi qua dialog 'Vào ca ngay' nếu chưa vào ca",
+        "Xác nhận xuất kho từ phiếu giao hàng cũng được gắn shift-gate đồng bộ với các module khác"
+      ]
+    },
+    {
+      "version": "1.1.20",
+      "date": "2026-05-31",
+      "title": "Bắt buộc vào ca trước khi thao tác",
+      "highlights": [
+        "Nhân viên & Trưởng bộ phận phải bấm 'Vào ca' trước khi kiểm phòng, nhận/hoàn thành công việc, giao đồ, check-in/out",
+        "Khi chưa vào ca, bấm thao tác sẽ mở dialog 'Vào ca ngay' tại chỗ; vào ca xong tự chạy tiếp hành động đang dở",
+        "Owner / Quản lý khách sạn / Super Admin không bị chặn (chỉ giám sát)"
+      ]
+    },
+    {
+      "version": "1.1.19",
+      "date": "2026-05-31",
+      "title": "Tối ưu ghi nhận tồn kho khi giao thẳng",
+      "highlights": [
+        "Gộp 2 lần cập nhật tồn kho thành 1 khi tạo phiếu giao trực tiếp (Giao ngay)",
+        "Không còn bước chuyển dịch ảo qua trạng thái 'chờ' → log kiểm toán và biểu đồ tiêu thụ chính xác hơn",
+        "Luồng tạo phiếu thủ công (chờ duyệt) giữ nguyên: tồn kho → chờ"
+      ]
+    },
+    {
+      "version": "1.1.18",
+      "date": "2026-05-30",
+      "title": "Sửa lỗi trùng khoá khi tạo phiếu xuất kho",
+      "highlights": [
+        "Khắc phục lỗi 'duplicate key ... distribution_order_batches_distribution_order_id_batch_numb_key' khi bấm Giao",
+        "RPC create_distribution_order dùng UPSERT cho bản ghi đợt giao để cùng tồn tại với trigger tự động",
+        "Auto-release (Giao thẳng cho NV) ghi đúng trạng thái handed_over + thông tin người xuất"
+      ]
+    },
+    {
+      "version": "1.1.17",
+      "date": "2026-05-30",
+      "title": "Sửa lỗi bấm phòng trong phiếu giao bị nhảy sang kiểm tra checkout",
+      "highlights": [
+        "Bấm tên phòng trong phiếu giao giờ vào đúng màn giao hàng, không còn nhảy sang kiểm tra checkout",
+        "Thêm guard ở RoomCheckPage: có context giao hàng thì không auto-redirect sang checkout inspection"
+      ]
+    },
+    {
+      "version": "1.1.16",
+      "date": "2026-05-30",
+      "title": "Xuất kho: hoàn thiện UX trạng thái & loại bỏ double-write",
+      "highlights": [
+        "Đổi nhãn trạng thái 'released' → 'Đã xuất kho — chờ NV nhận' (rõ hơn cho cả kho lẫn NV)",
+        "Cho phép huỷ phiếu ngay cả khi đã xuất kho (released), hoàn hàng đúng bucket",
+        "Bỏ update trùng supplement_requests ở client — RPC tự cập nhật, hết race condition",
+        "Việc cần làm: thêm gợi ý 'Chờ đóng phiếu' cho người tạo phiếu khi đã giao xong"
+      ]
+    },
+    {
+      "version": "1.1.15",
+      "date": "2026-05-30",
+      "title": "Sửa logic chuỗi phiếu xuất kho (lifecycle v2)",
+      "highlights": [
+        "Khắc phục lỗi nghiêm trọng trừ tồn kho 3 lần khi tạo phiếu → xuất kho → NV xác nhận",
+        "Phiếu mới tự sinh lô hàng, không còn lỗi 'Không tìm thấy batch' khi xuất kho",
+        "Huỷ phiếu hoạt động ở trạng thái 'Đã xuất kho' và 'Đang giao', hoàn hàng đúng bucket",
+        "Đóng phiếu tự hoàn hàng cho phòng không vào được, không còn kẹt tồn kho",
+        "NV bắt buộc bấm 'Tôi đã nhận đủ hàng' trước khi giao phòng (bỏ auto-confirm im lặng)",
+        "Xoá overload confirm_receive_order 1 tham số để hết lỗi 'Could not choose function'"
+      ]
+    },
+    {
+      "version": "1.1.14",
+      "releaseDate": "2026-05-30",
+      "title": "Xuất kho: yêu cầu bổ sung hiển thị sẵn, tạo phiếu ngay tại chỗ",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Banner yêu cầu bổ sung mở mặc định, hiển thị toàn bộ danh sách ngay khi mở trang Danh sách phiếu"
+        },
+        {
+          "type": "improvement",
+          "text": "Tạo phiếu từ yêu cầu bổ sung thực thi inline (chọn nhân viên + Giao ngay ngay trong banner), không còn chuyển sang view 'from-requests'"
+        },
+        {
+          "type": "ui",
+          "text": "Bỏ nút 'Xử lý ngay' trong banner và nút dropdown 'Tạo phiếu mới' ở header Phiếu giao hàng — tab '+ Tạo phiếu mới' của hub Xuất kho đã thay thế"
+        },
+        {
+          "type": "improvement",
+          "text": "URL legacy ?view=from-requests tự redirect về ?view=list"
+        }
+      ]
+    },
+    {
+      "version": "1.1.13",
+      "releaseDate": "2026-05-30",
+      "title": "Xuất kho: hợp nhất logic submit + category grid giữa Quick dialog và Mobile wizard",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tách shared sub-form ở src/components/inventory/outbound/shared/: useOutboundSubmit (dispatcher tới outbound/distribution/laundry), OutboundCategoryGrid (compact + wizard variant), useStockValidation"
+        },
+        {
+          "type": "fix",
+          "text": "QuickOutboundDialog trước đây gọi createOutbound cho mọi loại (kể cả Phòng / Giặt là) — nay đi đúng nhánh distribution / laundry như MobileOutboundForm"
+        },
+        {
+          "type": "improvement",
+          "text": "MobileOutboundForm bỏ 3 useMutation rời, dùng chung useOutboundSubmit; chống lệch state loading và lệch UX giữa 2 entrypoint"
+        },
+        {
+          "type": "improvement",
+          "text": "Default category của QuickOutboundDialog đổi sang 'other' để không vô tình tạo distribution order khi user chỉ muốn xuất nhanh"
+        }
+      ]
+    },
+    {
+      "version": "1.1.12",
+      "releaseDate": "2026-05-30",
+      "title": "Xuất kho: rút gọn 2 view, dọn field rác, ở lại trong hub sau khi tạo",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Gộp 3 sub-tab xuất kho thành 2: Danh sách phiếu (+ banner gợi ý 'Từ yêu cầu bổ sung' inline) và + Tạo phiếu mới — bớt 1 cấp tab"
+        },
+        {
+          "type": "improvement",
+          "text": "Sau khi tạo phiếu (giao phòng / lô giặt / xuất khác) ở lại hub Kho và tự chuyển về Danh sách phiếu kèm toast, không nhảy sang trang khác"
+        },
+        {
+          "type": "improvement",
+          "text": "Bỏ emoji ở dropdown Loại xuất kho cho đúng chuẩn minimalist; ẩn 'Kho nguồn' khi loại là 'Xuất cho phòng' để tránh field thừa"
+        },
+        {
+          "type": "improvement",
+          "text": "Hợp nhất trạng thái loading của 3 mutation (xuất kho / giao phòng / lô giặt) để chống double-submit"
+        },
+        {
+          "type": "improvement",
+          "text": "Hiển thị toast lỗi rõ ràng thay vì im lặng khi thiếu phòng/sản phẩm/lô giặt"
+        },
+        {
+          "type": "improvement",
+          "text": "Bookmark cũ /inventory/distributions/new và /from-supplements giờ redirect vào hub view tương ứng; xoá trang CreateDistributionPage legacy"
+        }
+      ]
+    },
+    {
+      "version": "1.1.11",
+      "releaseDate": "2026-05-30",
+      "title": "Xuất kho: gộp Danh sách phiếu + Tạo thủ công + Từ yêu cầu vào 1 trang",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Trang Xuất kho có 3 tab nội bộ: Danh sách phiếu (mặc định), Tạo phiếu thủ công, Từ yêu cầu bổ sung — không phải nhảy giữa nhiều mục sidebar"
+        },
+        {
+          "type": "improvement",
+          "text": "Khi tạo phiếu thủ công loại 'Xuất cho phòng', form phân phối hiển thị ngay tại chỗ thay vì nút mở tab khác"
+        },
+        {
+          "type": "improvement",
+          "text": "Mục 'Phiếu giao hàng' cũ trong sidebar Kho được gộp vào Xuất kho; bookmark cũ tự redirect"
+        }
+      ]
+    },
+    {
+      "version": "1.1.10",
+      "releaseDate": "2026-05-30",
+      "title": "Phiếu giao hàng: mở popup khi click thay vì chuyển trang",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Click vào dòng phiếu giao hàng mở popup chi tiết ngay tại chỗ, không cần chuyển trang qua lại"
+        },
+        {
+          "type": "improvement",
+          "text": "Popup giữ đủ thao tác: phân công, chỉnh sửa, in, huỷ phiếu; còn nút Mở trang đầy đủ khi cần"
+        },
+        {
+          "type": "improvement",
+          "text": "Mobile dùng bottom sheet 92vh, desktop dùng dialog 88vh để xử lý nhanh nhiều phiếu liên tiếp"
+        }
+      ]
+    },
+    {
+      "version": "1.1.9",
+      "releaseDate": "2026-05-30",
+      "title": "Hub Kho: sắp xếp lại layout Tổng quan cho cân đối",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Thống nhất grid 12 cột, 2 hàng widget theo tỉ lệ 8/4 thẳng rãnh, đồng đều chiều cao"
+        },
+        {
+          "type": "improvement",
+          "text": "Gộp Cảnh báo tồn kho thấp + Cảnh báo kho thành 1 card duy nhất với 3 chỉ số tổng + danh sách item"
+        },
+        {
+          "type": "improvement",
+          "text": "Giao dịch gần đây tách thành hàng full-width, dễ đọc hơn"
+        }
+      ]
+    },
+    {
+      "version": "1.1.8",
+      "releaseDate": "2026-05-30",
+      "title": "Hub Kho v2: KPI thông minh, search nhanh, badge realtime, shortcut",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tab Tổng quan redesign theo Enterprise SaaS: 6 KPI compact (Tổng giá trị, SKU, Sắp hết <7d, Cần đặt lại, Tồn ứ đọng, Giao dịch hôm nay) — click thẳng vào tab tương ứng"
+        },
+        {
+          "type": "improvement",
+          "text": "Widget Dự báo hết hàng (≤14 ngày) dùng consumption_snapshots, Top tiêu hao 30 ngày dạng bar chart, Phân bổ theo khách sạn ở chế độ Tất cả khách sạn"
+        },
+        {
+          "type": "improvement",
+          "text": "Quick search Ctrl+/ — tìm item theo tên/mã, Enter để mở Danh sách tài sản với từ khoá"
+        },
+        {
+          "type": "improvement",
+          "text": "Sidebar nội bộ hiển thị badge realtime: Đề xuất nhập, Phiếu giao hàng, Kiểm kê pending"
+        },
+        {
+          "type": "improvement",
+          "text": "Shortcut bàn phím: g+o (Tổng quan), g+i (Nhập), g+x (Xuất), g+k (Kiểm kê), / (focus search)"
+        },
+        {
+          "type": "improvement",
+          "text": "Mobile: menu 15 mục mở qua Sheet trượt trái, không tràn TabsList; sticky tabs khi cuộn"
+        },
+        {
+          "type": "improvement",
+          "text": "Breadcrumb hiển thị Kho › Nhóm › Mục đang xem"
+        }
+      ]
+    },
+    {
+      "version": "1.1.7",
+      "releaseDate": "2026-05-30",
+      "title": "Hub Kho: menu nội bộ đủ mục như sidebar cũ",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Thêm menu nội bộ trong /inventory theo đúng nhóm cũ: Tổng quan, Sản phẩm, Xuất nhập kho, Phân tích, Thiết lập"
+        },
+        {
+          "type": "fix",
+          "text": "Hiện rõ Phiếu giao hàng, Đề xuất nhập hàng, Bổ sung đồ và Quản lý kho trong Hub"
+        },
+        {
+          "type": "improvement",
+          "text": "Các URL cũ như /inventory/distributions, /inventory/reorder, /supplements, /settings/warehouses tự mở đúng tab trong Hub"
+        }
+      ]
+    },
+    {
+      "version": "1.1.6",
+      "releaseDate": "2026-05-30",
+      "title": "Hub Kho: bổ sung đủ 15 mục — thêm Nhập/Xuất/Chuyển/Thêm tài sản",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tab Xuất nhập có 7 sub-tab: Giao dịch · Nhập kho · Xuất kho · Chuyển kho · Kiểm kê · Phiếu giao · Đề xuất nhập"
+        },
+        {
+          "type": "improvement",
+          "text": "Tab Tài sản có 3 sub-tab: Danh sách · Danh mục · Thêm tài sản"
+        },
+        {
+          "type": "improvement",
+          "text": "Khôi phục đủ 15 mục của menu cũ vào trong hub /inventory"
+        }
+      ]
+    },
+    {
+      "version": "1.1.5",
+      "releaseDate": "2026-05-30",
+      "title": "Gọn menu Kho & Tài sản — gom thành 1 hub có tab",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Sidebar Kho & Tài sản: từ 15 mục con xuống còn 1 lối vào duy nhất"
+        },
+        {
+          "type": "improvement",
+          "text": "Trang /inventory là hub 5 tab: Tổng quan · Tài sản · Xuất nhập · Phân tích · Thiết lập"
+        },
+        {
+          "type": "improvement",
+          "text": "Tab Xuất nhập gộp Giao dịch, Kiểm kê, Phiếu giao, Đề xuất nhập"
+        },
+        {
+          "type": "improvement",
+          "text": "Nút 'Thao tác' header truy cập nhanh Nhập / Xuất / Chuyển / Kiểm kê / Thêm tài sản"
+        },
+        {
+          "type": "improvement",
+          "text": "Lazy-load mỗi tab — chỉ tab đang xem mới gọi dữ liệu, không nặng trang"
+        },
+        {
+          "type": "improvement",
+          "text": "URL ?tab=&sub= để giữ deep-link, F5 vẫn ở đúng tab"
+        }
+      ]
+    },
+    {
+      "version": "1.1.4",
+      "releaseDate": "2026-05-30",
+      "title": "Đồng bộ palette: mọi tông màu Tailwind khớp Slate Professional",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Override toàn bộ thang màu Tailwind (slate/gray/blue/green/amber/red/violet…) về tông Slate Professional"
+        },
+        {
+          "type": "improvement",
+          "text": "Tông cyan/sky/indigo gộp vào xanh dương #2563EB — bỏ màu chói mắt"
+        },
+        {
+          "type": "improvement",
+          "text": "Tông teal/emerald/lime gộp vào xanh lá #15803D — đồng nhất status OK"
+        },
+        {
+          "type": "improvement",
+          "text": "Tông yellow/orange gộp vào cam-nâu #B45309 — bỏ vàng chanh khó đọc"
+        },
+        {
+          "type": "improvement",
+          "text": "Tông rose/pink gộp vào đỏ #DC2626 — đồng nhất status lỗi"
+        }
+      ]
+    },
+    {
+      "version": "1.1.3",
+      "releaseDate": "2026-05-30",
+      "title": "Bộ màu mới Slate Professional — tăng tương phản, dễ đọc",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Nền trắng tinh, chữ navy đậm — đạt WCAG AAA cho text chính"
+        },
+        {
+          "type": "improvement",
+          "text": "Primary chuyển sang xanh royal #2563EB, bỏ accent cyan chói mắt"
+        },
+        {
+          "type": "improvement",
+          "text": "Success/Warning/Destructive đậm hơn — đọc rõ trên nền trắng"
+        },
+        {
+          "type": "improvement",
+          "text": "Sidebar navy đậm #0F172A, item active xanh nổi bật"
+        },
+        {
+          "type": "improvement",
+          "text": "Border #CBD5E1 đậm hơn — phân tách bảng và card rõ ràng hơn"
+        }
+      ]
+    },
+    {
+      "version": "1.1.2",
+      "releaseDate": "2026-05-30",
+      "title": "Sidebar: lối vào Bảng giá 4 trục, Quy tắc mùa giá & Khai báo lưu trú BCA",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Sidebar › Phòng › Đặt phòng & Khách: thêm \"Khai báo lưu trú\" (BCA)"
+        },
+        {
+          "type": "feature",
+          "text": "Sidebar › Cài đặt › Nghiệp vụ: thêm \"Bảng giá 4 trục\" và \"Quy tắc mùa giá\""
+        },
+        {
+          "type": "feature",
+          "text": "Sidebar › Cài đặt › Pháp lý (nhóm mới): thêm \"Cấu hình khai báo BCA\""
+        }
+      ]
+    },
+    {
+      "version": "1.1.1",
+      "releaseDate": "2026-05-30",
+      "title": "Sprint 1 Day 7–8: Pricing v2 trong BookingWizard + Quy tắc mùa giá CRUD",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Bước chọn phòng: thêm nút \"Áp dụng giá theo bảng\" — tự tính giá theo Pricing v2 (4 trục: ngày/qua đêm/giờ/tháng) cho mỗi phòng đã chọn"
+        },
+        {
+          "type": "feature",
+          "text": "Hiển thị breakdown giá chi tiết: cơ sở × số đơn vị × hệ số cuối tuần + điều chỉnh mùa + phụ thu sớm/trễ = tổng"
+        },
+        {
+          "type": "feature",
+          "text": "Lưu price_breakdown JSONB vào room_bookings khi tạo đặt phòng — phục vụ kiểm toán giá sau này"
+        },
+        {
+          "type": "feature",
+          "text": "Trang Quy tắc mùa giá (/settings/pricing/seasonal): CRUD đầy đủ — mùa lễ, cuối tuần, sự kiện; chế độ cộng thêm (stack) hoặc ghi đè (priority)"
+        },
+        {
+          "type": "feature",
+          "text": "Hỗ trợ 3 kiểu điều chỉnh: phần trăm, số tiền cố định, đặt giá tuyệt đối; áp dụng theo loại phòng + loại đặt cụ thể"
+        }
+      ]
+    },
+    {
+      "version": "1.0.99",
+      "releaseDate": "2026-05-29",
+      "title": "Sơ đồ phòng: tuỳ chỉnh kích thước ô phòng (Nhỏ / Vừa / Lớn / Tuỳ chỉnh)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Thanh công cụ thêm 3 nút Nhỏ / Vừa / Lớn để thay đổi nhanh kích thước ô phòng + popover tuỳ chỉnh chiều cao (72–160px) và số cột (4–16)"
+        },
+        {
+          "type": "feature",
+          "text": "Cài đặt lưu riêng theo từng khách sạn (localStorage), tự load lại khi đổi khách sạn hoặc reload trang"
+        },
+        {
+          "type": "feature",
+          "text": "Phím tắt Ctrl/Cmd + + / - / 0 để tăng / giảm / reset kích thước ô (không trigger khi đang gõ trong ô tìm kiếm)"
+        },
+        {
+          "type": "improvement",
+          "text": "Số phòng và chấm màu auto scale theo chiều cao ô — đọc rõ ở mọi cỡ từ TV đến laptop nhỏ"
+        }
+      ]
+    },
+    {
+      "version": "1.0.98",
+      "releaseDate": "2026-05-29",
+      "title": "Popup phòng nâng cấp: 3 tab (Tổng quan / Tài chính / Vận hành) + menu đổi trạng thái + gia hạn 1-click",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Tab Tổng quan: hiện đầy đủ khách (VIP tag, SĐT bấm gọi, CCCD + ảnh, quốc tịch, khách thân thiết), mã booking, nguồn, số đêm đã ở / tổng đêm, lịch sử lưu trú 3 lần gần nhất"
+        },
+        {
+          "type": "feature",
+          "text": "Tab Tài chính: chi tiết tiền phòng / dịch vụ / minibar / phụ thu / VAT / đã cọc / đã thanh toán / còn phải thu — kèm danh sách item dịch vụ-minibar đã dùng"
+        },
+        {
+          "type": "feature",
+          "text": "Tab Vận hành: danh sách HK task + maintenance đang mở (chấm màu priority), lần dọn cuối, link xem audit log đầy đủ"
+        },
+        {
+          "type": "feature",
+          "text": "Phòng trống: hiện 3 bảng giá (Đêm/Giờ/Tháng), tiện nghi chip, booking 7 ngày tới — chốt bán nhanh không cần rời popup"
+        },
+        {
+          "type": "feature",
+          "text": "Menu [···] header: Gỡ trạng thái / DND / OOS / OOO + tạo task HK / Maintenance + Lịch sử phòng (gọi RPC transition_room_status có audit)"
+        },
+        {
+          "type": "feature",
+          "text": "Nút Gia hạn ở footer mở ExtendBookingDialog trực tiếp; nút Checkout đi thẳng vào flow checkout"
+        },
+        {
+          "type": "improvement",
+          "text": "Popup mở rộng lên max-w-2xl, tabs scrollable, footer sticky bám đáy"
+        }
+      ]
+    },
+    {
+      "version": "1.0.97",
+      "releaseDate": "2026-05-29",
+      "title": "Sơ đồ phòng → màn tác nghiệp Lễ tân (nhìn 3 giây, click đặt phòng)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "KPI bar 4 ô lớn ở đầu sơ đồ: 🟢 Bán được · 🟡 Checkout hôm nay · 🔴 Đang dọn · 🔵 Có khách — click để lọc tức thì"
+        },
+        {
+          "type": "feature",
+          "text": "Ô phòng tối giản: số phòng to + chấm màu lớn ở giữa + loại phòng — lễ tân chỉ nhìn màu là biết, không cần đọc chữ"
+        },
+        {
+          "type": "feature",
+          "text": "Click phòng trống → popup nhanh hiện giá hôm nay, sức chứa, tầng + 2 nút 'Đặt phòng' / 'Checkin nhanh' (5 giây từ điện thoại đến xong)"
+        },
+        {
+          "type": "feature",
+          "text": "Click phòng có khách → popup tên khách, SĐT (bấm gọi), giờ checkout dự kiến + countdown 'Còn 3h' (xanh/cam/đỏ theo độ khẩn), nút mở chi tiết booking"
+        },
+        {
+          "type": "improvement",
+          "text": "Gom 11 trạng thái nội bộ thành 5 nhóm nghiệp vụ (Bán được / Sắp trả / Đang dọn / Có khách / Khoá): đổi 'vacant_clean' thành 🟢 Bán được — ngôn ngữ lễ tân, không phải ngôn ngữ hệ thống"
+        },
+        {
+          "type": "improvement",
+          "text": "Phòng có khách trên ô vẫn hiện họ khách và countdown giờ ra; phòng sắp trả (Checkout hôm nay) tự gán bucket riêng để lễ tân ưu tiên xử lý"
+        }
+      ]
+    },
+    {
+      "version": "1.0.96",
+      "releaseDate": "2026-05-29",
+      "title": "Quản lý phòng nâng cao — #3 Gỡ DND/OOS + Bulk action + Lịch sử trạng thái",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Sơ đồ phòng: hover ô phòng đang DND/OOS/OOO hiện nút 'Gỡ' để chuyển nhanh về 'Trống – đã dọn' (qua RPC transition_room_status, có audit log)"
+        },
+        {
+          "type": "feature",
+          "text": "Sơ đồ phòng: nút 'Sử' (lịch sử) trên mỗi ô — mở dialog xem 100 thay đổi trạng thái gần nhất với người thực hiện, lý do, thời điểm tự gỡ"
+        },
+        {
+          "type": "feature",
+          "text": "Trang chi tiết phòng: nút 'Lịch sử' hiển thị audit log đầy đủ của phòng (lọc bỏ cron tick rỗng)"
+        },
+        {
+          "type": "improvement",
+          "text": "RoomBulkActionsBar: dropdown trạng thái nay hỗ trợ đầy đủ 10 trạng thái V2 (Trống/Đang ở/DND/OOO/OOS...) chia nhóm Vận hành / Đặc biệt; thêm tuỳ chọn '↺ Gỡ DND/OOS · về Trống sạch' để xử lý hàng loạt"
+        },
+        {
+          "type": "improvement",
+          "text": "Hook useRoomAuditLog: gộp thông tin user (tên/email) cho từng entry, sort mới → cũ, lọc bỏ cron tick lift_expired_dnd_oos không có thay đổi"
+        }
+      ]
+    },
+    {
+      "version": "1.0.95",
+      "releaseDate": "2026-05-29",
+      "title": "Sơ đồ phòng & trải nghiệm — đợt nâng cấp #1–#6",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Sơ đồ phòng: thêm toolbar tìm số phòng, lọc theo trạng thái và tầng; cảnh báo công việc tồn đọng (housekeeping/maintenance) bằng chấm đỏ + số trên góc ô phòng"
+        },
+        {
+          "type": "feature",
+          "text": "Sơ đồ phòng: viền màu nhóm cho các phòng cùng booking_group_id (>1 phòng) — giúp nhận diện nhóm đoàn nhanh"
+        },
+        {
+          "type": "improvement",
+          "text": "RPC get_floor_plan_live: mở rộng cửa sổ 'sắp đến' từ 24h lên 48h (hỗ trợ ca đêm), bổ sung open_tasks/open_hk_tasks/open_maintenance, subscribe realtime thêm bảng housekeeping_tasks + maintenance_requests"
+        },
+        {
+          "type": "improvement",
+          "text": "RoomsPage: lưu tab đang chọn qua ?view= + localStorage; Sơ đồ phòng có CTA 'Thêm phòng' và 'Import từ Excel' khi rỗng"
+        },
+        {
+          "type": "improvement",
+          "text": "BookingDetailDialog: lazy-load + skeleton loading, mở popup nhanh và mượt hơn"
+        },
+        {
+          "type": "fix",
+          "text": "RoomTapeChart: thay useIsMobile (deprecated) bằng useBreakpoint, hết cảnh báo console"
+        }
+      ]
+    },
+    {
+      "version": "1.0.93",
+      "releaseDate": "2026-05-29",
+      "title": "Sơ đồ phòng theo thời gian thực",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Thêm tab 'Sơ đồ phòng' tại /rooms — lưới phòng theo tầng, màu đậm theo trạng thái (trống/đang ở/sắp đến/chờ dọn/bảo trì), hiển thị tên khách + chip thời lượng lưu trú (Hôm qua, 2 ngày, 5 giờ)"
+        },
+        {
+          "type": "feature",
+          "text": "RPC mới get_floor_plan_live trả về trạng thái phòng + booking hiện tại + booking sắp tới trong 24h, cập nhật realtime qua subscription rooms/room_bookings"
+        },
+        {
+          "type": "improvement",
+          "text": "Click ô phòng đang có khách → mở popup chi tiết booking; ô phòng trống → mở dialog tạo booking nhanh; lọc theo loại phòng (Standard/Deluxe/Suite...)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.92",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart — thanh booking đậm màu, dễ nhìn",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Đổi nền thanh booking từ pastel sang màu đậm (500) chữ trắng — tương phản cao, nhìn rõ trên màn LCD lễ tân"
+        },
+        {
+          "type": "improvement",
+          "text": "Cập nhật chú giải (legend) khớp màu mới: xanh dương đang lưu trú, xanh lá đã cọc đủ, vàng cọc một phần, cam chưa cọc, đỏ còn nợ, xám đã trả phòng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.91",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart — mở phiếu booking dạng popup, không rời trang",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Click 'Mở phiếu booking' từ tape chart sheet mở dialog overlay (95vw × 92vh) thay vì điều hướng — lễ tân không phải bấm Back"
+        },
+        {
+          "type": "improvement",
+          "text": "Click booking khác trong nhóm đặt phòng cũng mở dialog inline thay vì rời trang"
+        }
+      ]
+    },
+    {
+      "version": "1.0.90",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart sheet — tổ chức lại theo flow lễ tân",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Đưa Tóm tắt nhanh (ngày nhận/trả + đêm) và 3 số tài chính cốt lõi (Tổng / Đã thu / Còn thu) lên đầu — lễ tân trả lời điện thoại không cần scroll"
+        },
+        {
+          "type": "improvement",
+          "text": "Quick actions ngay trong sheet: Gọi khách, Mở phiếu booking, CTA chính theo trạng thái"
+        },
+        {
+          "type": "improvement",
+          "text": "Ẩn các chi tiết phụ (breakdown tài chính, giấy tờ, CRM, lịch sử, ghi chú) vào mục Xem chi tiết — mở khi cần, tránh nhiễu"
+        },
+        {
+          "type": "fix",
+          "text": "Lịch sử thay đổi: dịch action sang tiếng Việt (move → Đổi phòng, update → Cập nhật booking, price_change → Sửa giá...)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.89",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart sheet — breakdown tài chính, CCCD, CRM khách & lịch sử",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Tài chính: hiển thị tiền phòng (giá × đêm), phụ thu nhận sớm/trả muộn/khác, đền bù hư hỏng, danh sách dịch vụ và minibar chi tiết"
+        },
+        {
+          "type": "feature",
+          "text": "Mục Giấy tờ: trạng thái Đã scan / Chưa scan + preview ảnh CCCD/Hộ chiếu, cảnh báo bổ sung trước khi nhận phòng"
+        },
+        {
+          "type": "feature",
+          "text": "Hồ sơ khách (CRM): match theo số CCCD hoặc SĐT, hiển thị VIP, số lượt lưu trú, tổng chi tiêu, lần gần nhất, mở thẳng sang trang khách"
+        },
+        {
+          "type": "feature",
+          "text": "Lịch sử thay đổi: lấy 6 bản ghi mới nhất từ audit_log với hành động và trường thay đổi"
+        }
+      ]
+    },
+    {
+      "version": "1.0.88",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart — redesign sheet chi tiết booking (Command Bar)",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Sheet booking: header gọn 1 dòng, số điện thoại tap-to-call, cảnh báo phòng bẩn/hỏng/còn nợ nổi bật"
+        },
+        {
+          "type": "improvement",
+          "text": "Tài chính hiển thị TB/đêm, tách 'Còn phải thu' (đang lưu trú) vs 'Còn nợ' (đã trả phòng)"
+        },
+        {
+          "type": "improvement",
+          "text": "Footer sticky với CTA chính theo trạng thái: Tiếp tục nhận phòng / Trả phòng / Thu tiền & trả phòng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.87",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart — sửa nền cột Phòng trong suốt gây đè chữ",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Header 'Phòng' và row 'Tầng X' dùng nền opaque, không còn bị các ô ngày xuyên qua khi cuộn ngang"
+        }
+      ]
+    },
+    {
+      "version": "1.0.86",
+      "releaseDate": "2026-05-29",
+      "title": "Tape chart — sửa booking bar đè chữ cột phòng",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Cột phòng sticky (P101, Deluxe · Bẩn...) không còn bị bar booking đè khi cuộn ngang"
+        }
+      ]
+    },
+    {
+      "version": "1.0.84",
+      "releaseDate": "2026-05-28",
+      "title": "Tape chart v2c.1 — sửa cuộn ngang, kéo-pan, dọn text đè, điều hướng theo tuần",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Header ngày đồng bộ cuộn ngang với body: cuộn trái/phải không còn lệch cột ngày với bar booking"
+        },
+        {
+          "type": "feature",
+          "text": "Kéo-pan bằng chuột: nhấn giữ trên vùng trống của chart và kéo để di chuyển ngang/dọc (không cần dùng thanh cuộn)"
+        },
+        {
+          "type": "feature",
+          "text": "Điều hướng theo tuần: nút ◀/▶ chuyển 1 tuần, ◀◀/▶▶ chuyển nguyên cửa sổ; chọn ngày trong lịch đặt ngày đó vào 1/4 đầu cửa sổ và highlight"
+        },
+        {
+          "type": "feature",
+          "text": "Phím tắt: ←/→ cuộn 7 ngày, T về hôm nay, [ và ] đổi cửa sổ 3/7/14/30"
+        },
+        {
+          "type": "improvement",
+          "text": "Dọn text đè: header ngày cao 56px đủ chỗ cho dòng lễ Việt Nam; KPI strip chia 2 nhóm (vận hành / tài chính) với phân tách dọc, số tabular-nums không nhảy"
+        },
+        {
+          "type": "improvement",
+          "text": "Hôm nay không còn nhảy về cột đầu — đặt vào 1/4 đầu cửa sổ để thấy cả quá khứ gần"
+        }
+      ]
+    },
+    {
+      "version": "1.0.83",
+      "releaseDate": "2026-05-28",
+      "title": "Tape chart v2c — KPI ADR/RevPAR/Pickup, in/PDF, lễ Việt Nam, lưu preference, chế độ hỗ trợ màu",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "KPI nâng cao trên thanh tape chart: ADR, RevPAR và Pickup 24h (booking mới tạo) cho cửa sổ đang hiển thị, kèm % lấp đầy theo khoảng N ngày"
+        },
+        {
+          "type": "feature",
+          "text": "Nút 'In' xuất tape chart ra máy in hoặc PDF (A3 ngang) — toolbar và sidebar tự ẩn khi in"
+        },
+        {
+          "type": "feature",
+          "text": "Tô màu cột ngày lễ Việt Nam 2025–2027 (Tết, Giỗ Tổ, 30/4, 1/5, 2/9, Tết Dương lịch) và hiển thị tên rút gọn trên header"
+        },
+        {
+          "type": "feature",
+          "text": "Lưu preference người dùng vào trình duyệt: khoảng ngày 3/7/14/30, bộ lọc trạng thái, lọc tầng, chế độ hỗ trợ màu — lần mở sau không phải set lại"
+        },
+        {
+          "type": "feature",
+          "text": "Chế độ hỗ trợ màu (CB): thêm pattern sọc theo từng nhóm trạng thái thanh toán/lưu trú, giúp người không phân biệt màu vẫn đọc được tape chart"
+        }
+      ]
+    },
+    {
+      "version": "1.0.82",
+      "releaseDate": "2026-05-28",
+      "title": "Tape chart v2b — kéo–thả chuyển phòng, chặn phòng theo khoảng ngày, menu chuột phải",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Kéo–thả bar booking sang phòng hoặc ngày khác — tự kiểm tra trùng booking/block, có audit log, không cho di chuyển booking đã trả phòng"
+        },
+        {
+          "type": "feature",
+          "text": "Chặn phòng theo khoảng ngày (Bảo trì / OOO / OOS / Giữ VIP / Khác) — chuột phải ô trống → 'Chặn phòng từ ngày này', hiển thị thanh xám sọc trên tape chart"
+        },
+        {
+          "type": "feature",
+          "text": "Menu chuột phải trên bar booking (Xem chi tiết, hướng dẫn kéo–thả) và trên block (Gỡ block)"
+        },
+        {
+          "type": "feature",
+          "text": "KPI hiển thị số block đang hiệu lực; phòng đã block không cho tạo booking đè lên"
+        },
+        {
+          "type": "improvement",
+          "text": "Realtime đồng bộ block phòng giữa các máy: máy A chặn phòng → máy B thấy ngay không cần refresh"
+        }
+      ]
+    },
+    {
+      "version": "1.0.81",
+      "releaseDate": "2026-05-28",
+      "title": "Tape chart v2 — vị trí theo giờ thực, phát hiện trùng giờ, sidebar việc cần làm",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Bar booking giờ định vị theo GIỜ THỰC check-in/check-out (mặc định 14:00–12:00) — khách đi 12h và khách đến 14h cùng phòng cùng ngày không còn chồng nhau"
+        },
+        {
+          "type": "feature",
+          "text": "Phát hiện overbooking: 2 booking trùng giờ tự xếp 2 hàng trong cùng phòng và viền đỏ cảnh báo; có nút lọc 'Trùng giờ' trên thanh KPI"
+        },
+        {
+          "type": "feature",
+          "text": "Màu bar theo 5 trạng thái thanh toán: chưa cọc / cọc một phần / cọc đủ / đang lưu trú / còn nợ sau trả"
+        },
+        {
+          "type": "feature",
+          "text": "Hover bar trong nhóm đặt phòng → tất cả phòng cùng nhóm sáng cùng lúc, các bar khác mờ đi"
+        },
+        {
+          "type": "feature",
+          "text": "Sidebar 'Cần làm hôm nay' bên phải: khách đến, khách đi, phòng dơ cần dọn, booking còn nợ — bấm là mở chi tiết"
+        },
+        {
+          "type": "feature",
+          "text": "Đường đỏ chỉ thời điểm hiện tại chạy dọc theo cột hôm nay, tự cập nhật mỗi phút"
+        },
+        {
+          "type": "feature",
+          "text": "Sheet chi tiết booking mở từ ngay tape chart (không cần rời trang), có thông tin lưu trú/tài chính/nhóm/ghi chú"
+        },
+        {
+          "type": "feature",
+          "text": "Bộ lọc nhanh: tìm theo tên khách/SĐT, lọc theo trạng thái booking, lọc theo tầng, chọn khoảng 3/7/14/30 ngày, jump-to-date bằng lịch"
+        },
+        {
+          "type": "feature",
+          "text": "Badge nguồn booking (WI/BK/AG/AB/EX...) ở đầu bar để phân biệt walk-in và OTA"
+        },
+        {
+          "type": "improvement",
+          "text": "Hiển thị trạng thái phòng v2 đầy đủ trên cột phòng (Trống/Sạch/Bẩn/DND/OOO/OOS…)"
+        },
+        {
+          "type": "improvement",
+          "text": "Virtualization theo dòng — khách sạn 100+ phòng × 30 ngày cuộn mượt 60fps, render lần đầu < 800ms"
+        }
+      ]
+    },
+    {
+      "version": "1.0.80",
+      "releaseDate": "2026-05-28",
+      "title": "Tape chart cho lễ tân — xem cả tuần đặt phòng trên 1 màn hình",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Tab 'Sơ đồ tầng' đổi thành 'Tape chart' kiểu PMS: mỗi phòng 1 dòng × 3/7/14 ngày, hiển thị thanh booking theo tên khách và màu trạng thái"
+        },
+        {
+          "type": "feature",
+          "text": "KPI nhanh: số phòng đang ở, khách đến/đi hôm nay, tỉ lệ lấp đầy"
+        },
+        {
+          "type": "feature",
+          "text": "Chạm thanh booking để xem chi tiết; chạm ô trống để tạo đặt phòng mới đúng phòng + ngày"
+        },
+        {
+          "type": "feature",
+          "text": "Tự cập nhật realtime khi có booking mới hoặc trạng thái phòng thay đổi"
+        }
+      ]
+    },
+    {
+      "version": "1.0.79",
+      "releaseDate": "2026-05-28",
+      "title": "Sửa khoảng trắng khi vuốt trên PWA iOS",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Vuốt quá đầu/cuối trang trên PWA iPhone không còn lộ vùng trắng — màu nền khớp với theme tối"
+        },
+        {
+          "type": "fix",
+          "text": "Status bar trên iPhone đồng bộ màu với nền app thay vì hiện dải trắng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.78",
+      "releaseDate": "2026-05-28",
+      "title": "Tin nhắn gửi tức thì như Messenger",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tin nhắn hiện ngay khi nhấn Enter (<50ms) thay vì chờ máy chủ phản hồi — gõ và gửi liên tục không bị khựng"
+        },
+        {
+          "type": "improvement",
+          "text": "Tin đang gửi hiển thị mờ nhẹ, tự sáng lại khi máy chủ xác nhận"
+        },
+        {
+          "type": "fix",
+          "text": "Bỏ refetch toàn bộ 50 tin mỗi khi mình gửi xong — giảm tải mạng và hết hiện tượng nhấp nháy"
+        }
+      ]
+    },
+    {
+      "version": "1.0.77",
+      "releaseDate": "2026-05-28",
+      "title": "Sửa lỗi nhân viên/quản lý đăng nhập bị đá về 'Không có quyền'",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Sửa RPC get_user_permissions_summary bị lỗi 'column module is ambiguous' khiến mọi tài khoản không phải Chủ/Super Admin không tải được quyền và bị chuyển về trang Không có quyền"
+        },
+        {
+          "type": "fix",
+          "text": "Quản lý khách sạn và nhân viên buồng nay đăng nhập vào đúng module có quyền truy cập"
+        }
+      ]
+    },
+    {
+      "version": "1.0.76",
+      "releaseDate": "2026-05-28",
+      "title": "Sửa crash khi tải quyền truy cập",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Thêm fallback ?? [] khi permissions chưa tải về hoặc RPC thất bại — tránh lỗi 'Cannot read properties of undefined (reading find')"
+        },
+        {
+          "type": "fix",
+          "text": "AuthCallback không còn bị kẹt 'Đang xác thực...' khi dữ liệu phân quyền rỗng hoặc lỗi"
+        }
+      ]
+    },
+    {
+      "version": "1.0.75",
+      "releaseDate": "2026-05-28",
+      "title": "Sửa lỗi kẹt 'Đang xác thực...' sau khi đăng nhập",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Không còn kẹt vô hạn ở màn hình 'Đang xác thực...' khi tài khoản nhân viên chưa có dữ liệu phân quyền — tự động chuyển vào trang phù hợp"
+        },
+        {
+          "type": "improvement",
+          "text": "Thêm timeout an toàn 8 giây và nút 'Đăng nhập lại' xuất hiện sau 5 giây để thoát khỏi màn hình chờ nếu mạng/quyền tải chậm"
+        },
+        {
+          "type": "improvement",
+          "text": "Hiển thị dòng phụ 'Đang tải quyền truy cập' để biết app đang làm gì"
+        }
+      ]
+    },
+    {
+      "version": "1.0.74",
+      "releaseDate": "2026-05-28",
+      "title": "Toast tin nhắn theo phong cách Messenger",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Toast tin nhắn mới hiển thị avatar thật của người gửi, tên đậm và preview nội dung — bố cục giống Messenger"
+        },
+        {
+          "type": "improvement",
+          "text": "Bấm bất kỳ đâu trên toast là mở ngay cửa sổ chat đúng cuộc trò chuyện (bỏ nút 'Mở chat' rời)"
+        },
+        {
+          "type": "improvement",
+          "text": "Chat nhóm hiển thị huy hiệu Users trên avatar và dòng phụ 'trong \"Tên nhóm\"' để dễ nhận diện"
+        },
+        {
+          "type": "improvement",
+          "text": "Tin có ảnh/đính kèm khi body trống hiển thị '📷 Ảnh' hoặc '📎 Tệp đính kèm'"
+        }
+      ]
+    },
+    {
+      "version": "1.0.73",
+      "releaseDate": "2026-05-28",
+      "title": "Chat mobile: chuyển sang nút nổi giống desktop",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Gỡ tab 'Tin nhắn' khỏi bottom nav trên mobile — giải phóng 1 slot cho module nghiệp vụ"
+        },
+        {
+          "type": "improvement",
+          "text": "Hiển thị nút chat nổi (floating) trên mobile, đặt phía trên bottom nav để dễ thao tác bằng ngón cái"
+        },
+        {
+          "type": "improvement",
+          "text": "Badge số tin chưa đọc hiển thị ngay trên nút nổi, đồng bộ trải nghiệm với desktop"
+        }
+      ]
+    },
+    {
+      "version": "1.0.72",
+      "releaseDate": "2026-05-28",
+      "title": "Cải thiện thông báo tin nhắn đến",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Toast tin nhắn có icon (MessageCircle / Users) và viền trái màu primary — phân biệt rõ chat 1-1 và nhóm"
+        },
+        {
+          "type": "improvement",
+          "text": "Nội dung toast hiển thị đúng: chat nhóm thì 'Người gửi → Tên nhóm', chat 1-1 thì tên người gửi"
+        },
+        {
+          "type": "improvement",
+          "text": "Nút action đổi từ 'Mở' thành 'Mở chat' rõ nghĩa hơn, cả trên realtime toast và notification bell"
+        }
+      ]
+    },
+    {
+      "version": "1.0.71",
+      "releaseDate": "2026-05-28",
+      "title": "Chat mobile: pin ô nhập + nút về cuối",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Form nhập tin và nút gửi luôn sticky ở đáy (sticky bottom-0), không bị đẩy đi khi bàn phím iOS mở/đóng"
+        },
+        {
+          "type": "improvement",
+          "text": "Khu vực cuộn tin nhắn dùng absolute inset-0 + overscroll-contain để tách hoàn toàn khỏi form gửi"
+        },
+        {
+          "type": "feature",
+          "text": "Thêm nút 'Về cuối' nổi (ChevronDown) khi cuộn lên cao; auto-scroll chỉ khi đang ở gần đáy để không cướp vị trí đọc"
+        }
+      ]
+    },
+    {
+      "version": "1.0.70",
+      "releaseDate": "2026-05-28",
+      "title": "Khóa ô nhập tin chat ở cuối màn hình mobile",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Cửa sổ chat mobile dùng 100svh thay vì 100dvh: ô nhập tin và nút gửi không bị đẩy lên/xuống khi cuộn (thanh địa chỉ Safari thay đổi)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.69",
+      "releaseDate": "2026-05-28",
+      "title": "Cải thiện hộp thoại chat trên mobile",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Cửa sổ chat mobile dùng 100dvh + interactive-widget=resizes-content: khi mở bàn phím, layout co lại đúng, ô nhập và tin nhắn không còn bị che"
+        },
+        {
+          "type": "fix",
+          "text": "Bỏ padding safe-area kép giữa popup và form gửi tin → khu vực cuộn tin nhắn rộng hơn"
+        },
+        {
+          "type": "improvement",
+          "text": "Header chat mobile cao hơn, tap target nút Back/Đóng 40×40, tôn trọng safe-area-top"
+        }
+      ]
+    },
+    {
+      "version": "1.0.68",
+      "releaseDate": "2026-05-28",
+      "title": "Sửa thông báo tin nhắn trên mobile",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Thông báo tin nhắn đến trên mobile chuyển lên đầu màn hình, tránh bị che bởi thanh điều hướng dưới"
+        },
+        {
+          "type": "fix",
+          "text": "Sửa backend phát thông báo tin nhắn mới để lấy đúng khách sạn từ hội thoại và gọi đúng function thông báo"
+        }
+      ]
+    },
+    {
+      "version": "1.0.67",
+      "releaseDate": "2026-05-28",
+      "title": "Thông báo tin nhắn mới nổi trên mọi trang",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tin nhắn đến hiển thị toast nổi (kèm nút Mở) trên cả mobile và desktop khi cửa sổ chat đang đóng/thu gọn"
+        },
+        {
+          "type": "improvement",
+          "text": "Tôn trọng mute conversation và bỏ qua khi đang xem chính cuộc hội thoại đó"
+        }
+      ]
+    },
+    {
+      "version": "1.0.66",
+      "releaseDate": "2026-05-28",
+      "title": "Tin nhắn trên mobile: cửa sổ thu/mở thay vì vào trang riêng",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Tab Tin nhắn ở thanh dưới giờ mở/thu cửa sổ chat nổi (kiểu Messenger), không rời trang đang dùng"
+        },
+        {
+          "type": "improvement",
+          "text": "Chạm vào hội thoại bung sheet chat toàn màn hình; nút quay lại đưa về danh sách, nút đóng thu gọn về thanh dưới"
+        }
+      ]
+    },
+    {
+      "version": "1.0.65",
+      "releaseDate": "2026-05-28",
+      "title": "Chat desktop kiểu Facebook: danh sách nhỏ + popup nổi",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Widget chat mới ở góc phải dưới: danh sách hội thoại gọn 280px, có chấm online/offline cho từng người"
+        },
+        {
+          "type": "feature",
+          "text": "Click 1 hội thoại bung popup chat nổi riêng (320×440px); mở được tối đa 3 popup song song, từng popup có nút thu nhỏ và đóng"
+        },
+        {
+          "type": "improvement",
+          "text": "Thay cửa sổ chat lớn 760px trước đây bằng widget gọn hơn, không che màn hình làm việc"
+        }
+      ]
+    },
+    {
+      "version": "1.0.64",
+      "releaseDate": "2026-05-28",
+      "title": "Chat desktop: thêm cửa sổ nổi trên PC",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Desktop có nút chat nổi góc phải dưới, kèm badge số tin chưa đọc và mở nhanh cửa sổ chat mà không rời màn hình hiện tại"
+        },
+        {
+          "type": "improvement",
+          "text": "Cửa sổ chat PC dùng lại danh sách hội thoại, tạo hội thoại mới và khung nhắn tin hiện có; ẩn trên mobile và khi đang ở trang /chat để tránh trùng UI"
+        },
+        {
+          "type": "improvement",
+          "text": "Có nút thu nhỏ, đóng và mở trang chat đầy đủ cho ca trực cần xử lý nhiều hội thoại"
+        }
+      ]
+    },
+    {
+      "version": "1.0.63",
+      "releaseDate": "2026-05-27",
+      "title": "Sửa PWA mobile: không còn màn 'Unexpected Application Error'",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "PricingSection: chuẩn hoá dữ liệu features (array/string/object) — không còn lỗi '.map is not a function' trên bundle cũ"
+        },
+        {
+          "type": "fix",
+          "text": "Service worker: bỏ precache index.html, navigation dùng NetworkFirst — PWA luôn nhận shell mới khi có deploy, không kẹt bản cũ"
+        },
+        {
+          "type": "improvement",
+          "text": "Bọc Landing trong RootRoute bằng SectionErrorBoundary — section lỗi không còn làm sập cả trang"
+        }
+      ]
+    },
+    {
+      "version": "1.0.62",
+      "releaseDate": "2026-05-27",
+      "title": "Chat: gọn lại trên mobile, không bung 200 tin",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Khung chat mobile dùng chiều cao trừ bottom nav, không tràn xuống menu; bỏ viền trên mobile cho gọn"
+        },
+        {
+          "type": "improvement",
+          "text": "Tin nhắn ban đầu chỉ tải 50 tin mới nhất (thay vì 200) và dedupe theo id để không bị trùng khi realtime + refetch"
+        },
+        {
+          "type": "fix",
+          "text": "Auto-scroll chỉ chạy khi mở hội thoại hoặc có tin mới ở cuối — không còn bị giật mỗi lần refetch"
+        },
+        {
+          "type": "fix",
+          "text": "Dedupe attachment theo id để không hiện 2 lần khi realtime trùng payload"
+        }
+      ]
+    },
+    {
+      "version": "1.0.61",
+      "releaseDate": "2026-05-27",
+      "title": "Chống crash toàn trang & cứu PWA kẹt bundle cũ",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Mọi route public (/landing, /auth/*, /payment-qr, /i/:token, /scan-document, /onboarding, /docs) có errorElement riêng — không còn màn 'Unexpected Application Error' mặc định"
+        },
+        {
+          "type": "fix",
+          "text": "Landing Page bọc từng section bằng SectionErrorBoundary — 1 section lỗi (ví dụ Pricing trên bundle PWA cũ) không làm chết toàn trang"
+        },
+        {
+          "type": "feature",
+          "text": "Màn lỗi route mới có CTA 'Xoá cache & tải lại' — dọn caches + unregister Service Worker để khách PWA tự thoát bản cũ"
+        }
+      ]
+    },
+    {
+      "version": "1.0.60",
+      "releaseDate": "2026-05-27",
+      "title": "Chat: sửa lỗi danh sách trùng & badge sai",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Danh sách hội thoại không còn bị nhân đôi/nhân ba (lọc viewer_id = me khi đọc v_user_conversations)"
+        },
+        {
+          "type": "fix",
+          "text": "Badge 'Tin nhắn' ở Sidebar/MobileBottomNav đếm đúng, chỉ cộng unread của chính mình"
+        },
+        {
+          "type": "fix",
+          "text": "Hết cảnh báo React duplicate key trong khung chat"
+        }
+      ]
+    },
+    {
+      "version": "1.0.59",
+      "releaseDate": "2026-05-27",
+      "title": "Chat: gọn hơn, chọn người gửi dễ hơn",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Bubble tin nhắn compact (text 13px, padding nhỏ), bo góc kiểu chat, gộp các tin liên tiếp cùng người gửi trong 3 phút thành 1 cụm, chỉ tin cuối hiện thời gian"
+        },
+        {
+          "type": "improvement",
+          "text": "Avatar 7px ở mỗi cụm tin của người khác; header hội thoại gọn lại, hiển thị chip 'Nhóm/1-1'"
+        },
+        {
+          "type": "improvement",
+          "text": "Composer rút gọn: input bo tròn, nút Gửi đổi sang icon mũi tên, safe-area cho iOS"
+        },
+        {
+          "type": "improvement",
+          "text": "Sidebar: avatar + ô tìm hội thoại + tab Tất cả/Chưa đọc; row gọn, badge unread dạng chấm số"
+        },
+        {
+          "type": "feature",
+          "text": "Dialog 'Hội thoại mới': ô tìm theo tên/email (không dấu), phân nhóm Quản lý / Nhân viên có sticky header, chip 'Đã chọn' xoá nhanh, lọc đúng theo hotel đang chọn (qua user_hotels)"
+        },
+        {
+          "type": "improvement",
+          "text": "Khung chat dùng 100dvh để không bị 'hộp vuông nhỏ trong trang'"
+        }
+      ]
+    },
+    {
+      "version": "1.0.58",
+      "releaseDate": "2026-05-27",
+      "title": "Chat: badge chưa đọc ở Sidebar & Bottom Nav",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "usePendingCounts thêm chatUnread — tổng unread_count từ v_user_conversations, lọc theo tenant + hotel đang chọn (All Hotels bao toàn bộ)"
+        },
+        {
+          "type": "feature",
+          "text": "Realtime: INSERT messages hoặc UPDATE conversation_members tự invalidate pending-counts-all để badge cập nhật tức thời"
+        },
+        {
+          "type": "feature",
+          "text": "MobileBottomNav: pin tab 'Tin nhắn' (luôn hiện trước More) kèm badge số chưa đọc"
+        },
+        {
+          "type": "improvement",
+          "text": "Sidebar item Chat tự hiển thị badge nhờ badgeKey='chatUnread' đã có sẵn"
+        }
+      ]
+    },
+    {
+      "version": "1.0.57",
+      "releaseDate": "2026-05-27",
+      "title": "Chat: gửi ảnh & tệp đính kèm",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Nút đính kèm trong composer: chọn nhiều ảnh/tệp (tối đa 6 / tin nhắn, 20MB/tệp), upload song song lên bucket chat-attachments theo path {conversationId}/"
+        },
+        {
+          "type": "feature",
+          "text": "Preview thumbnail trước khi gửi, có nút xoá; chặn gửi khi đang upload"
+        },
+        {
+          "type": "feature",
+          "text": "Hiển thị ảnh inline trong bong bóng tin nhắn (signed URL 1h, cache client) và file dạng card có tên + dung lượng + tải xuống"
+        },
+        {
+          "type": "improvement",
+          "text": "useMessages tự fetch message_attachments theo lô; tin chỉ-attachment vẫn render đúng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.56",
+      "releaseDate": "2026-05-27",
+      "title": "Chat nội bộ: thông báo realtime + nav",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Edge function notify-new-message: fan-out in-app notification + Web Push khi có tin nhắn mới, loại trừ người gửi và kênh muted, dedupe 30s"
+        },
+        {
+          "type": "feature",
+          "text": "Trigger DB tự động gọi notify-new-message qua pg_net sau mỗi tin nhắn mới"
+        },
+        {
+          "type": "feature",
+          "text": "Bổ sung mục 'Tin nhắn' (/chat) vào sidebar desktop"
+        },
+        {
+          "type": "improvement",
+          "text": "Storage bucket chat-attachments private sẵn sàng cho phần đính kèm ở phiên bản tiếp theo"
+        }
+      ]
+    },
+    {
+      "version": "1.0.54",
+      "releaseDate": "2026-05-27",
+      "title": "Hợp nhất & dọn dẹp menu Báo cáo",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Finance Hub gộp 3 tab: Doanh thu phòng (mặc định) · Dòng tiền · Chi phí & Lợi nhuận — bỏ tab Doanh thu trùng"
+        },
+        {
+          "type": "improvement",
+          "text": "Housekeeping Hub thêm tab Chất lượng (QC) — embed dashboard /housekeeping/qc, đặt làm tab mặc định"
+        },
+        {
+          "type": "improvement",
+          "text": "Tab 'Hỏng / Mất' chuyển từ Operations Hub sang Inventory Hub (gom đúng nhóm tài sản kho)"
+        },
+        {
+          "type": "improvement",
+          "text": "Bỏ trang Reports Dashboard cũ; các URL /reports/room-revenue, /reports/cash-flow, /reports/damages tự redirect vào tab tương ứng"
+        },
+        {
+          "type": "improvement",
+          "text": "Menu báo cáo gọn còn 4 mục: Tài chính · Vận hành phòng · Buồng phòng & Giặt là · Kho & Bảo trì"
+        }
+      ]
+    },
+    {
+      "version": "1.0.53",
+      "releaseDate": "2026-05-27",
+      "title": "Báo cáo Dòng tiền (Cash Flow)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Trang mới /reports/cash-flow: 4 KPI lớn — Tiền vào, Tiền ra, Net cash, Công nợ phải thu — kèm Δ% so kỳ trước"
+        },
+        {
+          "type": "feature",
+          "text": "Biểu đồ kép theo ngày: cột Tiền vào / Tiền ra + đường Net cash dồn"
+        },
+        {
+          "type": "feature",
+          "text": "Breakdown Tiền vào theo kênh (Tiền mặt, Chuyển khoản, Booking.com, Agoda...) và Tiền ra theo nhóm (Mua hàng, Giặt là, Bảo trì)"
+        },
+        {
+          "type": "feature",
+          "text": "Công nợ phải thu theo Aging (0-7N / 8-30N / 31-60N / >60N) + Top 10 booking nợ nhiều nhất"
+        },
+        {
+          "type": "feature",
+          "text": "OTA chưa thanh toán theo kênh — gross, hoa hồng, đã trả, còn giữ"
+        },
+        {
+          "type": "feature",
+          "text": "Khoản sắp phải trả 30N tới: PO chờ nhận + bảo trì đang xử lý"
+        },
+        {
+          "type": "feature",
+          "text": "Cảnh báo dòng tiền tự sinh: âm net cash, công nợ cũ tích tụ, OTA giữ tiền nhiều, khoản phải trả tuần tới lớn hơn tiền vào"
+        }
+      ]
+    },
+    {
+      "version": "1.0.52",
+      "releaseDate": "2026-05-27",
+      "title": "Báo cáo Doanh thu phòng (Occupancy • ADR • RevPAR)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Trang mới /reports/room-revenue: 4 KPI lớn — Doanh thu phòng, Công suất, ADR (giá TB/đêm), RevPAR — kèm Δ% so kỳ trước và badge so chuẩn ngành"
+        },
+        {
+          "type": "feature",
+          "text": "Biểu đồ kép theo ngày: Công suất % (bar) + Doanh thu/ngày (line) — xem nhanh xu hướng"
+        },
+        {
+          "type": "feature",
+          "text": "Bảng Phòng bán tốt nhất (top 10) + Phòng bán chậm (bottom 5) — gợi ý kiểm tra QC khi <30% trung bình"
+        },
+        {
+          "type": "feature",
+          "text": "Phân tích doanh thu theo kênh (Walk-in, Direct, Booking.com, Agoda...) — kèm phí hoa hồng OTA và bar visual"
+        },
+        {
+          "type": "feature",
+          "text": "Gợi ý hành động tự sinh: OTA >60% cảnh báo, ADR thấp dưới chuẩn, công suất xuất sắc → cân nhắc tăng giá, RevPAR giảm mạnh"
+        }
+      ]
+    },
+    {
+      "version": "1.0.51",
+      "releaseDate": "2026-05-27",
+      "title": "Dọn dẹp Báo cáo Tài chính (Sprint F1)",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Bỏ trùng lặp KPI: 4+4 ô doanh thu/chi phí trong tab Chi phí đã có ở dải KPI Hub — không hiển thị 2 lần nữa"
+        },
+        {
+          "type": "improvement",
+          "text": "1 bộ filter kỳ duy nhất cho cả tab Doanh thu và Chi phí — không còn 2 chọn kỳ lệch nhau"
+        },
+        {
+          "type": "improvement",
+          "text": "Bỏ tabs lồng nhau trong Doanh thu (Tổng quan/Theo loại/Theo nguồn/Phòng) → cuộn dọc thành 6 section dễ đọc"
+        },
+        {
+          "type": "improvement",
+          "text": "Bỏ tab ROI hardcode (số liệu không thật) — sẽ thay bằng chỉ số thật ở sprint sau"
+        },
+        {
+          "type": "improvement",
+          "text": "Refactor Tài chính về chuẩn Minimalist: bỏ Card/icon/emoji/màu hex cứng, dùng border + token màu"
+        }
+      ]
+    },
+    {
+      "version": "1.0.50",
+      "releaseDate": "2026-05-26",
+      "title": "Trang Tổng quan điều hành mới (Sprint B2)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Trang /reports được thay bằng Tổng quan điều hành: 6 KPI tổng (Doanh thu • Lợi nhuận • Công suất • RevPAR • Chi phí • Còn nợ) + Δ% so kỳ trước"
+        },
+        {
+          "type": "feature",
+          "text": "Biểu đồ Doanh thu vs Chi phí 30 ngày gần nhất ngay trong trang Tổng quan"
+        },
+        {
+          "type": "feature",
+          "text": "Danh sách Cần chú ý: booking quá hạn, kho sắp hết, bảo trì khẩn, lô giặt trễ — click sang trang xử lý"
+        },
+        {
+          "type": "feature",
+          "text": "Click KPI để drilldown sang hub báo cáo chi tiết tương ứng"
+        },
+        {
+          "type": "improvement",
+          "text": "Trang Báo cáo cũ vẫn truy cập được tại /reports/legacy trong 1 release để rollback"
+        }
+      ]
+    },
+    {
+      "version": "1.0.49",
+      "releaseDate": "2026-05-26",
+      "title": "Bảng điểm KPI cho Báo cáo Tài chính (Sprint B1)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Thêm dải 6 KPI tile ở đầu Báo cáo Tài chính: Doanh thu thuần • Đã thu • Còn nợ • Chi phí • Lợi nhuận • Biên LN — luôn hiển thị ở mọi tab"
+        },
+        {
+          "type": "feature",
+          "text": "Mỗi KPI hiển thị Δ% so kỳ trước cùng độ dài, màu xanh/đỏ theo hướng tốt của từng chỉ số"
+        },
+        {
+          "type": "feature",
+          "text": "Chip chọn nhanh kỳ báo cáo: Hôm nay • 7 ngày • Tháng này • Tháng trước • 90 ngày • Năm nay"
+        },
+        {
+          "type": "improvement",
+          "text": "Component KpiScorecard + helper resolvePeriod dùng chung cho các hub báo cáo tiếp theo"
+        }
+      ]
+    },
+    {
+      "version": "1.0.48",
+      "releaseDate": "2026-05-25",
+      "title": "Tinh gọn Báo cáo: từ 10 trang → 4 hub theo vai trò",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Gộp Doanh thu + Tài chính → /reports/finance (Tài chính)"
+        },
+        {
+          "type": "feature",
+          "text": "Gộp KPI Vận hành + Hiệu năng phòng + Hỏng/Mất → /reports/operations (Vận hành phòng)"
+        },
+        {
+          "type": "feature",
+          "text": "Gộp Giặt là (+ Buồng phòng) → /reports/housekeeping (Buồng phòng & Giặt là)"
+        },
+        {
+          "type": "feature",
+          "text": "Gộp Tồn kho + Xuất kho + Kiểm kê + Bảo trì → /reports/inventory (Kho & Bảo trì)"
+        },
+        {
+          "type": "feature",
+          "text": "Sidebar Báo cáo rút gọn từ 6 mục xuống 5 mục, mỗi báo cáo trả lời 1 câu hỏi vận hành cụ thể"
+        },
+        {
+          "type": "fix",
+          "text": "Mọi URL báo cáo cũ tự redirect sang hub mới kèm ?tab= tương ứng (bookmark vẫn chạy)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.47",
+      "releaseDate": "2026-05-25",
+      "title": "Mở rộng báo cáo tài chính & giặt là (P1)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Báo cáo Tài chính: thêm doanh thu thuần, đã thu, còn nợ, lợi nhuận thuần và biên lợi nhuận"
+        },
+        {
+          "type": "feature",
+          "text": "Xu hướng tháng có thêm đường doanh thu và lợi nhuận"
+        },
+        {
+          "type": "fix",
+          "text": "Báo cáo Giặt là: tính cả lô đang xử lý (delivered/washing/ready), chi phí fallback estimated_cost khi chưa có actual_cost"
+        }
+      ]
+    },
+    {
+      "version": "1.0.46",
+      "releaseDate": "2026-05-25",
+      "title": "Sửa lỗi báo cáo doanh thu & công suất phòng (P0)",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Báo cáo Doanh thu: chỉ tính booking đã trả phòng (checked_out), loại pending/cancelled để không thổi phồng doanh thu"
+        },
+        {
+          "type": "fix",
+          "text": "Báo cáo Phòng: công suất và doanh thu theo loại phòng chỉ tính booking thực sự lưu trú (checked_in/checked_out)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.45",
+      "releaseDate": "2026-05-23",
+      "title": "Đánh giá vận hành — KPI, benchmark ngành và lời khuyên AI",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Thêm tab Đánh giá vận hành trong Báo cáo Tài chính: lợi nhuận thuần, biên lợi nhuận, RevPAR, tỷ lệ lấp đầy + so sánh kỳ trước"
+        },
+        {
+          "type": "feature",
+          "text": "Benchmark ngành khách sạn 2-4 sao Việt Nam — hiển thị mức Yếu/Trung bình/Tốt/Xuất sắc cho từng KPI"
+        },
+        {
+          "type": "feature",
+          "text": "Lời khuyên ưu tiên dùng Rule engine + AI tóm tắt tự nhiên, ước tính tác động VNĐ/tháng"
+        },
+        {
+          "type": "feature",
+          "text": "Xuất PDF báo cáo đánh giá vận hành"
+        }
+      ]
+    },
+    {
+      "version": "1.0.44",
+      "releaseDate": "2026-05-23",
+      "title": "Sửa công thức doanh thu — gộp phí dịch vụ, minibar và phụ thu phát sinh",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Báo cáo Doanh thu nay cộng đủ phí dịch vụ (spa, đưa đón…) và phí phát sinh (minibar, đồ tiêu hao) vào phần Phụ thu — trước đây bị bỏ sót khiến doanh thu thấp hơn thực tế"
+        },
+        {
+          "type": "feature",
+          "text": "Thêm chọn khoảng thời gian tùy chọn (Tùy chọn…) ở Báo cáo Doanh thu — so sánh quý/năm bất kỳ thay vì chỉ preset tuần/tháng/quý/năm"
+        },
+        {
+          "type": "fix",
+          "text": "Trang Báo cáo Tài chính khi đang tải hiển thị skeleton tiếng Việt thay vì chữ Loading… cứng"
+        },
+        {
+          "type": "improvement",
+          "text": "Báo cáo Hỏng/Mất ghi log cảnh báo khi gặp dữ liệu legacy không đúng định dạng, giúp phát hiện bug âm thầm"
+        },
+        {
+          "type": "improvement",
+          "text": "Thêm 7 unit test cho công thức doanh thu (paid/pending/refunded, fallback net revenue, phụ thu, VAT)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.43",
+      "releaseDate": "2026-05-21",
+      "title": "Báo cáo theo chức vụ — chỉ thấy báo cáo liên quan",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Trang /reports tổ chức lại theo nhóm bộ phận: Tài chính, Vận hành, Buồng phòng, Kho & Mua hàng, Giặt là, Bảo trì"
+        },
+        {
+          "type": "feature",
+          "text": "Trưởng bộ phận chỉ thấy báo cáo của bộ phận mình (ví dụ Trưởng kho chỉ thấy Tồn kho, Kiểm kê, Xuất kho), tránh nhiễu thông tin"
+        },
+        {
+          "type": "improvement",
+          "text": "Owner và Quản lý khách sạn vẫn thấy đầy đủ; hiển thị nhãn vai trò dưới tiêu đề để biết đang xem ở góc nhìn nào"
+        },
+        {
+          "type": "improvement",
+          "text": "Mobile dashboard /reports cũng áp dụng cùng quy tắc nhóm + lọc"
+        }
+      ]
+    },
+    {
+      "version": "1.0.42",
+      "releaseDate": "2026-05-21",
+      "title": "Tự động đăng nhập trên PWA đã cài",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "PWA đã cài (Add to Home Screen) nay tự đăng nhập sau lần đầu — không cần gõ lại email/mật khẩu mỗi lần mở app"
+        },
+        {
+          "type": "improvement",
+          "text": "Có nút 'Hủy' khi đang tự đăng nhập để chuyển sang tài khoản khác; bấm Đăng xuất thủ công sẽ chặn auto-login cho đến lần đăng nhập tay kế tiếp"
+        },
+        {
+          "type": "improvement",
+          "text": "Trình duyệt thường và môi trường preview vẫn giữ nguyên hành vi cũ — chỉ kích hoạt khi app chạy ở chế độ standalone"
+        }
+      ]
+    },
+    {
+      "version": "1.0.41",
+      "releaseDate": "2026-05-21",
+      "title": "Đồng bộ chấm on/off ở trang Quản lý nhân sự",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Chấm trạng thái cạnh tên nhân viên (trang /staff) nay phản ánh đúng thực tế: chỉ xanh khi đang trong ca và còn heartbeat — không còn chấm xanh cho người đã offline cả tháng"
+        },
+        {
+          "type": "improvement",
+          "text": "Thẻ thống kê đổi sang 4 nhóm: Sẵn sàng / Đang bận / Mất kết nối / Ngoài ca, dùng chung định nghĩa với dropdown giao việc"
+        },
+        {
+          "type": "improvement",
+          "text": "Badge 'Đang trong ca' tự đổi thành 'Trong ca · mất kết nối' khi heartbeat quá 30 phút, và 'Ca treo' khi ca mở quá 16 giờ"
+        }
+      ]
+    },
+    {
+      "version": "1.0.40",
+      "releaseDate": "2026-05-20",
+      "title": "Đồng bộ logic 'đang trong ca' giữa giao việc và Quản lý nhân sự",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Dropdown chọn nhân viên kiểm tra phòng (checkout, housekeeping, distribution...) nay loại bỏ ca treo quá 16 giờ — không còn hiện nhân viên đã nghỉ từ tuần trước"
+        },
+        {
+          "type": "improvement",
+          "text": "Nhân viên hiển thị theo nhóm rõ ràng: Sẵn sàng (chấm xanh) / Đang bận (vàng) / Mất kết nối >30 phút (xám), thay vì gộp chung"
+        },
+        {
+          "type": "improvement",
+          "text": "Trạng thái busy/break/offline trong staff_status nay được tôn trọng ở mọi nơi giao việc, không chỉ ở trang Quản lý nhân sự"
+        },
+        {
+          "type": "improvement",
+          "text": "Tự động đóng các ca làm việc đã mở quá 16 giờ (nhân viên quên bấm tan ca), chạy mỗi giờ và ghi nhật ký audit"
+        }
+      ]
+    },
+    {
+      "version": "1.0.39",
+      "releaseDate": "2026-05-20",
+      "title": "Đồng bộ trạng thái phòng & sửa lỗi không check-in được phòng vacant_clean",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Sửa lỗi không check-in được khi phòng đang ở trạng thái 'Trống – đã dọn' (vacant_clean): RPC perform_checkin nay hiểu đầy đủ bộ trạng thái mới v2"
+        },
+        {
+          "type": "improvement",
+          "text": "Sau checkout, phòng tự chuyển sang 'Trống – chưa dọn' (vacant_dirty) để housekeeping xử lý, thay vì trạng thái cũ check_out"
+        },
+        {
+          "type": "improvement",
+          "text": "Thông báo lỗi check-in rõ ràng hơn: phân biệt 'Phòng chưa dọn', 'Phòng bảo trì', 'Phòng đang có khách'"
+        },
+        {
+          "type": "improvement",
+          "text": "Bộ lọc trạng thái phòng và Floor Plan dùng nhãn thống nhất theo state machine v2 (Trống – đã dọn / chưa dọn / đã QC, Đang ở – đã dọn / cần dọn, DND, OOO, OOS...)"
+        },
+        {
+          "type": "fix",
+          "text": "Tự động chuẩn hóa các phòng còn dùng tên trạng thái cũ (vacant, occupied, cleaning, maintenance...) về tên mới"
+        }
+      ]
+    },
+    {
+      "version": "1.0.38",
+      "releaseDate": "2026-05-20",
+      "title": "Sửa lỗi QR VAT báo 'Mã không hợp lệ hoặc hết hạn'",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "QR lấy hoá đơn VAT trên bill nay luôn dùng token thật từ hệ thống, không còn fallback sang ID hoá đơn (nguyên nhân khiến khách quét báo mã không hợp lệ/hết hạn)"
+        },
+        {
+          "type": "fix",
+          "text": "Khi token chưa sẵn sàng, các nút In / PDF / In QR VAT sẽ chờ tạo token xong rồi mới chạy — bill in ra chắc chắn có QR đúng"
+        },
+        {
+          "type": "improvement",
+          "text": "QR luôn trỏ đến địa chỉ công khai của bản triển khai hiện tại /i/:token, kèm URL ngắn + hạn 7 ngày in dưới mã để khách gõ tay nếu cần"
+        },
+        {
+          "type": "improvement",
+          "text": "Nút In hoá đơn ở màn Booking nay mặc định khổ K80 và lấy QR VAT đúng cho hoá đơn của booking"
+        },
+        {
+          "type": "fix",
+          "text": "Công thức Còn lại trên bill trừ cả tiền cọc: Còn lại = Tổng − Đã thanh toán − Đã cọc"
+        }
+      ]
+    },
+    {
+      "version": "1.0.37",
+      "releaseDate": "2026-05-20",
+      "title": "Sửa hoá đơn: VAT/Phí DV đúng %, thông tin khách sạn đầy đủ trên bill",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Khắc phục lỗi hiển thị VAT 800% / Phí DV 500% trên bill và email — quy ước về integer percent, có normalize tương thích ngược cho hoá đơn cũ"
+        },
+        {
+          "type": "fix",
+          "text": "Bill nhiệt và A4/A5 hiển thị đúng tên khách sạn, địa chỉ, điện thoại, MST (trước đó luôn ghi 'KHÁCH SẠN' do không truyền hotelInfo vào preview)"
+        },
+        {
+          "type": "improvement",
+          "text": "Bill thêm dòng: Đã cọc, Hình thức thanh toán, Tiền thừa trả khách, dòng nhắc hạn 7 ngày quét QR lấy HĐ GTGT"
+        },
+        {
+          "type": "improvement",
+          "text": "Form tạo/sửa hoá đơn: ô % VAT và Phí DV nhập trực tiếp số nguyên (8, 10, 5...), tính tiền chính xác đến đồng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.36",
+      "releaseDate": "2026-05-20",
+      "title": "Khách tự lấy hoá đơn VAT điện tử qua QR",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Luồng hoá đơn mới: in bill nhiệt kèm QR → khách quét, tự nhập tên công ty/MST/email → hệ thống tự gửi hoá đơn VAT qua email"
+        },
+        {
+          "type": "feature",
+          "text": "Trang public /i/:token tối ưu mobile, có Zod validation MST 10/13 số, email bắt buộc, hỗ trợ tiền sẵn nếu khách đã lưu thông tin"
+        },
+        {
+          "type": "feature",
+          "text": "Mặc định khổ K80 khi mở preview hoá đơn để in nhanh trên máy nhiệt phổ biến"
+        },
+        {
+          "type": "improvement",
+          "text": "Cơ chế token 7 ngày, idempotent — lễ tân in lại QR vẫn ra cùng link, không tạo trùng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.35",
+      "releaseDate": "2026-05-20",
+      "title": "Hoá đơn: hỗ trợ 4 khổ giấy + QR lấy VAT điện tử",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Refactor bộ render hoá đơn: tách rõ khổ A4, A5, K80, K58 với layout và print CSS @page chuẩn cho từng khổ máy in"
+        },
+        {
+          "type": "feature",
+          "text": "Bill nhiệt K80/K58 và hoá đơn A4/A5 đều in kèm QR Code; khách quét để tự nhập thông tin công ty/email lấy hoá đơn VAT điện tử (chuẩn bị cho luồng tự phát hành HĐĐT)"
+        },
+        {
+          "type": "feature",
+          "text": "Thêm nút In QR VAT riêng — in một tem nhỏ khổ K80 chỉ chứa mã QR và hướng dẫn, đưa khách khi quên xin VAT lúc thanh toán"
+        },
+        {
+          "type": "improvement",
+          "text": "Preview hoá đơn dựng lại bất đồng bộ, hiển thị skeleton khi đang render, tránh nhấp nháy"
+        }
+      ]
+    },
+    {
+      "version": "1.0.34",
+      "releaseDate": "2026-05-20",
+      "title": "Tối ưu landing & thống nhất bộ chọn khách sạn trên mobile",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Landing page trên mobile gọn lại: giảm khoảng trắng giữa các phần, tiêu đề Hero không còn vỡ 3 dòng, CTA full-width thumb-friendly"
+        },
+        {
+          "type": "improvement",
+          "text": "Stats khách sạn hiển thị trong fold đầu tiên trên iPhone, kết hợp min-h dùng svh để tránh bị che bởi address bar Safari"
+        },
+        {
+          "type": "improvement",
+          "text": "Thống nhất bộ chọn khách sạn trên mobile: trang Kho hàng và header chính cùng dùng bottom sheet full-width thay cho dropdown 280px"
+        },
+        {
+          "type": "fix",
+          "text": "Loại bỏ nested button trong header mobile, tránh sự kiện kép trên iOS Safari khi chạm tên khách sạn"
+        },
+        {
+          "type": "improvement",
+          "text": "Safe-area chính xác cho iPhone notch: FAB không còn che nội dung cuối list trên Inventory"
+        }
+      ]
+    },
+    {
+      "version": "1.0.33",
+      "releaseDate": "2026-05-19",
+      "title": "Bộ chọn khách sạn mới trên mobile",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Chạm vào tên khách sạn trên header mobile để mở bottom sheet full-width: tìm kiếm, xem trạng thái và chuyển nhanh giữa các khách sạn"
+        },
+        {
+          "type": "improvement",
+          "text": "Bỏ nút chuyển khách sạn trùng lặp trên header, tránh xung đột thao tác trong vùng ngón cái"
+        }
+      ]
+    },
+    {
+      "version": "1.0.32",
+      "releaseDate": "2026-05-19",
+      "title": "Sửa màn lỗi mặc định & tối ưu giao diện mobile",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Thay màn \"Unexpected Application Error\" mặc định bằng fallback tiếng Việt; lỗi chunk sau deploy tự tải lại bản mới"
+        },
+        {
+          "type": "fix",
+          "text": "Sửa lỗi tràn ngang ở trang Cài đặt chung trên mobile (tiêu đề bị cắt bên trái)"
+        },
+        {
+          "type": "improvement",
+          "text": "Gọn header mobile: bỏ nút chuyển khách sạn trùng lặp; nút chạm trong header nhỏ gọn hơn"
+        },
+        {
+          "type": "improvement",
+          "text": "Chặn cuộn ngang toàn cục trên mobile để layout không bị lệch khi nội dung dài"
+        }
+      ]
+    },
+    {
+      "version": "1.0.31",
+      "releaseDate": "2026-05-19",
+      "title": "Sửa lỗi crash trang chủ \"l.map is not a function\"",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Bundle sẵn ngôn ngữ trang chủ (landing) để bảng giá không crash khi mở lần đầu trên mạng chậm"
+        },
+        {
+          "type": "improvement",
+          "text": "Bảng giá luôn render an toàn kể cả khi dữ liệu i18n chưa kịp tải"
+        }
+      ]
+    },
+    {
+      "version": "1.0.30",
+      "releaseDate": "2026-05-19",
+      "title": "Sửa lỗi \"Importing a module script failed\" trên mobile",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Tự động xoá cache & tải lại khi gặp lỗi chunk JS sau khi app cập nhật — không còn kẹt màn hình lỗi trên iOS PWA"
+        },
+        {
+          "type": "improvement",
+          "text": "Thêm màn hình fallback \"Đã có bản cập nhật mới\" với nút Tải lại thủ công khi auto-reload không thành công"
+        }
+      ]
+    },
+    {
+      "version": "1.0.29",
+      "releaseDate": "2026-05-19",
+      "title": "Bảng booking tự cập nhật sau khi dời lịch",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Dời ngày check-in xong, ngày trong bảng /bookings và các thẻ thống kê tự cập nhật ngay, không cần F5"
+        }
+      ]
+    },
+    {
+      "version": "1.0.28",
+      "releaseDate": "2026-05-19",
+      "title": "Sửa lỗi xác nhận dời lịch check-in",
+      "changes": [
+        {
+          "type": "fix",
+          "text": "Khắc phục lỗi 404 \"log_state_transition does not exist\" khi bấm Xác nhận dời lịch — RPC giờ gọi đúng tham số và ghi audit log đầy đủ"
+        }
+      ]
+    },
+    {
+      "version": "1.0.27",
+      "releaseDate": "2026-05-19",
+      "title": "Lịch chọn ngày rõ ràng hơn trong dialog dời check-in",
+      "changes": [
+        {
+          "type": "improvement",
+          "text": "Ô lịch đang chọn tô màu thực sự: xanh đậm = Nhận, xanh vừa = Trả, nhạt = trong khoảng"
+        },
+        {
+          "type": "feature",
+          "text": "Thêm chế độ \"Chọn ngày trả riêng\" — chạm 2 lần để đặt check-in và check-out tự do"
+        },
+        {
+          "type": "improvement",
+          "text": "Tóm tắt khoảng đang chọn + số đêm, có dấu xác nhận khi phòng trống"
+        },
+        {
+          "type": "improvement",
+          "text": "Ô ngày cao hơn (48px), hiện nhãn \"Nhận\" / \"Trả\" trực tiếp trên ô"
+        }
+      ]
+    },
+    {
+      "version": "1.0.26",
+      "releaseDate": "2026-05-19",
+      "title": "Lịch phòng trống trong dialog dời ngày check-in",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Dialog dời lịch hiển thị mini-calendar 30 ngày tới của phòng — ô đỏ là đã đặt, ô xám là trống"
+        },
+        {
+          "type": "feature",
+          "text": "Chạm ô trống để chọn ngày check-in mới (số đêm tự giữ nguyên)"
+        },
+        {
+          "type": "feature",
+          "text": "Cảnh báo đỏ ngay khi khoảng chọn trùng lịch + gợi ý khoảng trống gần nhất 1 chạm"
+        },
+        {
+          "type": "feature",
+          "text": "Nút \"Xem thêm 30 ngày\" mở rộng cửa sổ lịch tới 120 ngày"
+        },
+        {
+          "type": "improvement",
+          "text": "Realtime tự cập nhật lịch nếu có booking khác tạo cùng phòng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.25",
+      "releaseDate": "2026-05-19",
+      "title": "Xử lý khách quá giờ check-in (No-Show)",
+      "changes": [
+        {
+          "type": "feature",
+          "text": "Lọc nhanh \"Quá giờ check-in\" trên danh sách đặt phòng kèm số đếm"
+        },
+        {
+          "type": "feature",
+          "text": "Dòng booking quá giờ hiện chip cảnh báo \"Quá X giờ\" (vàng < 24h, đỏ ≥ 24h)"
+        },
+        {
+          "type": "feature",
+          "text": "Menu thao tác nhanh: Gọi khách, Dời ngày check-in, Đánh dấu No-Show"
+        },
+        {
+          "type": "feature",
+          "text": "Dialog No-Show cho phép chọn giữ cọc làm phí huỷ hoặc hoàn lại khách"
+        },
+        {
+          "type": "feature",
+          "text": "Dialog dời lịch giữ nguyên số đêm, kiểm tra xung đột phòng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.24",
+      "releaseDate": "2026-05-19",
+      "title": "Vá bảo mật — siết kiểm tra tenant trong phân quyền",
+      "changes": [
+        {
+          "type": "security",
+          "text": "Hàm phân quyền quản lý người dùng giờ tự kiểm tra cùng khách sạn — chặn rò chéo tenant kể cả khi RLS bên ngoài có sơ hở"
+        }
+      ]
+    },
+    {
+      "version": "1.0.23",
+      "releaseDate": "2026-05-19",
+      "title": "Vá bảo mật — defense-in-depth & rò marketing/giá gói",
+      "changes": [
+        {
+          "type": "security",
+          "text": "Thêm WITH CHECK chặn nhân viên đổi cấp bậc/vai trò/cờ super admin của chính mình (lớp 2 cùng trigger)"
+        },
+        {
+          "type": "security",
+          "text": "Chiến dịch marketing không còn lộ với khách vô danh, chỉ user đã đăng nhập đọc được"
+        },
+        {
+          "type": "security",
+          "text": "Lịch sử thay đổi giá gói dịch vụ chỉ Super Admin xem được (tránh lộ chiến lược giá)"
+        },
+        {
+          "type": "security",
+          "text": "Chủ khách sạn có thể tự thêm/sửa/xoá cấu hình tài khoản ngân hàng nhận thanh toán"
+        }
+      ]
+    },
+    {
+      "version": "1.0.22",
+      "releaseDate": "2026-05-19",
+      "title": "Vá bảo mật — chống leo quyền & rò mã khuyến mãi",
+      "changes": [
+        {
+          "type": "security",
+          "text": "Chặn nhân viên tự nâng cấp bậc/vai trò/cờ super admin qua bảng người dùng (trigger BEFORE INSERT/UPDATE)"
+        },
+        {
+          "type": "security",
+          "text": "Chỉ chủ khách sạn hoặc quản lý mới được tạo tài khoản mới — chặn staff tạo user giả mạo"
+        },
+        {
+          "type": "security",
+          "text": "Mã khuyến mãi không còn lộ với khách vô danh, chỉ user đã đăng nhập đọc được"
+        },
+        {
+          "type": "security",
+          "text": "Bổ sung chính sách truy cập rõ ràng cho Super Admin trên reminder_email_templates và reminder_automation_rules"
+        }
+      ]
+    },
+    {
+      "version": "1.0.21",
+      "releaseDate": "2026-05-19",
+      "title": "Vá bảo mật — Realtime, phân quyền, storage",
+      "changes": [
+        {
+          "type": "security",
+          "text": "Chặn cross-tenant qua Realtime broadcast/presence — chỉ cho phép postgres_changes (đã bảo vệ bởi RLS từng bảng)"
+        },
+        {
+          "type": "security",
+          "text": "Chủ khách sạn không còn được tự cấp/gán vai trò super_admin (chống leo quyền)"
+        },
+        {
+          "type": "security",
+          "text": "Ghi audit log mọi thay đổi user_roles"
+        },
+        {
+          "type": "security",
+          "text": "Chặn liệt kê file ở 4 bucket công khai (logo, ảnh sản phẩm, avatar, ảnh thông báo) — URL trực tiếp vẫn hoạt động"
+        },
+        {
+          "type": "security",
+          "text": "Bật chống mật khẩu rò rỉ (Have I Been Pwned) khi đăng ký / đổi mật khẩu"
+        },
+        {
+          "type": "security",
+          "text": "Khoá search_path cho 4 hàm email queue, chuyển pgtap ra schema extensions"
+        },
+        {
+          "type": "security",
+          "text": "Thu hồi quyền REST API trên materialized view monthly_expenses"
+        },
+        {
+          "type": "security",
+          "text": "Bổ sung chính sách đọc minh bạch cho super admin trên payment_webhook_logs, platform_settings, super_admin_activity_log"
+        }
+      ]
+    },
+    {
+      "version": "1.0.20",
+      "releaseDate": "2026-05-19",
+      "title": "Chuyển trang gần như tức thì",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Giữ lại dữ liệu trang cũ khi đổi tab/bộ lọc — không còn nháy skeleton (rooms, bookings, items, distributions, purchase orders, vendors, maintenance)"
+        },
+        {
+          "type": "improved",
+          "text": "Prefetch dữ liệu (không chỉ mã JS) khi chạm vào Rooms, Bookings, Inventory/Phân phối — vào trang là có sẵn"
+        },
+        {
+          "type": "improved",
+          "text": "Tự động bỏ qua prefetch trên mạng 2G/Save-Data, throttle 30s/route"
+        }
+      ]
+    },
+    {
+      "version": "1.0.19",
+      "releaseDate": "2026-05-19",
+      "title": "Tinh chỉnh ngôn ngữ và tải shell",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Khai báo ngôn ngữ trang là tiếng Việt (lang=\"vi\") cho SEO và trình đọc màn hình"
+        },
+        {
+          "type": "improved",
+          "text": "Preload sẵn shell giao diện chính và Dashboard để mở app sau đăng nhập nhanh hơn"
+        },
+        {
+          "type": "improved",
+          "text": "Tinh gọn gói ngôn ngữ tải trước — giảm dung lượng tải đầu"
+        },
+        {
+          "type": "improved",
+          "text": "Cache file ngôn ngữ trong Service Worker — mở lại PWA không phải tải lại"
+        }
+      ]
+    },
+    {
+      "version": "1.0.18",
+      "releaseDate": "2026-05-12",
+      "title": "Tăng tốc chuyển trang",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Tự động tải trước các trang thường dùng ngay khi app rảnh để chuyển trang gần như tức thì"
+        },
+        {
+          "type": "improved",
+          "text": "Bắt đầu tải trang ngay khi chạm/nhấn (không chờ thả tay) — giảm 100–300ms mỗi lần điều hướng trên mobile"
+        },
+        {
+          "type": "improved",
+          "text": "Bundle thêm nhiều gói ngôn ngữ tiếng Việt vào lần tải đầu để hết nháy mã key khi mở trang mới"
+        }
+      ]
+    },
+    {
+      "version": "1.0.17",
+      "releaseDate": "2026-05-12",
+      "title": "Khóa giao diện 100% tiếng Việt",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Bỏ tự động phát hiện ngôn ngữ trình duyệt và toàn bộ tài nguyên tiếng Anh để tránh nháy chữ tiếng Anh khi mở app"
+        },
+        {
+          "type": "improved",
+          "text": "Giảm dung lượng tải ban đầu nhờ loại bỏ các gói ngôn ngữ không dùng"
+        }
+      ]
+    },
+    {
+      "version": "1.0.16",
+      "releaseDate": "2026-05-12",
+      "title": "Sửa triệt để lỗi trắng trang sau publish",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Gộp toàn bộ thư viện vendor về một chunk duy nhất để loại bỏ lỗi 'Cannot access it before initialization' do tách chunk markdown/excel gây vòng lặp khởi tạo"
+        }
+      ]
+    },
+    {
+      "version": "1.0.15",
+      "releaseDate": "2026-05-12",
+      "title": "Sửa lỗi màn hình trắng sau publish",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Gộp lại các vendor chunk để tránh lỗi 'Cannot read properties of undefined (reading forwardRef)' khiến trang trắng sau khi publish"
+        }
+      ]
+    },
+    {
+      "version": "1.0.14",
+      "releaseDate": "2026-05-12",
+      "title": "Super Admin gia hạn thủ công tự bỏ chế độ chỉ đọc",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Khi Super Admin đổi gói/gia hạn thủ công, tự động bỏ chế độ chỉ đọc và reset thời gian ân hạn"
+        }
+      ]
+    },
+    {
+      "version": "1.0.13",
+      "releaseDate": "2026-05-12",
+      "title": "Sửa lỗi banner Chế độ chỉ đọc kẹt sau khi gia hạn",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Khách sạn đã thanh toán gia hạn nhưng vẫn thấy banner 'Chế độ chỉ đọc' và bị chặn thao tác — nay tự động bỏ ngay khi nhận thanh toán"
+        },
+        {
+          "type": "fixed",
+          "text": "Thêm cron tự kiểm tra hằng ngày để bỏ chế độ chỉ đọc cho mọi tenant đã gia hạn"
+        },
+        {
+          "type": "fixed",
+          "text": "Backfill các tenant đang bị kẹt chế độ chỉ đọc dù subscription còn hạn"
+        }
+      ]
+    },
+    {
+      "version": "1.0.12",
+      "releaseDate": "2026-05-12",
+      "title": "Prefetch route khi hover sidebar",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Hover/focus mục sidebar sẽ tự tải trước chunk trang đó — click chuyển trang gần như tức thì"
+        },
+        {
+          "type": "improved",
+          "text": "Tự bỏ qua prefetch trên kết nối chậm (2G hoặc Save-Data)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.11",
+      "releaseDate": "2026-05-12",
+      "title": "Tối ưu Landing Page",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Lazy-load các section dưới fold (Features, Pricing, Footer) — Hero hiển thị tức thì"
+        },
+        {
+          "type": "improved",
+          "text": "Giảm thêm ~30% kích thước chunk landing đầu tiên"
+        }
+      ]
+    },
+    {
+      "version": "1.0.10",
+      "releaseDate": "2026-05-12",
+      "title": "Lazy-load ngôn ngữ theo trang",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Giao diện chỉ tải file ngôn ngữ của trang đang xem (giảm ~200KB JSON ở entry)"
+        },
+        {
+          "type": "improved",
+          "text": "Landing & đăng nhập tải nhanh hơn rõ rệt trên 3G/4G"
+        }
+      ]
+    },
+    {
+      "version": "1.0.9",
+      "releaseDate": "2026-05-12",
+      "title": "Tăng tốc tải trang lần đầu",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "Tách bundle thư viện nặng (Excel, PDF, Charts, QR, Markdown, Mermaid) — landing & login tải nhanh hơn ~50%"
+        },
+        {
+          "type": "improved",
+          "text": "Lazy-load MainLayout và các provider PWA — khách vãng lai không phải tải code dashboard"
+        },
+        {
+          "type": "improved",
+          "text": "Preconnect Supabase ngay từ HTML để rút ngắn 100–300ms cho request đầu"
+        },
+        {
+          "type": "improved",
+          "text": "CacheBuster chạy trong requestIdleCallback, không còn block render đầu"
+        },
+        {
+          "type": "improved",
+          "text": "Hero Landing dùng LazyMotion — giảm ~70% kích thước Framer Motion"
+        }
+      ]
+    },
+    {
+      "version": "1.0.8",
+      "releaseDate": "2026-05-11",
+      "title": "Trang lịch sử phiên bản /whats-new",
+      "changes": [
+        {
+          "type": "new",
+          "text": "Trang Lịch sử phiên bản hiển thị toàn bộ thay đổi theo từng version"
+        },
+        {
+          "type": "new",
+          "text": "Liên kết 'Xem tất cả thay đổi' trong popup thông báo cập nhật"
+        },
+        {
+          "type": "improved",
+          "text": "Truy cập nhanh từ trang More mobile (chạm vào số phiên bản)"
+        }
+      ]
+    },
+    {
+      "version": "1.0.7",
+      "releaseDate": "2026-05-11",
+      "title": "Popup thông báo giàu nội dung",
+      "changes": [
+        {
+          "type": "new",
+          "text": "Popup thông báo cập nhật hỗ trợ highlight + thông tin liên hệ"
+        },
+        {
+          "type": "improved",
+          "text": "Form quản lý thông báo cho phép thêm icon và màu sắc"
+        }
+      ]
+    },
+    {
+      "version": "1.0.6",
+      "releaseDate": "2026-05-10",
+      "title": "Sửa lỗi cache PWA giữ bản cũ",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Tắt Service Worker trong môi trường preview/iframe để luôn hiển thị bản code mới nhất khi sửa"
+        },
+        {
+          "type": "fixed",
+          "text": "Tự động dọn cache + Service Worker cũ còn sót lại trên thiết bị người dùng"
+        },
+        {
+          "type": "improved",
+          "text": "PWA install + offline vẫn hoạt động đầy đủ trên domain production"
+        }
+      ]
+    }
+  ]
+}

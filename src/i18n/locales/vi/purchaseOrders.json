@@ -1,0 +1,161 @@
+{
+  "title": "Quản lý Đơn hàng",
+  "dashboard": "Quản lý đơn đặt hàng và nhà cung cấp",
+  "list": {
+    "title": "Danh sách đơn hàng",
+    "empty": "Chưa có đơn hàng nào"
+  },
+  "page": {
+    "title": "Đơn đặt hàng",
+    "description": "Quản lý đơn đặt hàng từ nhà cung cấp",
+    "exportExcel": "Xuất Excel",
+    "createNew": "Tạo đơn mới"
+  },
+  "tabs": {
+    "all": "Tất cả",
+    "draft": "Nháp",
+    "submitted": "Chờ duyệt",
+    "approved": "Đã duyệt",
+    "ordered": "Đã đặt",
+    "partial": "Nhận 1 phần",
+    "received": "Hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "quickFilters": {
+    "createdByMe": "Do tôi tạo",
+    "pendingMyApproval": "Cần duyệt của tôi",
+    "highValue": "Tổng giá trị > 10M"
+  },
+  "stats": {
+    "totalOrders": "Tổng đơn",
+    "allOrders": "Tất cả đơn đặt hàng",
+    "pendingApproval": "Chờ duyệt",
+    "needsProcessing": "Cần xử lý",
+    "value30d": "GT 30 ngày",
+    "totalValue": "Tổng giá trị",
+    "completed30d": "Hoàn thành",
+    "last30Days": "30 ngày qua"
+  },
+  "form": {
+    "create": "Tạo đơn đặt hàng mới",
+    "edit": "Chỉnh sửa đơn hàng",
+    "step": "Bước {{current}}/{{total}}",
+    "steps": {
+      "vendor": "Nhà cung cấp",
+      "products": "Sản phẩm",
+      "details": "Chi tiết",
+      "confirm": "Xác nhận",
+      "selectVendor": "Chọn nhà cung cấp",
+      "selectProducts": "Chọn sản phẩm",
+      "orderDetails": "Chi tiết đơn hàng",
+      "reviewSubmit": "Xem lại & Gửi"
+    },
+    "vendorInfo": "Thông tin nhà cung cấp",
+    "address": "Địa chỉ",
+    "contact": "Liên hệ",
+    "payment": "Thanh toán",
+    "delivery": "Giao hàng",
+    "minOrder": "Đơn TT",
+    "rating": "Rating",
+    "fromCatalog": "Từ danh mục",
+    "fromHistory": "Từ lịch sử",
+    "searchProducts": "Tìm sản phẩm...",
+    "product": "Sản phẩm",
+    "code": "Mã",
+    "stock": "Tồn kho",
+    "unit": "Đơn vị",
+    "lastPrice": "Giá gần nhất",
+    "featureInDevelopment": "Tính năng đang phát triển",
+    "orderDate": "Ngày đặt",
+    "expectedDeliveryDate": "Ngày giao dự kiến",
+    "shippingAddress": "Địa chỉ giao hàng",
+    "shippingAddressPlaceholder": "Nhập địa chỉ giao hàng...",
+    "vendorNotes": "Ghi chú cho nhà cung cấp",
+    "vendorNotesPlaceholder": "Yêu cầu đặc biệt, hướng dẫn giao hàng...",
+    "taxRate": "Thuế (%)",
+    "shippingFee": "Phí vận chuyển (₫)",
+    "orderOverview": "Tổng quan đơn hàng",
+    "reviewAndSubmit": "Xem lại & Gửi",
+    "vendorLabel": "Nhà cung cấp",
+    "productsCount": "Sản phẩm ({{count}})",
+    "deliveryInfo": "Thông tin giao hàng",
+    "expectedDelivery": "Ngày giao DK",
+    "confirmCheckbox": "Tôi đã kiểm tra kỹ thông tin và xác nhận tạo đơn hàng này",
+    "creating": "Đang tạo...",
+    "saveAndSubmit": "Lưu & Gửi duyệt"
+  },
+  "cart": {
+    "title": "Giỏ hàng",
+    "empty": "Chưa có sản phẩm nào",
+    "addedToCart": "Đã thêm {{name}} vào giỏ",
+    "removedFromCart": "Đã xóa khỏi giỏ hàng",
+    "quantity": "Số lượng",
+    "unitPrice": "Đơn giá",
+    "subtotal": "Thành tiền",
+    "addProduct": "Thêm sản phẩm"
+  },
+  "fields": {
+    "poCode": "Mã đơn hàng",
+    "vendor": "Nhà cung cấp",
+    "orderDate": "Ngày đặt hàng",
+    "deliveryDate": "Ngày giao dự kiến",
+    "shippingAddress": "Địa chỉ giao hàng",
+    "taxRate": "Thuế (%)",
+    "shippingFee": "Phí vận chuyển",
+    "notes": "Ghi chú",
+    "totalProducts": "Tổng sản phẩm"
+  },
+  "summary": {
+    "subtotal": "Tạm tính",
+    "tax": "Thuế ({{rate}}%)",
+    "shipping": "Phí vận chuyển",
+    "shippingFee": "Vận chuyển",
+    "total": "Tổng cộng",
+    "grandTotal": "TỔNG CỘNG"
+  },
+  "status": {
+    "draft": "Nháp",
+    "pending": "Chờ duyệt",
+    "approved": "Đã duyệt",
+    "ordered": "Đã đặt",
+    "shipped": "Đang giao",
+    "delivered": "Đã nhận",
+    "cancelled": "Đã hủy"
+  },
+  "actions": {
+    "create": "Tạo đơn hàng",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "cancel": "Hủy",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "submit": "Gửi đơn hàng"
+  },
+  "messages": {
+    "createSuccess": "Tạo đơn hàng thành công",
+    "createError": "Có lỗi xảy ra khi tạo đơn hàng",
+    "selectVendorRequired": "Vui lòng chọn nhà cung cấp",
+    "selectProductsRequired": "Vui lòng thêm ít nhất 1 sản phẩm",
+    "selectHotelRequired": "Vui lòng chọn khách sạn trước khi tạo đơn hàng",
+    "allHotelsMode": "Vui lòng chọn một khách sạn cụ thể trước khi tạo đơn hàng"
+  },
+  "placeholders": {
+    "selectVendor": "Chọn nhà cung cấp...",
+    "enterShippingAddress": "Nhập địa chỉ giao hàng",
+    "additionalNotes": "Ghi chú thêm..."
+  },
+  "validation": {
+    "vendorRequired": "Vui lòng chọn nhà cung cấp",
+    "addressMin": "Địa chỉ phải có ít nhất 10 ký tự",
+    "itemsMin": "Phải có ít nhất 1 sản phẩm",
+    "quantityPositive": "Số lượng phải lớn hơn 0",
+    "priceNonNegative": "Đơn giá không được âm",
+    "deliveryAfterOrder": "Ngày giao phải sau ngày đặt"
+  },
+  "table": {
+    "product": "Sản phẩm",
+    "qty": "SL",
+    "unitPrice": "Đơn giá",
+    "amount": "Thành tiền"
+  }
+}

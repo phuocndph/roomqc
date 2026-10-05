@@ -1,0 +1,188 @@
+{
+  "recurring": {
+    "title": "Vấn đề lặp lại",
+    "description": "Phân tích thiết bị và phòng có sự cố thường xuyên",
+    "tabs": {
+      "30days": "30 ngày",
+      "90days": "90 ngày",
+      "6months": "6 tháng",
+      "1year": "1 năm"
+    },
+    "stats": {
+      "devicesWithIssues": "Thiết bị/Phòng có vấn đề",
+      "totalIncidents": "Tổng sự cố (30 ngày)",
+      "totalCost": "Tổng chi phí"
+    },
+    "noIssues": {
+      "title": "Tuyệt vời! Không có vấn đề lặp lại",
+      "description": "Trong {{days}} ngày qua, không có thiết bị hoặc phòng nào gặp sự cố lặp lại (≥2 lần)",
+      "tipsTitle": "Mẹo phân tích:",
+      "tip1": "Thử tăng khoảng thời gian để xem xu hướng dài hạn",
+      "tip2": "Vấn đề lặp lại giúp xác định thiết bị cần thay thế",
+      "tip3": "Theo dõi chi phí bảo trì để tối ưu ngân sách"
+    }
+  },
+  "title": "Quản lý Bảo trì",
+  "pageTitle": "Yêu cầu bảo trì",
+  "dashboard": "Quản lý yêu cầu bảo trì",
+  "requests": {
+    "title": "Yêu cầu bảo trì",
+    "list": "Danh sách yêu cầu",
+    "new": "Tạo yêu cầu mới",
+    "detail": "Chi tiết yêu cầu",
+    "edit": "Chỉnh sửa yêu cầu",
+    "create": "Tạo yêu cầu bảo trì"
+  },
+  "recurring": {
+    "title": "Vấn đề lặp lại",
+    "list": "Danh sách vấn đề"
+  },
+  "form": {
+    "steps": {
+      "basicInfo": "Thông tin cơ bản",
+      "location": "Vị trí & Đối tượng",
+      "confirm": "Xác nhận"
+    },
+    "titleLabel": "Tiêu đề",
+    "titlePlaceholder": "Nhập tiêu đề yêu cầu",
+    "titleExamplePlaceholder": "VD: Tivi phòng 301 không lên hình",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Mô tả chi tiết vấn đề",
+    "descriptionExamplePlaceholder": "Mô tả chi tiết vấn đề, triệu chứng, thời gian xảy ra...",
+    "detailDescriptionLabel": "Mô tả chi tiết",
+    "priorityLabel": "Mức độ ưu tiên",
+    "issueTypeLabel": "Loại sự cố",
+    "locationLabel": "Vị trí",
+    "locationPlaceholder": "Ví dụ: Phòng 101, Tầng 1",
+    "detailLocationLabel": "Vị trí chi tiết",
+    "detailLocationPlaceholder": "VD: Phòng 301, khu vực phòng ngủ",
+    "roomLabel": "Phòng (tùy chọn)",
+    "roomPlaceholder": "Chọn phòng",
+    "itemLabel": "Thiết bị (tùy chọn)",
+    "itemPlaceholder": "Chọn thiết bị",
+    "roomDisplay": "Phòng {{number}} - Tầng {{floor}}",
+    "typeAndPriority": "Loại & Độ ưu tiên",
+    "locationAndItem": "Vị trí & Thiết bị",
+    "problemDescription": "Mô tả vấn đề",
+    "imagesLabel": "Hình ảnh minh họa",
+    "imagesHint": "Tải lên tối đa 5 hình ảnh mô tả vấn đề (không bắt buộc)",
+    "editDescription": "Cập nhật thông tin yêu cầu bảo trì",
+    "createDescription": "Báo cáo sự cố và yêu cầu bảo trì",
+    "priorityUrgentTime": "Xử lý ngay",
+    "priorityHighTime": "Trong 4 giờ",
+    "priorityMediumTime": "Trong ngày",
+    "priorityLowTime": "Trong tuần"
+  },
+  "issueType": {
+    "repair": "Sửa chữa",
+    "replace": "Thay thế",
+    "inspection": "Kiểm tra",
+    "cleaning": "Vệ sinh",
+    "other": "Khác"
+  },
+  "fields": {
+    "requestCode": "Mã yêu cầu",
+    "title": "Tiêu đề",
+    "description": "Mô tả",
+    "category": "Danh mục",
+    "priority": "Độ ưu tiên",
+    "status": "Trạng thái",
+    "location": "Vị trí",
+    "room": "Phòng",
+    "item": "Thiết bị",
+    "assignedTo": "Phân công cho",
+    "reportedBy": "Người báo cáo",
+    "reportedAt": "Ngày báo cáo",
+    "completedAt": "Ngày hoàn thành",
+    "estimatedCost": "Chi phí ước tính",
+    "actualCost": "Chi phí thực tế",
+    "notes": "Ghi chú",
+    "type": "Loại",
+    "createdAt": "Ngày tạo"
+  },
+  "priority": {
+    "low": "Thấp",
+    "medium": "Trung bình",
+    "high": "Cao",
+    "urgent": "Khẩn cấp"
+  },
+  "status": {
+    "pending": "Chờ xử lý",
+    "assigned": "Đã phân công",
+    "in_progress": "Đang xử lý",
+    "inProgress": "Đang xử lý",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "actions": {
+    "assign": "Phân công",
+    "start": "Bắt đầu",
+    "complete": "Hoàn thành",
+    "cancel": "Hủy",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "submit": "Hoàn thành",
+    "processing": "Đang xử lý..."
+  },
+  "messages": {
+    "createSuccess": "Tạo yêu cầu thành công",
+    "updateSuccess": "Cập nhật yêu cầu thành công",
+    "assignSuccess": "Đã phân công thành công",
+    "completeSuccess": "Hoàn thành yêu cầu",
+    "cancelSuccess": "Đã hủy yêu cầu",
+    "noRequests": "Chưa có yêu cầu nào",
+    "notFoundSearch": "Không tìm thấy yêu cầu",
+    "refreshed": "Đã cập nhật!"
+  },
+  "filters": {
+    "all": "Tất cả",
+    "byStatus": "Theo trạng thái",
+    "byPriority": "Theo độ ưu tiên",
+    "byRoom": "Theo phòng",
+    "search": "Tìm kiếm yêu cầu..."
+  },
+  "validation": {
+    "titleRequired": "Vui lòng nhập tiêu đề",
+    "descriptionRequired": "Vui lòng nhập mô tả",
+    "locationRequired": "Vui lòng nhập vị trí"
+  },
+  "list": {
+    "title": "Yêu cầu bảo trì",
+    "description": "Quản lý tất cả yêu cầu bảo trì",
+    "createRequest": "Tạo yêu cầu",
+    "tabs": {
+      "all": "Tất cả",
+      "waiting": "Đang chờ",
+      "pending": "Tiếp nhận",
+      "inProgress": "Đang kiểm tra",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy"
+    }
+  },
+  "dashboard": {
+    "title": "Quản lý Bảo trì",
+    "description": "Theo dõi và xử lý các yêu cầu bảo trì",
+    "schedule": "Lịch bảo trì",
+    "reports": "Báo cáo",
+    "createRequest": "Tạo yêu cầu",
+    "quickActions": "Thao tác nhanh",
+    "recentCompletions": "Hoàn thành gần đây",
+    "cost": "Chi phí",
+    "actions": {
+      "createNew": "Tạo yêu cầu mới",
+      "createNewDesc": "Báo cáo sự cố bảo trì",
+      "schedule": "Lên lịch bảo trì",
+      "scheduleDesc": "Bảo trì định kỳ",
+      "viewReports": "Xem báo cáo",
+      "viewReportsDesc": "Phân tích & thống kê",
+      "manageTech": "Quản lý thợ",
+      "manageTechDesc": "Phân công công việc"
+    }
+  },
+  "select": {
+    "placeholder": "Chọn yêu cầu bảo trì...",
+    "search": "Tìm yêu cầu...",
+    "empty": "Không có yêu cầu đang xử lý",
+    "pendingRequests": "Yêu cầu đang chờ xử lý"
+  }
+}

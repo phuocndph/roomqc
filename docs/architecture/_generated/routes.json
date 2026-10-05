@@ -1,0 +1,1335 @@
+{
+  "routes": [
+    {
+      "path": "/landing",
+      "element": "LandingPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/login",
+      "element": "Login",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/register",
+      "element": "Register",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/forgot-password",
+      "element": "ForgotPassword",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/change-password",
+      "element": "AuthGuard",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/callback",
+      "element": "AuthCallback",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/.lovable/oauth/consent",
+      "element": "OAuthConsent",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/unauthorized",
+      "element": "Unauthorized",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/payment-qr/:paymentId",
+      "element": "PaymentQRPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/i/:token",
+      "element": "InvoiceVatClaimPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/scan-document/:sessionId",
+      "element": "ScanDocumentPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/onboarding",
+      "element": "AuthGuard",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/settings/system-test",
+      "element": "AuthGuard",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/docs",
+      "element": "DocsLayout",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin']}"
+    },
+    {
+      "path": "*",
+      "element": "DocsViewer",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/super-admin",
+      "element": "SuperAdminErrorBoundary",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "dashboard",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "tenants",
+      "element": "TenantsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "approval",
+      "element": "TenantApprovalPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "promo-codes",
+      "element": "PromoCodesPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "campaigns",
+      "element": "MarketingCampaignsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "campaigns/new",
+      "element": "NewCampaignPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reminders",
+      "element": "RenewalRemindersPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "pricing",
+      "element": "PricingPlansPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "payments",
+      "element": "PaymentSettingsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "analytics",
+      "element": "AnalyticsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "settings",
+      "element": "SuperAdminSettingsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "announcements",
+      "element": "AnnouncementsAdminPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/",
+      "element": "RootRoute",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "more",
+      "element": "MorePage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "chat",
+      "element": "ChatPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "chat/:conversationId",
+      "element": "ChatPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory",
+      "element": "InventoryDashboardPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\""
+    },
+    {
+      "path": "inventory/transactions",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/inbound",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/inbound/new",
+      "element": "InboundPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "path": "inventory/outbound",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/outbound/new",
+      "element": "OutboundPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "path": "inventory/adjustments",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/adjustments/new",
+      "element": "CreateAdjustmentPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "path": "inventory/adjustments/:id",
+      "element": "AdjustmentDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\""
+    },
+    {
+      "path": "inventory/adjustments/:id/check",
+      "element": "CheckAdjustmentPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\" action=\"update\""
+    },
+    {
+      "path": "inventory/distributions",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/transfer/new",
+      "element": "TransferPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "path": "inventory/distributions/new",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/distributions/from-supplements",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/distributions/:id",
+      "element": "DistributionOrderDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"inventory\""
+    },
+    {
+      "path": "inventory/reorder",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/dead-stock",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "inventory/analytics",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "items",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "items/:id",
+      "element": "ItemDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"items\""
+    },
+    {
+      "path": "items/new",
+      "element": "ItemFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"items\" action=\"create\""
+    },
+    {
+      "path": "items/:id/edit",
+      "element": "ItemFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"items\" action=\"update\""
+    },
+    {
+      "path": "items/categories",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "rooms",
+      "element": "RoomsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "rooms/new",
+      "element": "RoomFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"create\""
+    },
+    {
+      "path": "rooms/:id",
+      "element": "RoomDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "rooms/:id/edit",
+      "element": "RoomFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-lean",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-lean/inspection",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-lean/review",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-lean/success",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-replenish",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/:id/check-delivery",
+      "element": "RequireShiftRouteGate",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "path": "rooms/standards",
+      "element": "RoomStandardsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "supplements",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "bookings",
+      "element": "BookingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "bookings/:id",
+      "element": "BookingDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "guests",
+      "element": "GuestsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "guests/:id",
+      "element": "GuestDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "lost-found",
+      "element": "LostFoundPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "guest-invoices",
+      "element": "GuestInvoicesPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "finance/reconciliation",
+      "element": "ReconciliationPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "path": "staff/shift-handover",
+      "element": "ShiftHandoverPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reception/pending-charges",
+      "element": "PendingChargesPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "laundry",
+      "element": "LaundryDashboardPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/batches",
+      "element": "LaundryBatchesPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/batches/new",
+      "element": "CreateBatchPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "path": "laundry/batches/:id",
+      "element": "BatchDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/batches/:id/receive",
+      "element": "ReceiveBatchPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\" action=\"update\""
+    },
+    {
+      "path": "laundry/vendors",
+      "element": "VendorListPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/vendors/new",
+      "element": "VendorFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "path": "laundry/vendors/:id",
+      "element": "VendorDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/vendors/:id/edit",
+      "element": "VendorFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\" action=\"update\""
+    },
+    {
+      "path": "laundry/compensation",
+      "element": "LaundryCompensationPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\""
+    },
+    {
+      "path": "laundry/linen-batches/new",
+      "element": "NewLinenBatchPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "path": "settings",
+      "element": "SettingsRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "settings/general",
+      "element": "GeneralSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/hotels",
+      "element": "HotelsManagementPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"hotels\""
+    },
+    {
+      "path": "settings/categories",
+      "element": "CategoryManagementPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/fixed-costs",
+      "element": "FixedCostsSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/users",
+      "element": "UsersPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"users\""
+    },
+    {
+      "path": "settings/change-password",
+      "element": "ChangePasswordPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "staff",
+      "element": "StaffManagementPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"users\""
+    },
+    {
+      "path": "my-tasks",
+      "element": "MyTasksPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "staff/housekeeping",
+      "element": "HousekeepingStaffDashboard",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "housekeeping",
+      "element": "HousekeepingDashboardPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "housekeeping/review",
+      "element": "TasksPendingReviewPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "housekeeping/qc",
+      "element": "QcDashboardPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"rooms\""
+    },
+    {
+      "path": "housekeeping/issues-review",
+      "element": "IssuesReviewPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager', 'department_manager']}"
+    },
+    {
+      "path": "settings/warehouses",
+      "element": "InventoryHubRedirect",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "settings/subscription",
+      "element": "SubscriptionPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "path": "settings/subscription/pay/:invoiceId",
+      "element": "SubscriptionPaymentPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "path": "settings/usage",
+      "element": "UsageDashboardPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "path": "settings/notifications",
+      "element": "NotificationSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/notifications/devices",
+      "element": "PushDevicesPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/telegram",
+      "element": "TelegramSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/business",
+      "element": "BusinessConfigurationPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/room-check",
+      "element": "RoomCheckSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/workflows",
+      "element": "WorkflowsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\" action=\"manage\""
+    },
+    {
+      "path": "settings/pricing-rules",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "settings/pricing",
+      "element": "PricingHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/pricing/seasonal",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "legal/stay-registrations",
+      "element": "StayRegistrationsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"bookings\""
+    },
+    {
+      "path": "settings/legal/stay-registration",
+      "element": "StayRegistrationSettingsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"settings\""
+    },
+    {
+      "path": "settings/ai",
+      "element": "AISettingsPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "path": "settings/audit-log",
+      "element": "AuditLogPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager', 'department_manager']}"
+    },
+    {
+      "path": "settings/hotel-policy",
+      "element": "HotelPolicyPage",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager']}"
+    },
+    {
+      "path": "profile",
+      "element": "ProfilePage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "settings/profile",
+      "element": "ProfilePage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "notifications",
+      "element": "NotificationHistoryPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "help",
+      "element": "HelpPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "whats-new",
+      "element": "WhatsNewPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports",
+      "element": "OverviewHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/daily",
+      "element": "DailyReportPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/finance",
+      "element": "FinanceHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/operations",
+      "element": "OperationsHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/housekeeping",
+      "element": "HousekeepingHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/inventory",
+      "element": "InventoryHubPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"reports\""
+    },
+    {
+      "path": "reports/legacy",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/cash-flow",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/revenue",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/financial",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/rooms",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/damages",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/laundry",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/outbound",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/stock-audit",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "reports/maintenance",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "vendors",
+      "element": "VendorManagementListPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"vendors\""
+    },
+    {
+      "path": "vendors/new",
+      "element": "VendorManagementFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"vendors\" action=\"create\""
+    },
+    {
+      "path": "vendors/:id",
+      "element": "VendorManagementDetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"vendors\""
+    },
+    {
+      "path": "vendors/:id/edit",
+      "element": "VendorManagementFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"vendors\" action=\"update\""
+    },
+    {
+      "path": "vendors/compare",
+      "element": "VendorComparisonPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"vendors\""
+    },
+    {
+      "path": "maintenance",
+      "element": "MaintenanceDashboard",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\""
+    },
+    {
+      "path": "maintenance/requests",
+      "element": "MaintenanceRequestList",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\""
+    },
+    {
+      "path": "maintenance/requests/new",
+      "element": "MaintenanceRequestForm",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\" action=\"create\""
+    },
+    {
+      "path": "maintenance/requests/:id",
+      "element": "MaintenanceRequestDetail",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\""
+    },
+    {
+      "path": "maintenance/requests/edit/:id",
+      "element": "MaintenanceRequestForm",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\" action=\"update\""
+    },
+    {
+      "path": "maintenance/recurring-issues",
+      "element": "RecurringIssuesPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"maintenance\""
+    },
+    {
+      "path": "purchase-orders",
+      "element": "POListPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"purchase_orders\""
+    },
+    {
+      "path": "purchase-orders/new",
+      "element": "POFormPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"purchase_orders\" action=\"create\""
+    },
+    {
+      "path": "purchase-orders/:id",
+      "element": "PODetailPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"purchase_orders\""
+    },
+    {
+      "path": "hotels",
+      "element": "HotelsPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"hotels\""
+    },
+    {
+      "path": "hotels/performance",
+      "element": "HotelPerformancePage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"hotels\""
+    },
+    {
+      "path": "users",
+      "element": "UsersPage",
+      "guard": "PermissionRoute",
+      "guardAttrs": "module=\"users\""
+    },
+    {
+      "path": "/dashboard",
+      "element": "Navigate",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "*",
+      "element": "NotFound",
+      "guard": null,
+      "guardAttrs": ""
+    }
+  ],
+  "guards": [
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin']}"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"dashboard\" fallback={<Navigate to=\"/auth/callback\" replace /"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"inventory\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"items\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"items\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"items\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"laundry\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"hotels\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"users\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"users\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\""
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager', 'department_manager']}"
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\" action=\"manage\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"bookings\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"settings\""
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner']}"
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager', 'department_manager']}"
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['super_admin', 'owner', 'hotel_manager']}"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"reports\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"vendors\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"vendors\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"vendors\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"vendors\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"vendors\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\" action=\"update\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"maintenance\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"purchase_orders\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"purchase_orders\" action=\"create\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"purchase_orders\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"hotels\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"hotels\""
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"users\""
+    }
+  ],
+  "source": "src/App.tsx"
+}

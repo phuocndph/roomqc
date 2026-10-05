@@ -1,0 +1,2287 @@
+ab_tests	id	uuid	NO	gen_random_uuid()
+ab_tests	name	text	NO	
+ab_tests	variant_a_subject	text	NO	
+ab_tests	variant_b_subject	text	NO	
+ab_tests	sample_size	integer	NO	1000
+ab_tests	status	text	NO	'draft'::text
+ab_tests	winner	text	YES	
+ab_tests	sent_a	integer	NO	0
+ab_tests	sent_b	integer	NO	0
+ab_tests	opened_a	integer	NO	0
+ab_tests	opened_b	integer	NO	0
+ab_tests	created_at	timestamp with time zone	NO	now()
+ab_tests	updated_at	timestamp with time zone	NO	now()
+activity_logs	id	uuid	NO	gen_random_uuid()
+activity_logs	tenant_id	uuid	NO	
+activity_logs	user_id	uuid	YES	
+activity_logs	user_name	text	NO	
+activity_logs	user_role	text	YES	
+activity_logs	action	text	NO	
+activity_logs	entity_type	text	NO	
+activity_logs	entity_id	uuid	YES	
+activity_logs	entity_name	text	YES	
+activity_logs	description	text	NO	
+activity_logs	old_values	jsonb	YES	
+activity_logs	new_values	jsonb	YES	
+activity_logs	ip_address	inet	YES	
+activity_logs	user_agent	text	YES	
+activity_logs	created_at	timestamp with time zone	YES	now()
+ai_settings	id	uuid	NO	gen_random_uuid()
+ai_settings	tenant_id	uuid	YES	
+ai_settings	config_key	text	NO	
+ai_settings	config_value	text	NO	
+ai_settings	updated_by	uuid	YES	
+ai_settings	updated_at	timestamp with time zone	NO	now()
+ai_settings	created_at	timestamp with time zone	NO	now()
+announcement_dismissals	announcement_id	uuid	NO	
+announcement_dismissals	user_id	uuid	NO	
+announcement_dismissals	dismissed_at	timestamp with time zone	NO	now()
+announcements	id	uuid	NO	gen_random_uuid()
+announcements	kind	USER-DEFINED	NO	
+announcements	placement	USER-DEFINED	NO	'popup_center'::announcement_placement
+announcements	variant	USER-DEFINED	NO	'info'::announcement_variant
+announcements	title	text	NO	
+announcements	body	text	YES	
+announcements	cta_label	text	YES	
+announcements	cta_url	text	YES	
+announcements	image_url	text	YES	
+announcements	icon	text	YES	
+announcements	audience	text	NO	'all'::text
+announcements	is_active	boolean	NO	true
+announcements	is_dismissible	boolean	NO	true
+announcements	starts_at	timestamp with time zone	YES	
+announcements	ends_at	timestamp with time zone	YES	
+announcements	version	text	YES	
+announcements	priority	integer	NO	0
+announcements	created_by	uuid	YES	
+announcements	created_at	timestamp with time zone	NO	now()
+announcements	updated_at	timestamp with time zone	NO	now()
+announcements	content	jsonb	YES	
+audit_log	id	bigint	NO	nextval('audit_log_id_seq'::regclass)
+audit_log	tenant_id	uuid	YES	
+audit_log	hotel_id	uuid	YES	
+audit_log	table_name	text	NO	
+audit_log	record_id	uuid	NO	
+audit_log	action	text	NO	
+audit_log	actor_id	uuid	YES	
+audit_log	actor_role	text	YES	
+audit_log	old_data	jsonb	YES	
+audit_log	new_data	jsonb	YES	
+audit_log	changed_fields	ARRAY	YES	
+audit_log	context	jsonb	YES	'{}'::jsonb
+audit_log	created_at	timestamp with time zone	NO	now()
+backup_logs	id	uuid	NO	gen_random_uuid()
+backup_logs	tenant_id	uuid	NO	
+backup_logs	backup_type	text	NO	
+backup_logs	backup_scope	ARRAY	NO	
+backup_logs	file_path	text	YES	
+backup_logs	file_size_bytes	bigint	YES	
+backup_logs	duration_seconds	integer	YES	
+backup_logs	status	text	NO	
+backup_logs	error_message	text	YES	
+backup_logs	created_by	uuid	YES	
+backup_logs	created_at	timestamp with time zone	YES	now()
+backup_logs	completed_at	timestamp with time zone	YES	
+bank_payment_settings	id	uuid	NO	gen_random_uuid()
+bank_payment_settings	bank_code	text	NO	
+bank_payment_settings	bank_name	text	NO	
+bank_payment_settings	account_number	text	NO	
+bank_payment_settings	account_holder	text	NO	
+bank_payment_settings	payment_prefix	text	YES	'HD-'::text
+bank_payment_settings	qr_template	text	YES	'compact'::text
+bank_payment_settings	is_active	boolean	YES	true
+bank_payment_settings	created_at	timestamp with time zone	YES	now()
+bank_payment_settings	updated_at	timestamp with time zone	YES	now()
+bank_payment_settings	hotel_id	uuid	YES	
+bank_payment_settings	tenant_id	uuid	YES	
+batch_inventory	id	uuid	NO	gen_random_uuid()
+batch_inventory	tenant_id	uuid	NO	
+batch_inventory	hotel_id	uuid	NO	
+batch_inventory	item_id	uuid	NO	
+batch_inventory	batch_code	text	NO	
+batch_inventory	quantity_initial	integer	NO	
+batch_inventory	quantity_available	integer	NO	
+batch_inventory	wash_cycles	integer	NO	0
+batch_inventory	received_at	timestamp with time zone	NO	now()
+batch_inventory	retired_at	timestamp with time zone	YES	
+batch_inventory	created_by	uuid	YES	
+batch_inventory	created_at	timestamp with time zone	NO	now()
+batch_inventory	updated_at	timestamp with time zone	NO	now()
+booking_consumables	id	uuid	NO	gen_random_uuid()
+booking_consumables	tenant_id	uuid	NO	
+booking_consumables	booking_id	uuid	NO	
+booking_consumables	item_id	uuid	NO	
+booking_consumables	room_id	uuid	NO	
+booking_consumables	initial_quantity	integer	NO	0
+booking_consumables	supplemented_quantity	integer	NO	0
+booking_consumables	remaining_quantity	integer	YES	
+booking_consumables	consumed_quantity	integer	YES	
+booking_consumables	unit_price	numeric	YES	0
+booking_consumables	notes	text	YES	
+booking_consumables	created_at	timestamp with time zone	NO	now()
+booking_consumables	updated_at	timestamp with time zone	NO	now()
+booking_payments	id	uuid	NO	gen_random_uuid()
+booking_payments	tenant_id	uuid	NO	
+booking_payments	hotel_id	uuid	NO	
+booking_payments	booking_id	uuid	NO	
+booking_payments	amount	numeric	NO	
+booking_payments	payment_method	text	NO	
+booking_payments	payment_status	text	NO	'pending'::text
+booking_payments	transaction_reference	text	YES	
+booking_payments	paid_at	timestamp with time zone	YES	
+booking_payments	created_by	uuid	YES	
+booking_payments	metadata	jsonb	YES	'{}'::jsonb
+booking_payments	notes	text	YES	
+booking_payments	created_at	timestamp with time zone	YES	now()
+booking_payments	updated_at	timestamp with time zone	YES	now()
+booking_payments	gateway_transaction_id	text	YES	
+booking_service_charges	id	uuid	NO	gen_random_uuid()
+booking_service_charges	tenant_id	uuid	NO	
+booking_service_charges	booking_id	uuid	NO	
+booking_service_charges	service_id	uuid	YES	
+booking_service_charges	service_name	text	NO	
+booking_service_charges	quantity	integer	NO	1
+booking_service_charges	unit_price	numeric	NO	0
+booking_service_charges	total_price	numeric	NO	0
+booking_service_charges	notes	text	YES	
+booking_service_charges	created_by	uuid	YES	
+booking_service_charges	created_at	timestamp with time zone	YES	now()
+campaign_engagement	id	uuid	NO	gen_random_uuid()
+campaign_engagement	campaign_id	uuid	NO	
+campaign_engagement	tenant_id	uuid	NO	
+campaign_engagement	email_sent_at	timestamp with time zone	YES	
+campaign_engagement	email_opened_at	timestamp with time zone	YES	
+campaign_engagement	clicked_at	timestamp with time zone	YES	
+campaign_engagement	converted_at	timestamp with time zone	YES	
+campaign_engagement	conversion_value	numeric	YES	
+chargeable_consumptions	id	uuid	NO	gen_random_uuid()
+chargeable_consumptions	tenant_id	uuid	NO	
+chargeable_consumptions	booking_id	uuid	NO	
+chargeable_consumptions	room_id	uuid	NO	
+chargeable_consumptions	item_id	uuid	NO	
+chargeable_consumptions	item_code	text	YES	
+chargeable_consumptions	item_name	text	NO	
+chargeable_consumptions	quantity	integer	NO	1
+chargeable_consumptions	unit_price	numeric	NO	0
+chargeable_consumptions	total_amount	numeric	YES	
+chargeable_consumptions	recorded_by	uuid	YES	
+chargeable_consumptions	recorded_at	timestamp with time zone	YES	now()
+chargeable_consumptions	is_billed	boolean	YES	false
+chargeable_consumptions	billed_at	timestamp with time zone	YES	
+chargeable_consumptions	notes	text	YES	
+chargeable_consumptions	created_at	timestamp with time zone	YES	now()
+chargeable_consumptions	updated_at	timestamp with time zone	YES	now()
+chargeable_consumptions	approval_status	text	NO	'pending'::text
+chargeable_consumptions	reviewed_by	uuid	YES	
+chargeable_consumptions	reviewed_at	timestamp with time zone	YES	
+chargeable_consumptions	reject_reason	text	YES	
+chargeable_consumptions	final_status	text	YES	
+chargeable_consumptions	overridden_by	uuid	YES	
+chargeable_consumptions	overridden_at	timestamp with time zone	YES	
+chargeable_consumptions	override_reason	text	YES	
+chargeable_consumptions	source_issue_id	uuid	YES	
+checkout_inspection_requests	id	uuid	NO	gen_random_uuid()
+checkout_inspection_requests	tenant_id	uuid	NO	
+checkout_inspection_requests	hotel_id	uuid	NO	
+checkout_inspection_requests	room_id	uuid	NO	
+checkout_inspection_requests	booking_id	uuid	NO	
+checkout_inspection_requests	requested_by	uuid	YES	
+checkout_inspection_requests	assigned_to	uuid	NO	
+checkout_inspection_requests	status	text	NO	'pending'::text
+checkout_inspection_requests	room_check_id	uuid	YES	
+checkout_inspection_requests	created_at	timestamp with time zone	NO	now()
+checkout_inspection_requests	started_at	timestamp with time zone	YES	
+checkout_inspection_requests	completed_at	timestamp with time zone	YES	
+checkout_inspection_requests	notes	text	YES	
+checkout_inspection_requests	phase1_damage_data	jsonb	YES	
+compensation_requests	id	uuid	NO	gen_random_uuid()
+compensation_requests	tenant_id	uuid	NO	
+compensation_requests	hotel_id	uuid	NO	
+compensation_requests	request_code	text	NO	
+compensation_requests	request_type	text	NO	'inventory_shortage'::text
+compensation_requests	status	text	NO	'pending'::text
+compensation_requests	source_type	text	YES	
+compensation_requests	source_id	uuid	YES	
+compensation_requests	responsible_person_id	uuid	YES	
+compensation_requests	responsible_person_name	text	YES	
+compensation_requests	item_id	uuid	YES	
+compensation_requests	item_name	text	YES	
+compensation_requests	item_code	text	YES	
+compensation_requests	quantity	integer	NO	1
+compensation_requests	unit_price	numeric	YES	0
+compensation_requests	total_amount	numeric	NO	0
+compensation_requests	resolution_notes	text	YES	
+compensation_requests	approved_by	uuid	YES	
+compensation_requests	approved_at	timestamp with time zone	YES	
+compensation_requests	paid_at	timestamp with time zone	YES	
+compensation_requests	payment_method	text	YES	
+compensation_requests	payment_reference	text	YES	
+compensation_requests	created_by	uuid	NO	
+compensation_requests	created_at	timestamp with time zone	NO	now()
+compensation_requests	updated_at	timestamp with time zone	NO	now()
+consumption_snapshots	id	uuid	NO	gen_random_uuid()
+consumption_snapshots	tenant_id	uuid	NO	
+consumption_snapshots	hotel_id	uuid	NO	
+consumption_snapshots	item_id	uuid	NO	
+consumption_snapshots	snapshot_date	date	NO	CURRENT_DATE
+consumption_snapshots	qty_consumed_7d	numeric	NO	0
+consumption_snapshots	qty_consumed_30d	numeric	NO	0
+consumption_snapshots	qty_consumed_90d	numeric	NO	0
+consumption_snapshots	avg_daily_consumption	numeric	NO	0
+consumption_snapshots	stock_on_date	numeric	NO	0
+consumption_snapshots	stock_days_remaining	numeric	YES	
+consumption_snapshots	created_at	timestamp with time zone	NO	now()
+consumption_snapshots	window_days	integer	NO	30
+conversation_members	conversation_id	uuid	NO	
+conversation_members	user_id	uuid	NO	
+conversation_members	tenant_id	uuid	NO	
+conversation_members	role	USER-DEFINED	NO	'member'::conversation_member_role
+conversation_members	last_read_message_id	uuid	YES	
+conversation_members	last_read_at	timestamp with time zone	YES	
+conversation_members	muted_until	timestamp with time zone	YES	
+conversation_members	joined_at	timestamp with time zone	NO	now()
+conversation_members	left_at	timestamp with time zone	YES	
+conversations	id	uuid	NO	gen_random_uuid()
+conversations	tenant_id	uuid	NO	
+conversations	hotel_id	uuid	NO	
+conversations	type	USER-DEFINED	NO	
+conversations	name	text	YES	
+conversations	created_by	uuid	NO	
+conversations	direct_key	text	YES	
+conversations	last_message_at	timestamp with time zone	YES	
+conversations	last_message_preview	text	YES	
+conversations	last_sender_id	uuid	YES	
+conversations	created_at	timestamp with time zone	NO	now()
+conversations	updated_at	timestamp with time zone	NO	now()
+custom_field_values	entity_type	text	NO	
+custom_field_values	entity_id	uuid	NO	
+custom_field_values	tenant_id	uuid	NO	
+custom_field_values	values	jsonb	NO	'{}'::jsonb
+custom_field_values	updated_at	timestamp with time zone	YES	now()
+custom_fields	id	uuid	NO	gen_random_uuid()
+custom_fields	tenant_id	uuid	NO	
+custom_fields	entity_type	text	NO	
+custom_fields	field_name	text	NO	
+custom_fields	label	text	NO	
+custom_fields	description	text	YES	
+custom_fields	field_type	text	NO	
+custom_fields	required	boolean	YES	false
+custom_fields	validation_rule	text	YES	
+custom_fields	min_value	numeric	YES	
+custom_fields	max_value	numeric	YES	
+custom_fields	min_length	integer	YES	
+custom_fields	max_length	integer	YES	
+custom_fields	options	jsonb	YES	
+custom_fields	default_value	text	YES	
+custom_fields	display_order	integer	YES	0
+custom_fields	show_in_list	boolean	YES	false
+custom_fields	show_in_filters	boolean	YES	false
+custom_fields	status	text	YES	'active'::text
+custom_fields	created_at	timestamp with time zone	YES	now()
+custom_fields	updated_at	timestamp with time zone	YES	now()
+dashboard_activities	id	uuid	YES	
+dashboard_activities	type	text	YES	
+dashboard_activities	description	text	YES	
+dashboard_activities	user_name	text	YES	
+dashboard_activities	user_avatar	text	YES	
+dashboard_activities	created_at	timestamp with time zone	YES	
+dashboard_activities	tenant_id	uuid	YES	
+dashboard_activities	metadata	jsonb	YES	
+dashboard_stats	hotel_id	uuid	YES	
+dashboard_stats	tenant_id	uuid	YES	
+dashboard_stats	hotel_name	text	YES	
+dashboard_stats	total_items	bigint	YES	
+dashboard_stats	total_quantity	bigint	YES	
+dashboard_stats	total_inventory_value	numeric	YES	
+dashboard_stats	total_in_stock	bigint	YES	
+dashboard_stats	total_in_use	bigint	YES	
+dashboard_stats	total_in_laundry	bigint	YES	
+dashboard_stats	total_damaged	bigint	YES	
+dashboard_stats	low_stock_items_count	bigint	YES	
+dashboard_stats	total_rooms	bigint	YES	
+dashboard_stats	vacant_rooms	bigint	YES	
+dashboard_stats	occupied_rooms	bigint	YES	
+dashboard_stats	cleaning_rooms	bigint	YES	
+dashboard_stats	maintenance_rooms	bigint	YES	
+dashboard_stats	active_laundry_batches	bigint	YES	
+dashboard_stats	pending_maintenance_requests	bigint	YES	
+distribution_order_batches	id	uuid	NO	gen_random_uuid()
+distribution_order_batches	distribution_order_id	uuid	NO	
+distribution_order_batches	batch_number	integer	NO	
+distribution_order_batches	status	text	NO	'open'::text
+distribution_order_batches	handed_over_at	timestamp with time zone	YES	
+distribution_order_batches	handed_over_by	uuid	YES	
+distribution_order_batches	received_at	timestamp with time zone	YES	
+distribution_order_batches	received_by	uuid	YES	
+distribution_order_batches	created_at	timestamp with time zone	YES	now()
+distribution_order_batches	updated_at	timestamp with time zone	YES	now()
+distribution_order_items	id	uuid	NO	gen_random_uuid()
+distribution_order_items	distribution_order_room_id	uuid	NO	
+distribution_order_items	item_id	uuid	NO	
+distribution_order_items	quantity	integer	NO	1
+distribution_order_items	quantity_confirmed	integer	YES	0
+distribution_order_items	status	text	NO	'pending'::text
+distribution_order_items	notes	text	YES	
+distribution_order_items	created_at	timestamp with time zone	YES	now()
+distribution_order_items	updated_at	timestamp with time zone	YES	now()
+distribution_order_items	quantity_actual	integer	YES	
+distribution_order_rooms	id	uuid	NO	gen_random_uuid()
+distribution_order_rooms	distribution_order_id	uuid	NO	
+distribution_order_rooms	room_id	uuid	NO	
+distribution_order_rooms	status	text	NO	'pending'::text
+distribution_order_rooms	delivered_at	timestamp with time zone	YES	
+distribution_order_rooms	confirmed_at	timestamp with time zone	YES	
+distribution_order_rooms	confirmed_by	uuid	YES	
+distribution_order_rooms	rejection_reason	text	YES	
+distribution_order_rooms	notes	text	YES	
+distribution_order_rooms	created_at	timestamp with time zone	YES	now()
+distribution_order_rooms	updated_at	timestamp with time zone	YES	now()
+distribution_order_rooms	delivered_by	uuid	YES	
+distribution_order_rooms	batch_number	integer	YES	1
+distribution_order_rooms	stop_status	text	YES	'pending'::text
+distribution_order_rooms	exception_type	text	YES	
+distribution_order_rooms	exception_reason	text	YES	
+distribution_order_rooms	returned_at	timestamp with time zone	YES	
+distribution_order_rooms	handover_to_order_id	uuid	YES	
+distribution_order_rooms	handover_at	timestamp with time zone	YES	
+distribution_order_rooms	booking_id	uuid	YES	
+distribution_orders	id	uuid	NO	gen_random_uuid()
+distribution_orders	tenant_id	uuid	NO	
+distribution_orders	hotel_id	uuid	NO	
+distribution_orders	order_code	text	NO	
+distribution_orders	status	text	NO	'pending'::text
+distribution_orders	transaction_id	uuid	YES	
+distribution_orders	total_rooms	integer	YES	0
+distribution_orders	total_items	integer	YES	0
+distribution_orders	assigned_to	uuid	YES	
+distribution_orders	created_by	uuid	NO	
+distribution_orders	started_at	timestamp with time zone	YES	
+distribution_orders	completed_at	timestamp with time zone	YES	
+distribution_orders	notes	text	YES	
+distribution_orders	created_at	timestamp with time zone	YES	now()
+distribution_orders	updated_at	timestamp with time zone	YES	now()
+distribution_orders	rooms_completed	integer	YES	0
+distribution_orders	floor	integer	YES	
+distribution_orders	shift_date	date	YES	CURRENT_DATE
+distribution_orders	shift_code	text	YES	'morning'::text
+distribution_orders	batch_size	integer	YES	10
+distribution_orders	released_at	timestamp with time zone	YES	
+distribution_orders	released_by	uuid	YES	
+distribution_orders	received_at	timestamp with time zone	YES	
+distribution_orders	received_by	uuid	YES	
+distribution_orders	supplement_request_id	uuid	YES	
+document_scan_sessions	id	uuid	NO	gen_random_uuid()
+document_scan_sessions	tenant_id	uuid	NO	
+document_scan_sessions	created_by	uuid	NO	
+document_scan_sessions	document_type	text	NO	'cccd'::text
+document_scan_sessions	status	text	NO	'pending'::text
+document_scan_sessions	scanned_data	jsonb	YES	
+document_scan_sessions	image_url	text	YES	
+document_scan_sessions	created_at	timestamp with time zone	NO	now()
+document_scan_sessions	completed_at	timestamp with time zone	YES	
+email_logs	id	uuid	NO	gen_random_uuid()
+email_logs	tenant_id	uuid	NO	
+email_logs	template_id	uuid	YES	
+email_logs	template_name	text	YES	
+email_logs	recipient_email	text	NO	
+email_logs	recipient_name	text	YES	
+email_logs	subject	text	NO	
+email_logs	status	text	NO	'pending'::text
+email_logs	sent_at	timestamp with time zone	YES	
+email_logs	delivered_at	timestamp with time zone	YES	
+email_logs	opened_at	timestamp with time zone	YES	
+email_logs	clicked_at	timestamp with time zone	YES	
+email_logs	failed_at	timestamp with time zone	YES	
+email_logs	error_message	text	YES	
+email_logs	retry_count	integer	YES	0
+email_logs	metadata	jsonb	YES	
+email_logs	created_at	timestamp with time zone	YES	now()
+email_notifications	id	uuid	NO	gen_random_uuid()
+email_notifications	tenant_id	uuid	YES	
+email_notifications	user_id	uuid	YES	
+email_notifications	to_email	text	NO	
+email_notifications	subject	text	NO	
+email_notifications	body_html	text	NO	
+email_notifications	body_text	text	YES	
+email_notifications	notification_type	text	NO	
+email_notifications	status	text	YES	'pending'::text
+email_notifications	sent_at	timestamp with time zone	YES	
+email_notifications	failed_at	timestamp with time zone	YES	
+email_notifications	failure_reason	text	YES	
+email_notifications	retry_count	integer	YES	0
+email_notifications	metadata	jsonb	YES	
+email_notifications	created_at	timestamp with time zone	YES	now()
+email_send_log	id	uuid	NO	gen_random_uuid()
+email_send_log	message_id	text	YES	
+email_send_log	template_name	text	NO	
+email_send_log	recipient_email	text	NO	
+email_send_log	status	text	NO	
+email_send_log	error_message	text	YES	
+email_send_log	metadata	jsonb	YES	
+email_send_log	created_at	timestamp with time zone	NO	now()
+email_send_state	id	integer	NO	1
+email_send_state	retry_after_until	timestamp with time zone	YES	
+email_send_state	batch_size	integer	NO	10
+email_send_state	send_delay_ms	integer	NO	200
+email_send_state	auth_email_ttl_minutes	integer	NO	15
+email_send_state	transactional_email_ttl_minutes	integer	NO	60
+email_send_state	updated_at	timestamp with time zone	NO	now()
+email_templates	id	uuid	NO	gen_random_uuid()
+email_templates	tenant_id	uuid	NO	
+email_templates	code	text	NO	
+email_templates	name	text	NO	
+email_templates	category	text	NO	
+email_templates	description	text	YES	
+email_templates	subject	text	NO	
+email_templates	html_body	text	NO	
+email_templates	text_body	text	YES	
+email_templates	available_variables	jsonb	YES	'[]'::jsonb
+email_templates	from_name	text	YES	
+email_templates	from_email	text	YES	
+email_templates	reply_to	text	YES	
+email_templates	cc	jsonb	YES	
+email_templates	bcc	jsonb	YES	
+email_templates	attachments	jsonb	YES	'[]'::jsonb
+email_templates	is_system	boolean	YES	false
+email_templates	status	text	YES	'active'::text
+email_templates	last_edited_by	uuid	YES	
+email_templates	last_edited_at	timestamp with time zone	YES	
+email_templates	created_at	timestamp with time zone	YES	now()
+email_templates	updated_at	timestamp with time zone	YES	now()
+email_unsubscribe_tokens	id	uuid	NO	gen_random_uuid()
+email_unsubscribe_tokens	token	text	NO	
+email_unsubscribe_tokens	email	text	NO	
+email_unsubscribe_tokens	created_at	timestamp with time zone	NO	now()
+email_unsubscribe_tokens	used_at	timestamp with time zone	YES	
+financial_targets	id	uuid	NO	gen_random_uuid()
+financial_targets	tenant_id	uuid	NO	
+financial_targets	hotel_id	uuid	YES	
+financial_targets	period_month	date	NO	
+financial_targets	metric	text	NO	
+financial_targets	target_value	numeric	NO	
+financial_targets	notes	text	YES	
+financial_targets	created_by	uuid	YES	
+financial_targets	created_at	timestamp with time zone	NO	now()
+financial_targets	updated_at	timestamp with time zone	NO	now()
+guest_invoices	id	uuid	NO	gen_random_uuid()
+guest_invoices	tenant_id	uuid	NO	
+guest_invoices	hotel_id	uuid	NO	
+guest_invoices	booking_id	uuid	YES	
+guest_invoices	invoice_number	text	NO	
+guest_invoices	guest_name	text	NO	
+guest_invoices	guest_phone	text	YES	
+guest_invoices	guest_address	text	YES	
+guest_invoices	guest_tax_code	text	YES	
+guest_invoices	company_name	text	YES	
+guest_invoices	room_number	text	YES	
+guest_invoices	check_in_date	date	YES	
+guest_invoices	check_out_date	date	YES	
+guest_invoices	line_items	jsonb	NO	'[]'::jsonb
+guest_invoices	subtotal	numeric	NO	0
+guest_invoices	vat_rate	numeric	NO	0.1
+guest_invoices	vat_amount	numeric	NO	0
+guest_invoices	service_fee_rate	numeric	NO	0
+guest_invoices	service_fee_amount	numeric	NO	0
+guest_invoices	total_amount	numeric	NO	0
+guest_invoices	deposit_amount	numeric	NO	0
+guest_invoices	amount_paid	numeric	NO	0
+guest_invoices	payment_method	text	YES	
+guest_invoices	notes	text	YES	
+guest_invoices	status	text	NO	'draft'::text
+guest_invoices	issued_at	timestamp with time zone	YES	
+guest_invoices	created_by	uuid	YES	
+guest_invoices	created_at	timestamp with time zone	NO	now()
+guest_invoices	updated_at	timestamp with time zone	NO	now()
+guest_invoices	guest_email	text	YES	
+guest_invoices	email_sent_at	timestamp with time zone	YES	
+guest_invoices	vat_claim_status	text	NO	'none'::text
+guest_invoices	einvoice_issued_at	timestamp with time zone	YES	
+guest_invoices	einvoice_provider	text	YES	
+guest_invoices	einvoice_pdf_path	text	YES	
+guest_invoices	invoice_type	text	NO	'receipt'::text
+guest_invoices	accountant_email	text	YES	
+guest_stay_registrations	id	uuid	NO	gen_random_uuid()
+guest_stay_registrations	tenant_id	uuid	NO	
+guest_stay_registrations	hotel_id	uuid	NO	
+guest_stay_registrations	booking_id	uuid	YES	
+guest_stay_registrations	guest_id	uuid	NO	
+guest_stay_registrations	room_number	text	NO	
+guest_stay_registrations	check_in_at	timestamp with time zone	NO	
+guest_stay_registrations	check_out_at	timestamp with time zone	YES	
+guest_stay_registrations	purpose	text	YES	
+guest_stay_registrations	status	text	NO	'pending'::text
+guest_stay_registrations	payload	jsonb	YES	
+guest_stay_registrations	response	jsonb	YES	
+guest_stay_registrations	external_ref	text	YES	
+guest_stay_registrations	attempt_count	integer	NO	0
+guest_stay_registrations	last_error	text	YES	
+guest_stay_registrations	submitted_at	timestamp with time zone	YES	
+guest_stay_registrations	acked_at	timestamp with time zone	YES	
+guest_stay_registrations	created_at	timestamp with time zone	NO	now()
+guest_stay_registrations	updated_at	timestamp with time zone	NO	now()
+guest_stay_registrations	next_retry_at	timestamp with time zone	YES	
+guests	id	uuid	NO	gen_random_uuid()
+guests	tenant_id	uuid	NO	
+guests	full_name	text	NO	
+guests	phone	text	YES	
+guests	email	text	YES	
+guests	id_type	text	YES	
+guests	id_number	text	YES	
+guests	nationality	text	YES	
+guests	gender	text	YES	
+guests	date_of_birth	date	YES	
+guests	address	text	YES	
+guests	id_image_url	text	YES	
+guests	vip_level	text	NO	'normal'::text
+guests	notes	text	YES	
+guests	total_stays	integer	NO	0
+guests	total_spent	numeric	NO	0
+guests	last_stay_date	date	YES	
+guests	created_at	timestamp with time zone	NO	now()
+guests	updated_at	timestamp with time zone	NO	now()
+guests	id_issue_date	date	YES	
+guests	id_issue_place	text	YES	
+guests	id_expiry_date	date	YES	
+guests	ethnicity	text	YES	
+guests	religion	text	YES	
+guests	occupation	text	YES	
+guests	permanent_address	text	YES	
+guests	visa_number	text	YES	
+guests	visa_expiry	date	YES	
+guests	entry_date	date	YES	
+guests	entry_port	text	YES	
+hotel_fixed_expenses	id	uuid	NO	gen_random_uuid()
+hotel_fixed_expenses	tenant_id	uuid	NO	
+hotel_fixed_expenses	hotel_id	uuid	NO	
+hotel_fixed_expenses	month	date	NO	
+hotel_fixed_expenses	category	text	NO	
+hotel_fixed_expenses	label	text	YES	
+hotel_fixed_expenses	amount	numeric	NO	0
+hotel_fixed_expenses	note	text	YES	
+hotel_fixed_expenses	created_at	timestamp with time zone	NO	now()
+hotel_fixed_expenses	updated_at	timestamp with time zone	NO	now()
+hotel_policy	id	uuid	NO	gen_random_uuid()
+hotel_policy	tenant_id	uuid	NO	
+hotel_policy	hotel_id	uuid	NO	
+hotel_policy	policy_key	text	NO	
+hotel_policy	policy_value	jsonb	NO	
+hotel_policy	version	integer	NO	1
+hotel_policy	is_active	boolean	NO	true
+hotel_policy	description	text	YES	
+hotel_policy	created_at	timestamp with time zone	NO	now()
+hotel_policy	updated_at	timestamp with time zone	NO	now()
+hotel_policy	updated_by	uuid	YES	
+hotel_policy_history	id	uuid	NO	gen_random_uuid()
+hotel_policy_history	policy_id	uuid	YES	
+hotel_policy_history	tenant_id	uuid	NO	
+hotel_policy_history	hotel_id	uuid	NO	
+hotel_policy_history	policy_key	text	NO	
+hotel_policy_history	old_value	jsonb	YES	
+hotel_policy_history	new_value	jsonb	YES	
+hotel_policy_history	old_version	integer	YES	
+hotel_policy_history	new_version	integer	YES	
+hotel_policy_history	changed_by	uuid	YES	
+hotel_policy_history	changed_role	text	YES	
+hotel_policy_history	change_reason	text	YES	
+hotel_policy_history	changed_at	timestamp with time zone	NO	now()
+hotel_services	id	uuid	NO	gen_random_uuid()
+hotel_services	tenant_id	uuid	NO	
+hotel_services	hotel_id	uuid	NO	
+hotel_services	name	text	NO	
+hotel_services	name_en	text	YES	
+hotel_services	category	USER-DEFINED	NO	'other'::service_category
+hotel_services	description	text	YES	
+hotel_services	unit	text	NO	'lần'::text
+hotel_services	price	numeric	NO	0
+hotel_services	is_active	boolean	NO	true
+hotel_services	icon	text	YES	'🔧'::text
+hotel_services	sort_order	integer	YES	0
+hotel_services	created_at	timestamp with time zone	YES	now()
+hotel_services	updated_at	timestamp with time zone	YES	now()
+hotel_settings	id	uuid	NO	gen_random_uuid()
+hotel_settings	tenant_id	uuid	NO	
+hotel_settings	hotel_id	uuid	NO	
+hotel_settings	created_at	timestamp with time zone	NO	now()
+hotel_settings	updated_at	timestamp with time zone	NO	now()
+hotel_settings	vat_rate	numeric	YES	8
+hotel_settings	service_fee_rate	numeric	YES	5
+hotel_settings	late_checkout_12_15_pct	numeric	YES	30
+hotel_settings	late_checkout_15_18_pct	numeric	YES	50
+hotel_settings	late_checkout_after18_pct	numeric	YES	100
+hotel_settings	early_checkin_before5_pct	numeric	YES	100
+hotel_settings	early_checkin_5_9_pct	numeric	YES	50
+hotel_settings	early_checkin_9_14_pct	numeric	YES	30
+hotel_settings	monthly_discounts	jsonb	YES	'{"1": 0, "2": 0, "3": 5, "6": 10, "12": 15}'::jsonb
+hotels	id	uuid	NO	gen_random_uuid()
+hotels	tenant_id	uuid	NO	
+hotels	code	text	NO	
+hotels	name	text	NO	
+hotels	address	text	YES	
+hotels	phone	text	YES	
+hotels	email	text	YES	
+hotels	total_rooms	integer	YES	0
+hotels	total_floors	integer	YES	0
+hotels	status	text	YES	'active'::text
+hotels	settings	jsonb	YES	'{}'::jsonb
+hotels	created_at	timestamp with time zone	YES	now()
+hotels	updated_at	timestamp with time zone	YES	now()
+hotels	type	text	NO	'hotel'::text
+hotels	city	text	YES	
+hotels	state	text	YES	
+hotels	country	text	NO	'Vietnam'::text
+hotels	postal_code	text	YES	
+hotels	website	text	YES	
+hotels	manager_id	uuid	YES	
+hotels	manager_name	text	YES	
+hotels	manager_email	text	YES	
+hotels	logo_url	text	YES	
+hotels	description	text	YES	
+hotels	inactive_at	timestamp with time zone	YES	
+hotels	inactive_reason	text	YES	
+hotels	qc_mode	USER-DEFINED	NO	'self'::hk_qc_mode
+hotels	photo_evidence_mode	USER-DEFINED	NO	'none'::photo_evidence_mode
+hotels	tbltkbtt_config	jsonb	NO	'{}'::jsonb
+housekeeping_tasks	id	uuid	NO	gen_random_uuid()
+housekeeping_tasks	tenant_id	uuid	NO	
+housekeeping_tasks	hotel_id	uuid	NO	
+housekeeping_tasks	room_id	uuid	NO	
+housekeeping_tasks	booking_id	uuid	YES	
+housekeeping_tasks	task_type	text	NO	'cleaning'::text
+housekeeping_tasks	title	text	YES	
+housekeeping_tasks	description	text	YES	
+housekeeping_tasks	priority	text	NO	'medium'::text
+housekeeping_tasks	assigned_to	uuid	YES	
+housekeeping_tasks	requested_by	uuid	YES	
+housekeeping_tasks	status	text	NO	'pending'::text
+housekeeping_tasks	started_at	timestamp with time zone	YES	
+housekeeping_tasks	completed_at	timestamp with time zone	YES	
+housekeeping_tasks	cancelled_at	timestamp with time zone	YES	
+housekeeping_tasks	due_at	timestamp with time zone	YES	
+housekeeping_tasks	room_check_id	uuid	YES	
+housekeeping_tasks	notes	text	YES	
+housekeeping_tasks	created_at	timestamp with time zone	NO	now()
+housekeeping_tasks	updated_at	timestamp with time zone	NO	now()
+housekeeping_tasks	distribution_order_room_id	uuid	YES	
+housekeeping_tasks	checkout_inspection_id	uuid	YES	
+housekeeping_tasks	qc_required	boolean	NO	false
+housekeeping_tasks	qc_status	text	YES	
+housekeeping_tasks	rework_count	integer	NO	0
+housekeeping_tasks	awaiting_review_at	timestamp with time zone	YES	
+housekeeping_tasks	qc_due_at	timestamp with time zone	YES	
+housekeeping_tasks	approved_at	timestamp with time zone	YES	
+housekeeping_tasks	approved_by	uuid	YES	
+housekeeping_tasks	rejection_reason	text	YES	
+housekeeping_tasks	rejected_at	timestamp with time zone	YES	
+housekeeping_tasks	rejected_by	uuid	YES	
+import_export_history	id	uuid	NO	gen_random_uuid()
+import_export_history	tenant_id	uuid	NO	
+import_export_history	type	text	NO	
+import_export_history	data_type	text	NO	
+import_export_history	user_id	uuid	NO	
+import_export_history	file_name	text	YES	
+import_export_history	format	text	YES	
+import_export_history	total_rows	integer	YES	
+import_export_history	success_count	integer	YES	0
+import_export_history	failed_count	integer	YES	0
+import_export_history	skipped_count	integer	YES	0
+import_export_history	filters	jsonb	YES	
+import_export_history	status	text	NO	'pending'::text
+import_export_history	error_message	text	YES	
+import_export_history	source_file_url	text	YES	
+import_export_history	output_file_url	text	YES	
+import_export_history	started_at	timestamp with time zone	YES	now()
+import_export_history	completed_at	timestamp with time zone	YES	
+import_export_history	duration_seconds	integer	YES	
+import_export_history	created_at	timestamp with time zone	YES	now()
+in_app_notifications	id	uuid	NO	gen_random_uuid()
+in_app_notifications	tenant_id	uuid	NO	
+in_app_notifications	user_id	uuid	NO	
+in_app_notifications	title	text	NO	
+in_app_notifications	body	text	NO	
+in_app_notifications	type	text	NO	'info'::text
+in_app_notifications	action_url	text	YES	
+in_app_notifications	icon	text	YES	
+in_app_notifications	is_read	boolean	YES	false
+in_app_notifications	read_at	timestamp with time zone	YES	
+in_app_notifications	metadata	jsonb	YES	'{}'::jsonb
+in_app_notifications	created_at	timestamp with time zone	YES	now()
+inventory_transactions	id	uuid	NO	gen_random_uuid()
+inventory_transactions	tenant_id	uuid	NO	
+inventory_transactions	hotel_id	uuid	NO	
+inventory_transactions	item_id	uuid	NO	
+inventory_transactions	transaction_code	text	NO	
+inventory_transactions	transaction_type	text	NO	
+inventory_transactions	transaction_category	text	YES	
+inventory_transactions	quantity	integer	NO	
+inventory_transactions	unit_price	numeric	YES	
+inventory_transactions	total_value	numeric	YES	
+inventory_transactions	quantity_before	integer	NO	
+inventory_transactions	quantity_after	integer	NO	
+inventory_transactions	related_type	text	YES	
+inventory_transactions	related_id	uuid	YES	
+inventory_transactions	from_location	text	YES	
+inventory_transactions	to_location	text	YES	
+inventory_transactions	created_by	uuid	NO	
+inventory_transactions	approved_by	uuid	YES	
+inventory_transactions	documents	ARRAY	YES	'{}'::text[]
+inventory_transactions	photos	ARRAY	YES	'{}'::text[]
+inventory_transactions	notes	text	YES	
+inventory_transactions	transaction_date	timestamp with time zone	YES	now()
+inventory_transactions	created_at	timestamp with time zone	YES	now()
+inventory_transactions	from_warehouse_id	uuid	YES	
+inventory_transactions	to_warehouse_id	uuid	YES	
+inventory_transactions	reference_type	character varying	YES	
+inventory_transactions	reference_id	uuid	YES	
+inventory_transactions	status	text	YES	'completed'::text
+inventory_transactions	idempotency_key_raw	text	YES	
+inventory_transactions	idempotency_key_hash	text	YES	
+investigation_logs	id	uuid	NO	gen_random_uuid()
+investigation_logs	tenant_id	uuid	NO	
+investigation_logs	entity_type	text	NO	
+investigation_logs	entity_id	uuid	NO	
+investigation_logs	adjustment_id	uuid	YES	
+investigation_logs	action	text	NO	
+investigation_logs	previous_status	text	YES	
+investigation_logs	new_status	text	YES	
+investigation_logs	resolution_type	text	YES	
+investigation_logs	reason_code	text	YES	
+investigation_logs	notes	text	YES	
+investigation_logs	metadata	jsonb	YES	'{}'::jsonb
+investigation_logs	performed_by	uuid	NO	
+investigation_logs	performed_by_name	text	YES	
+investigation_logs	performed_at	timestamp with time zone	NO	now()
+investigation_logs	ip_address	inet	YES	
+invoice_vat_claims	id	uuid	NO	gen_random_uuid()
+invoice_vat_claims	invoice_id	uuid	NO	
+invoice_vat_claims	tenant_id	uuid	NO	
+invoice_vat_claims	hotel_id	uuid	YES	
+invoice_vat_claims	claim_token	text	NO	
+invoice_vat_claims	status	text	NO	'pending'::text
+invoice_vat_claims	company_name	text	YES	
+invoice_vat_claims	tax_code	text	YES	
+invoice_vat_claims	company_address	text	YES	
+invoice_vat_claims	email	text	YES	
+invoice_vat_claims	einvoice_pdf_path	text	YES	
+invoice_vat_claims	einvoice_lookup_code	text	YES	
+invoice_vat_claims	notes	text	YES	
+invoice_vat_claims	expires_at	timestamp with time zone	NO	(now() + '7 days'::interval)
+invoice_vat_claims	claimed_at	timestamp with time zone	YES	
+invoice_vat_claims	issued_at	timestamp with time zone	YES	
+invoice_vat_claims	created_at	timestamp with time zone	NO	now()
+invoice_vat_claims	updated_at	timestamp with time zone	NO	now()
+invoices	id	uuid	NO	gen_random_uuid()
+invoices	tenant_id	uuid	NO	
+invoices	invoice_number	text	NO	
+invoices	invoice_date	date	NO	CURRENT_DATE
+invoices	due_date	date	NO	
+invoices	period_start	date	NO	
+invoices	period_end	date	NO	
+invoices	subscription_plan_id	uuid	YES	
+invoices	subtotal	numeric	NO	0
+invoices	tax_amount	numeric	NO	0
+invoices	discount_amount	numeric	NO	0
+invoices	total_amount	numeric	NO	0
+invoices	status	text	NO	'draft'::text
+invoices	paid_at	timestamp with time zone	YES	
+invoices	items	jsonb	YES	'[]'::jsonb
+invoices	notes	text	YES	
+invoices	created_by	uuid	YES	
+invoices	created_at	timestamp with time zone	YES	now()
+invoices	updated_at	timestamp with time zone	YES	now()
+item_avg_cost	item_id	uuid	YES	
+item_avg_cost	tenant_id	uuid	YES	
+item_avg_cost	avg_cost	numeric	YES	
+item_avg_cost	total_qty_in	bigint	YES	
+item_avg_cost	total_value_in	numeric	YES	
+item_avg_cost	last_inbound_at	timestamp with time zone	YES	
+item_categories	id	uuid	NO	gen_random_uuid()
+item_categories	tenant_id	uuid	NO	
+item_categories	name	text	NO	
+item_categories	name_en	text	YES	
+item_categories	description	text	YES	
+item_categories	icon	text	YES	'package'::text
+item_categories	color	text	YES	'#3b82f6'::text
+item_categories	sort_order	integer	YES	0
+item_categories	created_at	timestamp with time zone	YES	now()
+item_categories	updated_at	timestamp with time zone	YES	now()
+item_categories	code	text	YES	
+item_categories	parent_id	uuid	YES	
+item_categories	level	integer	YES	0
+item_categories	min_stock_level	integer	YES	
+item_categories	max_stock_level	integer	YES	
+item_categories	reorder_point	integer	YES	
+item_categories	preferred_vendor_id	uuid	YES	
+item_categories	depreciable	boolean	YES	false
+item_categories	depreciation_rate	numeric	YES	
+item_categories	useful_life_months	integer	YES	
+item_categories	track_serial_numbers	boolean	YES	false
+item_categories	require_inspection	boolean	YES	false
+item_categories	status	text	YES	'active'::text
+item_categories	is_launderable	boolean	YES	false
+item_categories	hotel_id	uuid	YES	
+item_categories	default_item_type	text	YES	
+item_images	id	uuid	NO	gen_random_uuid()
+item_images	item_id	uuid	NO	
+item_images	tenant_id	uuid	NO	
+item_images	url	text	NO	
+item_images	file_name	text	YES	
+item_images	file_size	integer	YES	
+item_images	mime_type	text	YES	'image/webp'::text
+item_images	is_primary	boolean	YES	false
+item_images	display_order	integer	YES	0
+item_images	created_at	timestamp with time zone	YES	now()
+item_images	created_by	uuid	YES	
+item_units	id	uuid	NO	gen_random_uuid()
+item_units	tenant_id	uuid	NO	
+item_units	name	text	NO	
+item_units	code	text	NO	
+item_units	symbol	text	YES	
+item_units	type	text	NO	
+item_units	base_unit_id	uuid	YES	
+item_units	conversion_factor	numeric	YES	
+item_units	status	text	YES	'active'::text
+item_units	created_at	timestamp with time zone	YES	now()
+item_units	updated_at	timestamp with time zone	YES	now()
+items	id	uuid	NO	gen_random_uuid()
+items	tenant_id	uuid	NO	
+items	hotel_id	uuid	NO	
+items	category_id	uuid	YES	
+items	code	text	NO	
+items	name	text	NO	
+items	name_en	text	YES	
+items	description	text	YES	
+items	unit	text	NO	'cái'::text
+items	unit_price	numeric	YES	0
+items	quantity_total	integer	YES	0
+items	quantity_in_stock	integer	YES	0
+items	quantity_in_use	integer	YES	0
+items	quantity_in_laundry	integer	YES	0
+items	quantity_damaged	integer	YES	0
+items	quantity_lost	integer	YES	0
+items	minimum_stock	integer	YES	0
+items	reorder_point	integer	YES	0
+items	brand	text	YES	
+items	model	text	YES	
+items	specifications	jsonb	YES	'{}'::jsonb
+items	expected_lifetime_days	integer	YES	
+items	max_wash_cycles	integer	YES	
+items	current_wash_cycles	integer	YES	0
+items	qr_code	text	YES	
+items	status	text	YES	'active'::text
+items	created_at	timestamp with time zone	YES	now()
+items	updated_at	timestamp with time zone	YES	now()
+items	item_type	USER-DEFINED	NO	'equipment'::item_type
+items	quantity_pending	integer	YES	0
+items	is_chargeable	boolean	YES	false
+items	is_complimentary	boolean	YES	true
+items	charge_price	numeric	YES	
+items	asset_group	USER-DEFINED	YES	
+items	migration_review_required	boolean	NO	false
+items	reorder_max_qty	integer	YES	
+items	lead_time_days	integer	YES	7
+items	is_perishable	boolean	YES	false
+items	last_outbound_at	timestamp with time zone	YES	
+items	preferred_vendor_id	uuid	YES	
+items	auto_reorder_enabled	boolean	NO	false
+items	safety_factor	numeric	NO	1.3
+items	migration_review_reason	text	YES	
+laundry_batch_audit	id	uuid	NO	gen_random_uuid()
+laundry_batch_audit	tenant_id	uuid	NO	
+laundry_batch_audit	hotel_id	uuid	NO	
+laundry_batch_audit	batch_id	uuid	NO	
+laundry_batch_audit	from_status	text	YES	
+laundry_batch_audit	to_status	text	NO	
+laundry_batch_audit	reason	text	YES	
+laundry_batch_audit	details	jsonb	YES	'{}'::jsonb
+laundry_batch_audit	performed_by	uuid	YES	
+laundry_batch_audit	created_at	timestamp with time zone	NO	now()
+laundry_batch_items	id	uuid	NO	gen_random_uuid()
+laundry_batch_items	batch_id	uuid	NO	
+laundry_batch_items	item_id	uuid	NO	
+laundry_batch_items	quantity_delivered	integer	NO	
+laundry_batch_items	weight_kg	numeric	YES	
+laundry_batch_items	condition_note	text	YES	
+laundry_batch_items	quantity_returned	integer	YES	0
+laundry_batch_items	quantity_lost	integer	YES	0
+laundry_batch_items	quantity_damaged	integer	YES	0
+laundry_batch_items	return_condition	text	YES	
+laundry_batch_items	created_at	timestamp with time zone	YES	now()
+laundry_batches	id	uuid	NO	gen_random_uuid()
+laundry_batches	tenant_id	uuid	NO	
+laundry_batches	hotel_id	uuid	NO	
+laundry_batches	vendor_id	uuid	YES	
+laundry_batches	batch_code	text	NO	
+laundry_batches	delivery_date	timestamp with time zone	YES	
+laundry_batches	delivery_staff_id	uuid	YES	
+laundry_batches	receiver_name	text	YES	
+laundry_batches	expected_return_date	timestamp with time zone	YES	
+laundry_batches	actual_return_date	timestamp with time zone	YES	
+laundry_batches	return_staff_id	uuid	YES	
+laundry_batches	delivery_person_name	text	YES	
+laundry_batches	total_weight_kg	numeric	NO	0
+laundry_batches	total_items	integer	NO	
+laundry_batches	estimated_cost	numeric	YES	
+laundry_batches	actual_cost	numeric	YES	
+laundry_batches	status	text	YES	'delivered'::text
+laundry_batches	quality_rating	numeric	YES	
+laundry_batches	timeliness_rating	numeric	YES	
+laundry_batches	items_lost	integer	YES	0
+laundry_batches	items_damaged	integer	YES	0
+laundry_batches	compensation_amount	numeric	YES	0
+laundry_batches	delivery_photos	ARRAY	YES	'{}'::text[]
+laundry_batches	return_photos	ARRAY	YES	'{}'::text[]
+laundry_batches	notes	text	YES	
+laundry_batches	return_notes	text	YES	
+laundry_batches	created_at	timestamp with time zone	YES	now()
+laundry_batches	updated_at	timestamp with time zone	YES	now()
+laundry_batches	policy_snapshot	jsonb	YES	
+laundry_batches	partially_received_at	timestamp with time zone	YES	
+laundry_batches	compensation_settled_at	timestamp with time zone	YES	
+laundry_batches	compensation_settled_by	uuid	YES	
+laundry_categories	id	uuid	NO	gen_random_uuid()
+laundry_categories	tenant_id	uuid	NO	
+laundry_categories	name	text	NO	
+laundry_categories	code	text	NO	
+laundry_categories	description	text	YES	
+laundry_categories	price_per_kg	numeric	YES	
+laundry_categories	price_per_item	numeric	YES	
+laundry_categories	standard_turnaround_hours	integer	YES	48
+laundry_categories	express_turnaround_hours	integer	YES	
+laundry_categories	express_surcharge	numeric	YES	
+laundry_categories	require_count_verification	boolean	YES	true
+laundry_categories	require_weight_verification	boolean	YES	true
+laundry_categories	display_order	integer	YES	0
+laundry_categories	status	text	YES	'active'::text
+laundry_categories	created_at	timestamp with time zone	YES	now()
+laundry_categories	updated_at	timestamp with time zone	YES	now()
+laundry_requests	id	uuid	NO	gen_random_uuid()
+laundry_requests	tenant_id	uuid	NO	
+laundry_requests	hotel_id	uuid	NO	
+laundry_requests	room_id	uuid	NO	
+laundry_requests	room_check_id	uuid	YES	
+laundry_requests	request_code	text	NO	
+laundry_requests	status	text	NO	'pending'::text
+laundry_requests	items	jsonb	NO	'[]'::jsonb
+laundry_requests	total_quantity	integer	NO	0
+laundry_requests	laundry_batch_id	uuid	YES	
+laundry_requests	requested_by	uuid	YES	
+laundry_requests	added_at	timestamp with time zone	YES	
+laundry_requests	notes	text	YES	
+laundry_requests	created_at	timestamp with time zone	NO	now()
+laundry_requests	updated_at	timestamp with time zone	NO	now()
+laundry_vendors	id	uuid	NO	gen_random_uuid()
+laundry_vendors	tenant_id	uuid	NO	
+laundry_vendors	code	text	NO	
+laundry_vendors	name	text	NO	
+laundry_vendors	type	text	NO	
+laundry_vendors	address	text	YES	
+laundry_vendors	phone	text	YES	
+laundry_vendors	email	text	YES	
+laundry_vendors	contact_person	text	YES	
+laundry_vendors	contract_info	jsonb	YES	'{"price_per_kg": 0, "minimum_order_kg": 0}'::jsonb
+laundry_vendors	rating	numeric	YES	0
+laundry_vendors	total_orders	integer	YES	0
+laundry_vendors	total_value	numeric	YES	0
+laundry_vendors	status	text	YES	'active'::text
+laundry_vendors	notes	text	YES	
+laundry_vendors	created_at	timestamp with time zone	YES	now()
+laundry_vendors	updated_at	timestamp with time zone	YES	now()
+lost_found_items	id	uuid	NO	gen_random_uuid()
+lost_found_items	tenant_id	uuid	NO	
+lost_found_items	hotel_id	uuid	NO	
+lost_found_items	item_code	text	YES	
+lost_found_items	item_name	text	NO	
+lost_found_items	description	text	YES	
+lost_found_items	category	text	NO	'other'::text
+lost_found_items	found_location	text	YES	
+lost_found_items	room_id	uuid	YES	
+lost_found_items	found_date	date	NO	CURRENT_DATE
+lost_found_items	found_by	uuid	YES	
+lost_found_items	photo_urls	jsonb	NO	'[]'::jsonb
+lost_found_items	status	text	NO	'stored'::text
+lost_found_items	claimed_by_name	text	YES	
+lost_found_items	claimed_by_phone	text	YES	
+lost_found_items	claimed_date	date	YES	
+lost_found_items	storage_location	text	YES	
+lost_found_items	notes	text	YES	
+lost_found_items	created_at	timestamp with time zone	NO	now()
+lost_found_items	updated_at	timestamp with time zone	NO	now()
+maintenance_categories	id	uuid	NO	gen_random_uuid()
+maintenance_categories	tenant_id	uuid	NO	
+maintenance_categories	name	text	NO	
+maintenance_categories	code	text	NO	
+maintenance_categories	description	text	YES	
+maintenance_categories	icon	text	YES	
+maintenance_categories	color	text	YES	
+maintenance_categories	default_assignee_id	uuid	YES	
+maintenance_categories	default_priority	text	YES	'medium'::text
+maintenance_categories	sla_hours	integer	YES	24
+maintenance_categories	require_approval	boolean	YES	false
+maintenance_categories	require_photos	boolean	YES	false
+maintenance_categories	checklist_items	ARRAY	YES	
+maintenance_categories	display_order	integer	YES	0
+maintenance_categories	status	text	YES	'active'::text
+maintenance_categories	created_at	timestamp with time zone	YES	now()
+maintenance_categories	updated_at	timestamp with time zone	YES	now()
+maintenance_requests	id	uuid	NO	gen_random_uuid()
+maintenance_requests	tenant_id	uuid	NO	
+maintenance_requests	hotel_id	uuid	NO	
+maintenance_requests	request_code	text	NO	
+maintenance_requests	room_id	uuid	YES	
+maintenance_requests	location	text	NO	
+maintenance_requests	item_id	uuid	YES	
+maintenance_requests	issue_type	text	NO	
+maintenance_requests	priority	text	YES	'medium'::text
+maintenance_requests	title	text	NO	
+maintenance_requests	description	text	NO	
+maintenance_requests	status	text	YES	'pending'::text
+maintenance_requests	reported_by	uuid	NO	
+maintenance_requests	reported_at	timestamp with time zone	YES	now()
+maintenance_requests	expected_completion_date	timestamp with time zone	YES	
+maintenance_requests	started_at	timestamp with time zone	YES	
+maintenance_requests	completed_at	timestamp with time zone	YES	
+maintenance_requests	estimated_cost	numeric	YES	
+maintenance_requests	actual_cost	numeric	YES	
+maintenance_requests	solution	text	YES	
+maintenance_requests	parts_used	ARRAY	YES	
+maintenance_requests	under_warranty	boolean	YES	false
+maintenance_requests	warranty_info	text	YES	
+maintenance_requests	photos	ARRAY	YES	'{}'::text[]
+maintenance_requests	completion_photos	ARRAY	YES	'{}'::text[]
+maintenance_requests	documents	ARRAY	YES	'{}'::text[]
+maintenance_requests	notes	text	YES	
+maintenance_requests	completion_notes	text	YES	
+maintenance_requests	created_at	timestamp with time zone	YES	now()
+maintenance_requests	updated_at	timestamp with time zone	YES	now()
+maintenance_requests	accepted_at	timestamp with time zone	YES	
+maintenance_requests	assigned_to	uuid	YES	
+marketing_campaigns	id	uuid	NO	gen_random_uuid()
+marketing_campaigns	name	text	NO	
+marketing_campaigns	description	text	YES	
+marketing_campaigns	campaign_type	text	NO	
+marketing_campaigns	target_audience	text	YES	'all'::text
+marketing_campaigns	target_plan_codes	ARRAY	YES	
+marketing_campaigns	promotional_code_id	uuid	YES	
+marketing_campaigns	email_subject	text	YES	
+marketing_campaigns	email_template	text	YES	
+marketing_campaigns	banner_text	text	YES	
+marketing_campaigns	cta_text	text	YES	
+marketing_campaigns	cta_link	text	YES	
+marketing_campaigns	starts_at	timestamp with time zone	NO	
+marketing_campaigns	ends_at	timestamp with time zone	YES	
+marketing_campaigns	status	text	YES	'draft'::text
+marketing_campaigns	emails_sent	integer	YES	0
+marketing_campaigns	emails_opened	integer	YES	0
+marketing_campaigns	clicks	integer	YES	0
+marketing_campaigns	conversions	integer	YES	0
+marketing_campaigns	created_by	uuid	YES	
+marketing_campaigns	created_at	timestamp with time zone	YES	now()
+marketing_campaigns	updated_at	timestamp with time zone	YES	now()
+message_attachments	id	uuid	NO	gen_random_uuid()
+message_attachments	message_id	uuid	NO	
+message_attachments	tenant_id	uuid	NO	
+message_attachments	conversation_id	uuid	NO	
+message_attachments	storage_path	text	NO	
+message_attachments	file_name	text	YES	
+message_attachments	mime_type	text	YES	
+message_attachments	size_bytes	bigint	YES	
+message_attachments	width	integer	YES	
+message_attachments	height	integer	YES	
+message_attachments	created_at	timestamp with time zone	NO	now()
+message_reactions	message_id	uuid	NO	
+message_reactions	user_id	uuid	NO	
+message_reactions	emoji	text	NO	
+message_reactions	conversation_id	uuid	NO	
+message_reactions	tenant_id	uuid	NO	
+message_reactions	created_at	timestamp with time zone	NO	now()
+message_reads	message_id	uuid	NO	
+message_reads	user_id	uuid	NO	
+message_reads	conversation_id	uuid	NO	
+message_reads	read_at	timestamp with time zone	NO	now()
+messages	id	uuid	NO	gen_random_uuid()
+messages	tenant_id	uuid	NO	
+messages	conversation_id	uuid	NO	
+messages	sender_id	uuid	NO	
+messages	body	text	YES	
+messages	parent_message_id	uuid	YES	
+messages	mentioned_user_ids	ARRAY	NO	'{}'::uuid[]
+messages	client_msg_id	text	YES	
+messages	edited_at	timestamp with time zone	YES	
+messages	deleted_at	timestamp with time zone	YES	
+messages	created_at	timestamp with time zone	NO	now()
+monthly_targets	id	uuid	NO	gen_random_uuid()
+monthly_targets	tenant_id	uuid	NO	
+monthly_targets	hotel_id	uuid	NO	
+monthly_targets	month	date	NO	
+monthly_targets	revenue_target	numeric	YES	
+monthly_targets	occupancy_target	numeric	YES	
+monthly_targets	created_at	timestamp with time zone	NO	now()
+monthly_targets	updated_at	timestamp with time zone	NO	now()
+notification_preferences	id	uuid	NO	gen_random_uuid()
+notification_preferences	user_id	uuid	NO	
+notification_preferences	tenant_id	uuid	NO	
+notification_preferences	push_enabled	boolean	YES	true
+notification_preferences	email_low_stock	boolean	YES	true
+notification_preferences	email_laundry_completed	boolean	YES	true
+notification_preferences	email_maintenance_new	boolean	YES	true
+notification_preferences	email_po_approved	boolean	YES	true
+notification_preferences	email_daily_report	boolean	YES	false
+notification_preferences	email_weekly_report	boolean	YES	true
+notification_preferences	inapp_realtime	boolean	YES	true
+notification_preferences	inapp_low_stock	boolean	YES	true
+notification_preferences	inapp_laundry_completed	boolean	YES	true
+notification_preferences	inapp_maintenance_new	boolean	YES	true
+notification_preferences	inapp_task_assigned	boolean	YES	true
+notification_preferences	inapp_approval_request	boolean	YES	true
+notification_preferences	low_stock_threshold	integer	YES	20
+notification_preferences	critical_stock_threshold	integer	YES	5
+notification_preferences	overdue_maintenance_days	integer	YES	3
+notification_preferences	laundry_delay_hours	integer	YES	24
+notification_preferences	daily_report_time	time without time zone	YES	'08:00:00'::time without time zone
+notification_preferences	weekly_report_day	integer	YES	1
+notification_preferences	quiet_hours_enabled	boolean	YES	false
+notification_preferences	quiet_hours_start	time without time zone	YES	'22:00:00'::time without time zone
+notification_preferences	quiet_hours_end	time without time zone	YES	'07:00:00'::time without time zone
+notification_preferences	created_at	timestamp with time zone	YES	now()
+notification_preferences	updated_at	timestamp with time zone	YES	now()
+notification_preferences	email_dead_stock_digest	boolean	NO	true
+notification_preferences	email_critical_stock	boolean	NO	true
+notification_preferences	inapp_booking_events	boolean	NO	true
+notification_preferences	inapp_laundry_delayed	boolean	NO	true
+notifications	id	uuid	NO	gen_random_uuid()
+notifications	tenant_id	uuid	NO	
+notifications	user_id	uuid	YES	
+notifications	role	text	YES	
+notifications	type	text	NO	
+notifications	category	text	NO	
+notifications	title	text	NO	
+notifications	message	text	NO	
+notifications	action_url	text	YES	
+notifications	action_label	text	YES	
+notifications	related_type	text	YES	
+notifications	related_id	uuid	YES	
+notifications	is_read	boolean	YES	false
+notifications	read_at	timestamp with time zone	YES	
+notifications	created_at	timestamp with time zone	YES	now()
+notifications	expires_at	timestamp with time zone	YES	
+password_reset_otps	id	uuid	NO	gen_random_uuid()
+password_reset_otps	email	text	NO	
+password_reset_otps	otp_hash	text	NO	
+password_reset_otps	expires_at	timestamp with time zone	NO	
+password_reset_otps	used	boolean	NO	false
+password_reset_otps	attempts	integer	NO	0
+password_reset_otps	created_at	timestamp with time zone	NO	now()
+payment_anomalies	id	uuid	NO	gen_random_uuid()
+payment_anomalies	tenant_id	uuid	YES	
+payment_anomalies	anomaly_type	USER-DEFINED	NO	
+payment_anomalies	status	USER-DEFINED	NO	'open'::payment_anomaly_status
+payment_anomalies	sepay_tx_id	text	NO	
+payment_anomalies	sepay_reference	text	YES	
+payment_anomalies	sepay_content	text	YES	
+payment_anomalies	sepay_amount	bigint	NO	
+payment_anomalies	sepay_date	timestamp with time zone	YES	
+payment_anomalies	sepay_account	text	YES	
+payment_anomalies	expected_payment_id	uuid	YES	
+payment_anomalies	expected_invoice_number	text	YES	
+payment_anomalies	expected_amount	bigint	YES	
+payment_anomalies	amount_diff	bigint	YES	
+payment_anomalies	resolved_by	uuid	YES	
+payment_anomalies	resolved_at	timestamp with time zone	YES	
+payment_anomalies	resolution_note	text	YES	
+payment_anomalies	created_at	timestamp with time zone	NO	now()
+payment_anomalies	updated_at	timestamp with time zone	NO	now()
+payment_methods	id	uuid	NO	gen_random_uuid()
+payment_methods	tenant_id	uuid	NO	
+payment_methods	gateway	text	NO	
+payment_methods	gateway_payment_method_id	text	NO	
+payment_methods	type	text	NO	
+payment_methods	card_brand	text	YES	
+payment_methods	card_last4	text	YES	
+payment_methods	card_exp_month	integer	YES	
+payment_methods	card_exp_year	integer	YES	
+payment_methods	is_default	boolean	YES	false
+payment_methods	is_verified	boolean	YES	false
+payment_methods	billing_name	text	YES	
+payment_methods	billing_email	text	YES	
+payment_methods	billing_address	jsonb	YES	
+payment_methods	created_at	timestamp with time zone	YES	now()
+payment_methods	updated_at	timestamp with time zone	YES	now()
+payment_transactions	id	uuid	NO	gen_random_uuid()
+payment_transactions	tenant_id	uuid	NO	
+payment_transactions	invoice_id	uuid	YES	
+payment_transactions	amount	numeric	NO	
+payment_transactions	currency	text	NO	'VND'::text
+payment_transactions	payment_method	text	YES	
+payment_transactions	payment_status	text	NO	'pending'::text
+payment_transactions	payment_date	timestamp with time zone	YES	
+payment_transactions	transaction_reference	text	YES	
+payment_transactions	payment_gateway	text	YES	
+payment_transactions	gateway_transaction_id	text	YES	
+payment_transactions	notes	text	YES	
+payment_transactions	metadata	jsonb	YES	'{}'::jsonb
+payment_transactions	created_at	timestamp with time zone	YES	now()
+payment_transactions	updated_at	timestamp with time zone	YES	now()
+payment_transactions	plan_id	uuid	YES	
+payment_transactions	billing_cycle	text	YES	
+payment_webhook_logs	id	uuid	NO	gen_random_uuid()
+payment_webhook_logs	gateway	text	NO	
+payment_webhook_logs	event_type	text	NO	
+payment_webhook_logs	event_id	text	YES	
+payment_webhook_logs	payload	jsonb	NO	
+payment_webhook_logs	processed	boolean	YES	false
+payment_webhook_logs	processed_at	timestamp with time zone	YES	
+payment_webhook_logs	error	text	YES	
+payment_webhook_logs	created_at	timestamp with time zone	YES	now()
+pending_group_links	id	uuid	NO	gen_random_uuid()
+pending_group_links	tenant_id	uuid	NO	
+pending_group_links	hotel_id	uuid	YES	
+pending_group_links	added_by	uuid	NO	
+pending_group_links	telegram_user_id	text	NO	
+pending_group_links	group_type	text	YES	'staff'::text
+pending_group_links	department	text	YES	
+pending_group_links	notification_types	ARRAY	YES	
+pending_group_links	status	text	YES	'pending'::text
+pending_group_links	chat_id	text	YES	
+pending_group_links	created_at	timestamp with time zone	YES	now()
+pending_group_links	expires_at	timestamp with time zone	YES	(now() + '00:10:00'::interval)
+permissions	id	uuid	NO	gen_random_uuid()
+permissions	code	text	NO	
+permissions	name	text	NO	
+permissions	description	text	YES	
+permissions	module	text	NO	
+permissions	action	text	NO	
+permissions	created_at	timestamp with time zone	YES	now()
+permissions	updated_at	timestamp with time zone	YES	now()
+plan_price_history	id	uuid	NO	gen_random_uuid()
+plan_price_history	plan_id	uuid	NO	
+plan_price_history	old_price_monthly	numeric	YES	
+plan_price_history	new_price_monthly	numeric	YES	
+plan_price_history	old_price_yearly	numeric	YES	
+plan_price_history	new_price_yearly	numeric	YES	
+plan_price_history	reason	text	YES	
+plan_price_history	changed_by	uuid	YES	
+plan_price_history	changed_at	timestamp with time zone	YES	now()
+platform_settings	id	uuid	NO	gen_random_uuid()
+platform_settings	key	text	NO	
+platform_settings	value	jsonb	NO	'{}'::jsonb
+platform_settings	description	text	YES	
+platform_settings	updated_by	uuid	YES	
+platform_settings	updated_at	timestamp with time zone	YES	now()
+platform_settings	created_at	timestamp with time zone	YES	now()
+positions	id	uuid	NO	gen_random_uuid()
+positions	tenant_id	uuid	NO	
+positions	code	text	NO	
+positions	name	text	NO	
+positions	description	text	YES	
+positions	user_level_code	text	NO	
+positions	department	text	YES	
+positions	display_order	integer	YES	0
+positions	status	text	YES	'active'::text
+positions	created_at	timestamp with time zone	YES	now()
+positions	updated_at	timestamp with time zone	YES	now()
+promo_code_usage	id	uuid	NO	gen_random_uuid()
+promo_code_usage	promo_code_id	uuid	NO	
+promo_code_usage	tenant_id	uuid	NO	
+promo_code_usage	discount_applied	numeric	NO	
+promo_code_usage	original_amount	numeric	NO	
+promo_code_usage	final_amount	numeric	NO	
+promo_code_usage	payment_transaction_id	uuid	YES	
+promo_code_usage	used_at	timestamp with time zone	YES	now()
+promotional_codes	id	uuid	NO	gen_random_uuid()
+promotional_codes	code	text	NO	
+promotional_codes	description	text	YES	
+promotional_codes	discount_type	text	NO	
+promotional_codes	discount_value	numeric	NO	
+promotional_codes	applicable_plans	ARRAY	YES	ARRAY['all'::text]
+promotional_codes	applicable_billing_cycles	ARRAY	YES	ARRAY['monthly'::text, 'yearly'::text]
+promotional_codes	max_uses	integer	YES	
+promotional_codes	current_uses	integer	YES	0
+promotional_codes	max_uses_per_tenant	integer	YES	1
+promotional_codes	valid_from	timestamp with time zone	YES	now()
+promotional_codes	valid_until	timestamp with time zone	YES	
+promotional_codes	is_active	boolean	YES	true
+promotional_codes	created_by	uuid	YES	
+promotional_codes	created_at	timestamp with time zone	YES	now()
+promotional_codes	updated_at	timestamp with time zone	YES	now()
+purchase_order_items	id	uuid	NO	gen_random_uuid()
+purchase_order_items	po_id	uuid	NO	
+purchase_order_items	item_id	uuid	NO	
+purchase_order_items	quantity_ordered	integer	NO	
+purchase_order_items	quantity_received	integer	YES	0
+purchase_order_items	unit_price	numeric	NO	
+purchase_order_items	total_price	numeric	YES	
+purchase_order_items	notes	text	YES	
+purchase_order_items	created_at	timestamp with time zone	YES	now()
+purchase_orders	id	uuid	NO	gen_random_uuid()
+purchase_orders	tenant_id	uuid	NO	
+purchase_orders	hotel_id	uuid	NO	
+purchase_orders	vendor_id	uuid	NO	
+purchase_orders	po_code	text	NO	
+purchase_orders	order_date	date	NO	CURRENT_DATE
+purchase_orders	expected_delivery_date	date	YES	
+purchase_orders	actual_delivery_date	date	YES	
+purchase_orders	status	text	YES	'draft'::text
+purchase_orders	subtotal	numeric	YES	0
+purchase_orders	tax_amount	numeric	YES	0
+purchase_orders	shipping_fee	numeric	YES	0
+purchase_orders	total_amount	numeric	YES	0
+purchase_orders	requested_by	uuid	NO	
+purchase_orders	approved_by	uuid	YES	
+purchase_orders	shipping_address	text	YES	
+purchase_orders	notes	text	YES	
+purchase_orders	created_at	timestamp with time zone	YES	now()
+purchase_orders	updated_at	timestamp with time zone	YES	now()
+push_subscriptions	id	uuid	NO	gen_random_uuid()
+push_subscriptions	tenant_id	uuid	NO	
+push_subscriptions	user_id	uuid	NO	
+push_subscriptions	endpoint	text	NO	
+push_subscriptions	p256dh_key	text	NO	
+push_subscriptions	auth_key	text	NO	
+push_subscriptions	device_name	text	YES	
+push_subscriptions	user_agent	text	YES	
+push_subscriptions	is_active	boolean	YES	true
+push_subscriptions	failed_count	integer	YES	0
+push_subscriptions	last_used_at	timestamp with time zone	YES	
+push_subscriptions	created_at	timestamp with time zone	YES	now()
+push_subscriptions	updated_at	timestamp with time zone	YES	now()
+qc_floor_stats_30d	tenant_id	uuid	YES	
+qc_floor_stats_30d	hotel_id	uuid	YES	
+qc_floor_stats_30d	floor	integer	YES	
+qc_floor_stats_30d	total_tasks	bigint	YES	
+qc_floor_stats_30d	rework_tasks	bigint	YES	
+qc_floor_stats_30d	pending_tasks	bigint	YES	
+qc_floor_stats_30d	rework_rate_pct	numeric	YES	
+qc_reviews	id	uuid	NO	gen_random_uuid()
+qc_reviews	tenant_id	uuid	NO	
+qc_reviews	hotel_id	uuid	NO	
+qc_reviews	task_id	uuid	NO	
+qc_reviews	room_check_id	uuid	YES	
+qc_reviews	reviewer_id	uuid	NO	
+qc_reviews	decision	text	NO	
+qc_reviews	rework_iteration	integer	NO	0
+qc_reviews	reason	text	YES	
+qc_reviews	reject_categories	ARRAY	YES	'{}'::text[]
+qc_reviews	score_override	integer	YES	
+qc_reviews	reviewed_at	timestamp with time zone	NO	now()
+qc_sla_settings	id	uuid	NO	gen_random_uuid()
+qc_sla_settings	tenant_id	uuid	NO	
+qc_sla_settings	hotel_id	uuid	YES	
+qc_sla_settings	task_type	text	NO	
+qc_sla_settings	qc_required	boolean	NO	false
+qc_sla_settings	sla_minutes	integer	NO	30
+qc_sla_settings	max_rework_count	integer	NO	3
+qc_sla_settings	auto_escalate	boolean	NO	true
+qc_sla_settings	created_at	timestamp with time zone	NO	now()
+qc_sla_settings	updated_at	timestamp with time zone	NO	now()
+qc_staff_stats_30d	tenant_id	uuid	YES	
+qc_staff_stats_30d	hotel_id	uuid	YES	
+qc_staff_stats_30d	user_id	uuid	YES	
+qc_staff_stats_30d	full_name	text	YES	
+qc_staff_stats_30d	total_completed	bigint	YES	
+qc_staff_stats_30d	approved_count	bigint	YES	
+qc_staff_stats_30d	rework_count	bigint	YES	
+qc_staff_stats_30d	pending_count	bigint	YES	
+qc_staff_stats_30d	rework_rate_pct	numeric	YES	
+rate_limit_hits	id	uuid	NO	gen_random_uuid()
+rate_limit_hits	bucket_key	text	NO	
+rate_limit_hits	hit_at	timestamp with time zone	NO	now()
+rate_plan_daily_prices	id	uuid	NO	gen_random_uuid()
+rate_plan_daily_prices	tenant_id	uuid	NO	
+rate_plan_daily_prices	rate_plan_id	uuid	NO	
+rate_plan_daily_prices	date	date	NO	
+rate_plan_daily_prices	price	numeric	YES	
+rate_plan_daily_prices	sale_price	numeric	YES	
+rate_plan_daily_prices	is_closed	boolean	NO	false
+rate_plan_daily_prices	created_at	timestamp with time zone	NO	now()
+rate_plan_daily_prices	updated_at	timestamp with time zone	NO	now()
+rate_plans	id	uuid	NO	gen_random_uuid()
+rate_plans	tenant_id	uuid	NO	
+rate_plans	hotel_id	uuid	YES	
+rate_plans	room_type_id	uuid	NO	
+rate_plans	name	text	NO	
+rate_plans	price	numeric	YES	
+rate_plans	sale_price	numeric	YES	
+rate_plans	sale_start_date	date	YES	
+rate_plans	sale_end_date	date	YES	
+rate_plans	inclusions	ARRAY	NO	'{}'::text[]
+rate_plans	policies	ARRAY	NO	'{}'::text[]
+rate_plans	is_active	boolean	NO	true
+rate_plans	sort_order	integer	NO	0
+rate_plans	created_at	timestamp with time zone	NO	now()
+rate_plans	updated_at	timestamp with time zone	NO	now()
+rate_plans	is_default	boolean	NO	false
+reminder_automation_rules	id	uuid	NO	gen_random_uuid()
+reminder_automation_rules	name	text	NO	
+reminder_automation_rules	enabled	boolean	NO	true
+reminder_automation_rules	trigger_type	text	NO	
+reminder_automation_rules	trigger_value	text	NO	
+reminder_automation_rules	action_type	text	NO	'send_email'::text
+reminder_automation_rules	action_template	text	YES	
+reminder_automation_rules	conditions	jsonb	YES	'{}'::jsonb
+reminder_automation_rules	created_at	timestamp with time zone	YES	now()
+reminder_automation_rules	updated_at	timestamp with time zone	YES	now()
+reminder_email_templates	id	uuid	NO	gen_random_uuid()
+reminder_email_templates	name	text	NO	
+reminder_email_templates	subject	text	NO	
+reminder_email_templates	category	text	NO	'renewal'::text
+reminder_email_templates	content	text	NO	''::text
+reminder_email_templates	variables	jsonb	YES	'[]'::jsonb
+reminder_email_templates	status	text	NO	'active'::text
+reminder_email_templates	created_at	timestamp with time zone	YES	now()
+reminder_email_templates	updated_at	timestamp with time zone	YES	now()
+renewal_reminders	id	uuid	NO	gen_random_uuid()
+renewal_reminders	tenant_id	uuid	NO	
+renewal_reminders	reminder_type	text	NO	
+renewal_reminders	scheduled_for	timestamp with time zone	NO	
+renewal_reminders	sent_at	timestamp with time zone	YES	
+renewal_reminders	status	text	YES	'pending'::text
+renewal_reminders	email_subject	text	YES	
+renewal_reminders	email_body	text	YES	
+renewal_reminders	error_message	text	YES	
+renewal_reminders	created_at	timestamp with time zone	YES	now()
+reorder_suggestions	id	uuid	NO	gen_random_uuid()
+reorder_suggestions	tenant_id	uuid	NO	
+reorder_suggestions	hotel_id	uuid	NO	
+reorder_suggestions	item_id	uuid	NO	
+reorder_suggestions	current_stock	numeric	NO	0
+reorder_suggestions	on_order_qty	numeric	NO	0
+reorder_suggestions	suggested_qty	numeric	NO	
+reorder_suggestions	reason	text	NO	'below_min'::text
+reorder_suggestions	status	text	NO	'pending'::text
+reorder_suggestions	ignored_reason	text	YES	
+reorder_suggestions	ignored_until	date	YES	
+reorder_suggestions	converted_po_id	uuid	YES	
+reorder_suggestions	created_by	uuid	YES	
+reorder_suggestions	approved_by	uuid	YES	
+reorder_suggestions	ignored_by	uuid	YES	
+reorder_suggestions	metadata	jsonb	YES	'{}'::jsonb
+reorder_suggestions	created_at	timestamp with time zone	NO	now()
+reorder_suggestions	updated_at	timestamp with time zone	NO	now()
+role_permissions	id	uuid	NO	gen_random_uuid()
+role_permissions	role_id	uuid	NO	
+role_permissions	permission_id	uuid	NO	
+role_permissions	granted_at	timestamp with time zone	YES	now()
+role_permissions	granted_by	uuid	YES	
+roles	id	uuid	NO	gen_random_uuid()
+roles	tenant_id	uuid	NO	
+roles	code	text	NO	
+roles	name	text	NO	
+roles	description	text	YES	
+roles	is_system	boolean	YES	false
+roles	hierarchy_level	integer	NO	5
+roles	created_at	timestamp with time zone	YES	now()
+roles	updated_at	timestamp with time zone	YES	now()
+room_blocks	id	uuid	NO	gen_random_uuid()
+room_blocks	tenant_id	uuid	NO	
+room_blocks	hotel_id	uuid	NO	
+room_blocks	room_id	uuid	NO	
+room_blocks	start_date	date	NO	
+room_blocks	end_date	date	NO	
+room_blocks	block_type	text	NO	'maintenance'::text
+room_blocks	reason	text	YES	
+room_blocks	created_by	uuid	YES	
+room_blocks	created_at	timestamp with time zone	NO	now()
+room_blocks	updated_at	timestamp with time zone	NO	now()
+room_bookings	id	uuid	NO	gen_random_uuid()
+room_bookings	tenant_id	uuid	NO	
+room_bookings	hotel_id	uuid	NO	
+room_bookings	room_id	uuid	NO	
+room_bookings	guest_name	text	NO	
+room_bookings	guest_phone	text	YES	
+room_bookings	guest_email	text	YES	
+room_bookings	guest_count	integer	YES	1
+room_bookings	check_in_date	date	NO	
+room_bookings	check_out_date	date	NO	
+room_bookings	actual_check_in	timestamp with time zone	YES	
+room_bookings	actual_check_out	timestamp with time zone	YES	
+room_bookings	status	text	NO	'confirmed'::text
+room_bookings	notes	text	YES	
+room_bookings	booking_source	text	YES	
+room_bookings	booking_reference	text	YES	
+room_bookings	created_by	uuid	YES	
+room_bookings	created_at	timestamp with time zone	YES	now()
+room_bookings	updated_at	timestamp with time zone	YES	now()
+room_bookings	room_price	numeric	YES	0
+room_bookings	extra_charges	numeric	YES	0
+room_bookings	total_amount	numeric	YES	0
+room_bookings	payment_status	text	YES	'pending'::text
+room_bookings	paid_at	timestamp with time zone	YES	
+room_bookings	expected_check_in_time	time without time zone	YES	'14:00:00'::time without time zone
+room_bookings	expected_check_out_time	time without time zone	YES	'12:00:00'::time without time zone
+room_bookings	amount_paid	numeric	YES	0
+room_bookings	deposit_amount	numeric	YES	0
+room_bookings	early_checkin_charge	numeric	YES	0
+room_bookings	late_checkout_charge	numeric	YES	0
+room_bookings	service_charges	numeric	YES	0
+room_bookings	vat_rate	numeric	YES	8
+room_bookings	vat_amount	numeric	YES	0
+room_bookings	service_fee_rate	numeric	YES	5
+room_bookings	service_fee_amount	numeric	YES	0
+room_bookings	subtotal	numeric	YES	0
+room_bookings	booking_group_id	uuid	YES	
+room_bookings	ota_payment_type	text	YES	
+room_bookings	ota_paid_amount	numeric	YES	0
+room_bookings	ota_commission_rate	numeric	YES	
+room_bookings	ota_commission_amount	numeric	YES	0
+room_bookings	net_revenue	numeric	YES	0
+room_bookings	damage_charges	numeric	YES	0
+room_bookings	damage_notes	text	YES	
+room_bookings	damage_items	jsonb	YES	'[]'::jsonb
+room_bookings	booking_type	text	NO	'daily'::text
+room_bookings	hourly_rate	numeric	YES	
+room_bookings	monthly_rate	numeric	YES	
+room_bookings	booking_hours	integer	YES	
+room_bookings	booking_months	integer	YES	
+room_bookings	hourly_start_time	timestamp with time zone	YES	
+room_bookings	hourly_end_time	timestamp with time zone	YES	
+room_bookings	guest_id_type	text	YES	
+room_bookings	guest_id_number	text	YES	
+room_bookings	guest_nationality	text	YES	
+room_bookings	guest_date_of_birth	date	YES	
+room_bookings	guest_gender	text	YES	
+room_bookings	guest_address	text	YES	
+room_bookings	guest_id_image_url	text	YES	
+room_bookings	guest_id	uuid	YES	
+room_bookings	sleep_out_at	timestamp with time zone	YES	
+room_bookings	sleep_out_note	text	YES	
+room_bookings	skipper_marked_at	timestamp with time zone	YES	
+room_bookings	skipper_marked_by	uuid	YES	
+room_bookings	skipper_note	text	YES	
+room_bookings	skipper_amount_loss	numeric	YES	
+room_bookings	sleep_out_reason	text	YES	
+room_bookings	skipper_at	timestamp with time zone	YES	
+room_bookings	skipper_reason	text	YES	
+room_bookings	skipper_amount_owed	numeric	YES	
+room_bookings	overnight_rate	numeric	YES	
+room_bookings	overnight_start_time	timestamp with time zone	YES	
+room_bookings	overnight_end_time	timestamp with time zone	YES	
+room_bookings	price_breakdown	jsonb	YES	
+room_check_issue_outbox	id	uuid	NO	gen_random_uuid()
+room_check_issue_outbox	tenant_id	uuid	NO	
+room_check_issue_outbox	hotel_id	uuid	NO	
+room_check_issue_outbox	room_check_id	uuid	NO	
+room_check_issue_outbox	issue_id	uuid	NO	
+room_check_issue_outbox	job_kind	text	NO	
+room_check_issue_outbox	status	text	NO	'pending'::text
+room_check_issue_outbox	attempts	integer	NO	0
+room_check_issue_outbox	last_error	text	YES	
+room_check_issue_outbox	payload	jsonb	YES	'{}'::jsonb
+room_check_issue_outbox	result	jsonb	YES	
+room_check_issue_outbox	created_at	timestamp with time zone	NO	now()
+room_check_issue_outbox	processed_at	timestamp with time zone	YES	
+room_check_issue_outbox	schema_version	smallint	NO	1
+room_check_issue_outbox	retry_count	integer	NO	0
+room_check_issue_outbox	next_retry_at	timestamp with time zone	NO	now()
+room_check_issue_outbox	idempotency_key_raw	text	YES	
+room_check_issue_outbox	idempotency_key_hash	text	YES	
+room_check_issue_outbox	dead_letter_at	timestamp with time zone	YES	
+room_check_issue_outbox	dead_letter_reason	text	YES	
+room_check_issue_reviews	id	uuid	NO	gen_random_uuid()
+room_check_issue_reviews	tenant_id	uuid	NO	
+room_check_issue_reviews	hotel_id	uuid	NO	
+room_check_issue_reviews	issue_id	uuid	NO	
+room_check_issue_reviews	reviewer_id	uuid	NO	
+room_check_issue_reviews	decision	text	NO	
+room_check_issue_reviews	reason	text	YES	
+room_check_issue_reviews	charge_id	uuid	YES	
+room_check_issue_reviews	created_at	timestamp with time zone	NO	now()
+room_check_issues	id	uuid	NO	gen_random_uuid()
+room_check_issues	tenant_id	uuid	NO	
+room_check_issues	hotel_id	uuid	NO	
+room_check_issues	room_check_id	uuid	NO	
+room_check_issues	room_id	uuid	NO	
+room_check_issues	item_id	uuid	YES	
+room_check_issues	item_name	text	YES	
+room_check_issues	item_type	text	YES	
+room_check_issues	asset_group	text	YES	
+room_check_issues	bucket	text	NO	
+room_check_issues	ui_action	text	YES	
+room_check_issues	sub_reason	text	YES	
+room_check_issues	issue_role	USER-DEFINED	NO	'primary_issue'::issue_role
+room_check_issues	kind	text	YES	
+room_check_issues	quantity	numeric	NO	
+room_check_issues	charge_to_guest	boolean	YES	
+room_check_issues	needs_review	boolean	YES	false
+room_check_issues	photos	ARRAY	YES	'{}'::text[]
+room_check_issues	notes	text	YES	
+room_check_issues	source	text	YES	
+room_check_issues	source_issue_id	uuid	YES	
+room_check_issues	extra	jsonb	YES	'{}'::jsonb
+room_check_issues	client_issue_id	text	YES	
+room_check_issues	created_at	timestamp with time zone	NO	now()
+room_check_issues	review_reason	text	YES	
+room_check_issues	quality_issue	boolean	NO	false
+room_check_issues	retire_reason	text	YES	
+room_check_issues	suspicious	boolean	NO	false
+room_check_issues	charge_status	USER-DEFINED	NO	'not_applicable'::charge_status
+room_check_issues	reviewed_by	uuid	YES	
+room_check_issues	reviewed_at	timestamp with time zone	YES	
+room_check_issues	review_decision	text	YES	
+room_check_sessions	id	uuid	NO	gen_random_uuid()
+room_check_sessions	room_id	uuid	NO	
+room_check_sessions	user_id	uuid	NO	
+room_check_sessions	user_name	text	NO	
+room_check_sessions	check_type	text	NO	
+room_check_sessions	started_at	timestamp with time zone	NO	now()
+room_check_sessions	tenant_id	uuid	NO	
+room_check_staff_items_view	room_item_id	uuid	YES	
+room_check_staff_items_view	room_id	uuid	YES	
+room_check_staff_items_view	item_id	uuid	YES	
+room_check_staff_items_view	item_code	text	YES	
+room_check_staff_items_view	display_name	text	YES	
+room_check_staff_items_view	item_type	USER-DEFINED	YES	
+room_check_staff_items_view	asset_group	USER-DEFINED	YES	
+room_check_staff_items_view	room_quantity_expected	integer	YES	
+room_check_staff_items_view	room_quantity_current	integer	YES	
+room_check_staff_items_view	condition	text	YES	
+room_check_staff_items_view	tenant_id	uuid	YES	
+room_check_staff_items_view	hotel_id	uuid	YES	
+room_check_staff_items_view	badge_label	text	YES	
+room_checks	id	uuid	NO	gen_random_uuid()
+room_checks	room_id	uuid	NO	
+room_checks	checked_by	uuid	NO	
+room_checks	check_type	text	NO	
+room_checks	cleanliness_score	integer	YES	
+room_checks	items_complete	boolean	YES	true
+room_checks	items_missing	jsonb	YES	'[]'::jsonb
+room_checks	items_damaged	jsonb	YES	'[]'::jsonb
+room_checks	photos	ARRAY	YES	'{}'::text[]
+room_checks	notes	text	YES	
+room_checks	checked_at	timestamp with time zone	YES	now()
+room_checks	items_sent_to_laundry	jsonb	YES	'[]'::jsonb
+room_checks	items_consumed	jsonb	YES	'[]'::jsonb
+room_checks	items_replaced	jsonb	YES	'[]'::jsonb
+room_checks	items_lost	jsonb	YES	'[]'::jsonb
+room_checks	tenant_id	uuid	YES	
+room_checks	hotel_id	uuid	YES	
+room_checks	qc_required	boolean	NO	false
+room_checks	qc_status	text	YES	
+room_checks	reviewed_by	uuid	YES	
+room_checks	reviewed_at	timestamp with time zone	YES	
+room_checks	score_override	integer	YES	
+room_checks	check_mode	text	YES	
+room_checks	task_id	uuid	YES	
+room_checks	summary_ok_count	integer	NO	0
+room_checks	summary_issue_count	integer	NO	0
+room_checks	minibar_count	integer	NO	0
+room_checks	status	text	NO	'submitted'::text
+room_checks	updated_at	timestamp with time zone	NO	now()
+room_checks	started_at	timestamp with time zone	YES	
+room_items	id	uuid	NO	gen_random_uuid()
+room_items	room_id	uuid	NO	
+room_items	item_id	uuid	NO	
+room_items	quantity	integer	NO	1
+room_items	condition	text	YES	'good'::text
+room_items	assigned_at	timestamp with time zone	YES	now()
+room_items	last_checked_at	timestamp with time zone	YES	
+room_items	last_checked_by	uuid	YES	
+room_items	notes	text	YES	
+room_items	is_verified	boolean	YES	false
+room_items	verified_at	timestamp with time zone	YES	
+room_items	verified_by	uuid	YES	
+room_items	standard_quantity	integer	YES	
+room_items	updated_at	timestamp with time zone	NO	now()
+room_pricing_rules	id	uuid	NO	gen_random_uuid()
+room_pricing_rules	tenant_id	uuid	NO	
+room_pricing_rules	hotel_id	uuid	YES	
+room_pricing_rules	standard_checkin_time	time without time zone	YES	'14:00:00'::time without time zone
+room_pricing_rules	standard_checkout_time	time without time zone	YES	'12:00:00'::time without time zone
+room_pricing_rules	early_checkin_5_9	numeric	YES	50
+room_pricing_rules	early_checkin_9_14	numeric	YES	30
+room_pricing_rules	late_checkout_12_15	numeric	YES	30
+room_pricing_rules	late_checkout_15_18	numeric	YES	50
+room_pricing_rules	late_checkout_after_18	numeric	YES	100
+room_pricing_rules	default_vat_rate	numeric	YES	8
+room_pricing_rules	default_service_fee_rate	numeric	YES	5
+room_pricing_rules	weekend_surcharge	numeric	YES	15
+room_pricing_rules	high_season_surcharge	numeric	YES	25
+room_pricing_rules	created_at	timestamp with time zone	YES	now()
+room_pricing_rules	updated_at	timestamp with time zone	YES	now()
+room_pricing_rules	early_checkin_before_5	numeric	YES	100
+room_type_availability	id	uuid	NO	gen_random_uuid()
+room_type_availability	tenant_id	uuid	NO	
+room_type_availability	hotel_id	uuid	YES	
+room_type_availability	room_type_id	uuid	NO	
+room_type_availability	date	date	NO	
+room_type_availability	available_qty	integer	NO	0
+room_type_availability	is_closed	boolean	NO	false
+room_type_availability	created_at	timestamp with time zone	NO	now()
+room_type_availability	updated_at	timestamp with time zone	NO	now()
+room_type_rates	id	uuid	NO	gen_random_uuid()
+room_type_rates	tenant_id	uuid	NO	
+room_type_rates	hotel_id	uuid	YES	
+room_type_rates	room_type_id	uuid	NO	
+room_type_rates	daily_rate	numeric	NO	0
+room_type_rates	overnight_rate	numeric	YES	
+room_type_rates	hourly_rate	numeric	YES	
+room_type_rates	hourly_first_block_hours	integer	YES	2
+room_type_rates	hourly_first_block_price	numeric	YES	
+room_type_rates	monthly_rate	numeric	YES	
+room_type_rates	overnight_start_time	time without time zone	YES	'22:00:00'::time without time zone
+room_type_rates	overnight_end_time	time without time zone	YES	'09:00:00'::time without time zone
+room_type_rates	weekday_multiplier	jsonb	NO	'{}'::jsonb
+room_type_rates	created_at	timestamp with time zone	NO	now()
+room_type_rates	updated_at	timestamp with time zone	NO	now()
+room_type_standards	id	uuid	NO	gen_random_uuid()
+room_type_standards	tenant_id	uuid	NO	
+room_type_standards	hotel_id	uuid	NO	
+room_type_standards	room_type	text	NO	
+room_type_standards	item_id	uuid	NO	
+room_type_standards	quantity	integer	NO	1
+room_type_standards	created_at	timestamp with time zone	YES	now()
+room_types	id	uuid	NO	gen_random_uuid()
+room_types	tenant_id	uuid	NO	
+room_types	hotel_id	uuid	YES	
+room_types	name	text	NO	
+room_types	code	text	NO	
+room_types	description	text	YES	
+room_types	max_guests	integer	YES	2
+room_types	beds_count	integer	YES	1
+room_types	bed_type	text	YES	
+room_types	has_balcony	boolean	YES	false
+room_types	has_kitchen	boolean	YES	false
+room_types	has_bathtub	boolean	YES	false
+room_types	square_meters	numeric	YES	
+room_types	default_items	jsonb	YES	'[]'::jsonb
+room_types	base_price	numeric	YES	
+room_types	display_order	integer	YES	0
+room_types	icon	text	YES	
+room_types	color	text	YES	
+room_types	status	text	YES	'active'::text
+room_types	created_at	timestamp with time zone	YES	now()
+room_types	updated_at	timestamp with time zone	YES	now()
+rooms	id	uuid	NO	gen_random_uuid()
+rooms	tenant_id	uuid	NO	
+rooms	hotel_id	uuid	NO	
+rooms	room_number	text	NO	
+rooms	floor	integer	NO	
+rooms	room_type	text	NO	
+rooms	status	text	YES	'vacant'::text
+rooms	area_sqm	numeric	YES	
+rooms	bed_type	text	YES	
+rooms	max_guests	integer	YES	2
+rooms	has_window	boolean	YES	true
+rooms	has_balcony	boolean	YES	false
+rooms	view_type	text	YES	
+rooms	smoking_allowed	boolean	YES	false
+rooms	base_price	numeric	YES	0
+rooms	amenities	ARRAY	YES	'{}'::text[]
+rooms	notes	text	YES	
+rooms	created_at	timestamp with time zone	YES	now()
+rooms	updated_at	timestamp with time zone	YES	now()
+rooms	hourly_price	numeric	YES	100000
+rooms	monthly_price	numeric	YES	5000000
+rooms	min_hours	integer	YES	2
+rooms	max_hours	integer	YES	8
+rooms	dnd_until	timestamp with time zone	YES	
+rooms	dnd_reason	text	YES	
+rooms	oos_until	timestamp with time zone	YES	
+rooms	oos_reason	text	YES	
+rooms	last_deep_clean_at	timestamp with time zone	YES	
+rooms	last_status_changed_at	timestamp with time zone	YES	now()
+rooms	last_status_changed_by	uuid	YES	
+rooms	legacy_status	text	YES	
+seasonal_rate_overrides	id	uuid	NO	gen_random_uuid()
+seasonal_rate_overrides	tenant_id	uuid	NO	
+seasonal_rate_overrides	hotel_id	uuid	YES	
+seasonal_rate_overrides	name	text	NO	
+seasonal_rate_overrides	from_date	date	NO	
+seasonal_rate_overrides	to_date	date	NO	
+seasonal_rate_overrides	room_type_ids	ARRAY	NO	'{}'::uuid[]
+seasonal_rate_overrides	apply_to	ARRAY	NO	ARRAY['daily'::text, 'overnight'::text]
+seasonal_rate_overrides	mode	text	NO	
+seasonal_rate_overrides	adjust_type	text	NO	
+seasonal_rate_overrides	adjust_value	numeric	NO	
+seasonal_rate_overrides	priority	integer	NO	100
+seasonal_rate_overrides	active	boolean	NO	true
+seasonal_rate_overrides	created_at	timestamp with time zone	NO	now()
+seasonal_rate_overrides	updated_at	timestamp with time zone	NO	now()
+shift_history	id	uuid	NO	gen_random_uuid()
+shift_history	tenant_id	uuid	NO	
+shift_history	user_id	uuid	NO	
+shift_history	hotel_id	uuid	YES	
+shift_history	start_at	timestamp with time zone	NO	
+shift_history	end_at	timestamp with time zone	NO	
+shift_history	duration_minutes	integer	YES	
+shift_history	notes	text	YES	
+shift_history	created_at	timestamp with time zone	NO	now()
+shift_notes	id	uuid	NO	gen_random_uuid()
+shift_notes	tenant_id	uuid	NO	
+shift_notes	hotel_id	uuid	YES	
+shift_notes	note_date	date	NO	
+shift_notes	content	text	NO	
+shift_notes	author_id	uuid	YES	
+shift_notes	author_name	text	YES	
+shift_notes	created_at	timestamp with time zone	NO	now()
+shift_notes	updated_at	timestamp with time zone	NO	now()
+shift_reminders	id	uuid	NO	gen_random_uuid()
+shift_reminders	tenant_id	uuid	NO	
+shift_reminders	user_id	uuid	NO	
+shift_reminders	shift_start_at	timestamp with time zone	NO	
+shift_reminders	reminded_at	timestamp with time zone	NO	now()
+shift_reminders	reminder_type	text	NO	'warning'::text
+shift_reminders	notification_channels	ARRAY	YES	ARRAY['push'::text]
+shift_reminders	created_at	timestamp with time zone	NO	now()
+staff_statistics	id	uuid	NO	gen_random_uuid()
+staff_statistics	user_id	uuid	NO	
+staff_statistics	hotel_id	uuid	NO	
+staff_statistics	laundry_batches_processed	integer	YES	0
+staff_statistics	maintenance_tasks_completed	integer	YES	0
+staff_statistics	items_checked	integer	YES	0
+staff_statistics	average_task_completion_time	interval	YES	
+staff_statistics	on_time_completion_rate	numeric	YES	
+staff_statistics	period_start	date	NO	
+staff_statistics	period_end	date	NO	
+staff_statistics	last_calculated_at	timestamp with time zone	YES	now()
+staff_status	id	uuid	NO	gen_random_uuid()
+staff_status	user_id	uuid	NO	
+staff_status	tenant_id	uuid	NO	
+staff_status	status	text	NO	'offline'::text
+staff_status	current_location	text	YES	
+staff_status	current_activity	text	YES	
+staff_status	current_activity_type	text	YES	
+staff_status	last_seen_at	timestamp with time zone	YES	now()
+staff_status	shift_start_at	timestamp with time zone	YES	
+staff_status	shift_end_at	timestamp with time zone	YES	
+staff_status	created_at	timestamp with time zone	YES	now()
+staff_status	updated_at	timestamp with time zone	YES	now()
+stock_adjustment_items	id	uuid	NO	gen_random_uuid()
+stock_adjustment_items	adjustment_id	uuid	NO	
+stock_adjustment_items	item_id	uuid	NO	
+stock_adjustment_items	system_quantity	integer	NO	
+stock_adjustment_items	actual_quantity	integer	NO	
+stock_adjustment_items	difference	integer	YES	
+stock_adjustment_items	unit_price	numeric	YES	
+stock_adjustment_items	value_difference	numeric	YES	
+stock_adjustment_items	discrepancy_reason	text	YES	
+stock_adjustment_items	status	text	YES	'pending'::text
+stock_adjustment_items	checked_by	uuid	YES	
+stock_adjustment_items	checked_at	timestamp with time zone	YES	
+stock_adjustment_items	photos	ARRAY	YES	'{}'::text[]
+stock_adjustment_items	notes	text	YES	
+stock_adjustment_items	created_at	timestamp with time zone	YES	now()
+stock_adjustment_items	investigation_status	text	YES	
+stock_adjustment_items	investigation_notes	text	YES	
+stock_adjustment_items	investigation_started_at	timestamp with time zone	YES	
+stock_adjustment_items	investigation_completed_at	timestamp with time zone	YES	
+stock_adjustment_items	resolution_type	text	YES	
+stock_adjustment_items	resolution_notes	text	YES	
+stock_adjustment_items	responsible_person_id	uuid	YES	
+stock_adjustment_items	linked_document_type	text	YES	
+stock_adjustment_items	linked_document_id	uuid	YES	
+stock_adjustment_items	approved_by	uuid	YES	
+stock_adjustment_items	approved_at	timestamp with time zone	YES	
+stock_adjustments	id	uuid	NO	gen_random_uuid()
+stock_adjustments	tenant_id	uuid	NO	
+stock_adjustments	hotel_id	uuid	NO	
+stock_adjustments	adjustment_code	text	NO	
+stock_adjustments	adjustment_type	text	NO	
+stock_adjustments	scheduled_date	date	YES	
+stock_adjustments	started_at	timestamp with time zone	YES	
+stock_adjustments	completed_at	timestamp with time zone	YES	
+stock_adjustments	status	text	YES	'draft'::text
+stock_adjustments	created_by	uuid	NO	
+stock_adjustments	assigned_to	ARRAY	YES	'{}'::uuid[]
+stock_adjustments	approved_by	uuid	YES	
+stock_adjustments	total_items_checked	integer	YES	0
+stock_adjustments	total_discrepancies	integer	YES	0
+stock_adjustments	total_value_difference	numeric	YES	0
+stock_adjustments	notes	text	YES	
+stock_adjustments	approval_notes	text	YES	
+stock_adjustments	created_at	timestamp with time zone	YES	now()
+stock_adjustments	updated_at	timestamp with time zone	YES	now()
+stock_adjustments	approved_at	timestamp with time zone	YES	
+subscription_plans	id	uuid	NO	gen_random_uuid()
+subscription_plans	code	text	NO	
+subscription_plans	name	text	NO	
+subscription_plans	description	text	YES	
+subscription_plans	price_monthly	numeric	NO	0
+subscription_plans	price_yearly	numeric	NO	0
+subscription_plans	max_hotels	integer	YES	1
+subscription_plans	max_users	integer	YES	5
+subscription_plans	max_storage_gb	integer	YES	10
+subscription_plans	features	jsonb	YES	'[]'::jsonb
+subscription_plans	is_active	boolean	YES	true
+subscription_plans	display_order	integer	YES	0
+subscription_plans	created_at	timestamp with time zone	YES	now()
+subscription_plans	updated_at	timestamp with time zone	YES	now()
+subscription_plans	max_rooms	integer	YES	
+subscription_plans	max_items	integer	YES	
+subscription_plans	pricing_model	text	YES	'room_based'::text
+subscription_plans	price_per_room_daily	numeric	YES	1000
+subscription_plans	min_subscription_days	integer	YES	30
+super_admin_activity_log	id	uuid	NO	gen_random_uuid()
+super_admin_activity_log	admin_user_id	uuid	NO	
+super_admin_activity_log	action	text	NO	
+super_admin_activity_log	entity_type	text	NO	
+super_admin_activity_log	entity_id	uuid	YES	
+super_admin_activity_log	description	text	NO	
+super_admin_activity_log	old_values	jsonb	YES	
+super_admin_activity_log	new_values	jsonb	YES	
+super_admin_activity_log	ip_address	inet	YES	
+super_admin_activity_log	created_at	timestamp with time zone	YES	now()
+supplement_requests	id	uuid	NO	gen_random_uuid()
+supplement_requests	tenant_id	uuid	NO	
+supplement_requests	hotel_id	uuid	NO	
+supplement_requests	room_id	uuid	NO	
+supplement_requests	room_check_id	uuid	YES	
+supplement_requests	request_code	text	NO	
+supplement_requests	status	text	NO	'pending'::text
+supplement_requests	request_type	text	NO	
+supplement_requests	items	jsonb	NO	'[]'::jsonb
+supplement_requests	total_value	numeric	NO	0
+supplement_requests	requested_by	uuid	YES	
+supplement_requests	approved_by	uuid	YES	
+supplement_requests	approved_at	timestamp with time zone	YES	
+supplement_requests	completed_at	timestamp with time zone	YES	
+supplement_requests	transaction_id	uuid	YES	
+supplement_requests	notes	text	YES	
+supplement_requests	rejection_reason	text	YES	
+supplement_requests	created_at	timestamp with time zone	NO	now()
+supplement_requests	updated_at	timestamp with time zone	NO	now()
+supplement_requests	distribution_order_id	uuid	YES	
+suppressed_emails	id	uuid	NO	gen_random_uuid()
+suppressed_emails	email	text	NO	
+suppressed_emails	reason	text	NO	
+suppressed_emails	metadata	jsonb	YES	
+suppressed_emails	created_at	timestamp with time zone	NO	now()
+telegram_connections	id	uuid	NO	gen_random_uuid()
+telegram_connections	tenant_id	uuid	NO	
+telegram_connections	user_id	uuid	YES	
+telegram_connections	chat_id	text	NO	
+telegram_connections	chat_type	text	YES	'private'::text
+telegram_connections	chat_title	text	YES	
+telegram_connections	username	text	YES	
+telegram_connections	first_name	text	YES	
+telegram_connections	is_active	boolean	YES	true
+telegram_connections	notification_types	ARRAY	YES	ARRAY['all'::text]
+telegram_connections	created_at	timestamp with time zone	YES	now()
+telegram_connections	updated_at	timestamp with time zone	YES	now()
+telegram_groups	id	uuid	NO	gen_random_uuid()
+telegram_groups	tenant_id	uuid	NO	
+telegram_groups	hotel_id	uuid	YES	
+telegram_groups	chat_id	text	NO	
+telegram_groups	chat_title	text	NO	
+telegram_groups	group_type	text	YES	'general'::text
+telegram_groups	notification_types	ARRAY	YES	ARRAY['all'::text]
+telegram_groups	is_active	boolean	YES	true
+telegram_groups	added_by	uuid	YES	
+telegram_groups	created_at	timestamp with time zone	YES	now()
+telegram_groups	updated_at	timestamp with time zone	YES	now()
+telegram_groups	department	text	YES	
+tenant_usage	id	uuid	NO	gen_random_uuid()
+tenant_usage	tenant_id	uuid	NO	
+tenant_usage	current_hotels_count	integer	YES	0
+tenant_usage	current_users_count	integer	YES	0
+tenant_usage	current_rooms_count	integer	YES	0
+tenant_usage	current_items_count	integer	YES	0
+tenant_usage	current_storage_bytes	bigint	YES	0
+tenant_usage	peak_hotels_count	integer	YES	0
+tenant_usage	peak_users_count	integer	YES	0
+tenant_usage	peak_storage_bytes	bigint	YES	0
+tenant_usage	last_calculated_at	timestamp with time zone	YES	now()
+tenant_usage	updated_at	timestamp with time zone	YES	now()
+tenants	id	uuid	NO	gen_random_uuid()
+tenants	name	text	NO	
+tenants	email	text	NO	
+tenants	phone	text	YES	
+tenants	logo_url	text	YES	
+tenants	subscription_plan	text	YES	'basic'::text
+tenants	subscription_status	text	YES	'trial'::text
+tenants	trial_ends_at	timestamp with time zone	YES	(now() + '14 days'::interval)
+tenants	subscription_expires_at	timestamp with time zone	YES	
+tenants	settings	jsonb	YES	'{"currency": "VND", "language": "vi", "timezone": "Asia/Ho_Chi_Minh", "date_format": "DD/MM/YYYY"}'::jsonb
+tenants	created_at	timestamp with time zone	YES	now()
+tenants	updated_at	timestamp with time zone	YES	now()
+tenants	subscription_plan_id	uuid	YES	
+tenants	subscription_start_date	date	YES	
+tenants	subscription_end_date	date	YES	
+tenants	trial_end_date	date	YES	
+tenants	auto_renew	boolean	YES	true
+tenants	payment_method	text	YES	
+tenants	billing_email	text	YES	
+tenants	billing_address	text	YES	
+tenants	tax_id	text	YES	
+tenants	billing_cycle	text	YES	'monthly'::text
+tenants	subscription_current_period_start	timestamp with time zone	YES	
+tenants	subscription_current_period_end	timestamp with time zone	YES	
+tenants	subscription_started_at	timestamp with time zone	YES	now()
+tenants	approval_status	text	YES	'pending'::text
+tenants	approved_by	uuid	YES	
+tenants	approved_at	timestamp with time zone	YES	
+tenants	rejection_reason	text	YES	
+tenants	registered_rooms	integer	YES	0
+tenants	subscription_duration_days	integer	YES	30
+tenants	grace_period_ends_at	timestamp with time zone	YES	
+tenants	usage_mode	text	NO	'full'::text
+tenants	is_read_only	boolean	NO	false
+tenants	read_only_reason	text	YES	
+tenants	read_only_since	timestamp with time zone	YES	
+tenants	payment_tolerance_vnd	integer	NO	1000
+tenants	grace_period_days_override	integer	YES	
+tenants	next_billing_date	timestamp with time zone	YES	
+user_hotels	user_id	uuid	NO	
+user_hotels	hotel_id	uuid	NO	
+user_hotels	assigned_at	timestamp with time zone	YES	now()
+user_hotels	assigned_by	uuid	YES	
+user_hotels	can_create_managers	boolean	YES	false
+user_hotels	can_create_staff	boolean	YES	true
+user_hotels	can_view_reports	boolean	YES	true
+user_hotels	can_export_data	boolean	YES	false
+user_hotels	can_approve_requests	boolean	YES	false
+user_levels	id	uuid	NO	gen_random_uuid()
+user_levels	code	text	NO	
+user_levels	name	text	NO	
+user_levels	hierarchy_level	integer	NO	
+user_levels	description	text	YES	
+user_levels	created_at	timestamp with time zone	YES	now()
+user_permissions	id	uuid	NO	gen_random_uuid()
+user_permissions	user_id	uuid	NO	
+user_permissions	tenant_id	uuid	NO	
+user_permissions	module	text	NO	
+user_permissions	action	text	NO	
+user_permissions	enabled	boolean	NO	true
+user_permissions	created_at	timestamp with time zone	YES	now()
+user_permissions	updated_at	timestamp with time zone	YES	now()
+user_permissions	created_by	uuid	YES	
+user_preferences	id	uuid	NO	gen_random_uuid()
+user_preferences	user_id	uuid	NO	
+user_preferences	current_hotel_id	uuid	YES	
+user_preferences	preferences	jsonb	YES	'{}'::jsonb
+user_preferences	updated_at	timestamp with time zone	YES	now()
+user_roles	id	uuid	NO	gen_random_uuid()
+user_roles	user_id	uuid	NO	
+user_roles	role	USER-DEFINED	NO	
+user_roles	created_at	timestamp with time zone	YES	now()
+user_roles	created_by	uuid	YES	
+user_with_levels	id	uuid	YES	
+user_with_levels	email	text	YES	
+user_with_levels	full_name	text	YES	
+user_with_levels	phone	text	YES	
+user_with_levels	avatar_url	text	YES	
+user_with_levels	tenant_id	uuid	YES	
+user_with_levels	hotel_id	uuid	YES	
+user_with_levels	user_level_code	text	YES	
+user_with_levels	is_super_admin	boolean	YES	
+user_with_levels	user_level_name	text	YES	
+user_with_levels	hierarchy_level	integer	YES	
+user_with_levels	status	text	YES	
+user_with_levels	last_login_at	timestamp with time zone	YES	
+user_with_levels	login_count	integer	YES	
+user_with_levels	account_locked	boolean	YES	
+user_with_levels	created_at	timestamp with time zone	YES	
+users	id	uuid	NO	
+users	tenant_id	uuid	YES	
+users	hotel_id	uuid	YES	
+users	full_name	text	NO	
+users	email	text	NO	
+users	phone	text	YES	
+users	avatar_url	text	YES	
+users	role	text	NO	'staff'::text
+users	department	text	YES	
+users	status	text	YES	'active'::text
+users	last_login_at	timestamp with time zone	YES	
+users	metadata	jsonb	YES	'{}'::jsonb
+users	created_at	timestamp with time zone	YES	now()
+users	updated_at	timestamp with time zone	YES	now()
+users	user_level_code	text	YES	'staff'::text
+users	is_super_admin	boolean	YES	false
+users	last_login_ip	inet	YES	
+users	login_count	integer	YES	0
+users	must_change_password	boolean	YES	false
+users	account_locked	boolean	YES	false
+users	locked_reason	text	YES	
+users	deactivated_at	timestamp with time zone	YES	
+users	deactivated_by	uuid	YES	
+users	deleted_at	timestamp with time zone	YES	
+users	notes	text	YES	
+users	is_primary_owner	boolean	YES	false
+users	created_by	uuid	YES	
+users	reports_to	uuid	YES	
+users	position_id	uuid	YES	
+users	telegram_username	text	YES	
+users	hourly_wage_vnd	numeric	YES	
+users	monthly_salary_vnd	numeric	YES	
+users	phone_verified	boolean	NO	false
+v_overdue_checkins	id	uuid	YES	
+v_overdue_checkins	tenant_id	uuid	YES	
+v_overdue_checkins	hotel_id	uuid	YES	
+v_overdue_checkins	room_id	uuid	YES	
+v_overdue_checkins	guest_name	text	YES	
+v_overdue_checkins	guest_phone	text	YES	
+v_overdue_checkins	guest_email	text	YES	
+v_overdue_checkins	guest_count	integer	YES	
+v_overdue_checkins	check_in_date	date	YES	
+v_overdue_checkins	check_out_date	date	YES	
+v_overdue_checkins	actual_check_in	timestamp with time zone	YES	
+v_overdue_checkins	actual_check_out	timestamp with time zone	YES	
+v_overdue_checkins	status	text	YES	
+v_overdue_checkins	notes	text	YES	
+v_overdue_checkins	booking_source	text	YES	
+v_overdue_checkins	booking_reference	text	YES	
+v_overdue_checkins	created_by	uuid	YES	
+v_overdue_checkins	created_at	timestamp with time zone	YES	
+v_overdue_checkins	updated_at	timestamp with time zone	YES	
+v_overdue_checkins	room_price	numeric	YES	
+v_overdue_checkins	extra_charges	numeric	YES	
+v_overdue_checkins	total_amount	numeric	YES	
+v_overdue_checkins	payment_status	text	YES	
+v_overdue_checkins	paid_at	timestamp with time zone	YES	
+v_overdue_checkins	expected_check_in_time	time without time zone	YES	
+v_overdue_checkins	expected_check_out_time	time without time zone	YES	
+v_overdue_checkins	amount_paid	numeric	YES	
+v_overdue_checkins	deposit_amount	numeric	YES	
+v_overdue_checkins	early_checkin_charge	numeric	YES	
+v_overdue_checkins	late_checkout_charge	numeric	YES	
+v_overdue_checkins	service_charges	numeric	YES	
+v_overdue_checkins	vat_rate	numeric	YES	
+v_overdue_checkins	vat_amount	numeric	YES	
+v_overdue_checkins	service_fee_rate	numeric	YES	
+v_overdue_checkins	service_fee_amount	numeric	YES	
+v_overdue_checkins	subtotal	numeric	YES	
+v_overdue_checkins	booking_group_id	uuid	YES	
+v_overdue_checkins	ota_payment_type	text	YES	
+v_overdue_checkins	ota_paid_amount	numeric	YES	
+v_overdue_checkins	ota_commission_rate	numeric	YES	
+v_overdue_checkins	ota_commission_amount	numeric	YES	
+v_overdue_checkins	net_revenue	numeric	YES	
+v_overdue_checkins	damage_charges	numeric	YES	
+v_overdue_checkins	damage_notes	text	YES	
+v_overdue_checkins	damage_items	jsonb	YES	
+v_overdue_checkins	booking_type	text	YES	
+v_overdue_checkins	hourly_rate	numeric	YES	
+v_overdue_checkins	monthly_rate	numeric	YES	
+v_overdue_checkins	booking_hours	integer	YES	
+v_overdue_checkins	booking_months	integer	YES	
+v_overdue_checkins	hourly_start_time	timestamp with time zone	YES	
+v_overdue_checkins	hourly_end_time	timestamp with time zone	YES	
+v_overdue_checkins	guest_id_type	text	YES	
+v_overdue_checkins	guest_id_number	text	YES	
+v_overdue_checkins	guest_nationality	text	YES	
+v_overdue_checkins	guest_date_of_birth	date	YES	
+v_overdue_checkins	guest_gender	text	YES	
+v_overdue_checkins	guest_address	text	YES	
+v_overdue_checkins	guest_id_image_url	text	YES	
+v_overdue_checkins	guest_id	uuid	YES	
+v_overdue_checkins	sleep_out_at	timestamp with time zone	YES	
+v_overdue_checkins	sleep_out_note	text	YES	
+v_overdue_checkins	skipper_marked_at	timestamp with time zone	YES	
+v_overdue_checkins	skipper_marked_by	uuid	YES	
+v_overdue_checkins	skipper_note	text	YES	
+v_overdue_checkins	skipper_amount_loss	numeric	YES	
+v_overdue_checkins	sleep_out_reason	text	YES	
+v_overdue_checkins	skipper_at	timestamp with time zone	YES	
+v_overdue_checkins	skipper_reason	text	YES	
+v_overdue_checkins	skipper_amount_owed	numeric	YES	
+v_overdue_checkins	hours_overdue	numeric	YES	
+v_user_conversations	id	uuid	YES	
+v_user_conversations	tenant_id	uuid	YES	
+v_user_conversations	hotel_id	uuid	YES	
+v_user_conversations	type	USER-DEFINED	YES	
+v_user_conversations	name	text	YES	
+v_user_conversations	last_message_at	timestamp with time zone	YES	
+v_user_conversations	last_message_preview	text	YES	
+v_user_conversations	last_sender_id	uuid	YES	
+v_user_conversations	viewer_id	uuid	YES	
+v_user_conversations	muted_until	timestamp with time zone	YES	
+v_user_conversations	last_read_message_id	uuid	YES	
+v_user_conversations	unread_count	integer	YES	
+v_user_effective_roles	user_id	uuid	YES	
+v_user_effective_roles	tenant_id	uuid	YES	
+v_user_effective_roles	hotel_id	uuid	YES	
+v_user_effective_roles	roles	ARRAY	YES	
+v_user_effective_roles	is_super_admin	boolean	YES	
+v_user_effective_roles	is_owner	boolean	YES	
+v_user_effective_roles	is_manager	boolean	YES	
+v_user_effective_roles	is_staff	boolean	YES	
+vendors	id	uuid	NO	gen_random_uuid()
+vendors	tenant_id	uuid	NO	
+vendors	code	text	NO	
+vendors	name	text	NO	
+vendors	category	text	NO	
+vendors	products_services	ARRAY	YES	'{}'::text[]
+vendors	address	text	YES	
+vendors	phone	text	YES	
+vendors	email	text	YES	
+vendors	website	text	YES	
+vendors	contact_person	text	YES	
+vendors	tax_code	text	YES	
+vendors	bank_account	text	YES	
+vendors	bank_name	text	YES	
+vendors	payment_terms	text	YES	
+vendors	delivery_time	text	YES	
+vendors	minimum_order_value	numeric	YES	
+vendors	rating	numeric	YES	0
+vendors	total_orders	integer	YES	0
+vendors	total_value	numeric	YES	0
+vendors	on_time_delivery_rate	numeric	YES	100
+vendors	documents	ARRAY	YES	'{}'::text[]
+vendors	status	text	YES	'active'::text
+vendors	notes	text	YES	
+vendors	created_at	timestamp with time zone	YES	now()
+vendors	updated_at	timestamp with time zone	YES	now()
+vendors	created_by	uuid	YES	
+warehouse_stock	id	uuid	NO	gen_random_uuid()
+warehouse_stock	warehouse_id	uuid	NO	
+warehouse_stock	item_id	uuid	NO	
+warehouse_stock	tenant_id	uuid	NO	
+warehouse_stock	quantity	integer	NO	0
+warehouse_stock	minimum_stock	integer	YES	0
+warehouse_stock	maximum_stock	integer	YES	
+warehouse_stock	last_transaction_id	uuid	YES	
+warehouse_stock	last_updated	timestamp with time zone	NO	now()
+warehouse_stock	created_at	timestamp with time zone	NO	now()
+warehouse_stock	updated_at	timestamp with time zone	NO	now()
+warehouses	id	uuid	NO	gen_random_uuid()
+warehouses	tenant_id	uuid	NO	
+warehouses	hotel_id	uuid	NO	
+warehouses	code	text	NO	
+warehouses	name	text	NO	
+warehouses	location_type	USER-DEFINED	NO	'warehouse'::warehouse_location_type
+warehouses	address	text	YES	
+warehouses	description	text	YES	
+warehouses	is_default	boolean	NO	false
+warehouses	is_active	boolean	NO	true
+warehouses	sort_order	integer	YES	0
+warehouses	created_at	timestamp with time zone	NO	now()
+warehouses	updated_at	timestamp with time zone	NO	now()
+workflow_actions	id	uuid	NO	gen_random_uuid()
+workflow_actions	workflow_id	uuid	NO	
+workflow_actions	action_type	text	NO	
+workflow_actions	action_config	jsonb	NO	'{}'::jsonb
+workflow_actions	order_index	integer	NO	0
+workflow_actions	continue_on_failure	boolean	YES	false
+workflow_actions	max_retries	integer	YES	0
+workflow_actions	retry_delay_seconds	integer	YES	60
+workflow_actions	created_at	timestamp with time zone	YES	now()
+workflow_actions	updated_at	timestamp with time zone	YES	now()
+workflow_executions	id	uuid	NO	gen_random_uuid()
+workflow_executions	workflow_id	uuid	NO	
+workflow_executions	status	text	NO	'running'::text
+workflow_executions	trigger_data	jsonb	YES	
+workflow_executions	actions_completed	integer	YES	0
+workflow_executions	actions_failed	integer	YES	0
+workflow_executions	error_message	text	YES	
+workflow_executions	execution_log	jsonb	YES	'[]'::jsonb
+workflow_executions	started_at	timestamp with time zone	YES	now()
+workflow_executions	completed_at	timestamp with time zone	YES	
+workflow_executions	duration_seconds	integer	YES	
+workflow_executions	created_at	timestamp with time zone	YES	now()
+workflows	id	uuid	NO	gen_random_uuid()
+workflows	tenant_id	uuid	NO	
+workflows	name	text	NO	
+workflows	description	text	YES	
+workflows	trigger_type	text	NO	
+workflows	trigger_event	text	YES	
+workflows	trigger_schedule	text	YES	
+workflows	conditions	jsonb	YES	'[]'::jsonb
+workflows	status	text	YES	'active'::text
+workflows	last_run_at	timestamp with time zone	YES	
+workflows	last_run_status	text	YES	
+workflows	last_error	text	YES	
+workflows	total_executions	integer	YES	0
+workflows	success_count	integer	YES	0
+workflows	failed_count	integer	YES	0
+workflows	created_by	uuid	YES	
+workflows	created_at	timestamp with time zone	YES	now()
+workflows	updated_at	timestamp with time zone	YES	now()

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content" />
+    <!-- Anti-cache for HTML shell — JS/CSS assets vẫn được cache theo hash filename -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>RoomQc - Quản lý khách sạn</title>
+    <meta name="description" content="Hệ thống quản lý khách sạn toàn diện - Quản lý phòng, đồ dùng, giặt là và bảo trì">
+    <meta name="author" content="RoomQc" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RoomQc" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Content Security Policy — phòng thủ lớp 2 chống XSS.
+         - script-src: cho phép self + inline (Vite cần) + Lovable preview tagger
+         - connect-src: Supabase được Vite chèn từ VITE_SUPABASE_URL
+         - clickjacking được chặn bằng X-Frame-Options ở Nginx
+         - img-src cho phép data: (QR code), blob: (preview), https: (avatars/CDN) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co https://*.lovable.dev https://*.lovable.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' __ROOMQC_SUPABASE_CONNECT_SRC__ https://*.lovable.app https://*.lovable.dev https://api.sepay.vn https://fonts.googleapis.com https://fonts.gstatic.com; base-uri 'self'; form-action 'self';" />
+
+    <!-- Performance: preconnect Supabase backend so first auth/session call doesn't pay DNS+TLS cost -->
+    <link data-roomqc-supabase-origin rel="preconnect" href="__ROOMQC_SUPABASE_ORIGIN__" crossorigin />
+    <link data-roomqc-supabase-origin rel="dns-prefetch" href="__ROOMQC_SUPABASE_ORIGIN__" />
+
+    <!-- Inventory Hub typography: Sora (display) + Manrope (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512x512.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="/icon-512x512.png" />
+    <meta property="og:title" content="RoomQc - Quản lý khách sạn">
+  <meta name="twitter:title" content="RoomQc - Quản lý khách sạn">
+  <meta property="og:description" content="Hệ thống quản lý khách sạn toàn diện - Quản lý phòng, đồ dùng, giặt là và bảo trì">
+  <meta name="twitter:description" content="Hệ thống quản lý khách sạn toàn diện - Quản lý phòng, đồ dùng, giặt là và bảo trì">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="/icon-96x96.png">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <!-- Modulepreload shell + dashboard chunk để user đã đăng nhập không chờ thêm round-trip sau main.tsx -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

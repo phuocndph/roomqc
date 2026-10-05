@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Quality gates + production container smoke test
+    runs-on: ubuntu-latest
+    env:
+      ROOMQC_ENVIRONMENT: local
+      VITE_SUPABASE_URL: http://127.0.0.1:54321
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_roomqc_ci
+      VITE_SUPABASE_PROJECT_ID: roomqc-ci
+      VITE_ENABLE_DEMO_DATA: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: ESLint (gồm rule FSM `no-direct-room-status-update`)
+        # Existing legacy warnings are reported but do not hide blocking errors.
+        run: npm run lint
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Vitest — RPC signature drift + suite
+        run: npm test -- --run
+
+      - name: Validate production build
+        run: |
+          npm run validate:env
+          npm run build
+          npm run verify:build
+
+      - name: Build and smoke-test Nginx container
+        run: |
+          docker compose -f docker-compose.roomqc.yml up -d --build roomqc
+          npm run verify:container
+
+      - name: Stop smoke-test container
+        if: always()
+        run: docker compose -f docker-compose.roomqc.yml down
+
+      - name: Cảnh báo nếu db-functions.tsv chưa được regen
+        run: |
+          if [ ! -f docs/architecture/_generated/db-functions.tsv ]; then
+            echo "::error::Thiếu db-functions.tsv. Chạy: bash scripts/audit/dump-db-schema.sh"
+            exit 1
+          fi

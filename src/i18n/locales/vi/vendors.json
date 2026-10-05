@@ -1,0 +1,192 @@
+{
+  "comparison": {
+    "title": "So sánh nhà cung cấp",
+    "comparing": "So sánh {{count}} nhà cung cấp",
+    "exportPdf": "Xuất PDF",
+    "changeSelection": "Thay đổi lựa chọn",
+    "selectMinVendors": "Vui lòng chọn từ 2 đến 5 nhà cung cấp để so sánh",
+    "vendorLabel": "Nhà cung cấp",
+    "performance": "Hiệu suất",
+    "rating": "Rating",
+    "totalOrders": "Tổng đơn",
+    "totalValue": "Tổng GT",
+    "onTimeRate": "On-time",
+    "totalScore": "Tổng điểm",
+    "scoreBreakdown": {
+      "price": "Giá",
+      "quality": "Chất lượng",
+      "delivery": "Giao hàng",
+      "service": "Dịch vụ",
+      "terms": "Điều khoản"
+    },
+    "recommendation": "Đề xuất",
+    "bestChoice": "{{name}} là lựa chọn tốt nhất với:",
+    "highestRating": "Rating cao nhất ({{rating}}/5)",
+    "bestOnTime": "On-time delivery tốt nhất ({{rate}}%)",
+    "highestScore": "Tổng điểm cao nhất ({{score}}/100)",
+    "alternativeNote": "{{name}} cũng là lựa chọn tốt nếu bạn ưu tiên các yếu tố khác. Có thể xem xét đàm phán điều khoản tốt hơn hoặc so sánh giá cụ thể cho từng sản phẩm.",
+    "categories": {
+      "supplier": "Nhà cung cấp",
+      "service_provider": "Dịch vụ",
+      "contractor": "Thầu phụ"
+    }
+  },
+  "title": "Quản lý Nhà cung cấp",
+  "list": "Danh sách NCC",
+  "addNew": "Thêm NCC mới",
+  "editVendor": "Chỉnh sửa NCC",
+  "viewVendor": "Chi tiết NCC",
+  "compare": "So sánh NCC",
+  "purchaseOrders": {
+    "title": "Đơn đặt hàng",
+    "list": "Danh sách đơn hàng",
+    "new": "Tạo đơn mới",
+    "detail": "Chi tiết đơn hàng"
+  },
+  "fields": {
+    "name": "Tên NCC",
+    "code": "Mã NCC",
+    "contactPerson": "Người liên hệ",
+    "phone": "Điện thoại",
+    "email": "Email",
+    "address": "Địa chỉ",
+    "rating": "Đánh giá",
+    "totalOrders": "Tổng đơn hàng",
+    "totalValue": "Tổng giá trị",
+    "status": "Trạng thái",
+    "type": "Loại NCC",
+    "notes": "Ghi chú",
+    "onTime": "Đúng hạn"
+  },
+  "type": {
+    "supplier": "Nhà cung cấp",
+    "laundry": "Giặt là",
+    "maintenance": "Bảo trì"
+  },
+  "category": {
+    "supplier": "NCC",
+    "service_provider": "DV",
+    "contractor": "Thầu"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "suspended": "Tạm ngưng"
+  },
+  "po": {
+    "fields": {
+      "poNumber": "Số PO",
+      "vendor": "Nhà cung cấp",
+      "orderDate": "Ngày đặt",
+      "expectedDate": "Ngày dự kiến",
+      "totalAmount": "Tổng tiền",
+      "status": "Trạng thái"
+    },
+    "status": {
+      "draft": "Nháp",
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "ordered": "Đã đặt",
+      "received": "Đã nhận",
+      "cancelled": "Đã hủy"
+    }
+  },
+  "messages": {
+    "createSuccess": "Tạo NCC thành công",
+    "updateSuccess": "Cập nhật NCC thành công",
+    "deleteSuccess": "Xóa NCC thành công",
+    "noVendors": "Chưa có NCC nào"
+  },
+  "filters": {
+    "all": "Tất cả",
+    "byType": "Theo loại",
+    "byStatus": "Theo trạng thái",
+    "search": "Tìm theo tên hoặc mã...",
+    "sortBy": "Sắp xếp"
+  },
+  "sort": {
+    "name": "Tên",
+    "rating": "Đánh giá",
+    "orders": "Số đơn",
+    "value": "Giá trị",
+    "recent": "Mới nhất"
+  },
+  "table": {
+    "vendor": "Nhà cung cấp",
+    "type": "Loại",
+    "contact": "Liên hệ",
+    "rating": "Rating",
+    "orders": "Số đơn",
+    "totalValue": "Tổng GT",
+    "onTime": "On-time",
+    "status": "Trạng thái",
+    "actions": "Thao tác"
+  },
+  "actions": {
+    "viewDetail": "Xem chi tiết",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "activate": "Kích hoạt",
+    "deactivate": "Vô hiệu hóa"
+  },
+  "dialogs": {
+    "deleteTitle": "Xác nhận xóa nhà cung cấp",
+    "deleteDescription": "Bạn có chắc chắn muốn xóa nhà cung cấp <strong>{{name}}</strong>? Hành động này không thể hoàn tác.",
+    "statusTitle": "Xác nhận thay đổi trạng thái",
+    "statusDescription": "Bạn có chắc chắn muốn {{action}} nhà cung cấp <strong>{{name}}</strong>?",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "deleting": "Đang xóa...",
+    "processing": "Đang xử lý..."
+  },
+  "form": {
+    "addTitle": "Thêm nhà cung cấp mới",
+    "editTitle": "Sửa nhà cung cấp",
+    "addDescription": "Điền thông tin nhà cung cấp mới",
+    "editDescription": "Cập nhật thông tin nhà cung cấp",
+    "basicInfo": "Thông tin cơ bản",
+    "contactInfo": "Thông tin liên hệ",
+    "termsSection": "Điều khoản hợp tác",
+    "companyName": "Tên công ty",
+    "companyNamePlaceholder": "VD: Công ty TNHH Vải Việt",
+    "vendorType": "Loại",
+    "typeSupplier": "Nhà cung cấp",
+    "typeService": "Dịch vụ",
+    "typeContractor": "Thầu phụ",
+    "productsServices": "Danh mục sản phẩm/dịch vụ",
+    "addressPlaceholder": "Số nhà, đường, phường/xã...",
+    "phonePlaceholder": "0901234567",
+    "emailPlaceholder": "contact@example.com",
+    "contactPersonPlaceholder": "Nguyễn Văn A",
+    "paymentTerms": "Điều khoản thanh toán",
+    "paymentTermsPlaceholder": "Chọn điều khoản...",
+    "paymentImmediate": "Thanh toán ngay",
+    "payment7Days": "7 ngày",
+    "payment15Days": "15 ngày",
+    "payment30Days": "30 ngày",
+    "payment45Days": "45 ngày",
+    "payment60Days": "60 ngày",
+    "notesPlaceholder": "Ghi chú về nhà cung cấp...",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "required": "*",
+    "productOptions": {
+      "fabric": "Đồ vải",
+      "electrical": "Thiết bị điện",
+      "amenities": "Tiện nghi phòng",
+      "laundry": "Dịch vụ giặt là",
+      "maintenance": "Dịch vụ bảo trì"
+    }
+  },
+  "validation": {
+    "nameMin": "Tên phải có ít nhất 3 ký tự",
+    "productsMin": "Chọn ít nhất 1 sản phẩm/dịch vụ",
+    "addressMin": "Địa chỉ phải có ít nhất 10 ký tự",
+    "phoneInvalid": "Số điện thoại không hợp lệ",
+    "emailInvalid": "Email không hợp lệ",
+    "contactMin": "Tên người liên hệ phải có ít nhất 3 ký tự",
+    "userNotFound": "Không tìm thấy thông tin người dùng",
+    "errorOccurred": "Có lỗi xảy ra. Vui lòng thử lại."
+  }
+}

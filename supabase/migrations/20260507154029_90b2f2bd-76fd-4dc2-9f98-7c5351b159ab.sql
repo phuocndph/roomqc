@@ -1,0 +1,1 @@
+ALTER TABLE public.room_checks ADD COLUMN IF NOT EXISTS started_at timestamp with time zone;

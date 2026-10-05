@@ -1,0 +1,382 @@
+{
+  "layout": {
+    "title": "Quản trị viên",
+    "loading": "Đang tải cổng quản trị...",
+    "logout": "Đăng xuất",
+    "superAdmin": "Quản trị viên cấp cao"
+  },
+  "navigation": {
+    "overview": "Tổng quan",
+    "tenants": "Khách hàng",
+    "approval": "Phê duyệt",
+    "promoCodes": "Mã khuyến mãi",
+    "campaigns": "Chiến dịch",
+    "reminders": "Nhắc nhở",
+    "pricing": "Gói dịch vụ",
+    "analytics": "Thống kê",
+    "settings": "Cài đặt"
+  },
+  "titles": {
+    "overview": "Tổng quan",
+    "tenantManagement": "Quản lý khách hàng",
+    "approval": "Phê duyệt doanh nghiệp",
+    "promoCodes": "Mã khuyến mãi",
+    "campaigns": "Chiến dịch marketing",
+    "reminders": "Nhắc nhở gia hạn",
+    "pricing": "Gói dịch vụ",
+    "analytics": "Thống kê & Báo cáo",
+    "settings": "Cài đặt hệ thống"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển quản trị",
+    "subtitle": "Theo dõi hiệu suất nền tảng SaaS của bạn",
+    "refresh": "Làm mới",
+    "exportReport": "Xuất báo cáo",
+    "totalRevenue": "Tổng doanh thu",
+    "activeCustomers": "Khách hàng hoạt động",
+    "onTrial": "đang dùng thử",
+    "recurringRevenue": "Doanh thu định kỳ",
+    "arpu": "ARPU",
+    "arpuDesc": "Doanh thu trung bình/khách hàng",
+    "vsLastMonth": "so với tháng trước",
+    "tabs": {
+      "overview": "Tổng quan",
+      "revenue": "Doanh thu",
+      "tenants": "Khách hàng",
+      "activity": "Hoạt động"
+    },
+    "charts": {
+      "revenueTrend": "Xu hướng doanh thu",
+      "mrrGrowth": "Tăng trưởng MRR",
+      "tenantGrowth": "Tăng trưởng khách hàng",
+      "planDistribution": "Phân bổ gói dịch vụ"
+    },
+    "revenue": {
+      "thisMonth": "Doanh thu tháng này",
+      "lastMonth": "Tháng trước",
+      "arr": "ARR",
+      "fromMonthlySubscriptions": "Từ các gói đăng ký hàng tháng",
+      "lastMonthRevenue": "Doanh thu tháng trước",
+      "annualRecurringRevenue": "Doanh thu định kỳ hàng năm",
+      "byPlan": "Doanh thu theo gói",
+      "customers": "khách hàng"
+    },
+    "tenants": {
+      "active": "Hoạt động",
+      "trial": "Dùng thử",
+      "expiringSoon": "Sắp hết hạn",
+      "gracePeriod": "Gia hạn",
+      "growthLast30Days": "Tăng trưởng khách hàng (30 ngày qua)"
+    },
+    "noData": "Không có dữ liệu"
+  },
+  "health": {
+    "title": "Sức khỏe hệ thống",
+    "expiringSoon": "Sắp hết hạn",
+    "gracePeriod": "Gia hạn",
+    "churnRate": "Tỷ lệ rời bỏ",
+    "newSignups": "Đăng ký mới",
+    "tenantsExpire7Days": "{{count}} khách hàng hết hạn trong 7 ngày tới",
+    "tenantsInGracePeriod": "{{count}} khách hàng đang gia hạn",
+    "churnLast30Days": "{{rate}}% rời bỏ trong 30 ngày qua",
+    "newSignupsThisMonth": "{{count}} đăng ký mới tháng này",
+    "expiringAlert": "{{count}} khách hàng sẽ hết hạn trong 7 ngày tới. Hãy cân nhắc gửi chiến dịch gia hạn."
+  },
+  "quickActions": {
+    "title": "Thao tác nhanh",
+    "createPromoCode": "Tạo mã khuyến mãi",
+    "newCampaign": "Chiến dịch mới",
+    "scheduleReminders": "Lên lịch nhắc nhở",
+    "generateReport": "Tạo báo cáo"
+  },
+  "activity": {
+    "title": "Hoạt động gần đây",
+    "loading": "Đang tải...",
+    "noActivity": "Không có hoạt động nào"
+  },
+  "campaigns": {
+    "title": "Chiến dịch Marketing",
+    "create": "Tạo chiến dịch",
+    "status": {
+      "draft": "Nháp",
+      "scheduled": "Đã lên lịch",
+      "active": "Đang chạy",
+      "paused": "Tạm dừng",
+      "completed": "Hoàn thành"
+    },
+    "table": {
+      "name": "Tên chiến dịch",
+      "status": "Trạng thái",
+      "audience": "Đối tượng",
+      "performance": "Hiệu suất",
+      "startDate": "Ngày bắt đầu",
+      "actions": "Thao tác",
+      "sent": "đã gửi",
+      "openRate": "mở",
+      "clicks": "clicks",
+      "loading": "Đang tải...",
+      "noCampaigns": "Không có chiến dịch nào.",
+      "total": "chiến dịch",
+      "viewStats": "Xem thống kê",
+      "launch": "Khởi chạy",
+      "pause": "Tạm dừng",
+      "resume": "Tiếp tục",
+      "delete": "Xóa"
+    }
+  },
+  "tenants": {
+    "title": "Quản lý khách hàng",
+    "subtitle": "Quản lý tất cả khách hàng và gói đăng ký của họ",
+    "addTenant": "Thêm khách hàng",
+    "searchPlaceholder": "Tìm kiếm khách hàng...",
+    "filterByStatus": "Lọc theo trạng thái",
+    "filterByPlan": "Lọc theo gói",
+    "allStatus": "Tất cả trạng thái",
+    "allPlans": "Tất cả gói",
+    "exportData": "Xuất dữ liệu",
+    "listTab": "Danh sách khách hàng",
+    "analyticsTab": "Phân tích",
+    "filterByApproval": "Lọc theo phê duyệt",
+    "allApproval": "Tất cả",
+    "approval": {
+      "approved": "Đã duyệt",
+      "pending": "Chờ duyệt",
+      "rejected": "Từ chối"
+    },
+    "table": {
+      "tenantName": "Tên khách hàng",
+      "approvalStatus": "Phê duyệt",
+      "status": "Trạng thái",
+      "plan": "Gói dịch vụ",
+      "usage": "Sử dụng",
+      "lifetimeRevenue": "Doanh thu",
+      "lastActivity": "Hoạt động gần nhất",
+      "expires": "Hết hạn",
+      "created": "Ngày tạo",
+      "actions": "Thao tác",
+      "loading": "Đang tải...",
+      "noTenants": "Không tìm thấy khách hàng.",
+      "tenantsTotal": "{{count}} khách hàng",
+      "previous": "Trước",
+      "next": "Tiếp",
+      "overLimit": "Vượt giới hạn",
+      "noPlan": "Chưa có gói",
+      "monthly": "Hàng tháng",
+      "yearly": "Hàng năm",
+      "daysLeft": "còn {{count}} ngày",
+      "expired": "Đã hết hạn",
+      "rooms": "phòng",
+      "days": "ngày",
+      "standardPlan": "Gói Tiêu Chuẩn"
+    },
+    "actions": {
+      "label": "Thao tác",
+      "viewDetails": "Xem chi tiết",
+      "viewBilling": "Xem hóa đơn",
+      "changePlan": "Đổi gói",
+      "reactivate": "Kích hoạt lại",
+      "suspend": "Tạm ngưng",
+      "delete": "Xóa"
+    },
+    "status": {
+      "active": "Hoạt động",
+      "trial": "Dùng thử",
+      "cancelled": "Đã hủy",
+      "suspended": "Tạm ngưng",
+      "gracePeriod": "Gia hạn",
+      "expired": "Đã hết hạn",
+      "notRegistered": "Chưa đăng ký",
+      "expiringSoon": "Sắp hết hạn"
+    },
+    "plans": {
+      "basic": "Cơ bản",
+      "premium": "Cao cấp",
+      "enterprise": "Doanh nghiệp"
+    },
+    "details": {
+      "subscription": "Gói đăng ký",
+      "plan": "Gói",
+      "autoRenew": "Tự động gia hạn",
+      "contactInfo": "Thông tin liên hệ",
+      "email": "Email",
+      "phone": "Điện thoại",
+      "subscriptionDates": "Thời hạn đăng ký",
+      "started": "Ngày bắt đầu",
+      "currentPeriod": "Kỳ hiện tại",
+      "nextBilling": "Thanh toán tiếp theo",
+      "createdAt": "Ngày tạo",
+      "resourceUsage": "Sử dụng tài nguyên",
+      "hotels": "Khách sạn",
+      "users": "Người dùng",
+      "storage": "Lưu trữ",
+      "peakUsage": "Sử dụng cao nhất",
+      "na": "N/A"
+    },
+    "analytics": {
+      "totalTenants": "Tổng khách hàng",
+      "active": "hoạt động",
+      "growthRate": "Tỷ lệ tăng trưởng",
+      "last30Days": "30 ngày qua",
+      "churnRate": "Tỷ lệ rời bỏ",
+      "churned": "rời bỏ",
+      "atRisk": "Có nguy cơ",
+      "needAttention": "Cần chú ý",
+      "growthTrend": "Xu hướng tăng trưởng",
+      "statusDistribution": "Phân bổ trạng thái"
+    },
+    "bulk": {
+      "selected": "{{count}} đã chọn",
+      "clear": "Bỏ chọn",
+      "sendEmail": "Gửi email",
+      "suspend": "Tạm ngưng",
+      "reactivate": "Kích hoạt lại",
+      "delete": "Xóa"
+    },
+    "dialogs": {
+      "suspendTitle": "Tạm ngưng khách hàng?",
+      "suspendDescription": "Thao tác này sẽ tạm ngưng quyền truy cập của <strong>{{name}}</strong>. Họ sẽ không thể đăng nhập cho đến khi được kích hoạt lại.",
+      "suspendConfirm": "Tạm ngưng",
+      "suspendTenantsTitle": "Tạm ngưng khách hàng",
+      "suspendTenantsDescription": "Bạn có chắc chắn muốn tạm ngưng {{count}} khách hàng? Họ sẽ mất quyền truy cập vào tài khoản.",
+      "deleteTenantsTitle": "Xóa khách hàng",
+      "deleteTenantsDescription": "Bạn có chắc chắn muốn xóa vĩnh viễn {{count}} khách hàng? Hành động này không thể hoàn tác.",
+      "cancel": "Hủy"
+    },
+    "toasts": {
+      "emailsSent": "Đã gửi email",
+      "emailsSentDesc": "Đã gửi email đến {{count}} khách hàng",
+      "tenantsSuspended": "Đã tạm ngưng",
+      "tenantsSuspendedDesc": "{{count}} khách hàng đã bị tạm ngưng",
+      "tenantsReactivated": "Đã kích hoạt lại",
+      "tenantsReactivatedDesc": "{{count}} khách hàng đã được kích hoạt lại",
+      "tenantsDeleted": "Đã xóa",
+      "tenantsDeletedDesc": "{{count}} khách hàng đã bị xóa"
+    },
+    "delete": {
+      "title": "Xóa tài khoản khách hàng",
+      "description": "Hành động này không thể hoàn tác. Tất cả dữ liệu liên quan đến khách hàng này sẽ bị xóa vĩnh viễn.",
+      "warning": "Cảnh báo",
+      "willDelete": "Sẽ xóa",
+      "allHotels": "Tất cả khách sạn và phòng",
+      "allItems": "Tất cả vật tư và tồn kho",
+      "allUsers": "Tất cả người dùng và quyền hạn",
+      "allTransactions": "Tất cả giao dịch và lịch sử",
+      "allFiles": "Tất cả tệp đã tải lên",
+      "tenantToDelete": "Khách hàng sẽ bị xóa",
+      "typeToConfirm": "Nhập",
+      "deleting": "Đang xóa...",
+      "deletePermanently": "Xóa vĩnh viễn"
+    }
+  },
+  "analytics": {
+    "title": "Thống kê & Báo cáo",
+    "subtitle": "Phân tích hiệu suất nền tảng SaaS",
+    "dateRange": {
+      "7d": "7 ngày",
+      "30d": "30 ngày",
+      "90d": "90 ngày",
+      "custom": "Tùy chỉnh"
+    },
+    "kpi": {
+      "mrr": "MRR",
+      "mrrDesc": "Doanh thu định kỳ hàng tháng",
+      "arr": "ARR",
+      "arrDesc": "Doanh thu định kỳ hàng năm",
+      "growth": "Tăng trưởng",
+      "newCustomers": "Khách hàng mới trong {{days}} ngày",
+      "churnRate": "Tỷ lệ rời bỏ",
+      "churnDesc": "{{count}} khách hàng rời bỏ"
+    },
+    "tabs": {
+      "revenue": "Doanh thu",
+      "tenants": "Khách hàng",
+      "plans": "Gói dịch vụ",
+      "conversion": "Chuyển đổi"
+    },
+    "revenue": {
+      "trend": "Xu hướng doanh thu",
+      "byPlan": "Doanh thu theo gói",
+      "breakdown": "Chi tiết doanh thu",
+      "planColumn": "Gói",
+      "customersColumn": "Khách hàng",
+      "revenueColumn": "Doanh thu",
+      "total": "Tổng cộng"
+    },
+    "tenants": {
+      "growth": "Tăng trưởng khách hàng",
+      "statusBreakdown": "Phân bổ trạng thái",
+      "churnAnalysis": "Phân tích rời bỏ"
+    },
+    "plans": {
+      "distribution": "Phân bổ gói dịch vụ",
+      "arpuByPlan": "ARPU theo gói"
+    },
+    "conversion": {
+      "trialToPaid": "Trial → Trả phí",
+      "rate": "Tỷ lệ chuyển đổi",
+      "funnel": "Phễu chuyển đổi",
+      "trialUsers": "Người dùng thử",
+      "currentTrials": "Đang dùng thử",
+      "converted": "Đã chuyển đổi",
+      "fromTrials": "Từ {{count}} trials",
+      "trials": "Trials",
+      "paid": "Trả phí"
+    },
+    "export": {
+      "pdf": "Xuất PDF",
+      "csv": "Xuất CSV"
+    }
+  },
+  "settings": {
+    "title": "Cài đặt hệ thống",
+    "subtitle": "Quản lý cấu hình nền tảng SaaS",
+    "tabs": {
+      "payment": "Thanh toán",
+      "platform": "Nền tảng",
+      "email": "Email",
+      "maintenance": "Bảo trì",
+      "audit": "Lịch sử"
+    },
+    "platform": {
+      "subscriptionSettings": "Cài đặt Subscription",
+      "trialPeriod": "Trial Period (ngày)",
+      "gracePeriod": "Grace Period (ngày)",
+      "defaultRooms": "Số phòng mặc định",
+      "pricePerRoom": "Giá mỗi phòng/ngày (VND)",
+      "platformInfo": "Thông tin nền tảng",
+      "platformName": "Tên nền tảng",
+      "supportEmail": "Email hỗ trợ"
+    },
+    "email": {
+      "smtpConfig": "Cấu hình SMTP",
+      "smtpHost": "SMTP Host",
+      "smtpPort": "SMTP Port",
+      "username": "Username",
+      "password": "Password",
+      "senderInfo": "Thông tin gửi",
+      "senderEmail": "Email gửi",
+      "senderName": "Tên hiển thị",
+      "testEmail": "Gửi email test",
+      "sendTest": "Gửi test"
+    },
+    "maintenance": {
+      "maintenanceMode": "Chế độ bảo trì",
+      "maintenanceModeDesc": "Khi bật, người dùng sẽ thấy trang bảo trì thay vì ứng dụng",
+      "maintenanceMessage": "Thông báo bảo trì",
+      "systemAnnouncement": "Thông báo hệ thống",
+      "sendAnnouncement": "Gửi thông báo"
+    },
+    "audit": {
+      "title": "Lịch sử hoạt động",
+      "search": "Tìm kiếm hoạt động...",
+      "export": "Xuất CSV",
+      "time": "Thời gian",
+      "admin": "Admin",
+      "action": "Hành động",
+      "entity": "Đối tượng",
+      "details": "Chi tiết"
+    },
+    "save": "Lưu cài đặt",
+    "saved": "Đã lưu cài đặt"
+  }
+}

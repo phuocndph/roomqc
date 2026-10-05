@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-09-20T05:40:00.670Z",
+  "counts": {
+    "routes": 160,
+    "rpcs": 369,
+    "rpcsCalledFromFE": 175,
+    "tables": 138,
+    "views": 10,
+    "tablesUsedFromFE": 108,
+    "edgeFunctions": 38,
+    "hooks": 225,
+    "pages": 167,
+    "migrations": 491,
+    "rlsPolicies": 343
+  }
+}

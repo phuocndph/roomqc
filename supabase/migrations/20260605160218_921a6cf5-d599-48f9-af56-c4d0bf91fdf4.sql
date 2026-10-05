@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.deliver_stop(uuid, jsonb, uuid);

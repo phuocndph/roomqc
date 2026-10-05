@@ -1,0 +1,1452 @@
+[
+  {
+    "table": "ab_tests",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\super-admin\\campaigns\\ABTestingManager.tsx",
+      "src\\components\\super-admin\\campaigns\\CreateABTestDialog.tsx"
+    ]
+  },
+  {
+    "table": "activity_logs",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\settings\\RoomCheckSettingsHistory.tsx",
+      "src\\hooks\\super-admin\\usePlatformSettings.ts",
+      "src\\hooks\\super-admin\\useTenants.ts",
+      "src\\hooks\\useStaffActivity.ts",
+      "src\\lib\\activityLogger.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "ai_settings",
+    "ops": [
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\pages\\settings\\AISettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "announcement_dismissals",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\announcements\\useActiveAnnouncements.ts"
+    ]
+  },
+  {
+    "table": "announcements",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\announcements\\useActiveAnnouncements.ts",
+      "src\\hooks\\announcements\\useAnnouncementsAdmin.ts",
+      "src\\hooks\\announcements\\useEnsureVersionDraft.ts"
+    ]
+  },
+  {
+    "table": "audit_log",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useBookingSheetDetails.ts",
+      "src\\hooks\\useRoomAuditLog.ts"
+    ]
+  },
+  {
+    "table": "avatars",
+    "ops": [
+      "update"
+    ],
+    "files": [
+      "src\\components\\settings\\MobileUserProfilePage.tsx"
+    ]
+  },
+  {
+    "table": "backup_logs",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useBackupLogs.ts"
+    ]
+  },
+  {
+    "table": "backups",
+    "ops": [],
+    "files": [
+      "src\\components\\settings\\BackupHistoryDialog.tsx"
+    ]
+  },
+  {
+    "table": "bank_payment_settings",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useBankPaymentSettings.ts"
+    ]
+  },
+  {
+    "table": "batch_inventory",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryCompensation.ts"
+    ]
+  },
+  {
+    "table": "booking_consumables",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useBookingConsumables.ts",
+      "src\\hooks\\usePricingRules.ts"
+    ]
+  },
+  {
+    "table": "booking_payments",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useBookingPayments.ts",
+      "src\\hooks\\useBookingStats.ts",
+      "src\\hooks\\useCashFlowReport.ts",
+      "src\\lib\\shiftHandoverPdf.ts",
+      "src\\pages\\reports\\hub\\DailyReportPage.tsx"
+    ]
+  },
+  {
+    "table": "booking_service_charges",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useBookingServiceCharges.ts",
+      "src\\hooks\\useBookingSheetDetails.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\lib\\invoiceHelpers.ts"
+    ]
+  },
+  {
+    "table": "campaign_engagement",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\useMarketingCampaigns.ts"
+    ]
+  },
+  {
+    "table": "chargeable_consumptions",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useBookingServiceCharges.ts",
+      "src\\hooks\\useBookingSheetDetails.ts",
+      "src\\hooks\\useChargeableConsumptions.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\lib\\invoiceHelpers.ts",
+      "src\\pages\\reception\\PendingChargesPage.tsx"
+    ]
+  },
+  {
+    "table": "checkout_inspection_requests",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx",
+      "src\\hooks\\useCheckoutInspection.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\pages\\rooms\\RoomCheckPage.tsx"
+    ]
+  },
+  {
+    "table": "compensation_requests",
+    "ops": [
+      "insert"
+    ],
+    "files": [
+      "src\\hooks\\useStockAdjustments.ts"
+    ]
+  },
+  {
+    "table": "conversation_members",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\components\\chat\\ChatNotificationListener.tsx",
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "table": "conversations",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\components\\chat\\ChatNotificationListener.tsx"
+    ]
+  },
+  {
+    "table": "distribution_order_batches",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "table": "distribution_order_items",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\components\\rooms\\check-steps\\DeliveryItemsStep.tsx",
+      "src\\hooks\\useDeliveryTaskItems.ts",
+      "src\\hooks\\usePendingDeliveries.ts"
+    ]
+  },
+  {
+    "table": "distribution_order_rooms",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useDeliveryTaskItems.ts",
+      "src\\hooks\\usePendingDeliveries.ts",
+      "src\\hooks\\usePendingRoomDistributions.ts",
+      "src\\hooks\\useRoomDistributionHistory.ts"
+    ]
+  },
+  {
+    "table": "distribution_orders",
+    "ops": [
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useCreateDistributionFromSupplement.ts",
+      "src\\hooks\\useHousekeepingOpsSummary.ts",
+      "src\\hooks\\useInventoryHubBadges.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useRouteBatch.ts",
+      "src\\hooks\\useRouteFilters.ts"
+    ]
+  },
+  {
+    "table": "document_scan_sessions",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\bookings\\DocumentScanner.tsx"
+    ]
+  },
+  {
+    "table": "email_notifications",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useEmailNotifications.ts"
+    ]
+  },
+  {
+    "table": "financial_targets",
+    "ops": [
+      "delete",
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\useFinancialTargets.ts"
+    ]
+  },
+  {
+    "table": "guest_invoices",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\invoices\\PrintReceiptDialog.tsx",
+      "src\\components\\invoices\\VatRequestForm.tsx",
+      "src\\hooks\\useGuestInvoices.ts",
+      "src\\lib\\invoiceHelpers.ts"
+    ]
+  },
+  {
+    "table": "guests",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useBookingSheetDetails.ts",
+      "src\\hooks\\useGuests.ts",
+      "src\\hooks\\useGuestsV2.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts"
+    ]
+  },
+  {
+    "table": "hotel_fixed_expenses",
+    "ops": [
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\useFixedExpenses.ts",
+      "src\\pages\\settings\\FixedCostsSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "hotel_services",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useHotelServices.ts"
+    ]
+  },
+  {
+    "table": "hotel_settings",
+    "ops": [
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\components\\settings\\PricingRulesForm.tsx",
+      "src\\hooks\\useHotelPricingRules.ts"
+    ]
+  },
+  {
+    "table": "hotels",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\invoices\\PrintReceiptDialog.tsx",
+      "src\\components\\settings\\workflows\\actions\\TelegramNotificationAction.tsx",
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\useFloorMapCellSizeRemote.ts",
+      "src\\hooks\\useHotelPhotoMode.ts",
+      "src\\hooks\\useHotelQcMode.ts",
+      "src\\hooks\\useHotels.ts",
+      "src\\hooks\\useRoomCheckLeanConfig.ts",
+      "src\\hooks\\useUpdateRoomCheckLeanConfig.ts",
+      "src\\lib\\mcp\\tools\\list-hotels.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "housekeeping_tasks",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx",
+      "src\\components\\housekeeping\\BulkCreateTaskDialog.tsx",
+      "src\\components\\rooms\\CleaningRequestBanner.tsx",
+      "src\\hooks\\useCheckoutInspection.ts",
+      "src\\hooks\\useCompletedTasksToday.ts",
+      "src\\hooks\\useHousekeepingDashboardPanels.ts",
+      "src\\hooks\\useHousekeepingTasks.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\usePendingReviewCount.ts",
+      "src\\hooks\\useQcStats.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\hooks\\useRoomsNeedingActionToday.ts",
+      "src\\hooks\\useUnifiedTasks.ts",
+      "src\\lib\\mcp\\tools\\list-housekeeping-tasks.ts",
+      "src\\pages\\housekeeping\\TasksPendingReviewPage.tsx",
+      "src\\pages\\rooms\\RoomCheckPage.tsx"
+    ]
+  },
+  {
+    "table": "in_app_notifications",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\notifications\\NotificationBell.tsx",
+      "src\\components\\notifications\\NotificationCenter.tsx",
+      "src\\pages\\NotificationHistoryPage.tsx",
+      "src\\pages\\admin\\PaymentSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "inventory_transactions",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useInventoryTransactions.ts",
+      "src\\hooks\\useItems.ts",
+      "src\\hooks\\useOperationsReport.ts",
+      "src\\hooks\\useOutboundReport.ts",
+      "src\\hooks\\useReports.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "investigation_logs",
+    "ops": [
+      "insert"
+    ],
+    "files": [
+      "src\\hooks\\useStockAdjustments.ts"
+    ]
+  },
+  {
+    "table": "invoices",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\payment\\BankTransferPaymentDialog.tsx",
+      "src\\hooks\\super-admin\\useTenantBilling.ts",
+      "src\\hooks\\super-admin\\useTenants.ts",
+      "src\\hooks\\useSubscription.ts"
+    ]
+  },
+  {
+    "table": "item_categories",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\items\\ItemFilters.tsx",
+      "src\\components\\laundry\\CreateBatchStep2.tsx",
+      "src\\components\\laundry\\MobileBatchForm.tsx",
+      "src\\components\\settings\\categories\\ItemCategoriesList.tsx",
+      "src\\components\\settings\\categories\\ItemClassificationTool.tsx",
+      "src\\hooks\\useCategories.ts",
+      "src\\hooks\\useItemCategories.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\settings\\SystemTestPage.tsx"
+    ]
+  },
+  {
+    "table": "item_images",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useItemImages.ts",
+      "src\\hooks\\useItems.ts"
+    ]
+  },
+  {
+    "table": "item_units",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useItemUnits.ts"
+    ]
+  },
+  {
+    "table": "items",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
+      "src\\components\\distribution\\hooks\\useDistributionForm.ts",
+      "src\\components\\inventory\\ReorderSettingsDialog.tsx",
+      "src\\components\\inventory\\hub\\InventoryHotelBreakdown.tsx",
+      "src\\components\\inventory\\hub\\InventoryQuickSearch.tsx",
+      "src\\components\\items\\BulkActionsBar.tsx",
+      "src\\components\\items\\ItemFilters.tsx",
+      "src\\components\\rooms\\CustomerUsedDialog.tsx",
+      "src\\components\\rooms\\StaffRoomDetailPage.tsx",
+      "src\\components\\rooms\\check-steps\\CategoryBasedItemsCheck.tsx",
+      "src\\components\\rooms\\check-steps\\DefaultOkItemsCheck.tsx",
+      "src\\components\\rooms\\check-steps\\item-type-tabs\\ConsumableTab.tsx",
+      "src\\components\\rooms\\check-steps\\item-type-tabs\\EquipmentTab.tsx",
+      "src\\components\\rooms\\check-steps\\item-type-tabs\\FurnitureTab.tsx",
+      "src\\components\\settings\\categories\\ItemClassificationTool.tsx",
+      "src\\hooks\\useCategories.ts",
+      "src\\hooks\\useChargeableConsumptions.ts",
+      "src\\hooks\\useConsumptionAnalytics.ts",
+      "src\\hooks\\useItems.ts",
+      "src\\hooks\\useLaundryBatches.ts",
+      "src\\hooks\\useOutOfStockCount.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useStockAdjustments.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\reports\\DamagesReportPage.tsx"
+    ]
+  },
+  {
+    "table": "laundry_batch_items",
+    "ops": [
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "table": "laundry_batches",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\dashboard\\MobileDashboard.tsx",
+      "src\\components\\laundry\\LaundryRequestsTab.tsx",
+      "src\\hooks\\useCashFlowReport.ts",
+      "src\\hooks\\useHousekeepingOpsSummary.ts",
+      "src\\hooks\\useLaundryBatches.ts",
+      "src\\hooks\\useLaundryCompensation.ts",
+      "src\\hooks\\useLaundryRequests.ts",
+      "src\\hooks\\useOverviewAlerts.ts",
+      "src\\hooks\\useOverviewKpiStrip.ts",
+      "src\\hooks\\useReports.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "laundry_categories",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryCategories.ts"
+    ]
+  },
+  {
+    "table": "laundry_requests",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryRequests.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "table": "laundry_vendors",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryVendors.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "lost_found_items",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useHousekeepingOpsSummary.ts",
+      "src\\hooks\\useLostFound.ts"
+    ]
+  },
+  {
+    "table": "maintenance_categories",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useMaintenanceCategories.ts"
+    ]
+  },
+  {
+    "table": "maintenance_requests",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\dashboard\\MobileDashboard.tsx",
+      "src\\hooks\\useCashFlowReport.ts",
+      "src\\hooks\\useHousekeepingOpsSummary.ts",
+      "src\\hooks\\useMaintenanceRequests.ts",
+      "src\\hooks\\useOverviewAlerts.ts",
+      "src\\hooks\\useOverviewKpiStrip.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\hooks\\useRecurringIssues.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\lib\\mcp\\tools\\create-maintenance-request.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "marketing_campaigns",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\useMarketingCampaigns.ts"
+    ]
+  },
+  {
+    "table": "message_attachments",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "table": "messages",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "table": "monthly_targets",
+    "ops": [
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\useFixedExpenses.ts",
+      "src\\pages\\settings\\FixedCostsSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "notification_preferences",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useNotificationPreferences.ts"
+    ]
+  },
+  {
+    "table": "notifications",
+    "ops": [
+      "insert"
+    ],
+    "files": [
+      "src\\hooks\\useLaundryBatches.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "payment_anomalies",
+    "ops": [
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\pages\\finance\\ReconciliationPage.tsx"
+    ]
+  },
+  {
+    "table": "payment_transactions",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\payment\\BankTransferPaymentDialog.tsx",
+      "src\\hooks\\super-admin\\useTenantBilling.ts",
+      "src\\hooks\\usePendingPayments.ts",
+      "src\\hooks\\useSubscription.ts",
+      "src\\hooks\\useSuperAdminStats.ts",
+      "src\\pages\\admin\\PaymentSettingsPage.tsx",
+      "src\\pages\\settings\\SubscriptionPaymentPage.tsx"
+    ]
+  },
+  {
+    "table": "pending_group_links",
+    "ops": [
+      "insert",
+      "update"
+    ],
+    "files": [
+      "src\\components\\settings\\telegram\\AutoLinkGroupDialog.tsx"
+    ]
+  },
+  {
+    "table": "permissions",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\usePermissions.ts",
+      "src\\hooks\\useRolesManagement.ts"
+    ]
+  },
+  {
+    "table": "plan_price_history",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\usePricingManagement.ts"
+    ]
+  },
+  {
+    "table": "platform_settings",
+    "ops": [
+      "select",
+      "update",
+      "upsert"
+    ],
+    "files": [
+      "src\\components\\super-admin\\settings\\EmailSettings.tsx",
+      "src\\hooks\\super-admin\\usePlatformSettings.ts"
+    ]
+  },
+  {
+    "table": "positions",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\usePositions.ts"
+    ]
+  },
+  {
+    "table": "promo_code_usage",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\components\\super-admin\\promo-codes\\PromoCodeAnalytics.tsx",
+      "src\\hooks\\super-admin\\usePromoCodes.ts"
+    ]
+  },
+  {
+    "table": "promotional_codes",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\super-admin\\promo-codes\\BulkPromoCodeGenerator.tsx",
+      "src\\hooks\\super-admin\\usePromoCodes.ts"
+    ]
+  },
+  {
+    "table": "purchase_order_items",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\usePurchaseOrders.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "purchase_orders",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useCashFlowReport.ts",
+      "src\\hooks\\usePurchaseOrders.ts",
+      "src\\hooks\\useVendors.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "push_subscriptions",
+    "ops": [
+      "delete",
+      "select",
+      "update",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\usePushNotifications.ts",
+      "src\\pages\\settings\\PushDevicesPage.tsx"
+    ]
+  },
+  {
+    "table": "reminder_automation_rules",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\useRenewalReminders.ts"
+    ]
+  },
+  {
+    "table": "reminder_email_templates",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\useRenewalReminders.ts"
+    ]
+  },
+  {
+    "table": "renewal_reminders",
+    "ops": [
+      "delete",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\super-admin\\useRenewalReminders.ts"
+    ]
+  },
+  {
+    "table": "reorder_suggestions",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useInventoryHubBadges.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useReorderSuggestions.ts"
+    ]
+  },
+  {
+    "table": "role_permissions",
+    "ops": [
+      "delete",
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\usePermissions.ts",
+      "src\\hooks\\useRolesManagement.ts"
+    ]
+  },
+  {
+    "table": "roles",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useRolesManagement.ts"
+    ]
+  },
+  {
+    "table": "room_bookings",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\bookings\\ExtendBookingDialog.tsx",
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx",
+      "src\\components\\dashboard\\owner\\MobileOwnerDashboard.tsx",
+      "src\\components\\dashboard\\owner\\OwnerRevenueOverview.tsx",
+      "src\\components\\rooms\\CustomerUsedDialog.tsx",
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\hooks\\useActiveRoomBookings.ts",
+      "src\\hooks\\useAvailableRooms.ts",
+      "src\\hooks\\useBookingConflicts.ts",
+      "src\\hooks\\useBookingIssues.ts",
+      "src\\hooks\\useBookingServiceCharges.ts",
+      "src\\hooks\\useBookingSheetDetails.ts",
+      "src\\hooks\\useBookingStats.ts",
+      "src\\hooks\\useCashFlowReport.ts",
+      "src\\hooks\\useCheckoutInspection.ts",
+      "src\\hooks\\useGroupBooking.ts",
+      "src\\hooks\\useGroupCheckoutCalculations.ts",
+      "src\\hooks\\useGuestStayHistory.ts",
+      "src\\hooks\\useGuests.ts",
+      "src\\hooks\\useHousekeepingDashboardPanels.ts",
+      "src\\hooks\\useHousekeepingKpi.ts",
+      "src\\hooks\\useOperationsInsights.ts",
+      "src\\hooks\\useOverviewAlerts.ts",
+      "src\\hooks\\useOverviewKpiStrip.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\hooks\\useRevenueReport.ts",
+      "src\\hooks\\useRoomAvailabilityWindow.ts",
+      "src\\hooks\\useRoomBooking.ts",
+      "src\\hooks\\useRoomPerformance.ts",
+      "src\\hooks\\useRoomsNeedingActionToday.ts",
+      "src\\lib\\invoiceHelpers.ts",
+      "src\\lib\\mcp\\tools\\list-bookings.ts",
+      "src\\lib\\route-data-prefetch.ts",
+      "src\\pages\\bookings\\BookingDetailPage.tsx",
+      "src\\pages\\bookings\\BookingsPage.tsx",
+      "src\\pages\\reports\\hub\\DailyReportPage.tsx"
+    ]
+  },
+  {
+    "table": "room_check_issues",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\pages\\housekeeping\\IssuesReviewPage.tsx"
+    ]
+  },
+  {
+    "table": "room_check_sessions",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useRoomCheckSession.ts"
+    ]
+  },
+  {
+    "table": "room_checks",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx",
+      "src\\components\\rooms\\ManagerRoomChecksView.tsx",
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\hooks\\useBookingConsumables.ts",
+      "src\\hooks\\useBookingIssues.ts",
+      "src\\hooks\\useBulkRoomActions.ts",
+      "src\\hooks\\useGroupCheckoutCalculations.ts",
+      "src\\hooks\\useItems.ts",
+      "src\\hooks\\useRevenueReport.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRoomLastCheck.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\bookings\\BookingsPage.tsx",
+      "src\\pages\\reports\\DamagesReportPage.tsx"
+    ]
+  },
+  {
+    "table": "room_items",
+    "ops": [
+      "insert",
+      "select",
+      "update",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\useBookingConsumables.ts",
+      "src\\hooks\\useBulkRoomActions.ts",
+      "src\\hooks\\useItems.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRoomItems.ts",
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "room_pricing_rules",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\settings\\PricingRulesForm.tsx",
+      "src\\hooks\\usePricingRules.ts"
+    ]
+  },
+  {
+    "table": "room_type_rates",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\usePricingDaily.ts",
+      "src\\hooks\\useRoomTypePricing.ts"
+    ]
+  },
+  {
+    "table": "room_type_standards",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useRoomStandards.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "room_types",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts",
+      "src\\hooks\\useAvailableRooms.ts",
+      "src\\hooks\\usePricingDaily.ts",
+      "src\\hooks\\useRoomTypePricing.ts",
+      "src\\hooks\\useRoomTypes.ts"
+    ]
+  },
+  {
+    "table": "rooms",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\dashboard\\MobileDashboard.tsx",
+      "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
+      "src\\components\\rooms\\MobileRoomFormPage.tsx",
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\useAvailableRooms.ts",
+      "src\\hooks\\useBookingStats.ts",
+      "src\\hooks\\useBulkCreateRooms.ts",
+      "src\\hooks\\useBulkRoomActions.ts",
+      "src\\hooks\\useCheckoutInspection.ts",
+      "src\\hooks\\useOverviewKpiStrip.ts",
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRoomSubscriptionLimit.ts",
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\hooks\\useSetupRoom.ts",
+      "src\\hooks\\useTaskQc.ts",
+      "src\\lib\\mcp\\tools\\list-rooms.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\bookings\\BookingsPage.tsx",
+      "src\\pages\\reception\\PendingChargesPage.tsx",
+      "src\\pages\\reports\\DamagesReportPage.tsx",
+      "src\\pages\\reports\\hub\\DailyReportPage.tsx",
+      "src\\pages\\rooms\\RoomFormPage.tsx"
+    ]
+  },
+  {
+    "table": "shift_history",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useShiftHistory.ts",
+      "src\\lib\\shiftHandoverPdf.ts"
+    ]
+  },
+  {
+    "table": "shift_notes",
+    "ops": [
+      "insert",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useShiftNotes.ts"
+    ]
+  },
+  {
+    "table": "staff_statistics",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useStaffStatistics.ts"
+    ]
+  },
+  {
+    "table": "staff_status",
+    "ops": [
+      "select",
+      "update",
+      "upsert"
+    ],
+    "files": [
+      "src\\hooks\\useOnShiftStaffList.ts",
+      "src\\hooks\\useOnShiftStaffListAll.ts",
+      "src\\hooks\\useOnlinePresence.ts",
+      "src\\hooks\\useShiftManagement.ts",
+      "src\\hooks\\useStaffStatus.ts"
+    ]
+  },
+  {
+    "table": "stock_adjustment_items",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useStockAdjustments.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "stock_adjustments",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useInventoryHubBadges.ts",
+      "src\\hooks\\useOperationsReport.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useReports.ts",
+      "src\\hooks\\useStockAdjustments.ts",
+      "src\\hooks\\useUnifiedTasks.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "subscription_plans",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\super-admin\\usePricingManagement.ts",
+      "src\\hooks\\useSubscription.ts"
+    ]
+  },
+  {
+    "table": "super_admin_activity_log",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\components\\super-admin\\dashboard\\RecentActivityFeed.tsx"
+    ]
+  },
+  {
+    "table": "supplement_requests",
+    "ops": [
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useCreateDistributionFromSupplement.ts",
+      "src\\hooks\\useCreateDistributionFromSupplements.ts",
+      "src\\hooks\\usePendingCounts.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useSupplementRequests.ts"
+    ]
+  },
+  {
+    "table": "telegram_connections",
+    "ops": [
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\profile\\TelegramConnectionCard.tsx",
+      "src\\components\\settings\\telegram\\AutoLinkGroupDialog.tsx",
+      "src\\pages\\settings\\TelegramSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "telegram_groups",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\settings\\telegram\\AutoLinkGroupDialog.tsx",
+      "src\\components\\settings\\workflows\\actions\\TelegramNotificationAction.tsx",
+      "src\\pages\\settings\\TelegramSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "tenant_usage",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useBulkCreateRooms.ts",
+      "src\\hooks\\useTenantUsage.ts"
+    ]
+  },
+  {
+    "table": "tenants",
+    "ops": [
+      "delete",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\settings\\UsageModeSelector.tsx",
+      "src\\components\\settings\\subscription\\AddRoomsDialog.tsx",
+      "src\\components\\super-admin\\shared\\NotificationBell.tsx",
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\super-admin\\usePricingManagement.ts",
+      "src\\hooks\\super-admin\\useTenants.ts",
+      "src\\hooks\\useBulkCreateRooms.ts",
+      "src\\hooks\\useReadOnlyMode.ts",
+      "src\\hooks\\useShiftSettings.ts",
+      "src\\hooks\\useSubscription.ts",
+      "src\\hooks\\useSuperAdminStats.ts",
+      "src\\hooks\\useTenant.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\settings\\BusinessConfigurationPage.tsx",
+      "src\\pages\\settings\\GeneralSettingsPage.tsx"
+    ]
+  },
+  {
+    "table": "user_hotels",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\contexts\\HotelContext.tsx",
+      "src\\hooks\\useChat.ts",
+      "src\\hooks\\useCreateDistributionFromSupplement.ts",
+      "src\\hooks\\useHotelStaffList.ts",
+      "src\\hooks\\useManagersByHotel.ts",
+      "src\\hooks\\useNotificationTriggers.ts",
+      "src\\hooks\\useOnShiftStaffList.ts",
+      "src\\hooks\\useUserHotels.ts",
+      "src\\utils\\notificationRecipients.ts"
+    ]
+  },
+  {
+    "table": "user_preferences",
+    "ops": [
+      "select",
+      "upsert"
+    ],
+    "files": [
+      "src\\contexts\\HotelContext.tsx",
+      "src\\hooks\\useMobileNavPreferences.ts"
+    ]
+  },
+  {
+    "table": "user_roles",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\usePermissions.ts",
+      "src\\hooks\\useRoles.ts",
+      "src\\hooks\\useUser.ts"
+    ]
+  },
+  {
+    "table": "users",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\chat\\ChatNotificationListener.tsx",
+      "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
+      "src\\components\\inventory\\adjustments\\InvestigationDialog.tsx",
+      "src\\components\\settings\\MobileUserProfilePage.tsx",
+      "src\\hooks\\useBookingConsumables.ts",
+      "src\\hooks\\useChat.ts",
+      "src\\hooks\\useHotels.ts",
+      "src\\hooks\\useOnShiftStaffListAll.ts",
+      "src\\hooks\\useProfile.ts",
+      "src\\hooks\\useRoomAuditLog.ts",
+      "src\\hooks\\useStaffStatus.ts",
+      "src\\hooks\\useStockAdjustments.ts",
+      "src\\hooks\\useUser.ts",
+      "src\\hooks\\useUsers.ts",
+      "src\\lib\\activityLogger.ts",
+      "src\\lib\\mcp\\supabase.ts",
+      "src\\lib\\seedDemoData.ts",
+      "src\\pages\\admin\\PaymentSettingsPage.tsx",
+      "src\\pages\\auth\\ChangePasswordPage.tsx",
+      "src\\pages\\settings\\SystemTestPage.tsx",
+      "src\\utils\\notificationRecipients.ts"
+    ]
+  },
+  {
+    "table": "v_user_conversations",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useChat.ts",
+      "src\\hooks\\usePendingCounts.ts"
+    ]
+  },
+  {
+    "table": "vendors",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useReorderSuggestions.ts",
+      "src\\hooks\\useVendors.ts",
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
+    "table": "warehouse_stock",
+    "ops": [
+      "delete",
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useWarehouseStock.ts",
+      "src\\hooks\\useWarehouses.ts"
+    ]
+  },
+  {
+    "table": "warehouses",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
+      "src\\hooks\\useWarehouses.ts"
+    ]
+  },
+  {
+    "table": "workflow_actions",
+    "ops": [
+      "delete",
+      "insert"
+    ],
+    "files": [
+      "src\\hooks\\useWorkflows.ts"
+    ]
+  },
+  {
+    "table": "workflow_executions",
+    "ops": [
+      "select"
+    ],
+    "files": [
+      "src\\hooks\\useWorkflows.ts"
+    ]
+  },
+  {
+    "table": "workflows",
+    "ops": [
+      "delete",
+      "insert",
+      "select",
+      "update"
+    ],
+    "files": [
+      "src\\hooks\\useWorkflows.ts"
+    ]
+  }
+]

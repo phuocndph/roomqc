@@ -1,0 +1,5288 @@
+[
+  {
+    "file": "20251108024651_c448f49e-67c3-412c-a9a8-326cc11004e7.sql",
+    "tablesCreated": [
+      "tenants",
+      "hotels",
+      "users",
+      "item_categories",
+      "items",
+      "rooms",
+      "room_items",
+      "room_type_standards",
+      "room_checks"
+    ],
+    "functionsCreated": [
+      "update_updated_at_column",
+      "generate_unique_code",
+      "hotels_generate_code",
+      "items_generate_code",
+      "items_generate_qr",
+      "room_items_update_inventory"
+    ],
+    "policies": [],
+    "lines": 323
+  },
+  {
+    "file": "20251108024814_b114a7ac-cfba-49b8-8ae6-5a7bb2962aa2.sql",
+    "tablesCreated": [
+      "laundry_vendors",
+      "laundry_batches",
+      "laundry_batch_items",
+      "inventory_transactions",
+      "vendors",
+      "purchase_orders",
+      "purchase_order_items",
+      "maintenance_requests",
+      "notifications",
+      "activity_logs"
+    ],
+    "functionsCreated": [
+      "laundry_vendors_generate_code",
+      "laundry_batches_generate_code",
+      "inventory_transactions_generate_code",
+      "vendors_generate_code",
+      "purchase_orders_generate_code",
+      "maintenance_requests_generate_code"
+    ],
+    "policies": [],
+    "lines": 366
+  },
+  {
+    "file": "20251108024915_fc5fc777-d4df-4565-8d1b-4e3664721105.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_default_categories",
+      "setup_new_tenant",
+      "log_activity"
+    ],
+    "policies": [],
+    "lines": 138
+  },
+  {
+    "file": "20251108025001_4310d02a-6db3-4cd7-9336-251c8093e1e7.sql",
+    "tablesCreated": [
+      "stock_adjustments",
+      "stock_adjustment_items"
+    ],
+    "functionsCreated": [
+      "stock_adjustments_generate_code",
+      "laundry_batch_items_update_inventory",
+      "update_vendor_stats",
+      "update_purchase_order_totals",
+      "purchase_order_items_receive",
+      "update_adjustment_summary",
+      "stock_adjustment_items_apply"
+    ],
+    "policies": [],
+    "lines": 218
+  },
+  {
+    "file": "20251108035156_4da008ae-2d4c-4585-8563-5be1a9f2878f.sql",
+    "tablesCreated": [
+      "user_roles"
+    ],
+    "functionsCreated": [
+      "has_role",
+      "get_user_primary_role",
+      "get_current_user_role",
+      "is_super_admin"
+    ],
+    "policies": [
+      "Users can view their own roles",
+      "Super admins can view all roles",
+      "Owners can manage roles in their tenant"
+    ],
+    "lines": 111
+  },
+  {
+    "file": "20251108041256_dc785ef3-3c5c-423a-9cea-b3c9cc844f90.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 31
+  },
+  {
+    "file": "20251108070305_0a31995f-e00f-4281-8da5-2578c9d00303.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "setup_new_tenant"
+    ],
+    "policies": [],
+    "lines": 85
+  },
+  {
+    "file": "20251109141816_ef3abb74-d6f1-4646-bd6a-e474c1066433.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 83
+  },
+  {
+    "file": "20251109143314_37ea4dac-15ac-4249-9973-8dbb5501ebf5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "refresh_monthly_expenses",
+      "get_dashboard_stats",
+      "get_monthly_expenses",
+      "get_top_items",
+      "get_recent_activities"
+    ],
+    "policies": [],
+    "lines": 303
+  },
+  {
+    "file": "20251109145008_9af34874-0941-46cf-a9b7-f5ea3367eacb.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_items_filtered",
+      "get_item_detail",
+      "get_categories_with_stats",
+      "bulk_delete_items"
+    ],
+    "policies": [],
+    "lines": 230
+  },
+  {
+    "file": "20251109151137_aa162c5b-ac46-462f-b3cb-c4686b8f3767.sql",
+    "tablesCreated": [
+      "rooms",
+      "room_items",
+      "room_checks",
+      "room_type_standards"
+    ],
+    "functionsCreated": [
+      "get_rooms_filtered",
+      "get_room_detail"
+    ],
+    "policies": [],
+    "lines": 234
+  },
+  {
+    "file": "20251109151729_3a64e343-85e6-4fcd-b5e0-75cf7c66b408.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_standards",
+      "apply_room_standards",
+      "get_floor_plan"
+    ],
+    "policies": [],
+    "lines": 110
+  },
+  {
+    "file": "20251109155546_d0a8b785-760d-4ef0-9bb6-46d74bb94ca1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_dashboard_stats",
+      "get_laundry_batches_filtered",
+      "get_laundry_batch_detail",
+      "get_vendor_performance",
+      "get_monthly_laundry_expenses"
+    ],
+    "policies": [],
+    "lines": 279
+  },
+  {
+    "file": "20251110083820_c030203c-ac71-41a9-9808-0da0d06df371.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_inventory_dashboard_stats",
+      "get_low_stock_items",
+      "get_inventory_transactions_filtered",
+      "get_inventory_value_over_time",
+      "create_inbound_transaction",
+      "create_outbound_transaction",
+      "get_stock_adjustments_filtered",
+      "create_stock_adjustment"
+    ],
+    "policies": [],
+    "lines": 675
+  },
+  {
+    "file": "20251110092223_0d34da84-bc6b-4ce2-8cf4-51aebda9cf71.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_inventory_report",
+      "get_financial_report",
+      "get_abc_analysis",
+      "get_turnover_analysis",
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 487
+  },
+  {
+    "file": "20251110103159_b47e069b-6c9a-4eae-866d-1d46e1138a2d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 13
+  },
+  {
+    "file": "20251110151715_24f390bf-8e0d-4e37-91a1-ddc6eff0f707.sql",
+    "tablesCreated": [
+      "backup_logs"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Admins can upload backups",
+      "Admins can view backups",
+      "Admins can delete backups",
+      "Users can view backup logs from their tenant",
+      "Admins can insert backup logs"
+    ],
+    "lines": 100
+  },
+  {
+    "file": "20251110153654_4a0c1fea-d43b-4f22-9fc6-4e4a38021169.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 43
+  },
+  {
+    "file": "20251110160215_c830d97a-cf88-4095-972a-ce4c699fe93c.sql",
+    "tablesCreated": [
+      "maintenance_categories",
+      "item_units",
+      "laundry_categories",
+      "room_types"
+    ],
+    "functionsCreated": [
+      "update_updated_at_column"
+    ],
+    "policies": [
+      "Users can view categories from their tenant",
+      "Managers can manage categories",
+      "Users can view units from their tenant",
+      "Managers can manage units",
+      "Users can view laundry categories from their tenant",
+      "Managers can manage laundry categories",
+      "Users can view room types from their tenant",
+      "Managers can manage room types"
+    ],
+    "lines": 244
+  },
+  {
+    "file": "20251110160656_79a80c2c-96b2-4896-be60-a353c9687322.sql",
+    "tablesCreated": [
+      "workflows",
+      "workflow_actions",
+      "workflow_executions"
+    ],
+    "functionsCreated": [
+      "update_workflow_stats"
+    ],
+    "policies": [
+      "Users can view workflows from their tenant",
+      "Managers can manage workflows",
+      "Users can view workflow actions from their tenant",
+      "Managers can manage workflow actions",
+      "Users can view execution logs from their tenant"
+    ],
+    "lines": 189
+  },
+  {
+    "file": "20251110164751_9c947179-9794-4da0-ac6f-216e09226446.sql",
+    "tablesCreated": [
+      "user_hotels",
+      "custom_fields",
+      "custom_field_values",
+      "email_templates",
+      "email_logs",
+      "import_export_history"
+    ],
+    "functionsCreated": [
+      "get_user_hotels",
+      "get_workflow_analytics"
+    ],
+    "policies": [
+      "Users view their hotel assignments",
+      "Admins manage hotel assignments",
+      "Users view custom fields in their tenant",
+      "Admins manage custom fields",
+      "Users manage custom field values in their tenant",
+      "Users view email templates",
+      "Admins manage email templates",
+      "Users view email logs in their tenant",
+      "Users view import/export history in their tenant",
+      "Users create import/export records"
+    ],
+    "lines": 402
+  },
+  {
+    "file": "20251111022041_cdd77315-2aa6-41de-b795-d9b57eca03b1.sql",
+    "tablesCreated": [
+      "permissions",
+      "roles",
+      "role_permissions"
+    ],
+    "functionsCreated": [
+      "to",
+      "has_permission",
+      "get_user_permissions",
+      "update_updated_at_column"
+    ],
+    "policies": [
+      "Users can view all permissions",
+      "Users can view roles from their tenant",
+      "Admins can manage roles in their tenant",
+      "Users can view role permissions from their tenant",
+      "Admins can manage role permissions in their tenant"
+    ],
+    "lines": 214
+  },
+  {
+    "file": "20251111122506_025d25e0-50bb-43c5-b324-8da4ea368ef7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view items from their tenant",
+      "Managers can create items",
+      "Managers can update items",
+      "Owners can delete items",
+      "Users can view categories from their tenant",
+      "Managers can manage categories",
+      "Users can view transactions from their tenant",
+      "Staff can create transactions",
+      "Managers can update transactions",
+      "Users can view hotels from their tenant",
+      "Owners can manage hotels",
+      "Users can view rooms from their tenant",
+      "Managers can manage rooms",
+      "Users can view room items",
+      "Staff can manage room items",
+      "Users can view room standards from their tenant",
+      "Managers can manage room standards",
+      "Users can view room checks",
+      "Staff can create room checks",
+      "Users can view laundry batches from their tenant",
+      "Staff can manage laundry batches",
+      "Users can view laundry batch items",
+      "Staff can manage laundry batch items",
+      "Users can view vendors from their tenant",
+      "Managers can manage vendors",
+      "Users can view maintenance requests from their tenant",
+      "Staff can create maintenance requests",
+      "Staff can update their maintenance requests",
+      "Users can view purchase orders from their tenant",
+      "Managers can manage purchase orders",
+      "Users can view PO items",
+      "Managers can manage PO items",
+      "Users can view their notifications",
+      "Users can update their notifications",
+      "System can create notifications",
+      "Users can view activity logs from their tenant",
+      "Users can view stock adjustments from their tenant",
+      "Managers can manage stock adjustments",
+      "Users can view adjustment items",
+      "Managers can manage adjustment items"
+    ],
+    "lines": 455
+  },
+  {
+    "file": "20251111130504_40dfb0a8-c933-48dd-89ed-47eff41b15d6.sql",
+    "tablesCreated": [
+      "item_images"
+    ],
+    "functionsCreated": [
+      "handle_item_image_primary"
+    ],
+    "policies": [
+      "Users can view item images in their tenant",
+      "Users can insert item images in their tenant",
+      "Users can update item images in their tenant",
+      "Users can delete item images in their tenant"
+    ],
+    "lines": 132
+  },
+  {
+    "file": "20251111132302_d67651da-0da9-42ea-a75d-ce565d28d64e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_items_filtered"
+    ],
+    "policies": [],
+    "lines": 117
+  },
+  {
+    "file": "20251111132349_2f7f95c2-711d-41f6-98f5-9b720198611f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 4
+  },
+  {
+    "file": "20251111133503_79fdaa9b-fd63-4f1f-b9e3-b399811c80fa.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_dashboard_stats",
+      "get_monthly_expenses",
+      "get_top_items",
+      "get_recent_activities",
+      "to",
+      "get_hotels_breakdown_stats"
+    ],
+    "policies": [],
+    "lines": 267
+  },
+  {
+    "file": "20251111134055_b274b368-e5fc-4675-91c2-cc0dffdd882c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "for",
+      "get_hotel_performance_stats",
+      "get_hotels_performance_comparison"
+    ],
+    "policies": [],
+    "lines": 269
+  },
+  {
+    "file": "20251111135928_527b09cf-e0f2-4b40-aa28-0ceab321d61a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 6
+  },
+  {
+    "file": "20251111141707_0ba249e4-64e4-4936-9e88-9908f44bd737.sql",
+    "tablesCreated": [
+      "user_preferences"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can manage their own preferences"
+    ],
+    "lines": 30
+  },
+  {
+    "file": "20251111152129_b080b726-6547-4e3e-b8e0-3c45796904ec.sql",
+    "tablesCreated": [
+      "user_levels"
+    ],
+    "functionsCreated": [
+      "get_user_level",
+      "has_user_level",
+      "is_level_higher_or_equal",
+      "to",
+      "get_user_levels"
+    ],
+    "policies": [
+      "Users can view their profile with level"
+    ],
+    "lines": 148
+  },
+  {
+    "file": "20251111153834_557f2c13-aaf9-4a33-a164-31c77b86eb76.sql",
+    "tablesCreated": [
+      "subscription_plans",
+      "payment_transactions",
+      "invoices"
+    ],
+    "functionsCreated": [
+      "generate_invoice_number",
+      "invoices_generate_number"
+    ],
+    "policies": [
+      "Anyone can view active subscription plans",
+      "Tenant owners can view their payment transactions",
+      "Tenant owners can insert payment transactions",
+      "Tenant owners can update their payment transactions",
+      "Tenant members can view their invoices",
+      "Tenant owners can manage invoices"
+    ],
+    "lines": 197
+  },
+  {
+    "file": "20251111155512_6784c961-4197-4ebb-8541-009287a9375a.sql",
+    "tablesCreated": [
+      "tenant_usage",
+      "staff_statistics",
+      "email_notifications"
+    ],
+    "functionsCreated": [
+      "calculate_tenant_storage",
+      "update_tenant_usage",
+      "check_tenant_can_add",
+      "trigger_check_tenant_quota",
+      "calculate_staff_statistics",
+      "queue_email_notification",
+      "check_expiring_subscriptions"
+    ],
+    "policies": [
+      "Tenant owners can view their usage",
+      "Users can view staff statistics from their tenant",
+      "Users can view their email notifications"
+    ],
+    "lines": 483
+  },
+  {
+    "file": "20251111155919_68d9a112-63f4-4d2f-87b0-74a0cc4db918.sql",
+    "tablesCreated": [
+      "payment_methods",
+      "payment_webhook_logs"
+    ],
+    "functionsCreated": [
+      "is_super_admin",
+      "mark_primary_owner",
+      "can_manage_user",
+      "process_expired_subscriptions",
+      "validate_plan_change",
+      "handle_successful_payment",
+      "increment_staff_stat",
+      "trigger_update_laundry_stats",
+      "trigger_update_maintenance_stats",
+      "get_super_admin_dashboard_stats",
+      "get_tenant_billing_summary"
+    ],
+    "policies": [
+      "Tenant owners can view payment methods",
+      "Tenant owners can manage payment methods"
+    ],
+    "lines": 685
+  },
+  {
+    "file": "20251111160458_fb59b064-604a-4c12-8ff5-7c0b5633d52a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_tenant_storage",
+      "handle_successful_payment"
+    ],
+    "policies": [
+      "Users can view their own tenant",
+      "Tenant owners can update their tenant",
+      "Users can view users in their tenant",
+      "Users can insert users in their tenant",
+      "Users can manage subordinates",
+      "Users can delete subordinates",
+      "Users can view hotels in their tenant",
+      "Owners can insert hotels",
+      "Owners and managers can update hotels",
+      "Owners can delete hotels",
+      "Users can view items in their tenant",
+      "Users can insert items in their tenant",
+      "Users can update items in their tenant",
+      "Users can delete items in their tenant",
+      "Users can view rooms in their tenant",
+      "Users can insert rooms in their tenant",
+      "Users can update rooms in their tenant",
+      "Users can delete rooms in their tenant",
+      "Users can view categories in their tenant",
+      "Users can insert categories in their tenant",
+      "Users can update categories in their tenant",
+      "Users can delete categories in their tenant",
+      "Users can view transactions in their tenant",
+      "Users can insert transactions in their tenant",
+      "Users can view batches in their tenant",
+      "Users can insert batches in their tenant",
+      "Users can update batches in their tenant",
+      "Users can view maintenance in their tenant",
+      "Users can insert maintenance in their tenant",
+      "Users can update maintenance in their tenant",
+      "Users can view vendors in their tenant",
+      "Users can insert vendors in their tenant",
+      "Users can update vendors in their tenant",
+      "Users can delete vendors in their tenant",
+      "Users can view purchase orders in their tenant",
+      "Users can insert purchase orders in their tenant",
+      "Users can update purchase orders in their tenant",
+      "Users can view activity logs in their tenant",
+      "Users can insert activity logs in their tenant",
+      "Anyone can view subscription plans",
+      "Only super admin can modify subscription plans",
+      "Users can view their tenant",
+      "System can insert payment transactions",
+      "Users can view their tenant usage",
+      "Users can view staff statistics in their tenant",
+      "Owners can manage payment methods",
+      "Only super admin can view webhook logs",
+      "System can insert webhook logs"
+    ],
+    "lines": 640
+  },
+  {
+    "file": "20251111164654_90b4320c-5453-4808-9dbb-5ae0f04951ac.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_dashboard_stats",
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 295
+  },
+  {
+    "file": "20251112011229_5469d49f-29ea-4af7-a0bb-e3c7f32f6d87.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_top_items",
+      "get_room_standards",
+      "get_laundry_batch_detail",
+      "create_super_admin"
+    ],
+    "policies": [],
+    "lines": 238
+  },
+  {
+    "file": "20251112011939_f91552d9-7e49-4d58-8be5-ec434c8ad99d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 186
+  },
+  {
+    "file": "20251112012024_fde229ed-0202-4e3b-8910-491910a94e57.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 194
+  },
+  {
+    "file": "20251112012702_2c169042-eb82-423a-ac5e-cad370fae0a5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 196
+  },
+  {
+    "file": "20251112013135_210c4d32-5b14-4ac6-abf0-101faa40f6ca.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 229
+  },
+  {
+    "file": "20251112013222_19bf5e79-8a2c-496f-b7bf-2e7545c5c81b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 51
+  },
+  {
+    "file": "20251112013935_e06f1a75-4d74-4e77-8a52-e3e963296e2f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cleanup_orphaned_auth_users"
+    ],
+    "policies": [],
+    "lines": 52
+  },
+  {
+    "file": "20251112014157_9d9e0ea0-1055-4c4e-becf-1a9502cf3d5c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 217
+  },
+  {
+    "file": "20251112022841_f2372d8e-2f97-4716-bd36-7a57bf212531.sql",
+    "tablesCreated": [
+      "promotional_codes",
+      "promo_code_usage",
+      "plan_price_history",
+      "renewal_reminders",
+      "marketing_campaigns",
+      "campaign_engagement",
+      "super_admin_activity_log"
+    ],
+    "functionsCreated": [
+      "schedule_renewal_reminders",
+      "apply_promo_code",
+      "get_super_admin_dashboard_stats"
+    ],
+    "policies": [
+      "Super admins can manage promo codes",
+      "Authenticated users can view active promo codes",
+      "Super admins can view all promo usage",
+      "Tenants can view their own promo usage",
+      "System can insert promo usage",
+      "Super admins can manage price history",
+      "Authenticated users can view price history",
+      "Super admins can manage renewal reminders",
+      "Tenant owners can view their reminders",
+      "Super admins can manage campaigns",
+      "Active campaigns are viewable by authenticated users",
+      "Super admins can view all engagement",
+      "Tenants can view their own engagement",
+      "Super admins can manage activity log"
+    ],
+    "lines": 504
+  },
+  {
+    "file": "20251112155026_f33bb900-1402-4466-aab0-090b8cdcb563.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 14
+  },
+  {
+    "file": "20251112160950_45af4db7-d91b-4bbe-8a59-9382d8c8c407.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 34
+  },
+  {
+    "file": "20251112162027_d1a1c0a6-12aa-46af-b1da-7e0f45afc767.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Public Access to Item Images",
+      "Users can upload item images to their tenant",
+      "Users can update their tenant item images",
+      "Users can delete their tenant item images"
+    ],
+    "lines": 54
+  },
+  {
+    "file": "20251113032331_d27f461b-b5f0-491f-85e1-0186cccd22c8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "room_items_update_inventory"
+    ],
+    "policies": [],
+    "lines": 77
+  },
+  {
+    "file": "20251113033235_2d0a57e9-9f25-42d5-bdab-382a6663b0ae.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 13
+  },
+  {
+    "file": "20251113033614_c88b87b1-23c7-4405-9dd4-2defe51c6d76.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 12
+  },
+  {
+    "file": "20251113034248_560deec7-4689-4331-9775-49f150b2a0f1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "apply_room_standards"
+    ],
+    "policies": [],
+    "lines": 47
+  },
+  {
+    "file": "20251113043348_b508b29b-daee-4160-bf48-7ae431b9804d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 90
+  },
+  {
+    "file": "20251113083520_d443b520-4208-4234-96a3-4d478ce99e12.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_filtered"
+    ],
+    "policies": [],
+    "lines": 117
+  },
+  {
+    "file": "20251113083544_a4f16e08-c4d9-4e24-9a1f-cd45cde6ea6f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_filtered"
+    ],
+    "policies": [],
+    "lines": 127
+  },
+  {
+    "file": "20251113084113_712a23a2-897a-4721-b0e8-0a16b1dc3816.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_filtered"
+    ],
+    "policies": [],
+    "lines": 125
+  },
+  {
+    "file": "20251113084258_423d6026-e190-44f3-b2cb-774d8858caab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view rooms in their tenant",
+      "Users can insert rooms in their tenant",
+      "Users can update rooms in their tenant",
+      "Managers can delete rooms"
+    ],
+    "lines": 89
+  },
+  {
+    "file": "20251113085727_ec891c5c-2390-4c80-a192-1a1af1a6054a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_filtered"
+    ],
+    "policies": [],
+    "lines": 120
+  },
+  {
+    "file": "20251113090311_dee143c7-6b6d-4f4a-aba3-26c818b0f916.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_filtered"
+    ],
+    "policies": [],
+    "lines": 120
+  },
+  {
+    "file": "20251113103524_78bb084e-2579-4733-a3f8-7c811fd75f08.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20251113105023_64d6f741-57bc-430e-905e-7ae323057bc4.sql",
+    "tablesCreated": [
+      "positions"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view positions in their tenant",
+      "Owners and managers can manage positions"
+    ],
+    "lines": 128
+  },
+  {
+    "file": "20251113134230_55f5a393-3e50-4e7e-a8eb-1e702b37c320.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "check_tenant_can_add",
+      "trigger_check_tenant_quota"
+    ],
+    "policies": [],
+    "lines": 99
+  },
+  {
+    "file": "20251113134421_2d0b9ce3-cf18-4a40-ba00-c297c9c9dc78.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "check_tenant_can_add"
+    ],
+    "policies": [],
+    "lines": 71
+  },
+  {
+    "file": "20251113141007_c98f60f1-6b16-4a50-b255-0012a1a49fe5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "can_create_user",
+      "approve_tenant",
+      "reject_tenant",
+      "get_pending_tenants"
+    ],
+    "policies": [],
+    "lines": 152
+  },
+  {
+    "file": "20251113144947_8842f06b-13be-4628-8710-39dc31de553e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "get_user_subordinates",
+      "can_create_user",
+      "check_created_by_required",
+      "user_has_subordinates",
+      "reassign_subordinates"
+    ],
+    "policies": [
+      "Users can view users in their hierarchy",
+      "Users can update their subordinates",
+      "Users can delete their subordinates"
+    ],
+    "lines": 255
+  },
+  {
+    "file": "20251113151741_040ead3a-9761-407a-bc63-5e360345c6ae.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 13
+  },
+  {
+    "file": "20251113152601_2785994d-02aa-4690-8c58-68e19d71ac55.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_current_user_tenant_id",
+      "is_tenant_owner",
+      "is_manager"
+    ],
+    "policies": [
+      "Users can view users in tenant",
+      "Users can create users in tenant",
+      "Users can update users in tenant",
+      "Users can delete subordinates in tenant"
+    ],
+    "lines": 117
+  },
+  {
+    "file": "20251113160933_ce560e8c-b958-4f61-99d6-5fe71dad93a8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 25
+  },
+  {
+    "file": "20251114070937_fb5ded03-f5c0-40d0-bd6f-299d744cfcb1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 35
+  },
+  {
+    "file": "20251114071724_a7a9d7d6-f177-4c02-af52-3cc1acab58ea.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 53
+  },
+  {
+    "file": "20251114073645_55a5cc66-2e5e-425a-900b-7aa4124e837f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 8
+  },
+  {
+    "file": "20251114074335_65bd8244-62d8-4586-be69-5fbb34bb1037.sql",
+    "tablesCreated": [
+      "user_permissions"
+    ],
+    "functionsCreated": [
+      "to",
+      "create_default_tenant_roles",
+      "assign_default_permissions_to_role",
+      "on_tenant_created",
+      "get_user_permissions",
+      "get_user_permissions_summary",
+      "user_has_hotel_access"
+    ],
+    "policies": [
+      "Users can view their own permissions",
+      "Owners can manage user permissions",
+      "Users can view items with hotel access",
+      "Users can view rooms with hotel access",
+      "Users can view laundry batches with hotel access",
+      "Users can view maintenance requests with hotel access",
+      "Users can view inventory transactions with hotel access"
+    ],
+    "lines": 470
+  },
+  {
+    "file": "20251114150920_c37e3392-0949-4fa8-b44e-7c623768b106.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_user_permissions"
+    ],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20251114154543_37f39979-40ff-44f4-b5f1-b219d977a59b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 14
+  },
+  {
+    "file": "20251114155659_adba00b2-001b-4840-bcbf-0592c09317a6.sql",
+    "tablesCreated": [
+      "room_check_sessions"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view check sessions in their tenant",
+      "Users can create their own check sessions",
+      "Users can delete their own check sessions"
+    ],
+    "lines": 52
+  },
+  {
+    "file": "20251114161116_992d225b-71f5-4000-9776-2ff1d4b9d69f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "cleanup_old_check_sessions"
+    ],
+    "policies": [],
+    "lines": 17
+  },
+  {
+    "file": "20251115012236_60116b92-2d0b-416c-bdd8-0ecf41c851c2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "check_duplicate_room_check"
+    ],
+    "policies": [],
+    "lines": 25
+  },
+  {
+    "file": "20251115013825_e1788c85-bb64-4da9-bc86-542f72f7c4fe.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "check_duplicate_room_check"
+    ],
+    "policies": [],
+    "lines": 25
+  },
+  {
+    "file": "20251115024548_487b518d-9e55-46e7-95bf-0b150de87f6e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 5
+  },
+  {
+    "file": "20251115042823_5f90a252-af71-40e8-816f-69d06b5daa4d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 13
+  },
+  {
+    "file": "20251115073923_1cc1554f-1870-4c50-82d9-8a39a23f273c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_outbound_transaction"
+    ],
+    "policies": [],
+    "lines": 137
+  },
+  {
+    "file": "20251115074350_e952c77a-8bf6-4365-bc21-015c86066d6d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_low_stock_items",
+      "get_inventory_transactions_filtered"
+    ],
+    "policies": [],
+    "lines": 151
+  },
+  {
+    "file": "20251115080511_fc021ea5-f0c3-4560-9e98-ab9bfffb56fa.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20251115110750_f4bcbf10-7238-48d2-84f4-d398fad3ea7a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_stock_adjustments_filtered"
+    ],
+    "policies": [],
+    "lines": 89
+  },
+  {
+    "file": "20251115150633_ba600b12-0478-488a-9143-ab329195d76d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_inventory_report",
+      "get_financial_report",
+      "get_abc_analysis",
+      "get_turnover_analysis",
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 475
+  },
+  {
+    "file": "20251115153326_55b3b322-8c30-4798-af29-b608bfa8e08a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_dashboard_stats",
+      "get_monthly_laundry_expenses"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20251116044241_5b479985-2ca5-422c-906b-7070988ce4d4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 18
+  },
+  {
+    "file": "20251116052116_2deb4cb9-b5b2-45b7-803f-f65ac358aebc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 22
+  },
+  {
+    "file": "20251116080024_76976e14-9f9b-4201-9981-c8590ffa8b50.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 22
+  },
+  {
+    "file": "20251116082214_04ef3cac-7e8d-4128-a989-71e0a0912a3b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "trigger_update_maintenance_stats"
+    ],
+    "policies": [],
+    "lines": 17
+  },
+  {
+    "file": "20251117025849_ecf1aff4-379f-40b4-90ba-2097583e8622.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_top_items"
+    ],
+    "policies": [],
+    "lines": 57
+  },
+  {
+    "file": "20251207043615_258c58e8-9714-4905-bcf5-fb7019a42043.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_inventory_report"
+    ],
+    "policies": [],
+    "lines": 135
+  },
+  {
+    "file": "20251209171151_a15c1bcb-8fae-4f73-b3e1-596b45b88de4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_outbound_transaction"
+    ],
+    "policies": [],
+    "lines": 175
+  },
+  {
+    "file": "20251209171447_dd87b677-e90f-4403-bafa-2c562c5f4117.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_outbound_transaction"
+    ],
+    "policies": [],
+    "lines": 130
+  },
+  {
+    "file": "20251210023702_680462cf-cd50-4dbc-b0f0-c0af7f2a4efd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_outbound_transaction",
+      "create_inbound_transaction"
+    ],
+    "policies": [],
+    "lines": 253
+  },
+  {
+    "file": "20251210023805_be34d12f-2ba1-4841-a4c2-fb7ade398caf.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 5
+  },
+  {
+    "file": "20251210024218_bc7180ba-4bbf-4d6f-bdfc-aabe17961686.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_outbound_transaction"
+    ],
+    "policies": [],
+    "lines": 139
+  },
+  {
+    "file": "20251211150324_a06e73bb-340e-42d0-a4f6-47003219eb9f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "has_user_permission",
+      "has_permission"
+    ],
+    "policies": [],
+    "lines": 86
+  },
+  {
+    "file": "20251211152633_e7fa3206-b89e-4059-b96f-128d1ecf7c15.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_user_permissions_summary",
+      "has_user_permission"
+    ],
+    "policies": [],
+    "lines": 136
+  },
+  {
+    "file": "20251212025506_35ae1ef5-b308-4d92-9ebd-28eb9a1dbb9a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "has_user_permission"
+    ],
+    "policies": [],
+    "lines": 61
+  },
+  {
+    "file": "20251212162350_2506cc90-e6e6-44ef-b006-2275d133ef27.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 9
+  },
+  {
+    "file": "20251212162942_e4c60dcf-9f71-4107-b955-a43c1eeebf09.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20251215165916_f8c1d7b8-ac39-443d-ae90-3cc4dacf268c.sql",
+    "tablesCreated": [
+      "distribution_orders",
+      "distribution_order_rooms",
+      "distribution_order_items"
+    ],
+    "functionsCreated": [
+      "create_distribution_order",
+      "complete_room_delivery",
+      "to",
+      "get_distribution_orders_filtered",
+      "get_distribution_order_detail",
+      "update_distribution_order_status"
+    ],
+    "policies": [
+      "Users can view distribution orders in their tenant",
+      "Users can create distribution orders in their tenant",
+      "Users can update distribution orders in their tenant",
+      "Users can delete distribution orders in their tenant",
+      "Users can view distribution order rooms",
+      "Users can manage distribution order rooms",
+      "Users can view distribution order items",
+      "Users can manage distribution order items"
+    ],
+    "lines": 513
+  },
+  {
+    "file": "20251215171236_dd06d59b-bd37-4d99-a327-7ec6e7c1c6e3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_distribution_order"
+    ],
+    "policies": [],
+    "lines": 61
+  },
+  {
+    "file": "20251215172204_9d6c3100-574e-4c56-b697-9db86983e743.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery"
+    ],
+    "policies": [],
+    "lines": 121
+  },
+  {
+    "file": "20251215172539_4a9b54b9-bf90-46ff-b99b-a1062cbc4d2a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 20
+  },
+  {
+    "file": "20251215172856_a4c58e54-5456-4015-af38-2e84ec6ec9d9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery"
+    ],
+    "policies": [],
+    "lines": 119
+  },
+  {
+    "file": "20251216034032_3597e265-b354-4f0c-bfc7-e6e48c4a5046.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_laundry_return_transaction"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20251216034813_bbec89ed-1176-4c9b-9a54-63648e6168e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_laundry_loss_transaction"
+    ],
+    "policies": [],
+    "lines": 124
+  },
+  {
+    "file": "20251216035712_ce29d44c-315d-49f5-a970-6870ce00848d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_laundry_return_transaction",
+      "create_laundry_loss_transaction"
+    ],
+    "policies": [],
+    "lines": 274
+  },
+  {
+    "file": "20251216040215_848f723b-68c6-4e66-ad4e-29141cd40fd4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_laundry_return_transaction",
+      "create_laundry_loss_transaction",
+      "create_laundry_batch_with_items"
+    ],
+    "policies": [],
+    "lines": 270
+  },
+  {
+    "file": "20251216083506_774bce6f-3803-4d86-b5da-cf46bdc47094.sql",
+    "tablesCreated": [
+      "push_subscriptions",
+      "in_app_notifications"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view own push subscriptions",
+      "Users can insert own push subscriptions",
+      "Users can update own push subscriptions",
+      "Users can delete own push subscriptions",
+      "Users can view own notifications",
+      "Users can update own notifications"
+    ],
+    "lines": 74
+  },
+  {
+    "file": "20251216084310_2544a8f3-a9e9-4673-aada-27d74e719fab.sql",
+    "tablesCreated": [
+      "notification_preferences"
+    ],
+    "functionsCreated": [
+      "to",
+      "create_notification"
+    ],
+    "policies": [
+      "Users can view their own notification preferences",
+      "Users can create their own notification preferences",
+      "Users can update their own notification preferences",
+      "Users can delete their own notification preferences"
+    ],
+    "lines": 99
+  },
+  {
+    "file": "20251216090833_f69d4358-06ee-4547-8be9-b27aad82f2b0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20251216092242_6ee4e081-c797-4c6b-a706-7555ae6d6f91.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Users can insert notifications for their tenant",
+      "Service role can insert notifications"
+    ],
+    "lines": 15
+  },
+  {
+    "file": "20251217142417_a02a5c57-4132-4950-981a-e15b331520a6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 17
+  },
+  {
+    "file": "20251217143738_2efdb35b-4f22-4aa8-a9f1-68bfbb72b969.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 51
+  },
+  {
+    "file": "20251217172136_9371baf2-af00-463e-9f39-b99f85b8bbd5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 16
+  },
+  {
+    "file": "20251218011904_47486e5a-8120-44d8-9bf7-f092710a0ef5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_items_filtered"
+    ],
+    "policies": [],
+    "lines": 117
+  },
+  {
+    "file": "20251218073215_3acf3072-6607-4d71-9d80-72d2672f0db8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery",
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 195
+  },
+  {
+    "file": "20251218073825_1ad830c1-9f39-4592-9d94-a8eaef24becd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "reject_room_delivery",
+      "get_room_distribution_history"
+    ],
+    "policies": [],
+    "lines": 138
+  },
+  {
+    "file": "20251218091055_21c52725-7edf-499b-a75a-39f1107feba3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery"
+    ],
+    "policies": [],
+    "lines": 121
+  },
+  {
+    "file": "20251218091341_29a60ebf-f9ee-4fd9-8c6c-caaa947be788.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 82
+  },
+  {
+    "file": "20251218091618_16a95179-fe83-4db0-ba59-1911a79e58ca.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20251218091940_2be058fb-bf23-4c46-b75b-b92d84efc7fa.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 172
+  },
+  {
+    "file": "20251218154129_5007c294-be5a-4ecc-addd-251daa022009.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery"
+    ],
+    "policies": [
+      "Users can insert notifications"
+    ],
+    "lines": 145
+  },
+  {
+    "file": "20251219043931_84f2daf1-5ff1-4c29-b8f7-33f34940a01c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 96
+  },
+  {
+    "file": "20251219152520_b19e4829-beb2-445c-a718-e77e17c1b9c8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "create_notification_for_user"
+    ],
+    "policies": [],
+    "lines": 47
+  },
+  {
+    "file": "20251221134127_93c99a59-e6cf-483b-bdd1-ec4d0e87adf9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Owners and managers can manage user permissions"
+    ],
+    "lines": 59
+  },
+  {
+    "file": "20251221142321_2ce43650-aeee-48fc-8157-6e895b2b6337.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_warehouse_delivery",
+      "get_distribution_order_detail"
+    ],
+    "policies": [],
+    "lines": 129
+  },
+  {
+    "file": "20251221142809_898f9be3-38df-4b17-af77-bb0740875200.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 9
+  },
+  {
+    "file": "20251221143526_2a754c34-59e1-460a-bfd0-b4a62e2ca1b1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_room_delivery"
+    ],
+    "policies": [],
+    "lines": 209
+  },
+  {
+    "file": "20251221145042_30e571c7-816c-42fa-8829-230f41045b07.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_distribution_order"
+    ],
+    "policies": [],
+    "lines": 204
+  },
+  {
+    "file": "20251221151333_7901f3d5-5722-4881-8165-3a4d15b4bde4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_warehouse_delivery"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20251222163058_44eb01a2-791c-4dec-b51f-cf797fec7426.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_room_delivery",
+      "batch_confirm_room_deliveries",
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 286
+  },
+  {
+    "file": "20251223150507_07cc6ff7-c76d-4fa6-b8d9-fc0cf08cf678.sql",
+    "tablesCreated": [
+      "room_bookings"
+    ],
+    "functionsCreated": [
+      "get_current_room_booking"
+    ],
+    "policies": [
+      "Users can view room bookings from their tenant",
+      "Managers can insert room bookings",
+      "Managers can update room bookings",
+      "Managers can delete room bookings"
+    ],
+    "lines": 125
+  },
+  {
+    "file": "20251223155025_ee151157-3e5b-47a7-b0d9-3ed8c5fcb00e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20251225154929_714ca07f-b35b-4380-9a65-995301d34a81.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_categories_with_stats"
+    ],
+    "policies": [],
+    "lines": 41
+  },
+  {
+    "file": "20251225155548_03e164a8-764c-4fdb-8e39-f991b7c3a65b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_categories_with_stats"
+    ],
+    "policies": [],
+    "lines": 59
+  },
+  {
+    "file": "20251225161832_5520792e-911d-4d48-9a36-e82ffdebee7a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_items_filtered",
+      "validate_item_category_hotel",
+      "sync_categories_for_hotel"
+    ],
+    "policies": [],
+    "lines": 237
+  },
+  {
+    "file": "20251230035431_04765a2c-ff31-4fff-ad0f-b20f36f6f4b5.sql",
+    "tablesCreated": [
+      "distribution_order_batches"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view batches from their tenant",
+      "Managers can manage batches"
+    ],
+    "lines": 127
+  },
+  {
+    "file": "20251230035624_1d13c5f6-a657-4b5e-9373-8c5ec6de599b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 75
+  },
+  {
+    "file": "20251230035831_5fc52f2f-7215-446d-af64-ac58661f9025.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handover_batch",
+      "receive_batch",
+      "deliver_stop",
+      "mark_cannot_access",
+      "retry_stop",
+      "return_to_stock_for_stop",
+      "handover_stop_create_next_route",
+      "close_route_if_complete",
+      "check_and_update_batch_status",
+      "check_and_update_order_status"
+    ],
+    "policies": [],
+    "lines": 839
+  },
+  {
+    "file": "20251230040131_1a82fc85-9c4d-475a-95fb-9a86394e72ed.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "is_storekeeper",
+      "is_route_assignee",
+      "is_distribution_leader"
+    ],
+    "policies": [
+      "distribution_orders_select_policy",
+      "distribution_orders_insert_policy",
+      "distribution_orders_update_policy",
+      "distribution_orders_delete_policy",
+      "distribution_batches_select_policy",
+      "distribution_batches_insert_policy",
+      "distribution_batches_update_policy",
+      "distribution_batches_delete_policy",
+      "distribution_rooms_select_policy",
+      "distribution_rooms_insert_policy",
+      "distribution_rooms_update_policy",
+      "distribution_rooms_delete_policy",
+      "distribution_items_select_policy",
+      "distribution_items_insert_policy",
+      "distribution_items_update_policy",
+      "distribution_items_delete_policy"
+    ],
+    "lines": 298
+  },
+  {
+    "file": "20251230053055_184a5e93-9314-4456-b0a2-3130abd9ce67.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_distribution_order_detail",
+      "auto_assign_batch_number",
+      "auto_create_batch_records",
+      "auto_update_order_floor"
+    ],
+    "policies": [],
+    "lines": 304
+  },
+  {
+    "file": "20251230084324_c52fc8c0-9167-4733-a0ff-bda011f81056.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_delivery_from_room_check"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20251230090732_df986abb-f61b-4e69-a1ca-6374c34fd91d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_distribution_orders_filtered"
+    ],
+    "policies": [],
+    "lines": 86
+  },
+  {
+    "file": "20251230092316_786c6ef1-f4cc-43a5-a201-28134846fa07.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 23
+  },
+  {
+    "file": "20251230093229_0e177f6a-c801-4458-bff7-e952641706a7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handover_batch",
+      "confirm_receive_order"
+    ],
+    "policies": [],
+    "lines": 180
+  },
+  {
+    "file": "20251230094047_1874d71e-7cef-40af-87ad-d2c5d4de50c5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "deliver_stop"
+    ],
+    "policies": [],
+    "lines": 150
+  },
+  {
+    "file": "20251230095558_b4b38689-d1a3-4ed8-becd-e2b74241366f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_distribution_orders_filtered",
+      "get_distribution_orders_count"
+    ],
+    "policies": [],
+    "lines": 134
+  },
+  {
+    "file": "20251230145726_b9df7c76-e43e-49fb-95d7-4278eb14e74e.sql",
+    "tablesCreated": [
+      "booking_consumables"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view booking consumables from their tenant",
+      "Users can insert booking consumables in their tenant",
+      "Users can update booking consumables in their tenant",
+      "Users can delete booking consumables in their tenant"
+    ],
+    "lines": 70
+  },
+  {
+    "file": "20251231170056_f945d940-6e80-4c04-aec8-757bc04564f5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_missing_items_for_rooms"
+    ],
+    "policies": [],
+    "lines": 36
+  },
+  {
+    "file": "20251231171535_70864c73-bc35-420b-a722-035cadf00495.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_missing_items_for_rooms"
+    ],
+    "policies": [],
+    "lines": 42
+  },
+  {
+    "file": "20251231172607_0a1c8170-9fb6-48a1-a1d9-2fb8577d8a36.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_missing_items_from_room_detail"
+    ],
+    "policies": [],
+    "lines": 47
+  },
+  {
+    "file": "20251231173010_33c17601-88ee-4f0c-b698-94268f7728d3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_missing_items_from_room_detail"
+    ],
+    "policies": [],
+    "lines": 50
+  },
+  {
+    "file": "20251231174207_51910cf5-f085-4c8a-93d3-eea48a1cc4d9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_missing_items_from_room_detail"
+    ],
+    "policies": [],
+    "lines": 49
+  },
+  {
+    "file": "20260101143619_38853c78-1c33-4610-91f0-91d68aa81b51.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 81
+  },
+  {
+    "file": "20260101143700_eb876fb9-1047-416a-b231-414cecc3c339.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 99
+  },
+  {
+    "file": "20260101144237_77a71ee3-d776-4b98-8f3c-72d5c51149e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20260101150425_35085805-21b6-43f4-897f-f7faf9da210f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_delivery_from_room_check"
+    ],
+    "policies": [],
+    "lines": 134
+  },
+  {
+    "file": "20260101151857_264592e0-a381-46b8-b202-947ddf288727.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_room_item_hotel"
+    ],
+    "policies": [],
+    "lines": 85
+  },
+  {
+    "file": "20260101160508_979036b4-e282-4e79-a961-a3a63a6f974f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 10
+  },
+  {
+    "file": "20260102024131_8a236062-c341-4221-af8f-45f8aa795efa.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "get_rooms_report_stats",
+      "get_room_checks_report"
+    ],
+    "policies": [],
+    "lines": 364
+  },
+  {
+    "file": "20260102025200_cddccb17-f22c-4b0d-b4f0-a79646c909d9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "with",
+      "get_rooms_report_stats",
+      "get_room_checks_report"
+    ],
+    "policies": [],
+    "lines": 364
+  },
+  {
+    "file": "20260102025321_b84b7f18-7d34-4693-b8dd-6c8f9efe14b4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_checks_report"
+    ],
+    "policies": [],
+    "lines": 200
+  },
+  {
+    "file": "20260102031214_d4e8ffc5-97dc-4e6c-a04a-574e2faeea3b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 258
+  },
+  {
+    "file": "20260102094428_9568e553-4c62-4bef-aed5-665a2a647c17.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 115
+  },
+  {
+    "file": "20260102103904_7f499003-23b0-4225-b19e-791d2bb5c124.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 28
+  },
+  {
+    "file": "20260102104430_ddfd3433-2847-42c2-a615-919096c42ca3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_super_admin_dashboard_stats"
+    ],
+    "policies": [],
+    "lines": 91
+  },
+  {
+    "file": "20260102105512_98672f03-f66e-4e0c-ae86-4fd803f90078.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 97
+  },
+  {
+    "file": "20260102105755_1b7d7441-a1d4-4181-b8f5-d9beb0e2870d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 98
+  },
+  {
+    "file": "20260102110406_368ec1ba-ddff-4fbd-a10d-c140d6463cdd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 100
+  },
+  {
+    "file": "20260102110823_dbfd40e3-9f10-4665-a2e5-e3b5dfcf28f3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 100
+  },
+  {
+    "file": "20260102145601_d87fd5c3-c778-4af4-8269-1ec47436189a.sql",
+    "tablesCreated": [
+      "bank_payment_settings"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Super admins can manage bank settings",
+      "Authenticated users can view active bank settings"
+    ],
+    "lines": 34
+  },
+  {
+    "file": "20260103083850_1db6cf48-8eff-4f35-ac76-4ba03e363ab2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 5
+  },
+  {
+    "file": "20260103163924_636db19d-2a94-4610-9d2b-a2764f9c0ae6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "calculate_payment_status"
+    ],
+    "policies": [],
+    "lines": 39
+  },
+  {
+    "file": "20260103165847_9a316db1-f038-4050-a6d4-3384d75fdfe3.sql",
+    "tablesCreated": [
+      "room_pricing_rules"
+    ],
+    "functionsCreated": [
+      "update_room_pricing_rules_updated_at",
+      "calculate_payment_status"
+    ],
+    "policies": [
+      "Users can view pricing rules for their tenant",
+      "Users can manage pricing rules for their tenant"
+    ],
+    "lines": 115
+  },
+  {
+    "file": "20260105080750_3720607f-fdba-4a6d-b625-8de1b3e4b4ed.sql",
+    "tablesCreated": [
+      "telegram_connections",
+      "telegram_groups"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view own telegram connections",
+      "Users can manage own telegram connections",
+      "Users can view tenant telegram groups",
+      "Owners and managers can manage telegram groups"
+    ],
+    "lines": 82
+  },
+  {
+    "file": "20260105160636_43daf8a4-1b56-4861-a4f4-f0e7705080e7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 103
+  },
+  {
+    "file": "20260105161324_7ad7d658-1c26-4dca-b422-a06c481660c3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 101
+  },
+  {
+    "file": "20260105163323_aabec5da-c918-429c-a2e1-b4fa8ce34b68.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 8
+  },
+  {
+    "file": "20260106015535_b10635ff-43e7-4b67-8fb7-62827d14d07e.sql",
+    "tablesCreated": [
+      "for",
+      "pending_group_links"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view their tenant",
+      "Users can create pending links for their tenant",
+      "Users can update their tenant"
+    ],
+    "lines": 51
+  },
+  {
+    "file": "20260106045832_d3ca22f0-06a3-4179-8e16-5846ab23ecd4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Super admins can view webhook logs",
+      "Service role can insert webhook logs",
+      "Users view own tenant templates",
+      "Super admins view all templates"
+    ],
+    "lines": 26
+  },
+  {
+    "file": "20260106080726_4691566d-2b1c-43fb-a5ec-81ed28638207.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "works_at_same_hotel"
+    ],
+    "policies": [
+      "Users can view users in same hotel or with management permission"
+    ],
+    "lines": 50
+  },
+  {
+    "file": "20260106081230_79279273-b536-43ee-9620-f2b313aebd6b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Authenticated users can view user levels"
+    ],
+    "lines": 9
+  },
+  {
+    "file": "20260106085058_7a7dff32-f71a-41e6-9e5b-c9d2a4089519.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_payment_status"
+    ],
+    "policies": [],
+    "lines": 41
+  },
+  {
+    "file": "20260107033534_9657e413-a3cb-44d1-b681-e4d70095515f.sql",
+    "tablesCreated": [
+      "for",
+      "password_reset_otps"
+    ],
+    "functionsCreated": [
+      "to",
+      "cleanup_expired_otps"
+    ],
+    "policies": [],
+    "lines": 27
+  },
+  {
+    "file": "20260107100552_d8f702b5-35ec-483b-b265-70471bd98bc0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 62
+  },
+  {
+    "file": "20260107101406_a2fb9f2b-93f8-4ebc-b7d4-7a4283d7fcf1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 65
+  },
+  {
+    "file": "20260107134346_14d0b229-1b4a-4ef9-b4d8-8367ef1fe902.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkin",
+      "perform_checkout",
+      "cancel_booking",
+      "update_room_status_safe"
+    ],
+    "policies": [],
+    "lines": 218
+  },
+  {
+    "file": "20260107163649_f5ebf913-42fa-4dc2-8a9c-344635c302e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "delete_inventory_transaction"
+    ],
+    "policies": [],
+    "lines": 60
+  },
+  {
+    "file": "20260107164345_c82e3031-b68e-4324-a7e8-ecbdf2de64ba.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20260107164711_117128c1-6e24-4231-8569-04159954286e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "increment_quantity_in_laundry"
+    ],
+    "policies": [],
+    "lines": 19
+  },
+  {
+    "file": "20260108021340_9a953bf4-66bb-4bde-98f8-ca963f3c1a13.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view users in same hotel or tenant",
+      "Users can create users in tenant",
+      "Users can delete subordinates in tenant",
+      "Users can update users in tenant"
+    ],
+    "lines": 62
+  },
+  {
+    "file": "20260108022628_56f94ed2-5897-4778-a44f-53a6e7e6a124.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Service role can insert webhook logs",
+      "Users can insert promo usage for their tenant",
+      "Service role can insert notifications",
+      "Authenticated users can receive notifications",
+      "Users can view OTPs by their email",
+      "Users can create OTPs for their email",
+      "Users can delete OTPs for their email",
+      "Anonymous can read OTPs for verification",
+      "Anonymous can create OTPs for password reset",
+      "Anonymous can delete used OTPs"
+    ],
+    "lines": 179
+  },
+  {
+    "file": "20260108023640_e5c460c5-07b3-4105-91ea-feceac90a1a2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 6
+  },
+  {
+    "file": "20260108150256_085f3b6e-5c53-41f9-8598-3c2249b273fe.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout",
+      "cancel_booking"
+    ],
+    "policies": [],
+    "lines": 116
+  },
+  {
+    "file": "20260108151143_6cc60d8f-c976-4982-be41-e940b29ab5ef.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20260108153947_726ed2dc-00f5-4388-9b96-515fa2314df0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 10
+  },
+  {
+    "file": "20260108160854_07cefa34-ab68-47ff-a2b2-daf5e0161f3a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 27
+  },
+  {
+    "file": "20260109034435_6d7f35ef-2cb7-413c-858a-f660fca5d03c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "with",
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 105
+  },
+  {
+    "file": "20260109073055_3f062314-7fce-4ab0-b9d0-dc38b4eb627a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 102
+  },
+  {
+    "file": "20260109075145_242d1ae2-1b7d-441d-903f-592bb9f796d2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "apply_room_standards",
+      "setup_room_initial"
+    ],
+    "policies": [],
+    "lines": 162
+  },
+  {
+    "file": "20260109080016_ab9e57a1-5733-4dcf-a520-1711275f61fc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards",
+      "setup_room_initial",
+      "apply_room_standards"
+    ],
+    "policies": [],
+    "lines": 207
+  },
+  {
+    "file": "20260109080217_0d2144f8-5533-4320-b95d-e799bb01a938.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "increment_workflow_stats"
+    ],
+    "policies": [],
+    "lines": 20
+  },
+  {
+    "file": "20260109091907_67c6af1d-a690-43df-a270-79ca8e9ae509.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_booking_dates",
+      "prevent_booking_overlap"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260109101807_f1efa1ae-a6d5-4d66-ad04-c9be4a12a97c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "apply_room_standards",
+      "setup_room_initial"
+    ],
+    "policies": [],
+    "lines": 141
+  },
+  {
+    "file": "20260109102601_326d01cf-76d7-4701-9ea0-94b50c43cd65.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 10
+  },
+  {
+    "file": "20260109103600_5b6f00ee-347b-40e5-b3d6-858617084730.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260110084837_cb9c0c51-1f75-49e1-8e2b-ad5e1109ad8a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 47
+  },
+  {
+    "file": "20260110091738_fa8524ff-647b-4ab7-9ba9-3e7579670201.sql",
+    "tablesCreated": [
+      "compensation_requests"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view compensation requests in their tenant",
+      "Users can create compensation requests in their tenant",
+      "Users can update compensation requests in their tenant"
+    ],
+    "lines": 80
+  },
+  {
+    "file": "20260110092043_6594ab09-b169-490a-af3a-b4ec11b0a3ad.sql",
+    "tablesCreated": [
+      "investigation_logs"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view investigation logs in their tenant",
+      "Users can create investigation logs in their tenant"
+    ],
+    "lines": 55
+  },
+  {
+    "file": "20260110094804_2971ee99-265e-40d7-ab92-cea3a9b53b67.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "stock_adjustment_items_apply"
+    ],
+    "policies": [],
+    "lines": 82
+  },
+  {
+    "file": "20260110094838_c35ff116-6d72-4e87-b46f-5c6b39e89e62.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "stock_adjustment_items_apply"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260110095313_30b325c2-c635-4752-8bf3-b2849c986365.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20260110100346_effc51ba-7f9d-49c9-bb1e-5f563470376a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_stock_audit_report"
+    ],
+    "policies": [],
+    "lines": 145
+  },
+  {
+    "file": "20260110101251_9f5b493c-10b0-4390-8a0b-0d774b504995.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_inventory_transactions_filtered"
+    ],
+    "policies": [],
+    "lines": 98
+  },
+  {
+    "file": "20260111025934_4b67254f-7a5f-4911-b9e4-350344e59008.sql",
+    "tablesCreated": [
+      "warehouses",
+      "warehouse_stock"
+    ],
+    "functionsCreated": [
+      "ensure_single_default_warehouse",
+      "create_default_warehouse_for_hotel",
+      "initialize_warehouse_stock",
+      "get_warehouse_stock_summary",
+      "create_warehouse_transfer"
+    ],
+    "policies": [
+      "Users can view warehouses of their tenant",
+      "Users can create warehouses for their tenant",
+      "Users can update warehouses of their tenant",
+      "Users can delete warehouses of their tenant",
+      "Users can view warehouse_stock of their tenant",
+      "Users can create warehouse_stock for their tenant",
+      "Users can update warehouse_stock of their tenant",
+      "Users can delete warehouse_stock of their tenant"
+    ],
+    "lines": 399
+  },
+  {
+    "file": "20260111031604_5096b3f1-a5ea-4cec-9f04-8cebf116328b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_all_warehouse_stock_summary",
+      "get_low_stock_by_warehouses"
+    ],
+    "policies": [],
+    "lines": 90
+  },
+  {
+    "file": "20260111035355_00a98010-02f5-43be-8f90-b54ed8f6c84d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 24
+  },
+  {
+    "file": "20260112041318_c7bf81e5-3105-440c-8658-e4c0dbbb936d.sql",
+    "tablesCreated": [
+      "staff_status"
+    ],
+    "functionsCreated": [
+      "update_staff_status_from_room_check"
+    ],
+    "policies": [
+      "Users can view staff status in their tenant",
+      "Users can update their own status",
+      "Managers can update any staff status in tenant",
+      "Users can insert their own status",
+      "System can insert status for any user in tenant"
+    ],
+    "lines": 122
+  },
+  {
+    "file": "20260112045043_3cfeda8e-b5f2-4071-a379-6e4ead514652.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20260112083905_b7c34070-e2c0-4c61-86b6-cccf3e50bcb1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "View telegram connections policy"
+    ],
+    "lines": 40
+  },
+  {
+    "file": "20260112094318_70b1ccd1-6a4a-4233-adc2-4a2cec9a5f42.sql",
+    "tablesCreated": [
+      "checkout_inspection_requests"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view inspections in their tenant",
+      "Users can create inspections in their tenant",
+      "Users can update inspections in their tenant",
+      "Users can delete inspections in their tenant"
+    ],
+    "lines": 57
+  },
+  {
+    "file": "20260112134953_29492d27-31a3-458a-92c7-626f750294ce.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 26
+  },
+  {
+    "file": "20260122165008_91187b3f-5fe5-41e8-a48a-24aa8ddeb1ae.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_items_filtered"
+    ],
+    "policies": [],
+    "lines": 177
+  },
+  {
+    "file": "20260123015105_6eb3fdcc-86c0-4369-a44f-49dbf796d12f.sql",
+    "tablesCreated": [
+      "housekeeping_tasks"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view tasks in their tenant",
+      "Users can create tasks in their tenant",
+      "Users can update tasks in their tenant",
+      "Users can delete tasks in their tenant"
+    ],
+    "lines": 69
+  },
+  {
+    "file": "20260123141653_bdb0c6c4-a771-498a-adfe-0078279bfccb.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_inbound_transaction",
+      "create_outbound_transaction"
+    ],
+    "policies": [],
+    "lines": 301
+  },
+  {
+    "file": "20260124145011_c3760e4c-4a4c-4fe4-9112-728ad51d522e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 21
+  },
+  {
+    "file": "20260125092158_12b8be09-e4c1-4f58-9de1-c7712f593d37.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Staff and managers can insert room bookings",
+      "Staff and managers can update room bookings"
+    ],
+    "lines": 29
+  },
+  {
+    "file": "20260125094040_0f6429df-6266-40e2-a0ad-0ea3faa35093.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cleanup_stale_check_sessions",
+      "get_stale_sessions_for_reminder"
+    ],
+    "policies": [],
+    "lines": 85
+  },
+  {
+    "file": "20260125095537_adc9ebfc-7c2f-43cf-be48-355493bac183.sql",
+    "tablesCreated": [
+      "chargeable_consumptions"
+    ],
+    "functionsCreated": [
+      "get_booking_chargeable_total"
+    ],
+    "policies": [
+      "Tenant users can view their own consumptions",
+      "Tenant users can insert consumptions",
+      "Tenant users can update their own consumptions",
+      "Tenant users can delete their own consumptions"
+    ],
+    "lines": 80
+  },
+  {
+    "file": "20260125165402_de99dcc7-9af8-4bb3-aaf6-be4e75d51567.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_warehouse_transfer",
+      "confirm_receive_order",
+      "return_to_stock_for_stop"
+    ],
+    "policies": [],
+    "lines": 409
+  },
+  {
+    "file": "20260126162139_19d60850-e867-4205-9e2f-ff2bed5df047.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 8
+  },
+  {
+    "file": "20260128143946_f35e1555-3491-49e8-aba5-bf2bfaeb1689.sql",
+    "tablesCreated": [
+      "booking_payments"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "booking_payments_select",
+      "booking_payments_insert",
+      "booking_payments_update"
+    ],
+    "lines": 49
+  },
+  {
+    "file": "20260128152421_93f22231-c44a-4d88-971b-35062e8e3173.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Allow public read booking_payments by id",
+      "Allow public read active bank_payment_settings"
+    ],
+    "lines": 11
+  },
+  {
+    "file": "20260129131630_4f54ec66-fb9b-419a-9e20-bde3b13e9713.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "is_owner_user"
+    ],
+    "policies": [
+      "Owners can manage bank settings",
+      "Users can view their tenant bank settings",
+      "Public read active bank settings"
+    ],
+    "lines": 74
+  },
+  {
+    "file": "20260129151823_7a521b9b-3e4e-43e2-af58-27f4c63039d8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "delete_inventory_transaction"
+    ],
+    "policies": [],
+    "lines": 87
+  },
+  {
+    "file": "20260130093839_ef019dfd-b87b-4c8c-8897-8c5c764d1a72.sql",
+    "tablesCreated": [
+      "supplement_requests",
+      "laundry_requests"
+    ],
+    "functionsCreated": [
+      "generate_supplement_request_code",
+      "generate_laundry_request_code",
+      "add_laundry_to_draft_batch"
+    ],
+    "policies": [
+      "Users can view supplement requests in their tenant",
+      "Users can create supplement requests in their tenant",
+      "Users can update supplement requests in their tenant",
+      "Users can view laundry requests in their tenant",
+      "Users can create laundry requests in their tenant",
+      "Users can update laundry requests in their tenant"
+    ],
+    "lines": 265
+  },
+  {
+    "file": "20260130142244_30c47d4e-4d40-4988-b7ff-c5c98976d792.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 22
+  },
+  {
+    "file": "20260130170739_60cfe4c4-acaa-46df-bf54-3eae3b5daee6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 167
+  },
+  {
+    "file": "20260131021155_3da979ec-7a1c-4857-821c-c9234530aa09.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 14
+  },
+  {
+    "file": "20260131021456_267cf58c-2fcb-4442-9f5b-6ec50ce944bf.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_receive_order"
+    ],
+    "policies": [],
+    "lines": 172
+  },
+  {
+    "file": "20260131022237_41f10a0d-552c-4768-8e37-bd97920f74e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_receive_order"
+    ],
+    "policies": [],
+    "lines": 147
+  },
+  {
+    "file": "20260131024728_99ac130a-0514-4896-8d84-f725be76e49b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handover_batch",
+      "confirm_receive_order"
+    ],
+    "policies": [],
+    "lines": 210
+  },
+  {
+    "file": "20260131030429_57148c08-9f38-4d11-a2a0-8f5313218528.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_distribution_order"
+    ],
+    "policies": [],
+    "lines": 215
+  },
+  {
+    "file": "20260131051708_be0a9030-38e0-4e52-ba75-fc964dd29573.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20260131061420_eb3bcc85-0684-4036-b27f-3d6eeb804036.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20260131084839_050f715f-1b53-4b78-a7cd-e506792327af.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_receive_order"
+    ],
+    "policies": [],
+    "lines": 72
+  },
+  {
+    "file": "20260131151636_755a1757-6548-49a9-967a-9d0aa203f237.sql",
+    "tablesCreated": [
+      "platform_settings"
+    ],
+    "functionsCreated": [
+      "is_super_admin"
+    ],
+    "policies": [
+      "Super admin can view platform settings",
+      "Super admin can insert platform settings",
+      "Super admin can update platform settings",
+      "Super admin can delete platform settings"
+    ],
+    "lines": 61
+  },
+  {
+    "file": "20260202101624_518cabc7-5475-4c7a-9f81-e66224ab4c58.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 312
+  },
+  {
+    "file": "20260202110154_585cf88c-0da5-4433-b595-19067013c4a0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_hourly_booking",
+      "validate_hourly_against_daily"
+    ],
+    "policies": [],
+    "lines": 93
+  },
+  {
+    "file": "20260203024528_a0babf0a-db57-4cbf-87ab-c261e22861e6.sql",
+    "tablesCreated": [
+      "shift_history"
+    ],
+    "functionsCreated": [
+      "log_shift_history"
+    ],
+    "policies": [
+      "Users can view own shift history",
+      "Managers can view all shift history in tenant"
+    ],
+    "lines": 86
+  },
+  {
+    "file": "20260203025219_51a41494-dd25-41de-a2d7-7d899b05b75c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "log_shift_history"
+    ],
+    "policies": [],
+    "lines": 37
+  },
+  {
+    "file": "20260203030259_58467af0-7ad2-4987-bef0-905ae4ea9a0e.sql",
+    "tablesCreated": [
+      "shift_reminders"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view their own reminders",
+      "Managers can view all reminders in tenant",
+      "Service can insert reminders"
+    ],
+    "lines": 42
+  },
+  {
+    "file": "20260203031916_490b385b-0e9d-4dd5-bb2c-5d7b75e2e943.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "auto_classify_item_type"
+    ],
+    "policies": [],
+    "lines": 111
+  },
+  {
+    "file": "20260204031442_cc5311e0-149a-4048-be89-a5d2ebfcba35.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkin"
+    ],
+    "policies": [],
+    "lines": 79
+  },
+  {
+    "file": "20260204135555_94e7ff33-9650-4831-90ab-e15339aba143.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "send_draft_batch"
+    ],
+    "policies": [],
+    "lines": 76
+  },
+  {
+    "file": "20260204153242_a48a0075-74d9-4c7a-87c3-7fd36e7b2f41.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20260204154606_478adcf4-0200-4c83-a1ef-376e5a521da9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "add_laundry_to_draft_batch"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20260204155337_ba14dc4f-b714-49b5-8256-52995bcb1b01.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_batch_detail",
+      "get_laundry_batches_filtered"
+    ],
+    "policies": [],
+    "lines": 165
+  },
+  {
+    "file": "20260204163040_65fdb34a-1aff-4056-9a45-520b47def819.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_batch_detail"
+    ],
+    "policies": [],
+    "lines": 60
+  },
+  {
+    "file": "20260204164102_81cbbb27-14de-42a7-a888-00b71b872289.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_batch_detail"
+    ],
+    "policies": [],
+    "lines": 65
+  },
+  {
+    "file": "20260204164504_ec5f479d-e66c-431e-a039-7a1d0bc1dce9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "to",
+      "calculate_grace_period_end"
+    ],
+    "policies": [],
+    "lines": 35
+  },
+  {
+    "file": "20260205093929_9ad3d9e3-59a8-4736-9897-5288d9f8865d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20260209153008_6f0cfe64-36bc-4e9b-8a6e-33ac7a5a28f0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 102
+  },
+  {
+    "file": "20260209164441_1790f40c-4839-44ad-92f6-76a2b9bcf794.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 86
+  },
+  {
+    "file": "20260210143052_b2e9eccf-b279-4930-a399-418358858a7c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 5
+  },
+  {
+    "file": "20260211020937_4747c6c0-a733-4d17-aca9-542e240abe0c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Hotel logos are publicly accessible",
+      "Tenant users can upload hotel logos",
+      "Tenant users can update hotel logos",
+      "Tenant users can delete hotel logos"
+    ],
+    "lines": 34
+  },
+  {
+    "file": "20260211024556_da8b6015-dcc8-4163-88b9-ca6e8beddac0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_users_by_hotel"
+    ],
+    "policies": [],
+    "lines": 32
+  },
+  {
+    "file": "20260211025723_7b6f4421-b29e-48d4-ab6e-326392d1dffb.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_maintenance_dashboard"
+    ],
+    "policies": [],
+    "lines": 155
+  },
+  {
+    "file": "20260211093817_85673e79-8a9f-45df-b64c-a67b435b47c6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Authenticated users can upload guest documents",
+      "Users can view guest documents from same tenant",
+      "Users can delete guest documents"
+    ],
+    "lines": 38
+  },
+  {
+    "file": "20260211094958_99fefd7f-f42f-49b1-ad49-7f37672cab97.sql",
+    "tablesCreated": [
+      "document_scan_sessions"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can view own tenant scan sessions",
+      "Users can create scan sessions",
+      "Users can update own tenant scan sessions"
+    ],
+    "lines": 41
+  },
+  {
+    "file": "20260211095016_954f2d6a-9909-4f7c-bf91-2ee11773314e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Tenant users can view scan sessions",
+      "Anonymous can view scan session by id",
+      "Tenant users can update scan sessions",
+      "Anonymous can complete scan sessions"
+    ],
+    "lines": 30
+  },
+  {
+    "file": "20260211100221_e1fcfd3c-47ce-4ec6-a20e-e83062d98038.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Anyone can view scan session by id",
+      "Anyone can complete pending scan sessions"
+    ],
+    "lines": 16
+  },
+  {
+    "file": "20260221023150_20beabb9-519c-433d-8602-7f070f3aeada.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20260307030306_f0537681-46be-4860-8dd8-20610252d865.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260307030514_cccacad5-4ddb-4d21-8c34-349edd334a82.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20260308052552_a4e57d3c-4e06-4cd8-8c92-5426285daf1f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "atomic_item_lost",
+      "atomic_item_consumed",
+      "atomic_item_to_laundry"
+    ],
+    "policies": [],
+    "lines": 105
+  },
+  {
+    "file": "20260308053613_bec2ae27-8fcf-47a9-9c55-9c641a92a368.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_booking_amount_paid"
+    ],
+    "policies": [],
+    "lines": 33
+  },
+  {
+    "file": "20260308055642_f3e8d9db-55e9-4f15-938b-d01904ce1e33.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "atomic_item_to_laundry",
+      "atomic_item_lost",
+      "atomic_item_consumed"
+    ],
+    "policies": [],
+    "lines": 143
+  },
+  {
+    "file": "20260308062441_abb08fe9-d80b-40f6-8c21-765754c53f48.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 88
+  },
+  {
+    "file": "20260308063016_f4629405-fc8b-4e45-8e29-7fb64d4c6ab7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 6
+  },
+  {
+    "file": "20260308151125_0234a14b-ed49-4959-8949-5a6edb2309bb.sql",
+    "tablesCreated": [
+      "reminder_automation_rules",
+      "reminder_email_templates"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Super admins can manage automation rules",
+      "Super admins can manage reminder templates"
+    ],
+    "lines": 57
+  },
+  {
+    "file": "20260308172107_4c6dcc4b-f3d5-4ca7-95c6-10224832a251.sql",
+    "tablesCreated": [
+      "hotel_services",
+      "booking_service_charges"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "hotel_services_select",
+      "hotel_services_insert",
+      "hotel_services_update",
+      "hotel_services_delete",
+      "booking_service_charges_select",
+      "booking_service_charges_insert",
+      "booking_service_charges_update",
+      "booking_service_charges_delete"
+    ],
+    "lines": 80
+  },
+  {
+    "file": "20260309060234_39772f06-612d-442d-8b89-361a2994d6ab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_booking_amount_paid"
+    ],
+    "policies": [],
+    "lines": 49
+  },
+  {
+    "file": "20260311171055_b0042a01-07ae-48d6-8082-0284d7114acb.sql",
+    "tablesCreated": [
+      "guests",
+      "lost_found_items",
+      "guest_invoices"
+    ],
+    "functionsCreated": [
+      "generate_guest_invoice_number"
+    ],
+    "policies": [
+      "Tenant isolation for guests",
+      "Tenant isolation for lost_found_items",
+      "Tenant isolation for guest_invoices"
+    ],
+    "lines": 124
+  },
+  {
+    "file": "20260311172459_847691ea-5104-440c-afa5-fa2b672c144a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_guest_stats_on_checkout",
+      "generate_lost_found_item_code"
+    ],
+    "policies": [],
+    "lines": 50
+  },
+  {
+    "file": "20260312140129_3cd507fb-e190-45d8-aa89-701c32630b46.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_booking_amount_paid"
+    ],
+    "policies": [],
+    "lines": 35
+  },
+  {
+    "file": "20260312145809_4f760ac4-ee0b-47f6-99c7-692e72729087.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_current_room_booking"
+    ],
+    "policies": [],
+    "lines": 90
+  },
+  {
+    "file": "20260319034308_57a4c575-f5b9-4e0c-b6c0-32d9958008f3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20260319104653_8a0109ce-2c5f-44df-ad8f-5f028ec163ae.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260323111601_b66d183b-942a-48fb-bf07-1719e8f026dd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "approve_tenant"
+    ],
+    "policies": [],
+    "lines": 74
+  },
+  {
+    "file": "20260402151510_bfda2eb4-b92c-43f3-a370-26724785a2dc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "auto_offline_inactive_staff",
+      "create_staff_status_for_new_user"
+    ],
+    "policies": [],
+    "lines": 36
+  },
+  {
+    "file": "20260402153641_4d881139-c8ff-40f7-b86f-39b4401b046e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "with",
+      "get_user_permissions_summary"
+    ],
+    "policies": [],
+    "lines": 54
+  },
+  {
+    "file": "20260402160000_fix_permissions_summary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_user_permissions_summary"
+    ],
+    "policies": [],
+    "lines": 68
+  },
+  {
+    "file": "20260402161810_c4da83e1-0c15-4c43-b94f-5914d79d6190.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260403153114_b6435e61-17b9-4fcf-ba4f-89a9977d6bd8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_monthly_expenses"
+    ],
+    "policies": [],
+    "lines": 74
+  },
+  {
+    "file": "20260417074021_b7e0dbbe-c480-4f2c-b562-6786614b38ac.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 34
+  },
+  {
+    "file": "20260417085212_969525ee-2204-41ba-8d07-47f1ec7f6a12.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 97
+  },
+  {
+    "file": "20260417094338_bb8ef52f-233b-4c8a-9040-747030fee481.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Avatar images are publicly accessible",
+      "Users can upload their own avatar",
+      "Users can update their own avatar",
+      "Users can delete their own avatar"
+    ],
+    "lines": 39
+  },
+  {
+    "file": "20260418102127_47d27ad4-87a1-419a-a405-5d57f61a9547.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handover_batch"
+    ],
+    "policies": [],
+    "lines": 195
+  },
+  {
+    "file": "20260418102336_2415b69b-44c1-4dc0-8e01-d34c50d48660.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handover_batch"
+    ],
+    "policies": [],
+    "lines": 193
+  },
+  {
+    "file": "20260419030450_9c6001c5-7bc3-4701-9d5e-426573f2e6e1.sql",
+    "tablesCreated": [
+      "ai_settings"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Users can read AI settings of their tenant",
+      "Only owners can insert AI settings",
+      "Only owners can update AI settings",
+      "Only owners can delete AI settings"
+    ],
+    "lines": 66
+  },
+  {
+    "file": "20260419042225_cd85e9ef-1852-483c-a640-6d8f1af93c9c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_maintenance_report"
+    ],
+    "policies": [],
+    "lines": 120
+  },
+  {
+    "file": "20260430143344_8d69a26d-c991-4798-8b24-0c57ff02a2ae.sql",
+    "tablesCreated": [
+      "audit_log",
+      "qc_sla_settings",
+      "qc_reviews"
+    ],
+    "functionsCreated": [
+      "fn_write_audit_log",
+      "resolve_qc_settings",
+      "submit_room_check_for_qc",
+      "qc_approve_task",
+      "qc_reject_task",
+      "qc_force_approve",
+      "qc_escalate_overdue"
+    ],
+    "policies": [
+      "Owner views all tenant audit",
+      "Tenant members read SLA",
+      "Owner/Manager manage SLA",
+      "Tenant members read qc_reviews"
+    ],
+    "lines": 537
+  },
+  {
+    "file": "20260430143412_df55b4ff-0a2f-4b2b-a9d3-3d5d7ab06e16.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20260430143857_62528c02-4d9e-4f68-acd3-b5d85f39efea.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "fn_room_status_alias",
+      "fn_sync_room_legacy_status",
+      "fn_sync_room_legacy_status_ins",
+      "fn_is_valid_room_transition",
+      "fn_can_user_transition_room",
+      "transition_room_status",
+      "fn_is_valid_task_transition",
+      "transition_task_status",
+      "lift_expired_dnd_oos"
+    ],
+    "policies": [],
+    "lines": 427
+  },
+  {
+    "file": "20260430151017_765f404a-3210-4f48-999b-715b6c726047.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "log_state_transition",
+      "is_tenant_read_only",
+      "is_super_admin",
+      "enforce_read_only_mutation",
+      "set_tenant_read_only",
+      "clear_tenant_read_only",
+      "auto_apply_read_only_after_grace"
+    ],
+    "policies": [],
+    "lines": 206
+  },
+  {
+    "file": "20260430151441_e5d641a1-2a0c-45e5-b928-4ac76872fc83.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_room_check_context"
+    ],
+    "policies": [],
+    "lines": 108
+  },
+  {
+    "file": "20260430151958_4e6d0772-b101-47e5-b761-02b30d048f26.sql",
+    "tablesCreated": [
+      "rate_limit_hits"
+    ],
+    "functionsCreated": [
+      "check_rate_limit",
+      "cleanup_rate_limit_hits"
+    ],
+    "policies": [
+      "service role manages rate limit hits"
+    ],
+    "lines": 61
+  },
+  {
+    "file": "20260430153537_c322ff7a-4958-4ab3-80f4-78f4162c09f0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "transition_task_status",
+      "fn_sync_room_status_on_booking_flag",
+      "transition_booking_status"
+    ],
+    "policies": [],
+    "lines": 273
+  },
+  {
+    "file": "20260430153826_cf1713bf-22ea-4202-a5ba-891e84de9cc5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260430155013_ded36235-2f9a-4bf6-b5d3-d338ad73dd18.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "users_select_self_or_tenant",
+      "users_insert_in_tenant",
+      "users_update_self_or_managed",
+      "users_delete_subordinates"
+    ],
+    "lines": 70
+  },
+  {
+    "file": "20260430160023_1324ae64-ab85-4746-8b9b-2955ce742c92.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_effective_permissions",
+      "is_qc_manager",
+      "complete_task",
+      "approve_task",
+      "reject_task"
+    ],
+    "policies": [],
+    "lines": 208
+  },
+  {
+    "file": "20260430161436_aeb2492e-8341-4a19-8ffa-0f50a27ff699.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "notify_task_rejected"
+    ],
+    "policies": [],
+    "lines": 98
+  },
+  {
+    "file": "20260430161631_fecbf104-1ca6-4196-ab62-d767dbbf3b52.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "notify_task_rejected"
+    ],
+    "policies": [],
+    "lines": 44
+  },
+  {
+    "file": "20260430161900_2cf92772-a1e8-464d-bd9a-e86c91a1d98a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_qc_staff_stats",
+      "get_qc_floor_stats"
+    ],
+    "policies": [],
+    "lines": 71
+  },
+  {
+    "file": "20260430162319_2fce46fb-d23c-4503-9b9a-99c267397e36.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_qc_daily_trend"
+    ],
+    "policies": [],
+    "lines": 41
+  },
+  {
+    "file": "20260430163056_fe0744f6-fe37-402b-9a96-4597aeae9045.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_last_room_check",
+      "perform_quick_room_check"
+    ],
+    "policies": [],
+    "lines": 155
+  },
+  {
+    "file": "20260430164935_5c65caaf-7157-4612-8667-d61e9ec7eb4e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "enforce_room_check_photos"
+    ],
+    "policies": [],
+    "lines": 62
+  },
+  {
+    "file": "20260502030032_a2e3f353-3840-472c-8e62-12b0afb43835.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "can_perform_quick_check"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20260502030418_4a40610d-fca9-4216-94d6-6123464e54ce.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_quick_room_check",
+      "submit_room_check_lean",
+      "reopen_room_check"
+    ],
+    "policies": [],
+    "lines": 294
+  },
+  {
+    "file": "20260502033452_11309f27-3fb1-4fd0-adcb-9182cd9550b3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_quick_room_check"
+    ],
+    "policies": [],
+    "lines": 99
+  },
+  {
+    "file": "20260503021434_601696f1-ff7e-4386-9a5f-7eca8b06cf38.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_room_check_context",
+      "submit_room_check_lean",
+      "perform_quick_room_check",
+      "reopen_room_check"
+    ],
+    "policies": [],
+    "lines": 419
+  },
+  {
+    "file": "20260503023005_45e01b4b-bbe5-49fb-ab9e-5bf4465efd89.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_room_check_context"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260503023318_6c6e9548-1dcb-46fe-9844-e25834c537f5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "reopen_room_check"
+    ],
+    "policies": [],
+    "lines": 50
+  },
+  {
+    "file": "20260503023425_8f184c42-baea-4f33-944c-dbaeee956555.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "submit_room_check_lean"
+    ],
+    "policies": [],
+    "lines": 159
+  },
+  {
+    "file": "20260503030343_758162d3-1ce1-41fe-bbde-c3b7123a39bf.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 29
+  },
+  {
+    "file": "20260505083257_64296401-0eb3-4fec-9e3f-e5561dfbdd0b.sql",
+    "tablesCreated": [
+      "hotel_policy",
+      "hotel_policy_history"
+    ],
+    "functionsCreated": [
+      "trg_hotel_policy_history",
+      "preview_asset_group_mapping",
+      "apply_asset_group_mapping"
+    ],
+    "policies": [],
+    "lines": 314
+  },
+  {
+    "file": "20260505095347_dcd6ddf8-34c3-4f7f-bb55-da6442eeb493.sql",
+    "tablesCreated": [
+      "batch_inventory"
+    ],
+    "functionsCreated": [
+      "validate_room_check_issue_entries",
+      "atomic_item_to_laundry",
+      "create_laundry_batch_with_items",
+      "mark_batch_partially_received",
+      "settle_batch_compensation",
+      "mark_batches_compensation_needed",
+      "touch_batch_inventory",
+      "create_new_linen_batch",
+      "allocate_linen_fifo"
+    ],
+    "policies": [],
+    "lines": 456
+  },
+  {
+    "file": "20260505100451_5c718c3d-d973-41fe-893c-5b9b53bfe76b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "submit_room_check_lean"
+    ],
+    "policies": [],
+    "lines": 164
+  },
+  {
+    "file": "20260505114357_95a83bf2-01c5-4fca-96a2-096e9f16a71c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "laundry_batch_items_update_inventory"
+    ],
+    "policies": [],
+    "lines": 45
+  },
+  {
+    "file": "20260506014804_f1764008-182d-4e02-98f2-300276d33bb0.sql",
+    "tablesCreated": [
+      "reorder_suggestions"
+    ],
+    "functionsCreated": [
+      "tg_reorder_suggestions_updated_at",
+      "compute_reorder_suggestions",
+      "tg_inventory_out_update_reorder",
+      "approve_reorder_suggestions",
+      "ignore_reorder_suggestion"
+    ],
+    "policies": [
+      "reorder_select_tenant",
+      "reorder_insert_system",
+      "reorder_update_manager"
+    ],
+    "lines": 379
+  },
+  {
+    "file": "20260506023516_dd30b93a-cb0e-4899-8821-5b4375845320.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Authenticated users can read realtime messages",
+      "Authenticated users can send realtime messages",
+      "Service role can insert webhook logs",
+      "Service role can insert notifications",
+      "Service can insert reminders",
+      "service role manages rate limit hits"
+    ],
+    "lines": 59
+  },
+  {
+    "file": "20260506024625_5319a71e-7156-41dd-bcc0-f9c79f1731a7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "approve_reorder_suggestions"
+    ],
+    "policies": [],
+    "lines": 134
+  },
+  {
+    "file": "20260506075424_60894139-d84c-4802-b748-0e4f0bd0b784.sql",
+    "tablesCreated": [
+      "consumption_snapshots"
+    ],
+    "functionsCreated": [
+      "refresh_consumption_snapshots",
+      "get_dead_stock_report",
+      "get_consumption_trend"
+    ],
+    "policies": [
+      "consumption_snapshots_read",
+      "consumption_snapshots_service_write",
+      "consumption_snapshots_service_update"
+    ],
+    "lines": 195
+  },
+  {
+    "file": "20260507041440_2b9d6a9d-d515-4bb2-aa9b-bebc0a13ccde.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "compute_auto_reorder_suggestions",
+      "run_auto_reorder_daily"
+    ],
+    "policies": [],
+    "lines": 157
+  },
+  {
+    "file": "20260507073031_656689c4-2719-4fe6-9449-53063e37932d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "bank_payment_settings_tenant_select",
+      "guest_documents_tenant_select",
+      "guest_documents_tenant_insert",
+      "guest_documents_tenant_delete",
+      "hotel_logos_tenant_insert",
+      "hotel_logos_tenant_update",
+      "hotel_logos_tenant_delete"
+    ],
+    "lines": 121
+  },
+  {
+    "file": "20260507135524_6819ad5b-9c06-4fa7-986b-a60cf8a79799.sql",
+    "tablesCreated": [
+      "room_check_issues"
+    ],
+    "functionsCreated": [
+      "submit_room_check_lean"
+    ],
+    "policies": [
+      "rci_tenant_select"
+    ],
+    "lines": 348
+  },
+  {
+    "file": "20260507140113_717c2afe-9473-41ca-af38-3b8e2e8d4729.sql",
+    "tablesCreated": [
+      "room_check_issue_outbox"
+    ],
+    "functionsCreated": [
+      "enqueue_room_check_issue_jobs",
+      "process_room_check_issue_outbox"
+    ],
+    "policies": [
+      "rcio_tenant_select"
+    ],
+    "lines": 292
+  },
+  {
+    "file": "20260507140503_f8dc4620-42a6-475e-b541-ed88854011ab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_chargeable_approval_status",
+      "review_chargeable_consumptions"
+    ],
+    "policies": [],
+    "lines": 70
+  },
+  {
+    "file": "20260507140640_dc9fc5e0-1254-4df7-97b2-5fc398dd73ad.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 4
+  },
+  {
+    "file": "20260507145101_fa68c783-2de1-4fa5-bb11-53c1f22077f8.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 65
+  },
+  {
+    "file": "20260507145137_14da3e0e-5296-4e15-abe1-6e38fc031cea.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 16
+  },
+  {
+    "file": "20260507145236_154421d8-49d6-49a1-819c-e15c79bb4158.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 20
+  },
+  {
+    "file": "20260507150546_29b48020-f882-43d3-b57c-fe9c652b0926.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "outbox_next_retry_at",
+      "process_room_check_issue_outbox",
+      "reconcile_room_check_outbox"
+    ],
+    "policies": [],
+    "lines": 267
+  },
+  {
+    "file": "20260507150950_47c2c4bd-6327-4290-b97e-f8c6013fd56e.sql",
+    "tablesCreated": [
+      "laundry_batch_audit"
+    ],
+    "functionsCreated": [
+      "trg_laundry_batch_snapshot_policy",
+      "transition_laundry_batch_status",
+      "mark_batch_partially_received",
+      "settle_batch_compensation"
+    ],
+    "policies": [
+      "lba_tenant_select"
+    ],
+    "lines": 241
+  },
+  {
+    "file": "20260507151528_7ea1a4e8-4893-4fa6-a4f9-adcbd4355ba5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "trg_room_check_issues_outbox_fanout"
+    ],
+    "policies": [],
+    "lines": 96
+  },
+  {
+    "file": "20260507152242_e2fb8fd9-9115-435d-a7d8-7ff0102ffeea.sql",
+    "tablesCreated": [
+      "room_check_issue_reviews"
+    ],
+    "functionsCreated": [
+      "trg_room_check_issues_outbox_fanout",
+      "process_room_check_issue_outbox",
+      "is_manager_or_above",
+      "review_room_check_issue",
+      "manager_override_charge"
+    ],
+    "policies": [
+      "rcir_tenant_select"
+    ],
+    "lines": 400
+  },
+  {
+    "file": "20260507154029_90b2f2bd-76fd-4dc2-9f98-7c5351b159ab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260507154804_fc6a1ff0-bfc0-4bf6-8311-54b7bfcebcab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "submit_room_check_lean"
+    ],
+    "policies": [],
+    "lines": 276
+  },
+  {
+    "file": "20260507155420_e3556eb0-8e9e-4d44-b5d1-6972823c9769.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "trg_rci_set_charge_status",
+      "trg_room_check_issues_outbox_fanout"
+    ],
+    "policies": [],
+    "lines": 101
+  },
+  {
+    "file": "20260507155936_399f3bc7-8e4a-4e1a-8e3d-94ea29783fa2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_quick_room_check"
+    ],
+    "policies": [],
+    "lines": 83
+  },
+  {
+    "file": "20260509020228_2456b0c9-add3-412a-b22e-28022f3776a6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "undo_quick_room_check"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20260509020256_6e2d3771-aeb5-4f2b-8101-136ade9e1340.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20260510041811_883b20cc-c8df-4f53-907a-6419a212a555.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 31
+  },
+  {
+    "file": "20260510044733_dd468dd5-d4a5-4734-ae70-b2c6c0d925dd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 74
+  },
+  {
+    "file": "20260510083433_5d032425-0954-4ac8-81d1-ce7f6eb03ffb.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_user_permissions_summary"
+    ],
+    "policies": [],
+    "lines": 80
+  },
+  {
+    "file": "20260510091535_a3419c91-29dc-4438-869c-2911f48c5d12.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "tenants_select_super_admin",
+      "tenants_select_own",
+      "tenants_update_super_admin",
+      "tenants_update_owner"
+    ],
+    "lines": 34
+  },
+  {
+    "file": "20260510100130_9c061634-8e2e-45b8-b78e-bf20b8bdcc33.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_inbound_transaction",
+      "create_outbound_transaction",
+      "delete_inventory_transaction"
+    ],
+    "policies": [],
+    "lines": 384
+  },
+  {
+    "file": "20260510115659_516d1f92-d160-4004-b8b2-1089a8a3465a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_inbound_transaction",
+      "create_outbound_transaction",
+      "create_warehouse_transfer"
+    ],
+    "policies": [],
+    "lines": 416
+  },
+  {
+    "file": "20260510115724_877f675f-88b3-4be7-84ba-78e565734737.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260510133033_bc9b5116-81d8-4263-abaa-b8e9c4bcbd5b.sql",
+    "tablesCreated": [
+      "payment_anomalies"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "anomalies_select_owner",
+      "anomalies_update_owner"
+    ],
+    "lines": 75
+  },
+  {
+    "file": "20260510155407_email_infra.sql",
+    "tablesCreated": [
+      "email_send_log",
+      "email_send_state",
+      "suppressed_emails",
+      "email_unsubscribe_tokens"
+    ],
+    "functionsCreated": [
+      "enqueue_email",
+      "read_email_batch",
+      "delete_email",
+      "move_to_dlq"
+    ],
+    "policies": [
+      "Service role can read send log",
+      "Service role can insert send log",
+      "Service role can update send log",
+      "Service role can manage send state",
+      "Service role can read suppressed emails",
+      "Service role can insert suppressed emails",
+      "Service role can read tokens",
+      "Service role can insert tokens",
+      "Service role can mark tokens as used"
+    ],
+    "lines": 293
+  },
+  {
+    "file": "20260511014717_d71fe6bd-f640-4956-b5ff-61b28183451c.sql",
+    "tablesCreated": [
+      "announcements",
+      "announcement_dismissals"
+    ],
+    "functionsCreated": [
+      "set_announcement_updated_at"
+    ],
+    "policies": [
+      "Anyone authenticated can read active announcements",
+      "Super admin manage announcements (select)",
+      "Super admin manage announcements (insert)",
+      "Super admin manage announcements (update)",
+      "Super admin manage announcements (delete)",
+      "Users read own dismissals",
+      "Users insert own dismissals",
+      "Users delete own dismissals",
+      "Public read announcement assets",
+      "Super admin upload announcement assets",
+      "Super admin update announcement assets",
+      "Super admin delete announcement assets"
+    ],
+    "lines": 150
+  },
+  {
+    "file": "20260511014736_43ea7dce-91d3-4936-af22-495de866dd2c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "set_announcement_updated_at"
+    ],
+    "policies": [],
+    "lines": 9
+  },
+  {
+    "file": "20260511072443_3e51b150-41c3-469c-958e-0dc25bedee5b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260512093617_eb9906ef-6843-46f3-9c62-01c77a3c0f63.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "auto_clear_read_only_after_renewal"
+    ],
+    "policies": [],
+    "lines": 67
+  },
+  {
+    "file": "20260519073010_b355f374-6d37-4516-acd3-a6bbb60d3be9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "log_user_roles_change"
+    ],
+    "policies": [
+      "rt_postgres_changes_only_authenticated",
+      "Super admins manage all roles",
+      "Owners manage non-super-admin roles in their tenant"
+    ],
+    "lines": 102
+  },
+  {
+    "file": "20260519073106_ca3672d1-7502-44df-b477-07807b86a49f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Super admins read webhook logs",
+      "Super admins manage platform settings",
+      "Super admins read activity log"
+    ],
+    "lines": 57
+  },
+  {
+    "file": "20260519083212_31905974-00d4-4cc0-9852-b357d6f463d0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "prevent_user_privilege_escalation"
+    ],
+    "policies": [
+      "Authenticated users can view active promo codes",
+      "Super admins manage reminder templates",
+      "Super admins manage reminder rules"
+    ],
+    "lines": 90
+  },
+  {
+    "file": "20260519083741_69c92ba5-ca5c-448d-84f0-d4ebacdb3efc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Active campaigns are viewable by authenticated users",
+      "Super admins can view price history"
+    ],
+    "lines": 66
+  },
+  {
+    "file": "20260519084636_691ef80d-82bc-4183-a425-f54413702fc5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "can_manage_user"
+    ],
+    "policies": [],
+    "lines": 72
+  },
+  {
+    "file": "20260519085754_7372b19e-1951-4df7-ad20-4a4f05999da2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "mark_booking_no_show",
+      "reschedule_booking_checkin"
+    ],
+    "policies": [],
+    "lines": 187
+  },
+  {
+    "file": "20260519092633_574648f1-75e4-45e6-8c50-a9976800a2b1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "reschedule_booking_checkin"
+    ],
+    "policies": [],
+    "lines": 92
+  },
+  {
+    "file": "20260520023815_cbcc1cd5-9f49-48a4-beac-c08fcdb62812.sql",
+    "tablesCreated": [
+      "invoice_vat_claims"
+    ],
+    "functionsCreated": [
+      "gen_vat_claim_token",
+      "ensure_vat_claim_token",
+      "get_vat_claim_public",
+      "submit_vat_claim_public",
+      "mark_vat_claim_issued"
+    ],
+    "policies": [
+      "tenant members can read claims",
+      "tenant members can manage claims"
+    ],
+    "lines": 225
+  },
+  {
+    "file": "20260520083537_7ea12266-19be-43ff-84e9-fa2f94f30e9b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "fn_normalize_room_status_v2",
+      "perform_checkin",
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 228
+  },
+  {
+    "file": "20260520093021_c8682776-72ed-4575-a69d-141ec1f7dc20.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "auto_close_stale_shifts"
+    ],
+    "policies": [],
+    "lines": 81
+  },
+  {
+    "file": "20260523074622_973e42a0-1ee6-4618-b0f0-dc12e56e72eb.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "works_at_same_hotel"
+    ],
+    "policies": [
+      "Public read announcement assets"
+    ],
+    "lines": 80
+  },
+  {
+    "file": "20260524031217_fd15ad66-95ec-4f56-b643-60cadd236144.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 2
+  },
+  {
+    "file": "20260524031832_71a8507c-1174-4d5c-9b07-b222ba3b531f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "room_check_photos_tenant_select",
+      "room_check_photos_tenant_insert",
+      "room_check_photos_tenant_update",
+      "room_check_photos_tenant_delete"
+    ],
+    "lines": 55
+  },
+  {
+    "file": "20260525025827_bc11abe5-4687-45b6-9dae-73c013288a59.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_rooms_report_stats"
+    ],
+    "policies": [],
+    "lines": 153
+  },
+  {
+    "file": "20260525030237_bacf38b7-a175-4cbc-8254-b64ae199bef1.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_financial_report",
+      "get_laundry_report"
+    ],
+    "policies": [],
+    "lines": 298
+  },
+  {
+    "file": "20260527133828_8bc7bb38-6575-4ddd-ac34-8a75f84ff345.sql",
+    "tablesCreated": [
+      "conversations",
+      "conversation_members",
+      "messages",
+      "message_attachments",
+      "message_reactions",
+      "message_reads"
+    ],
+    "functionsCreated": [
+      "is_conversation_member",
+      "is_conversation_admin",
+      "get_conversation_tenant",
+      "get_conversation_hotel",
+      "chat_after_message_insert",
+      "chat_guard_message_update",
+      "create_direct_conversation",
+      "create_group_conversation",
+      "send_chat_message",
+      "mark_conversation_read",
+      "toggle_message_reaction",
+      "set_conversation_mute",
+      "add_conversation_members",
+      "leave_or_remove_conversation_member",
+      "rename_chat_group",
+      "delete_chat_message"
+    ],
+    "policies": [
+      "conv_select_member",
+      "conv_insert_self",
+      "conv_update_admin",
+      "convm_select",
+      "convm_self_insert",
+      "convm_self_update",
+      "convm_admin_delete",
+      "msg_select",
+      "msg_insert",
+      "msg_update_sender",
+      "att_select",
+      "att_insert",
+      "react_select",
+      "react_insert",
+      "react_delete",
+      "reads_select",
+      "reads_insert",
+      "chat_att_select",
+      "chat_att_insert",
+      "chat_att_delete"
+    ],
+    "lines": 856
+  },
+  {
+    "file": "20260527133945_9d74fa73-c8e6-45da-9406-fcc055398080.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "chat_guard_message_update"
+    ],
+    "policies": [],
+    "lines": 30
+  },
+  {
+    "file": "20260527134132_d92feb94-62cb-4733-a3c9-2294ed9d150f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_direct_conversation",
+      "create_group_conversation",
+      "add_conversation_members"
+    ],
+    "policies": [],
+    "lines": 155
+  },
+  {
+    "file": "20260527135608_3cee259f-4831-4f5b-9d95-ab69b2ed8f04.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "chat_after_message_insert"
+    ],
+    "policies": [],
+    "lines": 48
+  },
+  {
+    "file": "20260528131046_bb78625e-da45-49ff-835f-f3a5e3a60898.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Super admins manage marketing campaigns"
+    ],
+    "lines": 8
+  },
+  {
+    "file": "20260528133515_1667ff18-5b4d-42a7-83d4-0e835c66c0e6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "chat_after_message_insert"
+    ],
+    "policies": [],
+    "lines": 44
+  },
+  {
+    "file": "20260528152148_2018282f-4a4a-4769-b6e8-ec7ce61e8ef5.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_user_permissions_summary"
+    ],
+    "policies": [],
+    "lines": 49
+  },
+  {
+    "file": "20260528154454_bbc83a80-c960-484b-9913-64fd4abdcbbc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_tape_chart"
+    ],
+    "policies": [],
+    "lines": 87
+  },
+  {
+    "file": "20260528160351_a04783fd-3d8f-4b6f-bbbf-7bec30914d23.sql",
+    "tablesCreated": [
+      "room_blocks"
+    ],
+    "functionsCreated": [
+      "touch_room_blocks_updated_at",
+      "_tc_check_booking_conflict",
+      "_tc_check_block_conflict",
+      "create_room_block",
+      "delete_room_block",
+      "move_booking",
+      "resize_booking",
+      "get_tape_chart"
+    ],
+    "policies": [
+      "room_blocks_select_same_tenant",
+      "room_blocks_insert_manager",
+      "room_blocks_update_manager",
+      "room_blocks_delete_manager"
+    ],
+    "lines": 394
+  },
+  {
+    "file": "20260529012705_5746b8ac-543d-4a80-be57-2ebbc6708412.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "hotel_logos_public_read",
+      "password_reset_otps_deny_select",
+      "platform_settings_deny_non_superadmin_select",
+      "Users can view permissions scoped by role"
+    ],
+    "lines": 68
+  },
+  {
+    "file": "20260529031609_50d0b2c4-a27d-4e74-b31b-70e484902a38.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_floor_plan_live"
+    ],
+    "policies": [],
+    "lines": 95
+  },
+  {
+    "file": "20260529032304_610ec2c8-c7c3-4888-9415-fa4061f841ab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_floor_plan_live"
+    ],
+    "policies": [],
+    "lines": 92
+  },
+  {
+    "file": "20260529033042_7384dfbf-e74c-4798-b50a-142cc29e4ab4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_floor_plan_live"
+    ],
+    "policies": [],
+    "lines": 113
+  },
+  {
+    "file": "20260530075624_571dad7c-a4a8-446a-9f9f-fc1a98f352ce.sql",
+    "tablesCreated": [
+      "guest_stay_registrations",
+      "room_type_rates",
+      "seasonal_rate_overrides"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "stay_reg_tenant_select",
+      "stay_reg_tenant_insert",
+      "stay_reg_tenant_update",
+      "rtr_tenant_select",
+      "rtr_tenant_modify",
+      "sro_tenant_select",
+      "sro_tenant_modify"
+    ],
+    "lines": 172
+  },
+  {
+    "file": "20260530075742_c31bc102-54f4-4095-8117-38ac122e2c9f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_booking_price",
+      "duplicate_room_type",
+      "enqueue_stay_registration",
+      "retry_stay_registration"
+    ],
+    "policies": [],
+    "lines": 365
+  },
+  {
+    "file": "20260530081714_393959cc-ec2a-48e9-9eb1-b4795d2fcb95.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "_enqueue_stay_registration_internal",
+      "trg_enqueue_stay_registration_on_checkin"
+    ],
+    "policies": [],
+    "lines": 100
+  },
+  {
+    "file": "20260530170106_ec51ece4-1572-4d4c-bab4-d51379a17ead.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order",
+      "handover_batch",
+      "confirm_receive_order",
+      "deliver_stop",
+      "cancel_distribution_order",
+      "close_route_if_complete"
+    ],
+    "policies": [],
+    "lines": 392
+  },
+  {
+    "file": "20260530171927_bb815179-5650-46c9-87ab-d54a8dbe3f8f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20260531040541_251ad9cd-084a-4406-9816-d20e198288cc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20260531092920_db87710b-bc55-4cab-9e66-69312396b983.sql",
+    "tablesCreated": [
+      "rate_plans",
+      "rate_plan_daily_prices",
+      "room_type_availability"
+    ],
+    "functionsCreated": [
+      "bulk_upsert_daily_prices",
+      "bulk_upsert_rt_availability"
+    ],
+    "policies": [
+      "rp_tenant_select",
+      "rp_tenant_modify",
+      "rpdp_tenant_select",
+      "rpdp_tenant_modify",
+      "rta_tenant_select",
+      "rta_tenant_modify"
+    ],
+    "lines": 196
+  },
+  {
+    "file": "20260531094145_9d84eac5-588f-4a1d-889e-fbc3a5f833c3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "ensure_default_rate_plan"
+    ],
+    "policies": [],
+    "lines": 67
+  },
+  {
+    "file": "20260531134811_117ca986-c604-4c2d-8d67-a781ce01538a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "room_type_pricing_code",
+      "sync_room_types_from_rooms",
+      "ensure_default_rate_plan"
+    ],
+    "policies": [],
+    "lines": 238
+  },
+  {
+    "file": "20260531135011_718f744a-3cad-4b43-9af0-50a1242cac4c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 8
+  },
+  {
+    "file": "20260531140844_c0243ee8-25d8-4541-88d3-981d8eae7e26.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_daily_prices_bulk",
+      "get_pricing_health",
+      "guard_room_type_delete",
+      "auto_sync_room_type_on_room_change"
+    ],
+    "policies": [],
+    "lines": 295
+  },
+  {
+    "file": "20260531141538_642df077-6302-427d-9034-514f4dde258c.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_today_prices_for_hotel"
+    ],
+    "policies": [],
+    "lines": 49
+  },
+  {
+    "file": "20260531142329_fc9a9c1e-f49d-4499-92f4-232feb3f28bc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_today_prices_for_hotel"
+    ],
+    "policies": [],
+    "lines": 52
+  },
+  {
+    "file": "20260531143409_9b0395ab-74b2-437d-bf09-2fd6ebb6d535.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_today_prices_for_hotel"
+    ],
+    "policies": [],
+    "lines": 50
+  },
+  {
+    "file": "20260531153300_3ed5d180-5c61-4406-9b88-3299863baf51.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_booking_price"
+    ],
+    "policies": [],
+    "lines": 190
+  },
+  {
+    "file": "20260601152448_13f11ed2-64a9-49bf-8160-251c1eb7dd28.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_hotel_floor_map_cell_size"
+    ],
+    "policies": [],
+    "lines": 100
+  },
+  {
+    "file": "20260601152611_89beafd9-2ba2-4d0a-8053-76c503d16dd6.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_hotel_floor_map_cell_size"
+    ],
+    "policies": [],
+    "lines": 100
+  },
+  {
+    "file": "20260601152846_276ccb01-e40a-4891-9a92-38291e81c961.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20260601154204_20d53d9b-330e-4160-9b50-6689863d8ed0.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "merge_guests"
+    ],
+    "policies": [],
+    "lines": 93
+  },
+  {
+    "file": "20260601163438_46cf9ad5-3ac6-4895-a300-f2566e296bc2.sql",
+    "tablesCreated": [
+      "financial_targets"
+    ],
+    "functionsCreated": [
+      "get_labor_cost",
+      "set_financial_targets_updated_at"
+    ],
+    "policies": [
+      "Tenant members can view targets",
+      "Owners and managers can manage targets"
+    ],
+    "lines": 135
+  },
+  {
+    "file": "20260602154837_64af7975-ef67-41d0-b32c-036e7e4e45e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_booking_price"
+    ],
+    "policies": [],
+    "lines": 192
+  },
+  {
+    "file": "20260602155416_bedc371b-107e-495b-a875-f8d9be1ee00b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_daily_prices_bulk"
+    ],
+    "policies": [],
+    "lines": 161
+  },
+  {
+    "file": "20260602155531_95d4e8bb-736d-4d9e-a5d4-5c997809dcab.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "resolve_daily_prices_bulk"
+    ],
+    "policies": [],
+    "lines": 164
+  },
+  {
+    "file": "20260604163035_86f954e3-85b4-4dc2-9fc7-62c8ccba777b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "submit_replenish_lean",
+      "submit_delivery_lean"
+    ],
+    "policies": [],
+    "lines": 235
+  },
+  {
+    "file": "20260604163814_2f7417ca-0c03-4b98-9a8c-ddf1a11ac001.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "submit_replenish_lean",
+      "submit_delivery_lean"
+    ],
+    "policies": [],
+    "lines": 155
+  },
+  {
+    "file": "20260605142202_b3c15310-32cb-472c-ad2b-a4f0c58a010f.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_delivery_from_room_check"
+    ],
+    "policies": [],
+    "lines": 97
+  },
+  {
+    "file": "20260605142248_50de6860-88d4-426d-bec8-55ca4384ff7d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_delivery_from_room_check"
+    ],
+    "policies": [],
+    "lines": 96
+  },
+  {
+    "file": "20260605142326_51d79120-a761-44ec-8ac4-52c949b645be.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_delivery_from_room_check"
+    ],
+    "policies": [],
+    "lines": 96
+  },
+  {
+    "file": "20260605152021_065bcea4-4c96-4385-a301-d7b6e2cd253b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_room_items_with_standards"
+    ],
+    "policies": [],
+    "lines": 69
+  },
+  {
+    "file": "20260605153653_a5afe2aa-7959-4ac6-9e1b-d11de1b4eb11.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "fn_is_valid_adjustment_transition",
+      "transition_adjustment_status"
+    ],
+    "policies": [],
+    "lines": 116
+  },
+  {
+    "file": "20260605160218_921a6cf5-d599-48f9-af56-c4d0bf91fdf4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 1
+  },
+  {
+    "file": "20260605160737_46324af4-4bcc-4539-9741-59ec16b85579.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20260605161231_affaac65-9205-469d-abde-d982c57e1de2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 5
+  },
+  {
+    "file": "20260605161711_f2f0906b-2cd9-4a51-a037-44a9c36a738b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 7
+  },
+  {
+    "file": "20260605162135_133257ff-4f92-4251-82e7-2fbe06251f8a.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_laundry_batches_filtered"
+    ],
+    "policies": [],
+    "lines": 73
+  },
+  {
+    "file": "20260605164803_af73924a-8860-4d5e-8ab9-15525a890078.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_latest_consumption_snapshots",
+      "get_inventory_transactions_filtered"
+    ],
+    "policies": [],
+    "lines": 115
+  },
+  {
+    "file": "20260606075721_dc130cd6-ac00-4ffd-9b7d-24ca648144e4.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "prevent_unauthorized_salary_change"
+    ],
+    "policies": [
+      "Users can view their email notifications"
+    ],
+    "lines": 67
+  },
+  {
+    "file": "20260606145226_2cd53d79-6b17-4e64-9a07-c86d6b2714a7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 3
+  },
+  {
+    "file": "20260607083328_363336dc-f017-43c9-8b67-90561e09fbfa.sql",
+    "tablesCreated": [
+      "hotel_fixed_expenses",
+      "monthly_targets",
+      "shift_notes"
+    ],
+    "functionsCreated": [],
+    "policies": [
+      "Tenant members can view fixed expenses",
+      "Tenant members can insert fixed expenses",
+      "Tenant members can update fixed expenses",
+      "Tenant members can delete fixed expenses",
+      "Tenant members can view monthly targets",
+      "Tenant members can insert monthly targets",
+      "Tenant members can update monthly targets",
+      "Tenant members can delete monthly targets",
+      "Tenant members can view shift notes",
+      "Tenant members can insert shift notes",
+      "Tenant members can update shift notes",
+      "Tenant members can delete shift notes"
+    ],
+    "lines": 127
+  },
+  {
+    "file": "20260607093243_e7d8e140-175e-4f6b-bc93-8eae52de8b6e.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20260607093433_a6d58c36-22d9-462f-aa8a-4e571031d3ac.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 19
+  },
+  {
+    "file": "20260607102937_99ffc7b4-3770-4886-8a3e-f9ac9e74b7c3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "validate_hourly_booking"
+    ],
+    "policies": [],
+    "lines": 53
+  },
+  {
+    "file": "20260608014825_948f95bb-1514-485f-aef0-4845bd877791.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_booking"
+    ],
+    "policies": [],
+    "lines": 92
+  },
+  {
+    "file": "20260608015331_a07235b7-a0d4-4dd2-ba63-cfa0d2683460.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "transfer_booking_room"
+    ],
+    "policies": [],
+    "lines": 120
+  },
+  {
+    "file": "20260608020559_19a622af-6012-423e-a4a8-1a7f6f26bcc9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_booking_v2"
+    ],
+    "policies": [],
+    "lines": 173
+  },
+  {
+    "file": "20260608020925_7a5f8517-98f7-4fcc-b076-9f6fa8c9e179.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 129
+  },
+  {
+    "file": "20260608082058_1bc6d4d4-0839-498d-b89a-085d242f0fcd.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20260608082723_10fb4d3f-f4ab-428e-a1a7-c0f65678e594.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 109
+  },
+  {
+    "file": "20260608083645_54eff572-4e89-47c3-afe5-aae54b810485.sql",
+    "tablesCreated": [
+      "hotel_settings"
+    ],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 42
+  },
+  {
+    "file": "20260608085900_b6fec3a0-bde6-4084-85dd-bf7d64c7798d.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "reschedule_booking_checkin"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20260608090149_6215ceb9-03db-4474-935c-6c63d0b8c5da.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "record_booking_payment",
+      "confirm_booking_payment_manual"
+    ],
+    "policies": [],
+    "lines": 103
+  },
+  {
+    "file": "20260608095543_eddedd8f-929b-4a8b-9460-0a689daa5fe2.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "sync_pricing_rules_to_hotel_settings"
+    ],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20260608095734_cb3b6a7d-71f2-4610-a3ba-aa1500d5f476.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout",
+      "create_booking_v2"
+    ],
+    "policies": [],
+    "lines": 302
+  },
+  {
+    "file": "20260608133327_99553a04-30ab-4981-a0d4-3fb4ee4916b3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "get_daily_occupancy_trend"
+    ],
+    "policies": [],
+    "lines": 60
+  },
+  {
+    "file": "20260608151302_e616ac04-979d-4d6a-99cd-7a6d0cb02ef9.sql",
+    "tablesCreated": [
+      "ab_tests"
+    ],
+    "functionsCreated": [
+      "update_ab_tests_updated_at"
+    ],
+    "policies": [
+      "Super admins manage ab_tests"
+    ],
+    "lines": 46
+  },
+  {
+    "file": "20260609080519_018ae2f0-01f5-40af-a226-a1e3e89dd55b.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "exec_cron_update"
+    ],
+    "policies": [],
+    "lines": 23
+  },
+  {
+    "file": "20260609081609_8eafebc9-53f3-4da6-a210-553a5815b361.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 256
+  },
+  {
+    "file": "20260610100003_4dd76410-99c3-412f-bcdf-ef24af50cf66.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 32
+  },
+  {
+    "file": "20260610100032_7a8d4034-54b9-4d81-ba36-2b97e00493b9.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 21
+  },
+  {
+    "file": "20260610104836_072ee310-55b7-4bd1-bdd5-1f3d787936b7.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "apply_room_standards",
+      "bulk_delete_items"
+    ],
+    "policies": [],
+    "lines": 183
+  },
+  {
+    "file": "20260613065301_d6d1c818-58f0-4a0a-835c-3a9343fa7a97.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 11
+  },
+  {
+    "file": "20260915090000_fix_registration_plan_selection.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 212
+  },
+  {
+    "file": "20260916100000_make_complete_registration_idempotent.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 315
+  },
+  {
+    "file": "20260918100710_harden_registration_and_repair_schema.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "is_super_admin",
+      "enqueue_stay_registration",
+      "_enqueue_stay_registration_internal",
+      "get_pending_tenants",
+      "handle_successful_payment",
+      "chat_after_message_insert",
+      "log_state_transition",
+      "handle_new_user",
+      "complete_registration",
+      "increment_workflow_stats",
+      "gen_vat_claim_token",
+      "ensure_vat_claim_token",
+      "mark_booking_no_show",
+      "get_turnover_analysis",
+      "validate_plan_change",
+      "auto_apply_read_only_after_grace",
+      "auto_clear_read_only_after_renewal",
+      "auto_close_stale_shifts",
+      "perform_quick_room_check"
+    ],
+    "policies": [],
+    "lines": 1619
+  },
+  {
+    "file": "20260918154145_finalize_roomqc_schema_cleanup.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "enqueue_stay_registration",
+      "_enqueue_stay_registration_internal"
+    ],
+    "policies": [],
+    "lines": 113
+  },
+  {
+    "file": "20260919170744_fix_db_lint_type_initializers.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order",
+      "bulk_delete_items"
+    ],
+    "policies": [],
+    "lines": 178
+  },
+  {
+    "file": "20260919181023_fix_auth_registration_trigger.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "handle_new_user"
+    ],
+    "policies": [],
+    "lines": 21
+  },
+  {
+    "file": "20260919181626_fix_registration_provisioning_trigger.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration",
+      "prevent_user_privilege_escalation"
+    ],
+    "policies": [],
+    "lines": 143
+  },
+  {
+    "file": "20260919182111_harden_registration_impl_grants.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 9
+  },
+  {
+    "file": "20260919182530_revoke_legacy_anon_function_grants.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 21
+  },
+  {
+    "file": "20260919192326_harden_internal_rpc_grants.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 56
+  },
+  {
+    "file": "20260919195644_harden_rpc_actor_guards_and_cleanup.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "rpc_request_is_trusted",
+      "assert_rpc_actor",
+      "atomic_item_lost",
+      "atomic_item_consumed",
+      "atomic_item_to_laundry",
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 459
+  },
+  {
+    "file": "20260919200716_harden_transaction_workflow_rpc_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "assert_rpc_hotel",
+      "assert_rpc_items",
+      "create_inbound_transaction",
+      "create_outbound_transaction",
+      "create_laundry_batch_with_items",
+      "create_laundry_return_transaction",
+      "create_laundry_loss_transaction",
+      "add_laundry_to_draft_batch",
+      "create_warehouse_transfer",
+      "create_stock_adjustment",
+      "record_booking_payment",
+      "confirm_booking_payment_manual",
+      "update_room_status_safe",
+      "assert_distribution_actor",
+      "confirm_room_delivery",
+      "undo_room_delivery_confirmation",
+      "mark_cannot_access",
+      "close_route_if_complete",
+      "confirm_receive_order",
+      "setup_room_initial",
+      "apply_room_standards",
+      "approve_tenant",
+      "create_booking_v2"
+    ],
+    "policies": [],
+    "lines": 915
+  },
+  {
+    "file": "20260919201623_fix_laundry_vendor_guard_and_rpc_privileges.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_laundry_batch_with_items"
+    ],
+    "policies": [],
+    "lines": 53
+  },
+  {
+    "file": "20260919201953_isolate_internal_rpc_implementations.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 108
+  },
+  {
+    "file": "20260919202153_revoke_public_client_rpc_execute.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 36
+  },
+  {
+    "file": "20260919203321_harden_distribution_order_validation_order.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 62
+  },
+  {
+    "file": "20260919204412_move_pgtap_to_extensions_schema.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 16
+  },
+  {
+    "file": "20260919204505_cleanup_distribution_wrapper_lint_warnings.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_room_delivery",
+      "mark_cannot_access",
+      "undo_room_delivery_confirmation"
+    ],
+    "policies": [],
+    "lines": 61
+  },
+  {
+    "file": "20260919205541_cleanup_legacy_rpc_lint_warnings.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 253
+  },
+  {
+    "file": "20260919220111_remove_duplicate_indexes.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 9
+  },
+  {
+    "file": "20260919223510_optimize_rls_auth_initplan.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 56
+  },
+  {
+    "file": "20260919223859_add_missing_foreign_key_indexes.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20260920002439_consolidate_rpc_overloads.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 18
+  },
+  {
+    "file": "20260920015525_harden_sepay_payment_idempotency.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "update_booking_amount_paid"
+    ],
+    "policies": [],
+    "lines": 149
+  },
+  {
+    "file": "20260920023958_atomic_sepay_booking_settlement.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "settle_booking_payment",
+      "settle_subscription_payment",
+      "private",
+      "confirm_booking_payment_manual"
+    ],
+    "policies": [],
+    "lines": 528
+  },
+  {
+    "file": "20260920034214_fix_booking_payment_status_trigger.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_payment_status"
+    ],
+    "policies": [],
+    "lines": 54
+  },
+  {
+    "file": "20260920041451_harden_payment_settlement_edges.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_payment_status",
+      "private",
+      "settle_subscription_payment",
+      "settle_booking_payment",
+      "create_booking_payment_pending",
+      "cancel_booking_payment"
+    ],
+    "policies": [],
+    "lines": 545
+  },
+  {
+    "file": "20260920043627_validate_manual_payment_amounts.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "confirm_booking_payment_manual"
+    ],
+    "policies": [],
+    "lines": 68
+  },
+  {
+    "file": "20260920044526_atomic_subscription_payment_cancellation.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_subscription_payment"
+    ],
+    "policies": [],
+    "lines": 59
+  },
+  {
+    "file": "20260920045140_harden_perform_checkout_rpc.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "perform_checkout"
+    ],
+    "policies": [],
+    "lines": 188
+  },
+  {
+    "file": "20260920050338_stage_checkout_amounts_and_atomic_group_checkout.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "calculate_payment_status",
+      "private",
+      "prepare_checkout_amounts",
+      "prepare_group_checkout_amounts",
+      "perform_group_checkout"
+    ],
+    "policies": [],
+    "lines": 390
+  },
+  {
+    "file": "20260920053313_align_booking_payment_tolerance.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 41
+  }
+]

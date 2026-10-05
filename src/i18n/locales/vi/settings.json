@@ -1,0 +1,225 @@
+{
+  "title": "Cài đặt",
+  "general": {
+    "title": "Cài đặt chung",
+    "description": "Quản lý cài đặt hệ thống và tùy chọn",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "darkMode": "Tối",
+    "lightMode": "Sáng",
+    "timezone": "Múi giờ",
+    "dateFormat": "Định dạng ngày",
+    "currency": "Đơn vị tiền tệ",
+    "pageTitle": "Cài đặt chung",
+    "pageDescription": "Quản lý thông tin và cấu hình chung của hệ thống",
+    "companyInfo": {
+      "title": "Thông tin công ty",
+      "description": "Thông tin cơ bản về doanh nghiệp của bạn"
+    },
+    "companyName": "Tên công ty",
+    "companyNamePlaceholder": "VD: Khách sạn ABC",
+    "email": "Email",
+    "emailPlaceholder": "contact@hotel.com",
+    "phone": "Số điện thoại",
+    "phonePlaceholder": "0901234567",
+    "regionalSettings": {
+      "title": "Cài đặt khu vực",
+      "description": "Múi giờ, ngôn ngữ và đơn vị tiền tệ"
+    },
+    "timezones": {
+      "hoChiMinh": "GMT+7 (Hồ Chí Minh)",
+      "bangkok": "GMT+7 (Bangkok)",
+      "singapore": "GMT+8 (Singapore)"
+    },
+    "languages": {
+      "vi": "Tiếng Việt",
+      "en": "English"
+    },
+    "currencies": {
+      "VND": "VND (₫)",
+      "USD": "USD ($)",
+      "EUR": "EUR (€)"
+    },
+    "autoSave": "Tự động lưu thay đổi",
+    "cancel": "Hủy",
+    "saveChanges": "Lưu thay đổi",
+    "saved": "Đã lưu",
+    "savedDescription": "Cài đặt đã được cập nhật thành công",
+    "error": "Lỗi",
+    "validation": {
+      "companyNameMin": "Tên công ty phải có ít nhất 2 ký tự",
+      "emailInvalid": "Email không hợp lệ"
+    }
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "fullName": "Họ và tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "avatar": "Ảnh đại diện",
+    "changePassword": "Đổi mật khẩu",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu"
+  },
+  "users": {
+    "title": "Quản lý người dùng",
+    "addUser": "Thêm người dùng",
+    "editUser": "Sửa người dùng",
+    "userLevel": "Cấp người dùng",
+    "hotel": "Khách sạn",
+    "position": "Chức vụ",
+    "status": "Trạng thái"
+  },
+  "hotels": {
+    "title": "Quản lý khách sạn",
+    "addHotel": "Thêm khách sạn",
+    "editHotel": "Sửa khách sạn",
+    "hotelName": "Tên khách sạn",
+    "address": "Địa chỉ",
+    "phone": "Điện thoại",
+    "email": "Email",
+    "totalRooms": "Tổng số phòng",
+    "totalFloors": "Tổng số tầng"
+  },
+  "categories": {
+    "title": "Quản lý danh mục",
+    "addCategory": "Thêm danh mục",
+    "editCategory": "Sửa danh mục",
+    "categoryName": "Tên danh mục",
+    "description": "Mô tả",
+    "parentCategory": "Danh mục cha"
+  },
+  "notifications": {
+    "title": "Cài đặt thông báo",
+    "description": "Cấu hình các loại thông báo bạn muốn nhận",
+    "email": "Thông báo email",
+    "push": "Thông báo đẩy",
+    "batch": "Thông báo lô giặt",
+    "pageTitle": "Cài đặt thông báo",
+    "pageDescription": "Quản lý các loại thông báo và cảnh báo hệ thống",
+    "history": "Lịch sử",
+    "sendTest": "Gửi test",
+    "pushNotifications": {
+      "title": "Thông báo đẩy (Push Notifications)",
+      "description": "Nhận thông báo ngay cả khi không mở ứng dụng",
+      "blocked": "Bạn đã chặn thông báo. Vui lòng bật lại trong cài đặt trình duyệt.",
+      "enable": "Bật thông báo đẩy",
+      "enableDescription": "Nhận cảnh báo tồn kho, bảo trì và cập nhật quan trọng",
+      "enabled": "Đã bật",
+      "preview": "Preview",
+      "turnOff": "Tắt",
+      "turnOn": "Bật ngay",
+      "manageDevices": "Quản lý thiết bị"
+    },
+    "devices": {
+      "title": "Quản lý thiết bị Push",
+      "description": "Xem và quản lý các thiết bị đã đăng ký nhận thông báo đẩy",
+      "active": "Thiết bị đang hoạt động",
+      "activeDesc": "Các thiết bị đang nhận thông báo đẩy",
+      "inactive": "Thiết bị không hoạt động",
+      "inactiveDesc": "Các thiết bị đã ngừng nhận thông báo hoặc gặp lỗi",
+      "noDevices": "Chưa có thiết bị nào",
+      "noDevicesDesc": "Bạn chưa đăng ký thiết bị nào để nhận thông báo đẩy",
+      "register": "Đăng ký thiết bị",
+      "deleteAll": "Xóa thiết bị không hoạt động",
+      "deleteConfirm": "Xóa thiết bị?",
+      "deleteConfirmDesc": "Thiết bị này sẽ không còn nhận được thông báo đẩy. Bạn có thể đăng ký lại thiết bị này sau.",
+      "currentDevice": "Thiết bị này",
+      "notActive": "Không hoạt động",
+      "errorCount": "Lỗi",
+      "registeredAt": "Đăng ký",
+      "lastUsed": "Dùng lần cuối",
+      "refresh": "Làm mới"
+    },
+    "emailNotifications": {
+      "title": "Thông báo Email",
+      "description": "Chọn các sự kiện nhận thông báo qua email",
+      "lowStock": "Cảnh báo tồn kho thấp",
+      "lowStockDesc": "Nhận email khi tồn kho dưới mức tối thiểu",
+      "laundryCompleted": "Lô giặt đã hoàn thành",
+      "laundryCompletedDesc": "Thông báo khi lô giặt được nhận về",
+      "maintenanceNew": "Yêu cầu bảo trì mới",
+      "maintenanceNewDesc": "Email khi có yêu cầu bảo trì được tạo",
+      "poApproved": "Đơn hàng được phê duyệt",
+      "poApprovedDesc": "Thông báo khi đơn đặt hàng được phê duyệt",
+      "dailyReport": "Báo cáo tổng hợp hàng ngày",
+      "dailyReportDesc": "Gửi báo cáo tổng hợp vào mỗi sáng",
+      "weeklyReport": "Báo cáo tuần",
+      "weeklyReportDesc": "Gửi báo cáo tổng hợp hàng tuần"
+    },
+    "inApp": {
+      "title": "Thông báo trong ứng dụng",
+      "description": "Cấu hình thông báo real-time",
+      "realtime": "Cập nhật theo thời gian thực",
+      "lowStock": "Cảnh báo tồn kho",
+      "laundryCompleted": "Lô giặt hoàn thành",
+      "maintenanceNew": "Bảo trì mới",
+      "taskAssigned": "Nhiệm vụ được giao",
+      "approvalRequest": "Yêu cầu phê duyệt"
+    },
+    "thresholds": {
+      "title": "Ngưỡng cảnh báo",
+      "description": "Thiết lập các mức cảnh báo tự động",
+      "lowStock": "Ngưỡng tồn kho thấp",
+      "criticalStock": "Tồn kho nguy hiểm",
+      "overdueMaintenance": "Bảo trì quá hạn",
+      "laundryDelay": "Giặt ủi chậm trễ",
+      "units": "đơn vị",
+      "days": "ngày",
+      "hours": "giờ"
+    },
+    "schedule": {
+      "title": "Lịch thông báo",
+      "description": "Thiết lập thời gian gửi báo cáo định kỳ",
+      "dailyTime": "Báo cáo hàng ngày",
+      "weeklyDay": "Báo cáo hàng tuần",
+      "quietHours": "Bật giờ im lặng",
+      "quietHoursDesc": "Không gửi thông báo trong khoảng thời gian này",
+      "quietStart": "Bắt đầu",
+      "quietEnd": "Kết thúc",
+      "weekdays": {
+        "sunday": "Chủ nhật",
+        "monday": "Thứ Hai",
+        "tuesday": "Thứ Ba",
+        "wednesday": "Thứ Tư",
+        "thursday": "Thứ Năm",
+        "friday": "Thứ Sáu",
+        "saturday": "Thứ Bảy"
+      }
+    },
+    "actions": {
+      "cancel": "Hủy thay đổi",
+      "save": "Lưu cài đặt"
+    },
+    "toast": {
+      "saved": "Đã lưu cài đặt thông báo",
+      "testSent": "Đã gửi thông báo test",
+      "testSentDesc": "Kiểm tra trong trung tâm thông báo",
+      "testError": "Không thể gửi thông báo test",
+      "userNotFound": "Không tìm thấy thông tin user"
+    }
+  },
+  "security": {
+    "title": "Bảo mật",
+    "description": "Cài đặt liên quan đến bảo mật",
+    "twoFactor": "Xác thực 2 bước",
+    "sessions": "Phiên đăng nhập",
+    "activityLog": "Nhật ký hoạt động"
+  },
+  "appearance": {
+    "title": "Giao diện",
+    "description": "Tùy chỉnh giao diện ứng dụng",
+    "displayMode": "Chế độ hiển thị",
+    "system": "Hệ thống",
+    "compact": "Chế độ thu gọn"
+  },
+  "system": {
+    "title": "Cài đặt hệ thống",
+    "description": "Cấu hình các tham số hệ thống"
+  },
+  "demoData": {
+    "title": "Dữ liệu Demo",
+    "description": "Tạo dữ liệu mẫu để kiểm thử hệ thống (chỉ dành cho môi trường phát triển)"
+  }
+}

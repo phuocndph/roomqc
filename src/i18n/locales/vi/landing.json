@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "features": "Tính năng",
+    "pricing": "Bảng giá",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "register": "Đăng ký miễn phí",
+    "dashboard": "Vào Dashboard"
+  },
+  "hero": {
+    "badge": "Nền tảng quản lý khách sạn toàn diện",
+    "title": "Quản lý khách sạn",
+    "titleHighlight": "thông minh & toàn diện",
+    "subtitle": "Tối ưu vận hành, kiểm soát kho tài sản, giặt là, bảo trì — tất cả trong một hệ thống duy nhất. Tiết kiệm thời gian, giảm thất thoát, tăng hiệu quả.",
+    "cta": "Dùng thử miễn phí",
+    "ctaSecondary": "Xem bảng giá",
+    "noCard": "Không cần thẻ tín dụng • Thiết lập trong 5 phút"
+  },
+  "stats": {
+    "rooms": "Phòng quản lý",
+    "hotels": "Khách sạn",
+    "transactions": "Giao dịch/tháng",
+    "uptime": "Uptime"
+  },
+  "features": {
+    "title": "Tất cả công cụ bạn cần",
+    "subtitle": "Một nền tảng duy nhất để quản lý mọi khía cạnh vận hành khách sạn",
+    "rooms": {
+      "title": "Quản lý phòng",
+      "description": "Theo dõi trạng thái phòng, check-in/check-out, kiểm tra phòng theo ca với quy trình chuẩn hóa."
+    },
+    "inventory": {
+      "title": "Kho & Tài sản",
+      "description": "Quản lý tồn kho real-time, nhập/xuất/kiểm kê, cảnh báo tồn kho thấp tự động."
+    },
+    "laundry": {
+      "title": "Giặt là",
+      "description": "Theo dõi lô giặt, quản lý vendor, đối soát số lượng gửi/nhận tự động."
+    },
+    "maintenance": {
+      "title": "Bảo trì",
+      "description": "Tạo yêu cầu bảo trì, phân công, theo dõi tiến độ và phát hiện vấn đề lặp lại."
+    },
+    "bookings": {
+      "title": "Đặt phòng",
+      "description": "Quản lý đặt phòng theo giờ/ngày/tháng, theo dõi thanh toán và hóa đơn khách."
+    },
+    "reports": {
+      "title": "Báo cáo & Phân tích",
+      "description": "Dashboard tổng quan, báo cáo kho, doanh thu, vận hành với biểu đồ trực quan."
+    },
+    "distribution": {
+      "title": "Phân phối đồ",
+      "description": "Tạo phiếu giao hàng theo tầng/ca, theo dõi giao nhận từng phòng."
+    },
+    "multiHotel": {
+      "title": "Đa khách sạn",
+      "description": "Quản lý nhiều khách sạn trên cùng một tài khoản, phân quyền theo từng cơ sở."
+    }
+  },
+  "pricing": {
+    "title": "Bảng giá đơn giản, minh bạch",
+    "subtitle": "Chỉ tính theo số phòng sử dụng. Không phí ẩn.",
+    "perRoom": "/ phòng / ngày",
+    "popular": "Phổ biến nhất",
+    "cta": "Bắt đầu ngay",
+    "ctaEnterprise": "Liên hệ tư vấn",
+    "starter": {
+      "name": "Starter",
+      "price": "Miễn phí",
+      "description": "Dành cho khách sạn nhỏ muốn trải nghiệm",
+      "features": ["Tối đa 5 phòng", "Quản lý phòng cơ bản", "Nhập/xuất kho", "1 người dùng", "Hỗ trợ email"]
+    },
+    "professional": {
+      "name": "Professional",
+      "price": "1.000đ",
+      "description": "Dành cho khách sạn vừa và nhỏ",
+      "features": ["Không giới hạn phòng", "Tất cả tính năng", "Giặt là & Bảo trì", "Đa người dùng & phân quyền", "Báo cáo nâng cao", "Hỗ trợ ưu tiên"]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "Liên hệ",
+      "description": "Dành cho chuỗi khách sạn lớn",
+      "features": ["Tất cả tính năng Pro", "Đa khách sạn", "API tích hợp", "Tùy chỉnh theo yêu cầu", "Account manager riêng", "SLA 99.9%"]
+    }
+  },
+  "cta": {
+    "title": "Sẵn sàng tối ưu vận hành khách sạn?",
+    "subtitle": "Bắt đầu miễn phí ngay hôm nay. Không cần thẻ tín dụng.",
+    "button": "Đăng ký miễn phí"
+  },
+  "footer": {
+    "description": "Nền tảng quản lý vận hành khách sạn toàn diện, giúp bạn tiết kiệm thời gian và giảm thất thoát.",
+    "product": "Sản phẩm",
+    "support": "Hỗ trợ",
+    "legal": "Pháp lý",
+    "helpCenter": "Trung tâm trợ giúp",
+    "documentation": "Tài liệu",
+    "contactUs": "Liên hệ",
+    "terms": "Điều khoản sử dụng",
+    "privacy": "Chính sách bảo mật",
+    "copyright": "© 2026 RoomQc. Tất cả quyền được bảo lưu."
+  }
+}

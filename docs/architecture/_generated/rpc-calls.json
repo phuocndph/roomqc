@@ -1,0 +1,1101 @@
+[
+  {
+    "rpc": "add_laundry_to_draft_batch",
+    "callers": [
+      "src\\hooks\\useLaundryRequests.ts",
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "rpc": "apply_promo_code",
+    "callers": [
+      "src\\hooks\\super-admin\\usePromoCodes.ts"
+    ]
+  },
+  {
+    "rpc": "apply_room_standards",
+    "callers": [
+      "src\\hooks\\useBulkRoomActions.ts",
+      "src\\hooks\\useRoomStandards.ts"
+    ]
+  },
+  {
+    "rpc": "approve_reorder_suggestions",
+    "callers": [
+      "src\\hooks\\useReorderSuggestions.ts"
+    ]
+  },
+  {
+    "rpc": "approve_task",
+    "callers": [
+      "src\\hooks\\useTaskQc.ts"
+    ]
+  },
+  {
+    "rpc": "approve_tenant",
+    "callers": [
+      "src\\hooks\\super-admin\\useTenantApproval.ts"
+    ]
+  },
+  {
+    "rpc": "atomic_item_consumed",
+    "callers": [
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "rpc": "atomic_item_lost",
+    "callers": [
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "rpc": "atomic_item_to_laundry",
+    "callers": [
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "rpc": "batch_confirm_room_deliveries",
+    "callers": [
+      "src\\hooks\\useRoomDistributionHistory.ts"
+    ]
+  },
+  {
+    "rpc": "bulk_delete_items",
+    "callers": [
+      "src\\hooks\\useItems.ts"
+    ]
+  },
+  {
+    "rpc": "calculate_booking_price",
+    "callers": [
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts",
+      "src\\hooks\\useRoomTypeRates.ts"
+    ]
+  },
+  {
+    "rpc": "calculate_staff_statistics",
+    "callers": [
+      "src\\hooks\\useStaffStatistics.ts"
+    ]
+  },
+  {
+    "rpc": "calculate_tenant_storage",
+    "callers": [
+      "src\\hooks\\useTenantUsage.ts"
+    ]
+  },
+  {
+    "rpc": "cancel_booking",
+    "callers": [
+      "src\\components\\bookings\\CancelBookingDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "cancel_booking_payment",
+    "callers": [
+      "src\\hooks\\useBookingPayments.ts"
+    ]
+  },
+  {
+    "rpc": "cancel_distribution_order",
+    "callers": [
+      "src\\hooks\\useDistributionOrders.ts"
+    ]
+  },
+  {
+    "rpc": "cancel_subscription_payment",
+    "callers": [
+      "src\\components\\settings\\subscription\\PendingPayments.tsx",
+      "src\\pages\\admin\\PaymentSettingsPage.tsx"
+    ]
+  },
+  {
+    "rpc": "check_expiring_subscriptions",
+    "callers": [
+      "src\\hooks\\useEmailNotifications.ts"
+    ]
+  },
+  {
+    "rpc": "check_tenant_can_add",
+    "callers": [
+      "src\\hooks\\useTenantUsage.ts"
+    ]
+  },
+  {
+    "rpc": "clear_tenant_read_only",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "close_route_if_complete",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "complete_registration",
+    "callers": [
+      "src\\pages\\auth\\Onboarding.tsx",
+      "src\\pages\\items\\CategoriesPage.tsx"
+    ]
+  },
+  {
+    "rpc": "complete_task",
+    "callers": [
+      "src\\hooks\\useHousekeepingTasks.ts",
+      "src\\hooks\\useTaskQc.ts"
+    ]
+  },
+  {
+    "rpc": "compute_reorder_suggestions",
+    "callers": [
+      "src\\hooks\\useReorderSuggestions.ts"
+    ]
+  },
+  {
+    "rpc": "confirm_booking_payment_manual",
+    "callers": [
+      "src\\components\\bookings\\BookingPaymentDialog.tsx",
+      "src\\components\\bookings\\GroupPaymentDialog.tsx",
+      "src\\hooks\\useBookingPayments.ts"
+    ]
+  },
+  {
+    "rpc": "confirm_delivery_from_room_check",
+    "callers": [
+      "src\\hooks\\usePendingDeliveries.ts"
+    ]
+  },
+  {
+    "rpc": "confirm_receive_order",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "confirm_room_delivery",
+    "callers": [
+      "src\\hooks\\useRoomDistributionHistory.ts"
+    ]
+  },
+  {
+    "rpc": "confirm_warehouse_delivery",
+    "callers": [
+      "src\\hooks\\useDistributionOrders.ts"
+    ]
+  },
+  {
+    "rpc": "create_booking_payment_pending",
+    "callers": [
+      "src\\hooks\\useBookingPayments.ts"
+    ]
+  },
+  {
+    "rpc": "create_booking_v2",
+    "callers": [
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts"
+    ]
+  },
+  {
+    "rpc": "create_direct_conversation",
+    "callers": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "rpc": "create_distribution_order",
+    "callers": [
+      "src\\hooks\\useCreateDistributionFromSupplement.ts",
+      "src\\hooks\\useCreateDistributionFromSupplements.ts",
+      "src\\hooks\\useDistributionOrders.ts"
+    ]
+  },
+  {
+    "rpc": "create_group_conversation",
+    "callers": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "rpc": "create_inbound_transaction",
+    "callers": [
+      "src\\hooks\\useInventoryTransactions.ts",
+      "src\\hooks\\usePurchaseOrders.ts"
+    ]
+  },
+  {
+    "rpc": "create_laundry_batch_with_items",
+    "callers": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "rpc": "create_laundry_loss_transaction",
+    "callers": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "rpc": "create_laundry_return_transaction",
+    "callers": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "rpc": "create_new_linen_batch",
+    "callers": [
+      "src\\hooks\\useLaundryCompensation.ts"
+    ]
+  },
+  {
+    "rpc": "create_notification_for_user",
+    "callers": [
+      "src\\hooks\\useNotificationTriggers.ts"
+    ]
+  },
+  {
+    "rpc": "create_outbound_transaction",
+    "callers": [
+      "src\\hooks\\useInventoryTransactions.ts",
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useSupplementRequests.ts"
+    ]
+  },
+  {
+    "rpc": "create_room_block",
+    "callers": [
+      "src\\hooks\\useTapeChartMutations.ts"
+    ]
+  },
+  {
+    "rpc": "create_stock_adjustment",
+    "callers": [
+      "src\\hooks\\useStockAdjustments.ts"
+    ]
+  },
+  {
+    "rpc": "create_warehouse_transfer",
+    "callers": [
+      "src\\hooks\\useWarehouseTransfer.ts"
+    ]
+  },
+  {
+    "rpc": "delete_inventory_transaction",
+    "callers": [
+      "src\\hooks\\useInventoryTransactions.ts"
+    ]
+  },
+  {
+    "rpc": "delete_room_block",
+    "callers": [
+      "src\\hooks\\useTapeChartMutations.ts"
+    ]
+  },
+  {
+    "rpc": "deliver_stop",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "duplicate_room_type",
+    "callers": [
+      "src\\hooks\\useRoomTypeRates.ts"
+    ]
+  },
+  {
+    "rpc": "enqueue_stay_registration",
+    "callers": [
+      "src\\hooks\\useStayRegistrations.ts"
+    ]
+  },
+  {
+    "rpc": "ensure_default_rate_plan",
+    "callers": [
+      "src\\hooks\\usePricingDaily.ts"
+    ]
+  },
+  {
+    "rpc": "ensure_vat_claim_token",
+    "callers": [
+      "src\\hooks\\useVatClaimToken.ts"
+    ]
+  },
+  {
+    "rpc": "generate_guest_invoice_number",
+    "callers": [
+      "src\\hooks\\useGuestInvoices.ts",
+      "src\\lib\\invoiceHelpers.ts"
+    ]
+  },
+  {
+    "rpc": "generate_laundry_request_code",
+    "callers": [
+      "src\\hooks\\useLaundryRequests.ts",
+      "src\\hooks\\useRoomChecks.ts"
+    ]
+  },
+  {
+    "rpc": "generate_lost_found_item_code",
+    "callers": [
+      "src\\pages\\lost-found\\LostFoundPage.tsx"
+    ]
+  },
+  {
+    "rpc": "generate_supplement_request_code",
+    "callers": [
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useSupplementRequests.ts"
+    ]
+  },
+  {
+    "rpc": "get_abc_analysis",
+    "callers": [
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_all_warehouse_stock_summary",
+    "callers": [
+      "src\\hooks\\useWarehouseReport.ts"
+    ]
+  },
+  {
+    "rpc": "get_booking_chargeable_total",
+    "callers": [
+      "src\\hooks\\useChargeableConsumptions.ts"
+    ]
+  },
+  {
+    "rpc": "get_categories_with_stats",
+    "callers": [
+      "src\\hooks\\useCategories.ts"
+    ]
+  },
+  {
+    "rpc": "get_consumption_trend",
+    "callers": [
+      "src\\hooks\\useConsumptionAnalytics.ts"
+    ]
+  },
+  {
+    "rpc": "get_current_room_booking",
+    "callers": [
+      "src\\hooks\\useRoomBooking.ts"
+    ]
+  },
+  {
+    "rpc": "get_daily_occupancy_trend",
+    "callers": [
+      "src\\hooks\\useRoomsReportData.ts"
+    ]
+  },
+  {
+    "rpc": "get_dashboard_stats",
+    "callers": [
+      "src\\hooks\\useDashboardStats.ts"
+    ]
+  },
+  {
+    "rpc": "get_dead_stock_report",
+    "callers": [
+      "src\\hooks\\useDeadStockReport.ts"
+    ]
+  },
+  {
+    "rpc": "get_distribution_order_detail",
+    "callers": [
+      "src\\hooks\\useDistributionOrders.ts",
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "get_distribution_orders_count",
+    "callers": [
+      "src\\hooks\\useRouteFilters.ts",
+      "src\\lib\\route-data-prefetch.ts"
+    ]
+  },
+  {
+    "rpc": "get_distribution_orders_filtered",
+    "callers": [
+      "src\\hooks\\useDistributionOrders.ts",
+      "src\\hooks\\useRouteFilters.ts",
+      "src\\lib\\route-data-prefetch.ts"
+    ]
+  },
+  {
+    "rpc": "get_effective_permissions",
+    "callers": [
+      "src\\hooks\\useEffectivePermissions.ts"
+    ]
+  },
+  {
+    "rpc": "get_financial_report",
+    "callers": [
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_floor_plan",
+    "callers": [
+      "src\\hooks\\useFloorPlan.ts"
+    ]
+  },
+  {
+    "rpc": "get_floor_plan_live",
+    "callers": [
+      "src\\hooks\\useFloorPlanLive.ts"
+    ]
+  },
+  {
+    "rpc": "get_hotel_performance_stats",
+    "callers": [
+      "src\\hooks\\useHotelPerformance.ts"
+    ]
+  },
+  {
+    "rpc": "get_hotels_breakdown_stats",
+    "callers": [
+      "src\\hooks\\useDashboardStats.ts"
+    ]
+  },
+  {
+    "rpc": "get_hotels_performance_comparison",
+    "callers": [
+      "src\\hooks\\useHotelPerformance.ts"
+    ]
+  },
+  {
+    "rpc": "get_inventory_dashboard_stats",
+    "callers": [
+      "src\\hooks\\useInventoryDashboard.ts",
+      "src\\hooks\\useInventoryHubBadges.ts"
+    ]
+  },
+  {
+    "rpc": "get_inventory_report",
+    "callers": [
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_inventory_transactions_filtered",
+    "callers": [
+      "src\\hooks\\useInventoryTransactions.ts"
+    ]
+  },
+  {
+    "rpc": "get_inventory_value_over_time",
+    "callers": [
+      "src\\hooks\\useInventoryDashboard.ts"
+    ]
+  },
+  {
+    "rpc": "get_items_filtered",
+    "callers": [
+      "src\\components\\items\\ItemFilters.tsx",
+      "src\\hooks\\useItems.ts"
+    ]
+  },
+  {
+    "rpc": "get_labor_cost",
+    "callers": [
+      "src\\hooks\\useLaborCost.ts"
+    ]
+  },
+  {
+    "rpc": "get_last_room_check",
+    "callers": [
+      "src\\hooks\\useQuickRoomCheck.ts"
+    ]
+  },
+  {
+    "rpc": "get_latest_consumption_snapshots",
+    "callers": [
+      "src\\hooks\\useConsumptionAnalytics.ts"
+    ]
+  },
+  {
+    "rpc": "get_laundry_batch_detail",
+    "callers": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "rpc": "get_laundry_batches_filtered",
+    "callers": [
+      "src\\hooks\\useLaundryBatches.ts"
+    ]
+  },
+  {
+    "rpc": "get_laundry_dashboard_stats",
+    "callers": [
+      "src\\hooks\\useLaundryDashboard.ts"
+    ]
+  },
+  {
+    "rpc": "get_laundry_report",
+    "callers": [
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_low_stock_by_warehouses",
+    "callers": [
+      "src\\hooks\\useWarehouseReport.ts"
+    ]
+  },
+  {
+    "rpc": "get_low_stock_items",
+    "callers": [
+      "src\\hooks\\useInventoryDashboard.ts",
+      "src\\hooks\\useOverviewAlerts.ts",
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_maintenance_dashboard",
+    "callers": [
+      "src\\hooks\\useMaintenanceDashboard.ts"
+    ]
+  },
+  {
+    "rpc": "get_maintenance_report",
+    "callers": [
+      "src\\hooks\\useMaintenanceReport.ts"
+    ]
+  },
+  {
+    "rpc": "get_missing_items_from_room_detail",
+    "callers": [
+      "src\\components\\distribution\\hooks\\useDistributionForm.ts"
+    ]
+  },
+  {
+    "rpc": "get_monthly_expenses",
+    "callers": [
+      "src\\hooks\\useMonthlyExpenses.ts"
+    ]
+  },
+  {
+    "rpc": "get_monthly_laundry_expenses",
+    "callers": [
+      "src\\hooks\\useLaundryDashboard.ts"
+    ]
+  },
+  {
+    "rpc": "get_pending_tenants",
+    "callers": [
+      "src\\hooks\\super-admin\\useTenantApproval.ts"
+    ]
+  },
+  {
+    "rpc": "get_pricing_health",
+    "callers": [
+      "src\\hooks\\usePricingDaily.ts"
+    ]
+  },
+  {
+    "rpc": "get_recent_activities",
+    "callers": [
+      "src\\hooks\\useRecentActivities.ts"
+    ]
+  },
+  {
+    "rpc": "get_room_checks_report",
+    "callers": [
+      "src\\hooks\\useRoomsReportData.ts"
+    ]
+  },
+  {
+    "rpc": "get_room_items_with_standards",
+    "callers": [
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useRooms.ts"
+    ]
+  },
+  {
+    "rpc": "get_room_standards",
+    "callers": [
+      "src\\hooks\\useRoomStandards.ts"
+    ]
+  },
+  {
+    "rpc": "get_rooms_filtered",
+    "callers": [
+      "src\\hooks\\useHousekeepingKpi.ts",
+      "src\\hooks\\useRoomSupplements.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\hooks\\useRoomsNeedingActionToday.ts",
+      "src\\lib\\route-data-prefetch.ts"
+    ]
+  },
+  {
+    "rpc": "get_rooms_report_stats",
+    "callers": [
+      "src\\hooks\\useRoomsReportData.ts"
+    ]
+  },
+  {
+    "rpc": "get_stock_adjustments_filtered",
+    "callers": [
+      "src\\hooks\\useStockAdjustments.ts"
+    ]
+  },
+  {
+    "rpc": "get_stock_audit_report",
+    "callers": [
+      "src\\hooks\\useStockAuditReport.ts"
+    ]
+  },
+  {
+    "rpc": "get_super_admin_dashboard_stats",
+    "callers": [
+      "src\\hooks\\useSuperAdminStats.ts"
+    ]
+  },
+  {
+    "rpc": "get_tape_chart",
+    "callers": [
+      "src\\hooks\\useTapeChart.ts"
+    ]
+  },
+  {
+    "rpc": "get_tenant_billing_summary",
+    "callers": [
+      "src\\hooks\\super-admin\\useTenantBilling.ts"
+    ]
+  },
+  {
+    "rpc": "get_top_items",
+    "callers": [
+      "src\\hooks\\useTopItems.ts"
+    ]
+  },
+  {
+    "rpc": "get_turnover_analysis",
+    "callers": [
+      "src\\hooks\\useReports.ts"
+    ]
+  },
+  {
+    "rpc": "get_user_levels",
+    "callers": [
+      "src\\hooks\\useUserLevels.ts"
+    ]
+  },
+  {
+    "rpc": "get_user_permissions",
+    "callers": [
+      "src\\hooks\\usePermissions.ts",
+      "src\\hooks\\useUserPermissions.ts"
+    ]
+  },
+  {
+    "rpc": "get_user_permissions_summary",
+    "callers": [
+      "src\\hooks\\useUserModulePermissions.ts",
+      "src\\hooks\\useUserPermissionConfiguration.ts",
+      "src\\hooks\\useUserPermissions.ts"
+    ]
+  },
+  {
+    "rpc": "get_user_subordinates",
+    "callers": [
+      "src\\hooks\\useSubordinates.ts"
+    ]
+  },
+  {
+    "rpc": "get_users_by_hotel",
+    "callers": [
+      "src\\hooks\\useUsers.ts"
+    ]
+  },
+  {
+    "rpc": "get_vat_claim_public",
+    "callers": [
+      "src\\pages\\public\\InvoiceVatClaimPage.tsx"
+    ]
+  },
+  {
+    "rpc": "get_vendor_performance",
+    "callers": [
+      "src\\hooks\\useLaundryVendors.ts"
+    ]
+  },
+  {
+    "rpc": "get_warehouse_stock_summary",
+    "callers": [
+      "src\\hooks\\useWarehouseStock.ts"
+    ]
+  },
+  {
+    "rpc": "handover_batch",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "handover_stop_create_next_route",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "has_user_permission",
+    "callers": [
+      "src\\components\\auth\\PermissionRoute.tsx",
+      "src\\hooks\\usePermission.ts",
+      "src\\hooks\\useUserPermissions.ts"
+    ]
+  },
+  {
+    "rpc": "ignore_reorder_suggestion",
+    "callers": [
+      "src\\hooks\\useReorderSuggestions.ts"
+    ]
+  },
+  {
+    "rpc": "manager_override_charge",
+    "callers": [
+      "src\\pages\\reception\\PendingChargesPage.tsx"
+    ]
+  },
+  {
+    "rpc": "mark_batch_partially_received",
+    "callers": [
+      "src\\hooks\\useLaundryCompensation.ts"
+    ]
+  },
+  {
+    "rpc": "mark_booking_no_show",
+    "callers": [
+      "src\\hooks\\useMarkBookingNoShow.ts"
+    ]
+  },
+  {
+    "rpc": "mark_cannot_access",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "mark_conversation_read",
+    "callers": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "rpc": "move_booking",
+    "callers": [
+      "src\\hooks\\useTapeChartMutations.ts"
+    ]
+  },
+  {
+    "rpc": "perform_checkin",
+    "callers": [
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\pages\\bookings\\BookingsPage.tsx"
+    ]
+  },
+  {
+    "rpc": "perform_checkout",
+    "callers": [
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\pages\\bookings\\BookingsPage.tsx"
+    ]
+  },
+  {
+    "rpc": "perform_group_checkout",
+    "callers": [
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "perform_quick_room_check",
+    "callers": [
+      "src\\hooks\\useQuickRoomCheck.ts"
+    ]
+  },
+  {
+    "rpc": "prepare_checkout_amounts",
+    "callers": [
+      "src\\components\\bookings\\CheckoutSummaryDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "prepare_group_checkout_amounts",
+    "callers": [
+      "src\\components\\bookings\\GroupCheckoutDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "queue_email_notification",
+    "callers": [
+      "src\\hooks\\useEmailNotifications.ts"
+    ]
+  },
+  {
+    "rpc": "receive_batch",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "refresh_consumption_snapshots",
+    "callers": [
+      "src\\hooks\\useConsumptionAnalytics.ts"
+    ]
+  },
+  {
+    "rpc": "reject_room_delivery",
+    "callers": [
+      "src\\hooks\\useRoomDistributionHistory.ts"
+    ]
+  },
+  {
+    "rpc": "reject_task",
+    "callers": [
+      "src\\hooks\\useTaskQc.ts"
+    ]
+  },
+  {
+    "rpc": "reject_tenant",
+    "callers": [
+      "src\\hooks\\super-admin\\useTenantApproval.ts"
+    ]
+  },
+  {
+    "rpc": "reopen_room_check",
+    "callers": [
+      "src\\hooks\\useRoomCheckLean.ts"
+    ]
+  },
+  {
+    "rpc": "reschedule_booking_checkin",
+    "callers": [
+      "src\\hooks\\useRescheduleBookingCheckin.ts"
+    ]
+  },
+  {
+    "rpc": "resize_booking",
+    "callers": [
+      "src\\hooks\\useTapeChartMutations.ts"
+    ]
+  },
+  {
+    "rpc": "resolve_daily_prices_bulk",
+    "callers": [
+      "src\\hooks\\usePricingDaily.ts"
+    ]
+  },
+  {
+    "rpc": "resolve_today_prices_for_hotel",
+    "callers": [
+      "src\\hooks\\usePricingDaily.ts"
+    ]
+  },
+  {
+    "rpc": "retry_stay_registration",
+    "callers": [
+      "src\\hooks\\useStayRegistrations.ts"
+    ]
+  },
+  {
+    "rpc": "retry_stop",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "return_to_stock_for_stop",
+    "callers": [
+      "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "review_chargeable_consumptions",
+    "callers": [
+      "src\\pages\\reception\\PendingChargesPage.tsx"
+    ]
+  },
+  {
+    "rpc": "review_room_check_issue",
+    "callers": [
+      "src\\pages\\housekeeping\\IssuesReviewPage.tsx"
+    ]
+  },
+  {
+    "rpc": "schedule_renewal_reminders",
+    "callers": [
+      "src\\hooks\\super-admin\\useRenewalReminders.ts"
+    ]
+  },
+  {
+    "rpc": "send_chat_message",
+    "callers": [
+      "src\\hooks\\useChat.ts"
+    ]
+  },
+  {
+    "rpc": "send_draft_batch",
+    "callers": [
+      "src\\hooks\\useSendDraftBatch.ts"
+    ]
+  },
+  {
+    "rpc": "settle_batch_compensation",
+    "callers": [
+      "src\\hooks\\useLaundryCompensation.ts"
+    ]
+  },
+  {
+    "rpc": "settle_booking_payment",
+    "callers": [
+      "src\\components\\bookings\\BookingPaymentDialog.tsx",
+      "src\\components\\bookings\\GroupPaymentDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "settle_subscription_payment",
+    "callers": [
+      "src\\pages\\admin\\PaymentSettingsPage.tsx"
+    ]
+  },
+  {
+    "rpc": "setup_room_initial",
+    "callers": [
+      "src\\hooks\\useSetupRoom.ts"
+    ]
+  },
+  {
+    "rpc": "submit_delivery_lean",
+    "callers": [
+      "src\\hooks\\useSubmitDeliveryLean.ts"
+    ]
+  },
+  {
+    "rpc": "submit_replenish_lean",
+    "callers": [
+      "src\\hooks\\useSubmitReplenishLean.ts"
+    ]
+  },
+  {
+    "rpc": "submit_room_check_lean",
+    "callers": [
+      "src\\hooks\\useRoomCheckLean.ts"
+    ]
+  },
+  {
+    "rpc": "sync_categories_for_hotel",
+    "callers": [
+      "src\\hooks\\useSyncCategories.ts"
+    ]
+  },
+  {
+    "rpc": "transfer_booking_room",
+    "callers": [
+      "src\\components\\bookings\\RoomTransferDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "transition_booking_status",
+    "callers": [
+      "src\\hooks\\useBookingFlagTransition.ts"
+    ]
+  },
+  {
+    "rpc": "transition_room_status",
+    "callers": [
+      "src\\components\\rooms\\ReceptionQuickDialog.tsx",
+      "src\\hooks\\useBulkRoomActions.ts",
+      "src\\hooks\\useRoomChecks.ts",
+      "src\\hooks\\useRoomTransition.ts",
+      "src\\hooks\\useRooms.ts"
+    ]
+  },
+  {
+    "rpc": "transition_task_status",
+    "callers": [
+      "src\\hooks\\useCheckoutInspection.ts",
+      "src\\hooks\\useHousekeepingTasks.ts",
+      "src\\hooks\\useRooms.ts",
+      "src\\hooks\\useTaskTransition.ts",
+      "src\\pages\\rooms\\RoomCheckPage.tsx"
+    ]
+  },
+  {
+    "rpc": "undo_quick_room_check",
+    "callers": [
+      "src\\hooks\\useUndoQuickRoomCheck.ts"
+    ]
+  },
+  {
+    "rpc": "undo_room_delivery_confirmation",
+    "callers": [
+      "src\\hooks\\useRoomDistributionHistory.ts"
+    ]
+  },
+  {
+    "rpc": "update_booking_amount_paid",
+    "callers": [
+      "src\\hooks\\useBookingPayments.ts"
+    ]
+  },
+  {
+    "rpc": "update_distribution_order",
+    "callers": [
+      "src\\hooks\\useDistributionOrders.ts"
+    ]
+  },
+  {
+    "rpc": "update_tenant_usage",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\useSubscription.ts",
+      "src\\hooks\\useTenantUsage.ts"
+    ]
+  },
+  {
+    "rpc": "user_has_subordinates",
+    "callers": [
+      "src\\hooks\\useSubordinates.ts"
+    ]
+  },
+  {
+    "rpc": "validate_booking_dates",
+    "callers": [
+      "src\\components\\bookings\\ExtendBookingDialog.tsx",
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts"
+    ]
+  },
+  {
+    "rpc": "validate_hourly_against_daily",
+    "callers": [
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts"
+    ]
+  },
+  {
+    "rpc": "validate_hourly_booking",
+    "callers": [
+      "src\\components\\bookings\\RoomTransferDialog.tsx",
+      "src\\components\\bookings\\booking-wizard\\hooks\\useBookingForm.ts"
+    ]
+  },
+  {
+    "rpc": "validate_plan_change",
+    "callers": [
+      "src\\hooks\\useValidatePlanChange.ts"
+    ]
+  },
+  {
+    "rpc": "validate_room_check_context",
+    "callers": [
+      "src\\hooks\\useRoomCheckGuard.ts"
+    ]
+  }
+]

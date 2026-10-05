@@ -1,0 +1,108 @@
+{
+  "title": "Quản lý Người dùng & Phân quyền",
+  "description": "Quản lý người dùng, vai trò và quyền truy cập",
+  "list": "Danh sách người dùng",
+  "addNew": "Thêm người dùng mới",
+  "editUser": "Chỉnh sửa người dùng",
+  "viewUser": "Chi tiết người dùng",
+  "profile": "Hồ sơ cá nhân",
+  "changePassword": "Đổi mật khẩu",
+  "tabs": {
+    "users": "Người dùng",
+    "roles": "Vai trò",
+    "permissions": "Cấu hình Quyền"
+  },
+  "fields": {
+    "fullName": "Họ tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "avatar": "Ảnh đại diện",
+    "role": "Vai trò",
+    "userLevel": "Cấp độ",
+    "position": "Chức vụ",
+    "hotel": "Khách sạn",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "lastLogin": "Lần đăng nhập cuối",
+    "password": "Mật khẩu"
+  },
+  "role": {
+    "superAdmin": "Super Admin",
+    "owner": "Chủ sở hữu",
+    "hotelManager": "Quản lý khách sạn",
+    "departmentManager": "Quản lý bộ phận",
+    "staff": "Nhân viên"
+  },
+  "userLevel": {
+    "tenantOwner": "Chủ sở hữu",
+    "manager": "Quản lý",
+    "staff": "Nhân viên"
+  },
+  "userLevelDescription": {
+    "manager": "Quản lý khách sạn và giám sát nhân viên",
+    "staff": "Nhân viên thực hiện công việc hàng ngày"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "pending": "Chờ duyệt"
+  },
+  "permissions": {
+    "title": "Phân quyền",
+    "module": "Module",
+    "view": "Xem",
+    "create": "Tạo",
+    "update": "Sửa",
+    "delete": "Xóa"
+  },
+  "messages": {
+    "createSuccess": "Đã tạo người dùng thành công",
+    "updateSuccess": "Đã cập nhật thành công",
+    "deleteSuccess": "Đã xóa người dùng",
+    "passwordChanged": "Đã đổi mật khẩu thành công",
+    "noUsers": "Không tìm thấy người dùng",
+    "reportsTo": "Người dùng mới sẽ báo cáo cho"
+  },
+  "filters": {
+    "all": "Tất cả",
+    "byRole": "Theo vai trò",
+    "byStatus": "Theo trạng thái",
+    "byHotel": "Theo khách sạn",
+    "search": "Tìm kiếm người dùng..."
+  },
+  "form": {
+    "title": "Thêm người dùng mới",
+    "editTitle": "Chỉnh sửa người dùng",
+    "description": "Tạo tài khoản mới cho người dùng và phân quyền truy cập",
+    "editDescription": "Cập nhật thông tin người dùng",
+    "fullNamePlaceholder": "Nhập họ và tên",
+    "emailPlaceholder": "email@example.com",
+  "passwordPlaceholder": "Nhập mật khẩu",
+    "selectLevel": "Chọn cấp bậc",
+    "selectHotel": "Chọn khách sạn",
+    "selectPosition": "Chọn chức vụ",
+    "selectManager": "Chọn quản lý phụ trách",
+    "createUser": "Tạo người dùng",
+    "createPosition": "+ Tạo chức vụ mới",
+    "noManagersWarning": "Khách sạn này chưa có Quản lý. Nhân viên sẽ báo cáo trực tiếp cho Owner.",
+    "noSupervisorOption": "Không có (Owner quản lý trực tiếp)",
+    "loadingManagers": "Đang tải danh sách quản lý..."
+  },
+  "validation": {
+    "selectHotel": "Vui lòng chọn khách sạn",
+    "selectPosition": "Vui lòng chọn chức vụ"
+  },
+  "hierarchy": {
+    "primaryOwner": "Chủ sở hữu chính",
+    "subordinates": "{{count}} người dưới quyền",
+    "noPosition": "Chưa có chức vụ",
+    "createdBy": "Được tạo bởi",
+    "reportsTo": "Báo cáo: {{name}}",
+    "noSupervisor": "Chưa có quản lý phụ trách",
+    "unassigned": "Chưa phân công",
+    "unassignedDescription": "Các nhân viên chưa được gán cho quản lý cụ thể. Họ được Owner quản lý trực tiếp.",
+    "ownerDescription": "Chủ sở hữu có toàn quyền trong hệ thống và không thể bị xóa. Được tạo lúc khởi tạo doanh nghiệp.",
+    "managerDescription": "Quản lý có thể tạo Quản lý khác và Nhân viên. Họ quản lý các khách sạn cụ thể và có quyền phê duyệt yêu cầu.",
+    "staffDescription": "Nhân viên thực hiện các công việc hàng ngày. Họ không có quyền tạo người dùng mới."
+  }
+}

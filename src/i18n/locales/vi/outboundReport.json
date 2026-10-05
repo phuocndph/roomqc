@@ -1,0 +1,93 @@
+{
+  "title": "Báo cáo Xuất kho",
+  "description": "Phân tích chi tiết các loại giao dịch xuất kho",
+  "back": "Quay lại",
+  "exportPdf": "Xuất PDF",
+  "exportExcel": "Xuất Excel",
+  "allCategories": "Tất cả",
+  "dateRange": "Khoảng thời gian",
+  "categories": {
+    "room_assign": "Xuất cho phòng",
+    "staff_assign": "Giao cho nhân viên",
+    "laundry": "Gửi giặt",
+    "maintenance": "Bảo trì",
+    "disposal": "Thanh lý",
+    "other": "Khác"
+  },
+  "summary": {
+    "totalTransactions": "Tổng giao dịch",
+    "totalQuantity": "Tổng số lượng",
+    "totalValue": "Tổng giá trị",
+    "avgPerTransaction": "TB mỗi GD"
+  },
+  "roomAssign": {
+    "title": "Báo cáo Xuất cho phòng",
+    "totalDeliveries": "Lượt giao",
+    "itemsDelivered": "Đồ dùng đã giao",
+    "roomsCovered": "Số phòng",
+    "avgItemsPerRoom": "TB item/phòng",
+    "topRooms": "Phòng nhận nhiều nhất",
+    "topItems": "Đồ dùng giao nhiều nhất",
+    "monthlyTrend": "Xu hướng theo tháng"
+  },
+  "staffAssign": {
+    "title": "Báo cáo Giao nhân viên",
+    "totalIssues": "Lượt cấp phát",
+    "itemsIssued": "Đồ dùng đã cấp",
+    "staffReceived": "Nhân viên nhận",
+    "pendingReturns": "Chờ hoàn trả",
+    "topStaff": "Nhân viên nhận nhiều nhất",
+    "topItems": "Đồ dùng cấp nhiều nhất",
+    "returnRate": "Tỷ lệ hoàn trả"
+  },
+  "laundry": {
+    "title": "Báo cáo Gửi giặt",
+    "totalBatches": "Số đợt",
+    "itemsSent": "Đồ dùng gửi",
+    "totalWeight": "Tổng trọng lượng",
+    "totalCost": "Tổng chi phí",
+    "avgCostPerKg": "Chi phí/kg",
+    "topVendors": "Nhà giặt thường dùng",
+    "topItems": "Đồ dùng giặt nhiều nhất",
+    "costTrend": "Xu hướng chi phí"
+  },
+  "maintenance": {
+    "title": "Báo cáo Xuất bảo trì",
+    "totalRequests": "Lượt xuất",
+    "itemsUsed": "Đồ dùng đã dùng",
+    "totalCost": "Tổng chi phí",
+    "avgCostPerRequest": "TB/yêu cầu",
+    "topItems": "Vật tư bảo trì thường dùng",
+    "costByCategory": "Chi phí theo loại"
+  },
+  "disposal": {
+    "title": "Báo cáo Thanh lý",
+    "totalDisposals": "Lượt thanh lý",
+    "itemsDisposed": "Đồ dùng đã thanh lý",
+    "totalValue": "Giá trị thanh lý",
+    "reasons": "Lý do thanh lý",
+    "topItems": "Đồ dùng thanh lý nhiều nhất",
+    "monthlyTrend": "Xu hướng theo tháng"
+  },
+  "other": {
+    "title": "Báo cáo Xuất khác",
+    "totalTransactions": "Số giao dịch",
+    "totalItems": "Tổng đồ dùng",
+    "destinations": "Điểm đến phổ biến"
+  },
+  "chart": {
+    "transactions": "Giao dịch",
+    "quantity": "Số lượng",
+    "value": "Giá trị",
+    "month": "Tháng"
+  },
+  "table": {
+    "rank": "#",
+    "name": "Tên",
+    "count": "Số lượng",
+    "percentage": "Tỷ lệ",
+    "value": "Giá trị"
+  },
+  "noData": "Chưa có dữ liệu",
+  "loading": "Đang tải..."
+}

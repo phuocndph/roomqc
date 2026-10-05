@@ -1,0 +1,2 @@
+ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_payment_status_check;
+ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_payment_status_check CHECK (payment_status = ANY (ARRAY['pending'::text, 'completed'::text, 'failed'::text, 'refunded'::text, 'expired'::text]));

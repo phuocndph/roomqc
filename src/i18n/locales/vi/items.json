@@ -1,0 +1,225 @@
+{
+  "title": "Quản lý Tài sản",
+  "description": "Quản lý tất cả tài sản và đồ dùng trong khách sạn",
+  "list": "Danh sách tài sản",
+  "categories": "Danh mục",
+  "addNew": "Thêm tài sản mới",
+  "editItem": "Chỉnh sửa tài sản",
+  "viewItem": "Chi tiết tài sản",
+  "deleteItem": "Xóa tài sản",
+  "createSuccess": "Tạo tài sản thành công",
+  "updateSuccess": "Cập nhật tài sản thành công",
+  "deleteSuccess": "Xóa tài sản thành công",
+  "backToList": "Quay lại danh sách",
+  "edit": "Chỉnh sửa",
+  "notFound": "Không tìm thấy tài sản",
+  "loading": "Đang tải...",
+  "fields": {
+    "name": "Tên tài sản",
+    "nameEn": "Tên tiếng Anh",
+    "code": "Mã tài sản",
+    "category": "Danh mục",
+    "itemType": "Loại đồ dùng",
+    "unit": "Đơn vị",
+    "unitPrice": "Đơn giá (₫)",
+    "quantity": "Số lượng",
+    "quantityTotal": "Tổng số",
+    "quantityInStock": "Trong kho",
+    "quantityInUse": "Đang dùng",
+    "quantityInLaundry": "Đang giặt",
+    "quantityDamaged": "Hư hỏng",
+    "quantityLost": "Thất lạc",
+    "minimumStock": "Tồn kho tối thiểu",
+    "reorderPoint": "Điểm đặt hàng",
+    "brand": "Thương hiệu",
+    "model": "Model",
+    "description": "Mô tả",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Cập nhật lần cuối",
+    "images": "Hình ảnh"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "lowStock": "Tồn kho thấp",
+    "outOfStock": "Hết hàng",
+    "inStock": "Còn hàng"
+  },
+  "itemType": {
+    "linen": "Đồ vải",
+    "consumable": "Tiêu hao",
+    "equipment": "Thiết bị",
+    "furniture": "Nội thất"
+  },
+  "itemTypeDescription": {
+    "linen": "Khăn, ga, gối - cần giặt và thay thế",
+    "consumable": "Bàn chải, kem đánh răng, nước - dùng 1 lần",
+    "equipment": "Ấm nước, tivi, điều khiển - cần kiểm tra mất/hỏng",
+    "furniture": "Bàn, ghế, tủ - kiểm tra tình trạng"
+  },
+  "actions": {
+    "import": "Nhập Excel",
+    "export": "Xuất Excel",
+    "downloadTemplate": "Tải mẫu"
+  },
+  "messages": {
+    "createSuccess": "Đã tạo sản phẩm mới",
+    "updateSuccess": "Đã cập nhật sản phẩm",
+    "deleteSuccess": "Xóa tài sản thành công",
+    "deleteConfirm": "Bạn có chắc muốn xóa tài sản này?",
+    "importSuccess": "Nhập dữ liệu thành công",
+    "noItems": "Không tìm thấy tài sản nào",
+    "saveError": "Lỗi khi lưu sản phẩm"
+  },
+  "filters": {
+    "all": "Tất cả",
+    "byCategory": "Theo danh mục",
+    "byStatus": "Theo trạng thái",
+    "search": "Tìm kiếm tài sản..."
+  },
+  "form": {
+    "steps": {
+      "basicInfo": "Thông tin cơ bản",
+      "details": "Chi tiết",
+      "images": "Hình ảnh"
+    },
+    "sections": {
+      "basicInfo": "Thông tin cơ bản",
+      "productInfo": "Thông tin sản phẩm",
+      "images": "Hình ảnh sản phẩm"
+    },
+    "subtitle": {
+      "edit": "Cập nhật thông tin tài sản",
+      "create": "Nhập thông tin tài sản mới"
+    },
+    "codePlaceholder": "Ví dụ: FAB-001",
+    "namePlaceholder": "Ví dụ: Khăn tắm trắng",
+    "nameEnPlaceholder": "Ví dụ: Bath Towel White",
+    "selectCategory": "Chọn danh mục...",
+    "selectItemType": "Chọn loại đồ dùng...",
+    "descriptionPlaceholder": "Mô tả chi tiết về tài sản",
+    "addImage": "Thêm ảnh",
+    "imageHint": "Ảnh sẽ được upload lên Storage. Tối đa 10 ảnh, mỗi ảnh không quá 5MB.",
+    "buttons": {
+      "cancel": "Hủy",
+      "saving": "Đang lưu...",
+      "update": "Cập nhật",
+      "create": "Tạo mới"
+    }
+  },
+  "alerts": {
+    "allHotelsMode": "Bạn đang ở chế độ xem tất cả khách sạn. Vui lòng chọn một khách sạn cụ thể để tạo sản phẩm mới.",
+    "noHotelSelected": "Chưa chọn khách sạn. Vui lòng chọn khách sạn từ menu trên cùng.",
+    "selectHotelToCreate": "Vui lòng chọn một khách sạn cụ thể trước khi tạo sản phẩm",
+    "selectHotelFirst": "Vui lòng chọn khách sạn trước khi tạo sản phẩm"
+  },
+  "validation": {
+    "codeRequired": "Mã tài sản là bắt buộc",
+    "nameRequired": "Tên tài sản là bắt buộc",
+    "categoryRequired": "Vui lòng chọn danh mục",
+    "unitRequired": "Đơn vị là bắt buộc",
+    "priceMin": "Đơn giá phải >= 0",
+    "stockMin": "Tồn kho tối thiểu phải >= 0",
+    "reorderMin": "Điểm đặt hàng phải >= 0"
+  },
+  "units": {
+    "piece": "Cái",
+    "item": "Chiếc",
+    "set": "Bộ",
+    "box": "Hộp",
+    "bottle": "Chai"
+  },
+  "colors": {
+    "blue": "Xanh dương",
+    "green": "Xanh lá",
+    "orange": "Cam",
+    "red": "Đỏ",
+    "purple": "Tím",
+    "pink": "Hồng",
+    "gray": "Xám"
+  },
+  "categories": {
+    "addCategory": "Thêm danh mục mới",
+    "editCategory": "Sửa danh mục",
+    "fields": {
+      "name": "Tên danh mục",
+      "nameEn": "Tên tiếng Anh",
+      "description": "Mô tả",
+      "icon": "Biểu tượng",
+      "color": "Màu sắc",
+      "sortOrder": "Thứ tự hiển thị"
+    },
+    "form": {
+      "namePlaceholder": "VD: Đồ giường",
+      "nameEnPlaceholder": "VD: Bedding",
+      "descriptionPlaceholder": "Mô tả ngắn về danh mục"
+    },
+    "icons": {
+      "shirt": "Áo",
+      "cleaning": "Làm sạch",
+      "electronics": "Điện tử",
+      "furniture": "Nội thất",
+      "hygiene": "Vệ sinh",
+      "other": "Khác"
+    }
+  },
+  "detail": {
+    "images": "Hình ảnh",
+    "primaryImage": "Ảnh chính",
+    "inventoryStats": "Thống kê kho",
+    "transactionHistory": "Lịch sử giao dịch",
+    "roomAllocation": "Phân bổ phòng",
+    "noTransactions": "Chưa có giao dịch nào",
+    "noRoomAllocation": "Chưa phân bổ cho phòng nào",
+    "basicInfo": "Thông tin cơ bản",
+    "stockStatus": "Trạng thái kho",
+    "stockValue": "Giá trị tồn kho",
+    "qrCode": "Mã QR",
+    "additionalInfo": "Thông tin bổ sung",
+    "noCategory": "Chưa phân loại",
+    "transactionCode": "Mã GD",
+    "type": "Loại",
+    "performer": "Người thực hiện",
+    "time": "Thời gian",
+    "room": "Phòng",
+    "roomType": "Loại phòng",
+    "condition": "Tình trạng",
+    "allocatedAt": "Phân bổ lúc",
+    "conditionGood": "Tốt",
+    "conditionFair": "Khá",
+    "conditionPoor": "Kém",
+    "conditionDamaged": "Hỏng",
+    "lifecycle": "Vòng đời",
+    "expectedLifetime": "Tuổi thọ dự kiến",
+    "days": "{{count}} ngày",
+    "washCycles": "Chu kỳ giặt",
+    "hotel": "Khách sạn",
+    "minStock": "Mức tồn tối thiểu",
+    "reorderPoint": "Điểm đặt hàng lại",
+    "alerts": {
+      "lowStock": "Sắp hết hàng",
+      "lowStockDesc": "Số lượng tồn kho đang thấp hơn mức tối thiểu",
+      "outOfStock": "Hết hàng",
+      "outOfStockDesc": "Cần nhập hàng ngay"
+    }
+  },
+  "categoriesPage": {
+    "title": "Danh mục tài sản",
+    "description": "Quản lý các danh mục tài sản",
+    "addCategory": "Thêm danh mục",
+    "editCategory": "Chỉnh sửa danh mục",
+    "createCategory": "Thêm danh mục mới",
+    "categoryName": "Tên danh mục",
+    "categoryNameEn": "Tên tiếng Anh",
+    "categoryDescription": "Mô tả",
+    "categoryColor": "Màu sắc",
+    "sortOrder": "Thứ tự",
+    "loading": "Đang tải...",
+    "items": "items",
+    "deleteConfirm": "Xác nhận xóa",
+    "deleteDescription": "Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.",
+    "deleteWarning": "Lưu ý: Chỉ có thể xóa danh mục không có items.",
+    "enterInfo": "Nhập thông tin danh mục tài sản"
+  }
+}

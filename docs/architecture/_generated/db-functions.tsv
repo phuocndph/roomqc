@@ -1,0 +1,376 @@
+_enqueue_stay_registration_internal	p_booking_id uuid	integer	plpgsql	t
+_tc_check_block_conflict	p_room_id uuid, p_check_in date, p_check_out date, p_exclude_block_id uuid DEFAULT NULL::uuid	uuid	sql	t
+_tc_check_booking_conflict	p_room_id uuid, p_check_in date, p_check_out date, p_exclude_booking_id uuid DEFAULT NULL::uuid	uuid	sql	t
+add_conversation_members	_conversation_id uuid, _user_ids uuid[]	void	plpgsql	t
+add_laundry_to_draft_batch	p_tenant_id uuid, p_hotel_id uuid, p_laundry_request_id uuid	uuid	plpgsql	t
+allocate_linen_fifo	_item_id uuid, _quantity integer	jsonb	plpgsql	t
+apply_asset_group_mapping	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _override_existing boolean DEFAULT false	jsonb	plpgsql	t
+apply_promo_code	p_tenant_id uuid, p_promo_code text, p_original_amount numeric	jsonb	plpgsql	f
+apply_room_standards	p_room_id uuid, p_user_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+approve_reorder_suggestions	_suggestion_ids uuid[]	jsonb	plpgsql	t
+approve_task	_task_id uuid, _note text DEFAULT NULL::text	housekeeping_tasks	plpgsql	t
+approve_tenant	p_tenant_id uuid, p_admin_id uuid	jsonb	plpgsql	t
+assert_distribution_actor	p_room_order_id uuid, p_actor_id uuid, OUT tenant_id uuid, OUT hotel_id uuid	record	plpgsql	t
+assert_rpc_actor	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_actor_id uuid DEFAULT NULL::uuid, p_require_manager boolean DEFAULT false	uuid	plpgsql	t
+assert_rpc_hotel	p_tenant_id uuid, p_hotel_id uuid	void	plpgsql	t
+assert_rpc_items	p_tenant_id uuid, p_hotel_id uuid, p_items jsonb	void	plpgsql	t
+assign_default_permissions_to_role	p_tenant_id uuid, p_role_code text, p_permission_codes text[]	void	plpgsql	t
+atomic_item_consumed	p_item_id uuid, p_quantity integer	TABLE(quantity_before integer, quantity_after integer, unit_price numeric)	plpgsql	t
+atomic_item_lost	p_item_id uuid, p_quantity integer	TABLE(quantity_before integer, quantity_after integer, unit_price numeric)	plpgsql	t
+atomic_item_to_laundry	p_item_id uuid, p_quantity integer	void	plpgsql	t
+auto_apply_read_only_after_grace		integer	plpgsql	t
+auto_assign_batch_number		trigger	plpgsql	t
+auto_classify_item_type		trigger	plpgsql	f
+auto_clear_read_only_after_renewal		integer	plpgsql	t
+auto_close_stale_shifts		jsonb	plpgsql	t
+auto_create_batch_records		trigger	plpgsql	t
+auto_offline_inactive_staff		void	sql	t
+auto_sync_room_type_on_room_change		trigger	plpgsql	t
+auto_update_order_floor		trigger	plpgsql	t
+batch_confirm_room_deliveries	p_room_order_ids uuid[], p_confirmed_by uuid	jsonb	plpgsql	t
+bulk_delete_items	p_item_ids uuid[], p_user_id uuid	jsonb	plpgsql	t
+bulk_upsert_daily_prices	_rate_plan_id uuid, _dates date[], _price numeric DEFAULT NULL::numeric, _sale_price numeric DEFAULT NULL::numeric, _is_closed boolean DEFAULT NULL::boolean, _reset boolean DEFAULT false	integer	plpgsql	t
+bulk_upsert_rt_availability	_room_type_id uuid, _dates date[], _qty integer DEFAULT NULL::integer, _is_closed boolean DEFAULT NULL::boolean	integer	plpgsql	t
+calculate_booking_price	p_room_type_id uuid, p_booking_type text, p_from_ts timestamp with time zone, p_to_ts timestamp with time zone, p_hotel_id uuid DEFAULT NULL::uuid, p_apply_early_late boolean DEFAULT true	jsonb	plpgsql	t
+calculate_grace_period_end		trigger	plpgsql	t
+calculate_payment_status		trigger	plpgsql	f
+calculate_staff_statistics	p_user_id uuid, p_hotel_id uuid, p_period_start date, p_period_end date	void	plpgsql	t
+calculate_tenant_storage	p_tenant_id uuid	bigint	plpgsql	t
+can_create_user	p_creator_id uuid, p_new_user_level text, p_tenant_id uuid	boolean	plpgsql	t
+can_manage_user	p_manager_id uuid, p_target_user_id uuid	boolean	plpgsql	t
+can_perform_quick_check	_room_id uuid	boolean	plpgsql	t
+cancel_booking	p_booking_id uuid, p_room_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text, p_refund_deposit boolean DEFAULT false	jsonb	plpgsql	t
+cancel_booking_payment	p_payment_id uuid	jsonb	plpgsql	t
+cancel_distribution_order	p_order_id uuid, p_cancelled_by uuid	jsonb	plpgsql	t
+cancel_subscription_payment	p_payment_id uuid	jsonb	plpgsql	t
+chat_after_message_insert		trigger	plpgsql	t
+chat_guard_message_update		trigger	plpgsql	f
+check_and_update_batch_status	p_batch_id uuid	void	plpgsql	t
+check_and_update_order_status	p_order_id uuid	void	plpgsql	t
+check_created_by_required		trigger	plpgsql	f
+check_duplicate_room_check		trigger	plpgsql	t
+check_expiring_subscriptions		void	plpgsql	t
+check_rate_limit	_bucket_key text, _max_hits integer, _window_seconds integer	boolean	plpgsql	t
+check_tenant_can_add	p_tenant_id uuid, p_resource_type text	boolean	plpgsql	t
+cleanup_expired_otps		void	plpgsql	t
+cleanup_old_check_sessions		void	plpgsql	t
+cleanup_orphaned_auth_users		integer	plpgsql	t
+cleanup_rate_limit_hits		void	sql	t
+cleanup_stale_check_sessions		void	plpgsql	t
+clear_tenant_read_only	p_tenant_id uuid, p_reason text DEFAULT NULL::text	void	plpgsql	t
+close_route_if_complete	p_order_id uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+complete_registration	p_user_id uuid, p_full_name text, p_phone text, p_tenant_name text, p_email text, p_hotel_name text, p_hotel_address text, p_hotel_phone text, p_hotel_email text, p_total_rooms integer	jsonb	plpgsql	t
+complete_registration_impl	p_user_id uuid, p_full_name text, p_phone text, p_tenant_name text, p_email text, p_hotel_name text, p_hotel_address text, p_hotel_phone text, p_hotel_email text, p_total_rooms integer	jsonb	plpgsql	t
+complete_task	_task_id uuid, _note text DEFAULT NULL::text	housekeeping_tasks	plpgsql	t
+compute_auto_reorder_suggestions	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+compute_reorder_suggestions	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _item_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+confirm_booking_payment_manual	p_payment_id uuid, p_booking_id uuid, p_amount numeric, p_total_amount numeric DEFAULT NULL::numeric	jsonb	plpgsql	t
+confirm_delivery_from_room_check	p_room_order_id uuid, p_confirmed_by uuid	jsonb	plpgsql	t
+confirm_receive_order	p_order_id uuid, p_actor_id uuid DEFAULT NULL::uuid, p_adjustments jsonb DEFAULT NULL::jsonb	jsonb	plpgsql	t
+confirm_room_delivery	p_room_order_id uuid, p_confirmed_by uuid	jsonb	plpgsql	t
+confirm_warehouse_delivery	p_room_order_id uuid, p_delivered_by uuid, p_item_confirmations jsonb DEFAULT NULL::jsonb	jsonb	plpgsql	t
+create_booking_payment_pending	p_booking_id uuid, p_tenant_id uuid, p_hotel_id uuid, p_amount numeric, p_payment_method text, p_transaction_reference text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb, p_total_amount numeric DEFAULT NULL::numeric, p_notes text DEFAULT NULL::text	jsonb	plpgsql	t
+create_booking_v2	p_bookings jsonb, p_guest jsonb	jsonb	plpgsql	t
+create_default_categories	p_tenant_id uuid	void	plpgsql	t
+create_default_tenant_roles	p_tenant_id uuid	void	plpgsql	t
+create_default_warehouse_for_hotel	p_hotel_id uuid, p_tenant_id uuid	uuid	plpgsql	t
+create_direct_conversation	_hotel_id uuid, _peer_user_id uuid	uuid	plpgsql	t
+create_distribution_order	p_tenant_id uuid, p_hotel_id uuid, p_created_by uuid, p_assigned_to uuid, p_rooms jsonb, p_notes text DEFAULT NULL::text, p_auto_release boolean DEFAULT false, p_supplement_request_ids uuid[] DEFAULT NULL::uuid[]	jsonb	plpgsql	t
+create_group_conversation	_hotel_id uuid, _name text, _member_ids uuid[]	uuid	plpgsql	t
+create_inbound_transaction	p_tenant_id uuid, p_hotel_id uuid, p_transaction_category text, p_from_location text, p_to_location text, p_created_by uuid, p_items jsonb, p_related_type text DEFAULT NULL::text, p_related_id uuid DEFAULT NULL::uuid, p_documents text[] DEFAULT NULL::text[], p_photos text[] DEFAULT NULL::text[], p_notes text DEFAULT NULL::text, p_to_warehouse_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+create_laundry_batch_with_items	p_tenant_id uuid, p_hotel_id uuid, p_vendor_id uuid, p_delivery_date date, p_expected_return_date date, p_delivery_staff_id uuid, p_receiver_name text, p_notes text, p_items jsonb	jsonb	plpgsql	t
+create_laundry_loss_transaction	p_tenant_id uuid, p_hotel_id uuid, p_created_by uuid, p_items jsonb, p_loss_type text, p_related_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text	jsonb	plpgsql	t
+create_laundry_return_transaction	p_tenant_id uuid, p_hotel_id uuid, p_from_location text, p_to_location text, p_created_by uuid, p_items jsonb, p_related_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text	jsonb	plpgsql	t
+create_new_linen_batch	_item_id uuid, _quantity integer, _batch_code text	jsonb	plpgsql	t
+create_notification	p_user_id uuid, p_tenant_id uuid, p_title text, p_body text, p_type text DEFAULT 'info'::text, p_action_url text DEFAULT NULL::text, p_icon text DEFAULT NULL::text, p_metadata jsonb DEFAULT NULL::jsonb	uuid	plpgsql	t
+create_notification_for_user	p_user_id uuid, p_tenant_id uuid, p_title text, p_body text, p_type text DEFAULT 'info'::text, p_action_url text DEFAULT NULL::text, p_icon text DEFAULT NULL::text, p_metadata jsonb DEFAULT NULL::jsonb	uuid	plpgsql	t
+create_outbound_transaction	p_tenant_id uuid, p_hotel_id uuid, p_transaction_category text, p_from_location text, p_to_location text, p_created_by uuid, p_items jsonb, p_related_type text DEFAULT NULL::text, p_related_id uuid DEFAULT NULL::uuid, p_recipient_name text DEFAULT NULL::text, p_recipient_signature text DEFAULT NULL::text, p_documents text[] DEFAULT NULL::text[], p_photos text[] DEFAULT NULL::text[], p_notes text DEFAULT NULL::text, p_from_warehouse_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+create_room_block	p_hotel_id uuid, p_room_id uuid, p_start_date date, p_end_date date, p_block_type text DEFAULT 'maintenance'::text, p_reason text DEFAULT NULL::text	jsonb	plpgsql	t
+create_staff_status_for_new_user		trigger	plpgsql	t
+create_stock_adjustment	p_tenant_id uuid, p_hotel_id uuid, p_adjustment_type text, p_scheduled_date date, p_created_by uuid, p_assigned_to uuid[], p_item_ids uuid[], p_notes text DEFAULT NULL::text	jsonb	plpgsql	t
+create_super_admin	p_email text, p_full_name text DEFAULT 'Super Admin'::text	jsonb	plpgsql	t
+create_warehouse_transfer	p_tenant_id uuid, p_hotel_id uuid, p_from_warehouse_id uuid, p_to_warehouse_id uuid, p_items jsonb, p_notes text DEFAULT NULL::text, p_created_by uuid DEFAULT NULL::uuid	uuid	plpgsql	t
+delete_chat_message	_message_id uuid	void	plpgsql	t
+delete_email	queue_name text, message_id bigint	boolean	plpgsql	t
+delete_inventory_transaction	p_transaction_id uuid	jsonb	plpgsql	t
+delete_room_block	p_block_id uuid	jsonb	plpgsql	t
+deliver_stop	p_stop_id uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+duplicate_room_type	p_source_id uuid, p_new_name text, p_new_code text, p_copy_rates boolean DEFAULT true, p_copy_default_items boolean DEFAULT true	uuid	plpgsql	t
+enforce_read_only_mutation		trigger	plpgsql	t
+enforce_room_check_photos		trigger	plpgsql	t
+enqueue_email	queue_name text, payload jsonb	bigint	plpgsql	t
+enqueue_stay_registration	p_booking_id uuid	integer	plpgsql	t
+ensure_default_rate_plan	p_room_type_id uuid	uuid	plpgsql	t
+ensure_single_default_warehouse		trigger	plpgsql	t
+ensure_vat_claim_token	p_invoice_id uuid	TABLE(token text, expires_at timestamp with time zone, status text)	plpgsql	t
+exec_cron_update	_jobname text, _command text	void	plpgsql	t
+fn_can_user_transition_room	_user_id uuid, _from text, _to text	boolean	plpgsql	t
+fn_is_valid_adjustment_transition	_from text, _to text	boolean	sql	f
+fn_is_valid_room_transition	_from text, _to text	boolean	sql	f
+fn_is_valid_task_transition	_from text, _to text	boolean	sql	f
+fn_normalize_room_status_v2	_status text	text	sql	f
+fn_room_status_alias	_status text	text	sql	f
+fn_sync_room_legacy_status		trigger	plpgsql	f
+fn_sync_room_legacy_status_ins		trigger	plpgsql	f
+fn_sync_room_status_on_booking_flag		trigger	plpgsql	t
+fn_write_audit_log		trigger	plpgsql	t
+gen_vat_claim_token		text	plpgsql	f
+generate_guest_invoice_number	p_tenant_id uuid	text	plpgsql	t
+generate_invoice_number		text	plpgsql	f
+generate_laundry_request_code	p_tenant_id uuid	text	plpgsql	t
+generate_lost_found_item_code	p_tenant_id uuid	text	plpgsql	t
+generate_supplement_request_code	p_tenant_id uuid	text	plpgsql	t
+generate_unique_code	prefix text, table_name text, column_name text	text	plpgsql	f
+get_abc_analysis	p_tenant_id uuid, p_hotel_id uuid	TABLE(item_id uuid, item_code text, item_name text, category_name text, total_value numeric, cumulative_value numeric, percentage numeric, cumulative_percentage numeric, abc_class text)	plpgsql	t
+get_all_warehouse_stock_summary	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid	TABLE(warehouse_id uuid, warehouse_name text, warehouse_code text, is_default boolean, total_items bigint, total_quantity bigint, total_value numeric, low_stock_count bigint)	plpgsql	t
+get_booking_chargeable_total	p_booking_id uuid	numeric	sql	t
+get_categories_with_stats	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid	TABLE(id uuid, name text, name_en text, description text, icon text, color text, sort_order integer, items_count bigint, total_value numeric)	plpgsql	t
+get_consumption_trend	_item_id uuid, _days integer DEFAULT 90	TABLE(day date, qty_out numeric)	sql	t
+get_conversation_hotel	_conv_id uuid	uuid	sql	t
+get_conversation_tenant	_conv_id uuid	uuid	sql	t
+get_current_room_booking	p_room_id uuid	TABLE(id uuid, guest_name text, guest_phone text, guest_email text, guest_count integer, check_in_date date, check_out_date date, actual_check_in timestamp with time zone, actual_check_out timestamp with time zone, status text, notes text, room_price numeric, extra_charges numeric, deposit_amount numeric, amount_paid numeric, early_checkin_charge numeric, late_checkout_charge numeric, service_charges numeric, subtotal numeric, vat_rate numeric, vat_amount numeric, service_fee_rate numeric, service_fee_amount numeric, total_amount numeric, damage_charges numeric, payment_status text, paid_at timestamp with time zone, booking_type text, hourly_rate numeric, monthly_rate numeric, booking_hours integer, booking_months integer, booking_source text, expected_check_in_time text, expected_check_out_time text)	sql	t
+get_current_user_role		text	sql	t
+get_current_user_tenant_id		uuid	sql	t
+get_daily_occupancy_trend	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date	jsonb	plpgsql	t
+get_dashboard_stats	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+get_dead_stock_report	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _days_threshold integer DEFAULT 90	TABLE(item_id uuid, item_code text, item_name text, hotel_id uuid, category_id uuid, asset_group asset_group, quantity_in_stock integer, unit_price numeric, total_value numeric, last_outbound_at timestamp with time zone, days_since_last_out integer)	sql	t
+get_distribution_order_detail	p_order_id uuid	jsonb	plpgsql	t
+get_distribution_orders_count	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_status text DEFAULT NULL::text, p_assigned_to uuid DEFAULT NULL::uuid, p_floor integer DEFAULT NULL::integer, p_shift_date date DEFAULT NULL::date, p_shift_code text DEFAULT NULL::text	integer	plpgsql	t
+get_distribution_orders_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_status text DEFAULT NULL::text, p_assigned_to uuid DEFAULT NULL::uuid, p_floor integer DEFAULT NULL::integer, p_shift_date date DEFAULT NULL::date, p_shift_code text DEFAULT NULL::text, p_limit integer DEFAULT 25, p_offset integer DEFAULT 0	TABLE(id uuid, order_code text, status text, floor integer, shift_date date, shift_code text, total_rooms integer, total_items integer, rooms_completed integer, assigned_to uuid, assigned_to_name text, created_by uuid, created_by_name text, notes text, released_at timestamp with time zone, started_at timestamp with time zone, completed_at timestamp with time zone, created_at timestamp with time zone, hotel_id uuid, hotel_name text)	plpgsql	t
+get_effective_permissions	_user_id uuid	TABLE(module text, action text, source text)	sql	t
+get_financial_report	p_tenant_id uuid, p_hotel_id uuid, p_start_date date, p_end_date date	jsonb	plpgsql	t
+get_floor_plan	p_hotel_id uuid	jsonb	plpgsql	t
+get_floor_plan_live	p_hotel_id uuid	jsonb	plpgsql	t
+get_hotel_performance_stats	p_tenant_id uuid, p_hotel_id uuid, p_from_date date, p_to_date date	jsonb	plpgsql	t
+get_hotels_breakdown_stats	p_tenant_id uuid	TABLE(hotel_id uuid, hotel_name text, hotel_code text, total_value numeric, total_items bigint, in_stock bigint, in_use bigint, in_laundry bigint, low_stock_count bigint)	plpgsql	t
+get_hotels_performance_comparison	p_tenant_id uuid, p_from_date date, p_to_date date	TABLE(hotel_id uuid, hotel_name text, hotel_code text, total_rooms integer, inventory_value numeric, inventory_turnover_rate numeric, total_operating_cost numeric, cost_per_room numeric, laundry_cost numeric, maintenance_cost numeric, purchase_value numeric, laundry_quality numeric, maintenance_completion_rate numeric, efficiency_score numeric)	plpgsql	t
+get_inventory_dashboard_stats	p_tenant_id uuid, p_hotel_id uuid	jsonb	plpgsql	t
+get_inventory_report	p_tenant_id uuid, p_hotel_id uuid, p_start_date date, p_end_date date	jsonb	plpgsql	t
+get_inventory_transactions_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_transaction_type text DEFAULT NULL::text, p_category_id uuid DEFAULT NULL::uuid, p_created_by uuid DEFAULT NULL::uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_search text DEFAULT NULL::text, p_limit integer DEFAULT NULL::integer, p_offset integer DEFAULT NULL::integer, p_page integer DEFAULT NULL::integer, p_page_size integer DEFAULT NULL::integer	TABLE(id uuid, transaction_code text, transaction_type text, transaction_category text, item_id uuid, item_name text, item_code text, item_images text[], category_name text, quantity integer, unit_price numeric, total_value numeric, quantity_before integer, quantity_after integer, from_location text, to_location text, created_by uuid, created_by_name text, created_by_avatar text, created_at timestamp with time zone, notes text, total_count bigint)	plpgsql	t
+get_inventory_value_over_time	p_tenant_id uuid, p_hotel_id uuid, p_months integer DEFAULT 12	TABLE(month date, stock_value numeric, value_in numeric, value_out numeric)	plpgsql	t
+get_item_detail	p_item_id uuid	jsonb	plpgsql	t
+get_items_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_category_id uuid DEFAULT NULL::uuid, p_stock_status text DEFAULT NULL::text, p_status text DEFAULT 'active'::text, p_search text DEFAULT NULL::text, p_warehouse_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0	TABLE(id uuid, code text, name text, name_en text, category_id uuid, category_name text, category_color text, hotel_id uuid, unit text, unit_price numeric, brand text, model text, quantity_total integer, quantity_in_stock integer, quantity_in_use integer, quantity_in_laundry integer, quantity_damaged integer, quantity_lost integer, minimum_stock integer, reorder_point integer, status text, description text, created_at timestamp with time zone, updated_at timestamp with time zone, stock_status text, warehouse_breakdown jsonb, total_count bigint)	plpgsql	t
+get_labor_cost	p_tenant_id uuid, p_hotel_id uuid, p_start_date date, p_end_date date	jsonb	plpgsql	t
+get_last_room_check	_room_id uuid	TABLE(id uuid, check_type text, checked_at timestamp with time zone, checked_by uuid, checker_name text, cleanliness_score integer, items_complete boolean, photos text[], notes text, issues_count integer, qc_status text)	sql	t
+get_latest_consumption_snapshots	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 500	SETOF consumption_snapshots	sql	t
+get_laundry_batch_detail	p_batch_id uuid	jsonb	plpgsql	t
+get_laundry_batches_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_vendor_id uuid DEFAULT NULL::uuid, p_status text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_from_date date DEFAULT NULL::date, p_to_date date DEFAULT NULL::date, p_page integer DEFAULT 1, p_page_size integer DEFAULT 20	TABLE(id uuid, tenant_id uuid, hotel_id uuid, vendor_id uuid, batch_code text, status text, delivery_date timestamp with time zone, expected_return_date timestamp with time zone, actual_return_date timestamp with time zone, total_items integer, total_weight_kg numeric, estimated_cost numeric, actual_cost numeric, notes text, created_at timestamp with time zone, updated_at timestamp with time zone, vendor_name text, vendor_logo text, vendor_rating numeric, total_count bigint)	plpgsql	t
+get_laundry_dashboard_stats	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+get_laundry_report	p_tenant_id uuid, p_hotel_id uuid, p_start_date date, p_end_date date	jsonb	plpgsql	t
+get_low_stock_by_warehouses	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 50	TABLE(warehouse_id uuid, warehouse_name text, warehouse_code text, item_id uuid, item_name text, item_code text, category_name text, quantity integer, minimum_stock integer, shortage integer, unit_price numeric)	plpgsql	t
+get_low_stock_items	p_tenant_id uuid, p_hotel_id uuid, p_limit integer DEFAULT 50	TABLE(id uuid, code text, name text, category_id uuid, category_name text, quantity_in_stock integer, minimum_stock integer, reorder_point integer, shortage integer, shortage_percent numeric, unit_price numeric, images text[])	plpgsql	t
+get_maintenance_dashboard	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+get_maintenance_report	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_start_date date DEFAULT ((CURRENT_DATE - '30 days'::interval))::date, p_end_date date DEFAULT CURRENT_DATE	jsonb	plpgsql	t
+get_missing_items_for_rooms	p_room_ids uuid[]	TABLE(room_id uuid, room_number text, item_id uuid, item_name text, current_qty integer, standard_qty integer, missing_qty integer, item_stock integer)	plpgsql	t
+get_missing_items_from_room_detail	p_room_ids uuid[]	TABLE(room_id uuid, room_number text, item_id uuid, item_code text, item_name text, current_qty integer, standard_qty integer, missing_qty integer, item_stock integer)	plpgsql	t
+get_monthly_expenses	p_tenant_id uuid, p_months integer, p_hotel_id uuid DEFAULT NULL::uuid	TABLE(month text, purchase bigint, laundry bigint, maintenance bigint, total bigint)	plpgsql	t
+get_monthly_laundry_expenses	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_year integer DEFAULT (EXTRACT(year FROM now()))::integer	TABLE(month text, total_batches bigint, total_items bigint, estimated_cost bigint, actual_cost bigint)	plpgsql	t
+get_pending_tenants		TABLE(tenant_id uuid, tenant_name text, owner_name text, owner_email text, created_at timestamp with time zone, subscription_tier text)	plpgsql	t
+get_pricing_health	p_hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+get_qc_daily_trend	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _days integer DEFAULT 30	TABLE(day date, total_tasks bigint, rework_tasks bigint, rework_rate_pct numeric)	sql	f
+get_qc_floor_stats	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _days integer DEFAULT 30	TABLE(hotel_id uuid, floor integer, total_tasks bigint, rework_tasks bigint, pending_tasks bigint, rework_rate_pct numeric)	sql	f
+get_qc_staff_stats	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid, _days integer DEFAULT 30	TABLE(user_id uuid, full_name text, hotel_id uuid, total_completed bigint, approved_count bigint, rework_count bigint, pending_count bigint, rework_rate_pct numeric)	sql	f
+get_recent_activities	p_tenant_id uuid, p_limit integer DEFAULT 10, p_hotel_id uuid DEFAULT NULL::uuid	TABLE(id uuid, type text, description text, user_name text, user_avatar text, created_at timestamp with time zone, metadata jsonb)	plpgsql	t
+get_room_checks_report	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date	jsonb	plpgsql	t
+get_room_detail	p_room_id uuid	jsonb	plpgsql	t
+get_room_distribution_history	p_room_id uuid	TABLE(order_id uuid, order_code text, order_status text, room_status text, total_items integer, total_quantity integer, delivered_at timestamp with time zone, confirmed_at timestamp with time zone, confirmed_by_name text, assigned_to_name text, rejection_reason text, created_at timestamp with time zone, items jsonb)	plpgsql	t
+get_room_items_with_standards	p_room_id uuid	TABLE(id uuid, room_id uuid, item_id uuid, quantity integer, standard_quantity integer, condition text, notes text, item_name text, item_code text, item_type text, category_id uuid, category_name text, unit text, is_chargeable boolean, unit_price numeric, asset_group text, default_item_type text)	plpgsql	t
+get_room_standards	p_hotel_id uuid, p_room_type text	TABLE(id uuid, item_id uuid, item_code text, item_name text, item_thumbnail text, category_name text, category_color text, quantity integer)	plpgsql	t
+get_rooms_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_floor integer DEFAULT NULL::integer, p_room_type text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_missing_items_only boolean DEFAULT false	TABLE(id uuid, tenant_id uuid, hotel_id uuid, room_number text, floor integer, room_type text, status text, bed_type text, max_guests integer, area_sqm numeric, base_price numeric, amenities text[], notes text, created_at timestamp with time zone, updated_at timestamp with time zone, hotel_name text, hotel_code text, total_items bigint, missing_items bigint, items_in_laundry bigint, last_check_at timestamp with time zone, last_check_score numeric, has_balcony boolean, has_window boolean, smoking_allowed boolean, view_type text)	plpgsql	t
+get_rooms_report_stats	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date	jsonb	plpgsql	t
+get_stale_sessions_for_reminder		TABLE(session_id uuid, room_id uuid, user_id uuid, user_name text, check_type text, started_at timestamp with time zone, room_number text, hotel_id uuid, tenant_id uuid, duration_minutes integer)	sql	t
+get_stock_adjustments_filtered	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_status text DEFAULT NULL::text, p_adjustment_type text DEFAULT NULL::text, p_created_by uuid DEFAULT NULL::uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 25, p_offset integer DEFAULT 0	TABLE(id uuid, adjustment_code text, adjustment_type text, status text, scheduled_date date, started_at timestamp with time zone, completed_at timestamp with time zone, created_by uuid, created_by_name text, assigned_to uuid[], assigned_to_names text[], total_items_checked integer, total_discrepancies integer, total_value_difference numeric, approved_by uuid, approved_by_name text, notes text, created_at timestamp with time zone, updated_at timestamp with time zone, total_count bigint)	plpgsql	t
+get_stock_audit_report	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_start_date date DEFAULT ((CURRENT_DATE - '30 days'::interval))::date, p_end_date date DEFAULT CURRENT_DATE	jsonb	plpgsql	t
+get_super_admin_dashboard_stats		jsonb	plpgsql	t
+get_tape_chart	p_hotel_id uuid, p_start_date date, p_days integer DEFAULT 14	jsonb	plpgsql	t
+get_tenant_billing_summary	p_tenant_id uuid	jsonb	plpgsql	t
+get_top_items	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 10	TABLE(id uuid, code text, name text, thumbnail text, category_name text, category_color text, quantity_in_use integer, quantity_total integer, utilization_rate numeric, stock_status text)	plpgsql	t
+get_turnover_analysis	p_tenant_id uuid, p_hotel_id uuid, p_months integer DEFAULT 3	TABLE(item_id uuid, item_code text, item_name text, category_name text, avg_stock numeric, total_usage numeric, turnover_rate numeric, days_in_stock numeric, status text)	plpgsql	t
+get_user_hotels	p_user_id uuid	TABLE(id uuid, code text, name text, city text, total_rooms integer, status text)	plpgsql	t
+get_user_level	_user_id uuid	text	sql	t
+get_user_levels		TABLE(id uuid, code text, name text, hierarchy_level integer, description text)	sql	t
+get_user_permissions	_user_id uuid	TABLE(code text, name text, module text, action text, source text)	sql	t
+get_user_permissions_summary	p_user_id uuid	TABLE(module text, can_view boolean, can_create boolean, can_update boolean, can_delete boolean, can_export boolean, can_approve boolean, can_assign boolean, can_manage boolean)	plpgsql	t
+get_user_primary_role	_user_id uuid	app_role	sql	t
+get_user_subordinates	p_user_id uuid	TABLE(id uuid, full_name text, email text, user_level_code text, created_at timestamp with time zone, subordinate_count bigint)	plpgsql	t
+get_users_by_hotel	p_tenant_id uuid, p_hotel_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid, p_user_level text DEFAULT NULL::text	SETOF users	plpgsql	t
+get_vat_claim_public	p_token text	jsonb	plpgsql	t
+get_vendor_performance	p_vendor_id uuid, p_days integer DEFAULT 30	jsonb	plpgsql	t
+get_warehouse_stock_summary	p_warehouse_id uuid	TABLE(item_id uuid, item_name text, item_code text, category_name text, quantity integer, minimum_stock integer, stock_status text)	plpgsql	t
+get_workflow_analytics	p_workflow_id uuid, p_period text DEFAULT 'month'::text	jsonb	plpgsql	t
+guard_room_type_delete		trigger	plpgsql	t
+handle_item_image_primary		trigger	plpgsql	f
+handle_new_user		trigger	plpgsql	t
+handle_successful_payment	p_transaction_id uuid	void	plpgsql	t
+handover_batch	p_batch_id uuid, p_actor_id uuid DEFAULT NULL::uuid, p_adjustments jsonb DEFAULT NULL::jsonb	jsonb	plpgsql	t
+handover_stop_create_next_route	p_room_order_id uuid, p_next_shift_code text, p_next_assignee_id uuid DEFAULT NULL::uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+has_permission	_user_id uuid, _permission_code text	boolean	sql	t
+has_role	_user_id uuid, _role app_role	boolean	sql	t
+has_user_level	_user_id uuid, _level_code text	boolean	sql	t
+has_user_permission	p_user_id uuid, p_module text, p_action text	boolean	plpgsql	t
+hotels_generate_code		trigger	plpgsql	f
+ignore_reorder_suggestion	_suggestion_id uuid, _reason text DEFAULT NULL::text, _ignore_days integer DEFAULT 7	jsonb	plpgsql	t
+increment_quantity_in_laundry	p_item_id uuid, p_quantity integer	void	plpgsql	t
+increment_staff_stat	p_user_id uuid, p_hotel_id uuid, p_stat_type text, p_increment integer DEFAULT 1	void	plpgsql	t
+increment_workflow_stats	p_workflow_id uuid, p_success boolean	void	plpgsql	t
+initialize_warehouse_stock	p_warehouse_id uuid, p_hotel_id uuid, p_tenant_id uuid	integer	plpgsql	t
+inventory_transactions_generate_code		trigger	plpgsql	f
+invoices_generate_number		trigger	plpgsql	f
+is_conversation_admin	_conv_id uuid, _user_id uuid	boolean	sql	t
+is_conversation_member	_conv_id uuid, _user_id uuid	boolean	sql	t
+is_distribution_leader	_user_id uuid	boolean	sql	t
+is_level_higher_or_equal	_user_id uuid, _min_level_code text	boolean	sql	t
+is_manager		boolean	sql	t
+is_manager_or_above	_user uuid	boolean	sql	t
+is_owner_user		boolean	sql	t
+is_qc_manager	_user_id uuid	boolean	sql	t
+is_route_assignee	_user_id uuid, _order_id uuid	boolean	sql	t
+is_storekeeper	_user_id uuid	boolean	sql	t
+is_super_admin	p_user_id uuid	boolean	sql	t
+is_super_admin		boolean	sql	t
+is_tenant_owner		boolean	sql	t
+is_tenant_read_only	p_tenant_id uuid	boolean	sql	t
+items_generate_code		trigger	plpgsql	f
+items_generate_qr		trigger	plpgsql	f
+laundry_batch_items_update_inventory		trigger	plpgsql	t
+laundry_batches_generate_code		trigger	plpgsql	f
+laundry_vendors_generate_code		trigger	plpgsql	f
+leave_or_remove_conversation_member	_conversation_id uuid, _user_id uuid	void	plpgsql	t
+lift_expired_dnd_oos		jsonb	plpgsql	t
+log_activity	p_tenant_id uuid, p_user_id uuid, p_action text, p_entity_type text, p_entity_id uuid, p_entity_name text, p_description text, p_old_values jsonb DEFAULT NULL::jsonb, p_new_values jsonb DEFAULT NULL::jsonb	void	plpgsql	t
+log_shift_history		trigger	plpgsql	t
+log_state_transition	p_table_name text, p_record_id uuid, p_action text, p_context jsonb	bigint	plpgsql	t
+log_state_transition	p_tenant_id uuid, p_hotel_id uuid, p_table_name text, p_record_id uuid, p_action text, p_from_state text, p_to_state text, p_reason text DEFAULT NULL::text, p_context jsonb DEFAULT '{}'::jsonb	bigint	plpgsql	t
+log_state_transition	p_table_name text, p_record_id uuid, p_from_state text, p_to_state text, p_context jsonb	bigint	plpgsql	t
+log_user_roles_change		trigger	plpgsql	t
+maintenance_requests_generate_code		trigger	plpgsql	f
+manager_override_charge	p_charge_id uuid, p_decision text, p_override_reason text	jsonb	plpgsql	t
+mark_batch_partially_received	_batch_id uuid, _items jsonb	jsonb	plpgsql	t
+mark_batches_compensation_needed		jsonb	plpgsql	t
+mark_booking_no_show	_booking_id uuid, _reason text DEFAULT NULL::text, _refund_deposit boolean DEFAULT true	room_bookings	plpgsql	t
+mark_cannot_access	p_room_order_id uuid, p_exception_type text, p_exception_reason text DEFAULT NULL::text, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+mark_conversation_read	_conversation_id uuid, _up_to_message_id uuid DEFAULT NULL::uuid	void	plpgsql	t
+mark_primary_owner		trigger	plpgsql	f
+mark_vat_claim_issued	p_claim_id uuid, p_provider text, p_pdf_path text, p_lookup_code text	void	plpgsql	t
+merge_guests	p_target_id uuid, p_source_ids uuid[]	jsonb	plpgsql	t
+move_booking	p_booking_id uuid, p_new_room_id uuid, p_new_check_in date, p_new_check_out date	jsonb	plpgsql	t
+move_to_dlq	source_queue text, dlq_name text, message_id bigint, payload jsonb	bigint	plpgsql	t
+notify_task_rejected		trigger	plpgsql	t
+on_tenant_created		trigger	plpgsql	t
+outbox_next_retry_at	_retry_count integer	timestamp with time zone	sql	f
+perform_checkin	p_booking_id uuid, p_room_id uuid, p_early_checkin_charge numeric DEFAULT 0	jsonb	plpgsql	t
+perform_checkout	p_booking_id uuid, p_room_id uuid, p_late_checkout_charge numeric DEFAULT 0, p_service_charges numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_damage_charges numeric DEFAULT 0, p_damage_notes text DEFAULT NULL::text, p_damage_items jsonb DEFAULT '[]'::jsonb, p_new_amount_paid numeric DEFAULT NULL::numeric, p_check_out_date date DEFAULT NULL::date	jsonb	plpgsql	t
+perform_group_checkout	p_checkouts jsonb	jsonb	plpgsql	t
+perform_quick_room_check	_room_id uuid, _check_type text DEFAULT 'daily'::text, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[]	jsonb	plpgsql	t
+prepare_checkout_amounts	p_booking_id uuid, p_room_id uuid, p_late_checkout_charge numeric DEFAULT 0, p_service_charges numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_damage_charges numeric DEFAULT 0, p_damage_notes text DEFAULT NULL::text, p_damage_items jsonb DEFAULT '[]'::jsonb	jsonb	plpgsql	t
+prepare_group_checkout_amounts	p_checkouts jsonb	jsonb	plpgsql	t
+prevent_booking_overlap		trigger	plpgsql	f
+prevent_unauthorized_salary_change		trigger	plpgsql	t
+prevent_user_privilege_escalation		trigger	plpgsql	t
+preview_asset_group_mapping	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid	TABLE(item_id uuid, item_code text, item_name text, item_type text, current_group asset_group, suggested_group asset_group, confidence text, needs_review boolean)	plpgsql	t
+process_expired_subscriptions		void	plpgsql	t
+process_room_check_issue_outbox	_limit integer DEFAULT 50	jsonb	plpgsql	t
+purchase_order_items_receive		trigger	plpgsql	f
+purchase_orders_generate_code		trigger	plpgsql	f
+qc_approve_task	_task_id uuid, _score_override integer DEFAULT NULL::integer, _notes text DEFAULT NULL::text	jsonb	plpgsql	t
+qc_escalate_overdue		integer	plpgsql	t
+qc_force_approve	_task_id uuid, _reason text	jsonb	plpgsql	t
+qc_reject_task	_task_id uuid, _reason text, _categories text[] DEFAULT '{}'::text[]	jsonb	plpgsql	t
+queue_email_notification	p_tenant_id uuid, p_user_id uuid, p_to_email text, p_subject text, p_body_html text, p_notification_type text, p_metadata jsonb DEFAULT NULL::jsonb	uuid	plpgsql	t
+read_email_batch	queue_name text, batch_size integer, vt integer	TABLE(msg_id bigint, read_ct integer, message jsonb)	plpgsql	t
+reassign_subordinates	p_old_manager_id uuid, p_new_manager_id uuid	integer	plpgsql	t
+receive_batch	p_batch_id uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+reconcile_room_check_outbox	_hours integer DEFAULT 24	jsonb	plpgsql	t
+record_booking_payment	p_booking_id uuid, p_tenant_id uuid, p_hotel_id uuid, p_amount numeric, p_payment_method text, p_transaction_reference text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb, p_total_amount numeric DEFAULT NULL::numeric	jsonb	plpgsql	t
+refresh_consumption_snapshots	_tenant_id uuid, _hotel_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+refresh_monthly_expenses		void	plpgsql	t
+reject_room_delivery	p_distribution_order_room_id uuid, p_rejected_by uuid, p_rejection_reason text	jsonb	plpgsql	t
+reject_task	_task_id uuid, _reason text	housekeeping_tasks	plpgsql	t
+reject_tenant	p_tenant_id uuid, p_admin_id uuid, p_reason text	jsonb	plpgsql	t
+rename_chat_group	_conversation_id uuid, _name text	void	plpgsql	t
+reopen_room_check	_check_id uuid, _reason text DEFAULT NULL::text	jsonb	plpgsql	t
+reschedule_booking_checkin	_booking_id uuid, _new_check_in_date date, _new_check_out_date date, _reason text DEFAULT NULL::text	room_bookings	plpgsql	t
+resize_booking	p_booking_id uuid, p_new_check_in date, p_new_check_out date	jsonb	plpgsql	t
+resolve_daily_prices_bulk	p_room_type_id uuid, p_from date, p_to date, p_apply_to text DEFAULT 'daily'::text, p_hotel_id uuid DEFAULT NULL::uuid	TABLE(date date, base_price numeric, override_price numeric, final_price numeric, is_closed boolean, source text, seasonals jsonb)	plpgsql	t
+resolve_qc_settings	_tenant_id uuid, _hotel_id uuid, _task_type text	TABLE(qc_required boolean, sla_minutes integer, max_rework_count integer, auto_escalate boolean)	sql	t
+resolve_today_prices_for_hotel	p_hotel_id uuid, p_apply_to text DEFAULT 'daily'::text	TABLE(room_type_id uuid, room_type_name text, room_type_code text, base_price numeric, final_price numeric, has_seasonal boolean, has_override boolean, is_closed boolean)	plpgsql	t
+retry_stay_registration	p_id uuid	void	plpgsql	t
+retry_stop	p_room_order_id uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+return_to_stock_for_stop	p_room_order_id uuid, p_actor_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+review_chargeable_consumptions	p_ids uuid[], p_decision text, p_reason text DEFAULT NULL::text	TABLE(updated_count integer)	plpgsql	t
+review_room_check_issue	p_issue_id uuid, p_decision text, p_reason text DEFAULT NULL::text	jsonb	plpgsql	t
+room_items_update_inventory		trigger	plpgsql	f
+room_type_pricing_code	p_room_type text	text	sql	f
+rpc_request_is_trusted		boolean	sql	t
+run_auto_reorder_daily		jsonb	plpgsql	t
+schedule_renewal_reminders		void	plpgsql	f
+send_chat_message	_conversation_id uuid, _body text, _parent_message_id uuid DEFAULT NULL::uuid, _client_msg_id text DEFAULT NULL::text, _mentioned_user_ids uuid[] DEFAULT '{}'::uuid[], _attachments jsonb DEFAULT '[]'::jsonb	uuid	plpgsql	t
+send_draft_batch	p_batch_id uuid, p_vendor_id uuid, p_delivery_date date, p_expected_return_date date, p_delivery_staff_id uuid, p_receiver_name text, p_notes text DEFAULT NULL::text	jsonb	plpgsql	t
+set_announcement_updated_at		trigger	plpgsql	f
+set_conversation_mute	_conversation_id uuid, _muted_until timestamp with time zone	void	plpgsql	t
+set_financial_targets_updated_at		trigger	plpgsql	f
+set_tenant_read_only	p_tenant_id uuid, p_reason text	void	plpgsql	t
+settle_batch_compensation	_batch_id uuid, _compensation_amount numeric, _notes text DEFAULT NULL::text	jsonb	plpgsql	t
+settle_booking_payment	p_payment_id uuid, p_gateway_transaction_id text DEFAULT NULL::text	jsonb	plpgsql	t
+settle_subscription_payment	p_payment_id uuid, p_gateway_transaction_id text DEFAULT NULL::text	jsonb	plpgsql	t
+setup_new_tenant	p_user_id uuid, p_tenant_name text, p_tenant_email text, p_tenant_phone text, p_hotel_name text, p_hotel_address text, p_hotel_phone text, p_hotel_email text, p_total_rooms integer	jsonb	plpgsql	t
+setup_room_initial	p_room_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reset_quantities boolean DEFAULT false	jsonb	plpgsql	t
+stock_adjustment_items_apply		trigger	plpgsql	f
+stock_adjustments_generate_code		trigger	plpgsql	f
+submit_delivery_lean	_room_id uuid, _distribution_order_room_id uuid, _items_actual jsonb DEFAULT NULL::jsonb, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[], _task_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+submit_replenish_lean	_room_id uuid, _items jsonb DEFAULT '[]'::jsonb, _cleaning_requested boolean DEFAULT false, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[], _task_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+submit_room_check_for_qc	_task_id uuid, _room_check_id uuid	jsonb	plpgsql	t
+submit_room_check_lean	_room_id uuid, _check_type text, _started_at timestamp with time zone, _notes text DEFAULT NULL::text, _photos text[] DEFAULT '{}'::text[], _items_missing jsonb DEFAULT '[]'::jsonb, _items_damaged jsonb DEFAULT '[]'::jsonb, _items_lost jsonb DEFAULT '[]'::jsonb, _items_consumed jsonb DEFAULT '[]'::jsonb, _items_replaced jsonb DEFAULT '[]'::jsonb, _items_sent_to_laundry jsonb DEFAULT '[]'::jsonb, _task_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+submit_vat_claim_public	p_token text, p_company_name text, p_tax_code text, p_company_address text, p_email text	jsonb	plpgsql	t
+sync_categories_for_hotel	p_tenant_id uuid, p_hotel_id uuid	jsonb	plpgsql	t
+sync_pricing_rules_to_hotel_settings		trigger	plpgsql	t
+sync_room_types_from_rooms	p_hotel_id uuid DEFAULT NULL::uuid	integer	plpgsql	t
+tg_inventory_out_update_reorder		trigger	plpgsql	t
+tg_reorder_suggestions_updated_at		trigger	plpgsql	t
+toggle_message_reaction	_message_id uuid, _emoji text	boolean	plpgsql	t
+touch_batch_inventory		trigger	plpgsql	f
+touch_room_blocks_updated_at		trigger	plpgsql	f
+transfer_booking_room	p_booking_id uuid, p_new_room_id uuid, p_reason text DEFAULT NULL::text	jsonb	plpgsql	t
+transition_adjustment_status	_adjustment_id uuid, _to_status text, _reason text DEFAULT NULL::text, _force boolean DEFAULT false	stock_adjustments	plpgsql	t
+transition_booking_status	_booking_id uuid, _to_status text, _reason text DEFAULT NULL::text, _amount_owed numeric DEFAULT NULL::numeric	room_bookings	plpgsql	t
+transition_laundry_batch_status	_batch_id uuid, _to text, _reason text DEFAULT NULL::text	jsonb	plpgsql	t
+transition_room_status	_room_id uuid, _to_status text, _reason text DEFAULT NULL::text, _dnd_until timestamp with time zone DEFAULT NULL::timestamp with time zone, _oos_until timestamp with time zone DEFAULT NULL::timestamp with time zone, _force boolean DEFAULT false	jsonb	plpgsql	t
+transition_task_status	_task_id uuid, _to_status text, _reason text DEFAULT NULL::text, _force boolean DEFAULT false	housekeeping_tasks	plpgsql	t
+trg_enqueue_stay_registration_on_checkin		trigger	plpgsql	t
+trg_hotel_policy_history		trigger	plpgsql	t
+trg_laundry_batch_snapshot_policy		trigger	plpgsql	t
+trg_rci_set_charge_status		trigger	plpgsql	t
+trg_room_check_issues_outbox_fanout		trigger	plpgsql	t
+trigger_check_tenant_quota		trigger	plpgsql	t
+trigger_update_laundry_stats		trigger	plpgsql	f
+trigger_update_maintenance_stats		trigger	plpgsql	f
+undo_quick_room_check	_check_id uuid, _reason text DEFAULT NULL::text	jsonb	plpgsql	t
+undo_room_delivery_confirmation	p_distribution_order_room_id uuid, p_performed_by uuid	jsonb	plpgsql	t
+update_ab_tests_updated_at		trigger	plpgsql	f
+update_adjustment_summary		trigger	plpgsql	f
+update_booking_amount_paid	p_booking_id uuid, p_amount_to_add numeric, p_total_amount numeric	jsonb	plpgsql	t
+update_distribution_order	p_order_id uuid, p_assigned_to uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_rooms jsonb DEFAULT NULL::jsonb	jsonb	plpgsql	t
+update_distribution_order_status		trigger	plpgsql	f
+update_guest_stats_on_checkout		trigger	plpgsql	t
+update_hotel_floor_map_cell_size	p_hotel_id uuid, p_size jsonb	jsonb	plpgsql	t
+update_purchase_order_totals		trigger	plpgsql	f
+update_room_pricing_rules_updated_at		trigger	plpgsql	f
+update_room_status_safe	p_room_id uuid, p_new_status text, p_expected_updated_at timestamp with time zone DEFAULT NULL::timestamp with time zone	jsonb	plpgsql	t
+update_staff_status_from_room_check		trigger	plpgsql	t
+update_tenant_usage	p_tenant_id uuid	void	plpgsql	t
+update_updated_at_column		trigger	plpgsql	f
+update_vendor_stats		trigger	plpgsql	f
+update_workflow_stats		trigger	plpgsql	t
+user_has_hotel_access	p_user_id uuid, p_hotel_id uuid	boolean	sql	t
+user_has_subordinates	p_user_id uuid	boolean	sql	f
+validate_booking_dates	p_room_id uuid, p_check_in date, p_check_out date, p_exclude_booking_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+validate_chargeable_approval_status		trigger	plpgsql	f
+validate_hourly_against_daily	p_room_id uuid, p_booking_date date, p_exclude_booking_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+validate_hourly_booking	p_room_id uuid, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_exclude_booking_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+validate_item_category_hotel		trigger	plpgsql	t
+validate_plan_change	p_tenant_id uuid, p_new_plan_id uuid	jsonb	plpgsql	t
+validate_room_check_context	p_room_id uuid, p_check_type text, p_task_id uuid DEFAULT NULL::uuid	jsonb	plpgsql	t
+validate_room_check_issue_entries		trigger	plpgsql	f
+validate_room_item_hotel		trigger	plpgsql	t
+vendors_generate_code		trigger	plpgsql	f
+works_at_same_hotel	target_user_id uuid	boolean	sql	t

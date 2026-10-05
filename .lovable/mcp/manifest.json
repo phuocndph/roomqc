@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "sdk_version": "0.25.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ehjtoajnlnuvuiwkpmbp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "hotel-inventory-hub",
+      "version": "0.1.0",
+      "title": "Hotel Inventory Hub"
+    },
+    "tools": [
+      {
+        "name": "list_hotels",
+        "title": "Danh sách khách sạn",
+        "description": "Liệt kê các khách sạn thuộc đơn vị của người dùng đang đăng nhập.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_rooms",
+        "title": "Danh sách phòng",
+        "description": "Liệt kê phòng cùng trạng thái hiện tại (trống, đang ở, cần dọn, bảo trì...). Có thể lọc theo khách sạn, trạng thái hoặc tầng.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "hotel_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID khách sạn cần lọc."
+            },
+            "status": {
+              "type": "string",
+              "description": "Trạng thái phòng cần lọc, ví dụ available, occupied, dirty, cleaning."
+            },
+            "floor": {
+              "type": "integer",
+              "description": "Số tầng cần lọc."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Số bản ghi tối đa."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_bookings",
+        "title": "Danh sách đặt phòng",
+        "description": "Liệt kê đặt phòng theo khoảng ngày nhận phòng, trạng thái hoặc khách sạn. Dùng để xem lịch nhận/trả phòng.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "hotel_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID khách sạn cần lọc."
+            },
+            "status": {
+              "type": "string",
+              "description": "Trạng thái đặt phòng, ví dụ confirmed, checked_in, checked_out, cancelled."
+            },
+            "from_date": {
+              "type": "string",
+              "description": "Ngày nhận phòng từ (YYYY-MM-DD)."
+            },
+            "to_date": {
+              "type": "string",
+              "description": "Ngày nhận phòng đến (YYYY-MM-DD)."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Số bản ghi tối đa."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_housekeeping_tasks",
+        "title": "Danh sách công việc buồng phòng",
+        "description": "Liệt kê công việc buồng phòng (dọn phòng, QC, bổ sung đồ) theo trạng thái, khách sạn hoặc chỉ công việc của tôi.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "hotel_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID khách sạn cần lọc."
+            },
+            "status": {
+              "type": "string",
+              "description": "Trạng thái công việc, ví dụ pending, in_progress, awaiting_review, completed."
+            },
+            "only_mine": {
+              "type": "boolean",
+              "default": false,
+              "description": "Chỉ lấy công việc được giao cho tôi."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Số bản ghi tối đa."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_maintenance_request",
+        "title": "Tạo yêu cầu bảo trì",
+        "description": "Tạo một yêu cầu bảo trì mới cho khách sạn của người dùng. Chỉ tạo khi người dùng yêu cầu rõ ràng.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 3,
+              "description": "Tiêu đề ngắn gọn của sự cố."
+            },
+            "description": {
+              "type": "string",
+              "minLength": 3,
+              "description": "Mô tả chi tiết sự cố."
+            },
+            "location": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Vị trí xảy ra sự cố, ví dụ 'Phòng 201' hoặc 'Sảnh tầng 1'."
+            },
+            "issue_type": {
+              "type": "string",
+              "enum": [
+                "repair",
+                "replace",
+                "inspection",
+                "cleaning",
+                "other"
+              ],
+              "default": "repair",
+              "description": "Loại sự cố."
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "urgent"
+              ],
+              "default": "medium",
+              "description": "Mức ưu tiên."
+            },
+            "hotel_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID khách sạn; mặc định lấy khách sạn của người dùng."
+            },
+            "room_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID phòng liên quan (nếu có)."
+            }
+          },
+          "required": [
+            "title",
+            "description",
+            "location"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

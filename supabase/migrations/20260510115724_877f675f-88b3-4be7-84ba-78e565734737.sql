@@ -1,0 +1,1 @@
+ALTER VIEW public.item_avg_cost SET (security_invoker = true);

@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.transition_task_status(uuid, text, text);
