@@ -6,6 +6,7 @@ const securityHeaders = [
   'x-frame-options',
   'referrer-policy',
   'permissions-policy',
+  'strict-transport-security',
 ]
 
 async function request(path) {
@@ -48,6 +49,14 @@ expectStatus(serviceWorker, '/sw.js')
 expectSecurityHeaders(serviceWorker, '/sw.js')
 const swCache = serviceWorker?.headers.get('cache-control') || ''
 if (!/no-store/i.test(swCache)) failures.push('/sw.js must use Cache-Control: no-store')
+
+const manifest = await request('/manifest.webmanifest')
+expectStatus(manifest, '/manifest.webmanifest')
+expectSecurityHeaders(manifest, '/manifest.webmanifest')
+const manifestType = manifest?.headers.get('content-type') || ''
+if (!/application\/manifest\+json/i.test(manifestType)) {
+  failures.push('/manifest.webmanifest must use application/manifest+json')
+}
 
 const assetPath = loginHtml.match(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/)?.[1]
 if (!assetPath) {

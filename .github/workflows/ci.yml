@@ -15,6 +15,7 @@ jobs:
       VITE_SUPABASE_URL: http://127.0.0.1:54321
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_roomqc_ci
       VITE_SUPABASE_PROJECT_ID: roomqc-ci
+      VITE_VAPID_PUBLIC_KEY: BIb2-YMJYspRhZ2J_Xpb3DQuWydfRqjeSvzHhJwWDE19G9WqTcX_l6HJM9PlmWZYIqaEQKyJ4SG-WwztLK6Pqx8
       VITE_ENABLE_DEMO_DATA: "false"
     steps:
       - uses: actions/checkout@v4
