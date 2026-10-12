@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRef, useState } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUser } from '@/hooks/useUser'
 import { useForm } from 'react-hook-form'
@@ -14,16 +14,18 @@ import { Input } from '@/components/ui/input'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Building2, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Progress } from '@/components/ui/progress'
+import { getRegistrationErrorMessage } from '@/lib/registration-error-messages'
+import { getAccountSetupState } from '@/lib/account-setup'
+import { AccountSetupNotice } from '@/components/auth/AccountSetupNotice'
 
 const onboardingSchema = z.object({
-  tenantName: z.string().min(2, 'Tên công ty phải có ít nhất 2 ký tự'),
-  tenantPhone: z.string().min(10, 'Số điện thoại không hợp lệ'),
-  hotelName: z.string().min(2, 'Tên khách sạn phải có ít nhất 2 ký tự'),
-  hotelAddress: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
-  hotelPhone: z.string().min(10, 'Số điện thoại không hợp lệ'),
-  hotelEmail: z.string().email('Email không hợp lệ'),
-  totalRooms: z.coerce.number().min(1, 'Số phòng phải lớn hơn 0').max(10000, 'Số phòng quá lớn'),
+  tenantName: z.string().trim().min(2, 'Tên công ty phải có ít nhất 2 ký tự'),
+  tenantPhone: z.string().trim().min(10, 'Số điện thoại không hợp lệ'),
+  hotelName: z.string().trim().min(2, 'Tên khách sạn phải có ít nhất 2 ký tự'),
+  hotelAddress: z.string().trim().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
+  hotelPhone: z.string().trim().min(10, 'Số điện thoại không hợp lệ'),
+  hotelEmail: z.string().trim().email('Email không hợp lệ'),
+  totalRooms: z.coerce.number().int('Số phòng phải là số nguyên').min(1, 'Số phòng phải lớn hơn 0').max(10000, 'Số phòng quá lớn'),
 })
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>
@@ -31,11 +33,11 @@ type OnboardingFormData = z.infer<typeof onboardingSchema>
 export default function Onboarding() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { refetch: refetchUser } = useUser()
+  const { user: profile, isLoading: profileLoading, error: profileError, refetch: refetchUser } = useUser()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [loadingProgress, setLoadingProgress] = useState(0)
-  const [loadingMessage, setLoadingMessage] = useState('')
+  const [completed, setCompleted] = useState(false)
+  const submissionInFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<OnboardingFormData>({
@@ -52,21 +54,17 @@ export default function Onboarding() {
   })
 
   const onSubmit = async (data: OnboardingFormData) => {
+    if (submissionInFlight.current) return
     if (!user?.id) {
       setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
     }
 
+    submissionInFlight.current = true
     setIsSubmitting(true)
     setError(null)
-    setLoadingProgress(0)
-    setLoadingMessage('Đang khởi tạo...')
 
     try {
-      // Progress simulation
-      setLoadingProgress(20)
-      setLoadingMessage('Đang tạo công ty...')
-
       // Call complete_registration function
       const { data: result, error } = await supabase.rpc('complete_registration', {
         p_user_id: user.id,
@@ -81,11 +79,8 @@ export default function Onboarding() {
         p_total_rooms: data.totalRooms,
       })
 
-      setLoadingProgress(60)
-      setLoadingMessage('Đang cấu hình khách sạn...')
-
       if (error) {
-        throw new Error(`Lỗi kết nối: ${error.message}`)
+        throw error
       }
 
       // Handle result structure from function
@@ -101,47 +96,29 @@ export default function Onboarding() {
         throw new Error(`${errorMsg}${errorDetail}`)
       }
 
-      setLoadingProgress(80)
-      setLoadingMessage('Đang thiết lập danh mục và phân quyền...')
+      if (!resultData.tenant_id || !resultData.hotel_id) {
+        throw new Error('Registration returned an incomplete setup')
+      }
 
-      // Success! Show success message
-      setLoadingProgress(100)
-      setLoadingMessage('Hoàn tất thiết lập!')
+      setCompleted(true)
 
       toast({
         title: '🎉 Chào mừng bạn!',
         description: 'Tài khoản và khách sạn của bạn đã sẵn sàng. Đang chuyển hướng...',
       })
 
-      // Refetch user data to update context
+      // Refresh the profile before resolving the first permitted route. The
+      // callback presents a retry screen if this read fails after provisioning.
       await refetchUser()
-
-      // Small delay then force full page reload to ensure all contexts are updated
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 800)
+      navigate('/auth/callback', { replace: true })
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Onboarding error:', error)
-      
-      // Extract user-friendly error message
-      let errorMessage = 'Có lỗi xảy ra khi thiết lập tài khoản'
-      
-      if (error.message) {
-        if (error.message.includes('Basic subscription plan not found')) {
-          errorMessage = 'Hệ thống chưa được cấu hình gói dịch vụ. Vui lòng liên hệ quản trị viên.'
-        } else if (error.message.includes('violates check constraint')) {
-          errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.'
-        } else if (error.message.includes('duplicate key')) {
-          errorMessage = 'Tài khoản hoặc khách sạn đã tồn tại trong hệ thống.'
-        } else {
-          errorMessage = error.message
-        }
-      }
+      const errorMessage = getRegistrationErrorMessage(error)
       
       setError(errorMessage)
-      setLoadingProgress(0)
-      setLoadingMessage('')
+      setCompleted(false)
+      submissionInFlight.current = false
       
       toast({
         title: 'Lỗi thiết lập',
@@ -151,6 +128,16 @@ export default function Onboarding() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (profileLoading) return <LoadingSpinner fullScreen />
+  if (profileError) return <AccountSetupNotice onRetry={() => { void refetchUser() }} />
+  const setupState = getAccountSetupState(profile)
+  if (setupState === 'assignment-required') {
+    return <AccountSetupNotice assignmentRequired onRetry={() => { void refetchUser() }} />
+  }
+  if (setupState === 'ready' && !isSubmitting && !completed) {
+    return <Navigate to="/auth/callback" replace />
   }
 
   return (
@@ -173,18 +160,16 @@ export default function Onboarding() {
             </Alert>
           )}
 
-          {isSubmitting && (
-            <div className="mb-6 space-y-2">
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{loadingMessage}</span>
-                <span>{loadingProgress}%</span>
-              </div>
-              <Progress value={loadingProgress} className="h-2" />
+          {(isSubmitting || completed) && (
+            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{completed ? 'Khách sạn đã sẵn sàng. Đang mở trang chính…' : 'Đang thiết lập khách sạn và quyền truy cập…'}</span>
             </div>
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <fieldset disabled={isSubmitting || completed} className="space-y-6">
               {/* Tenant Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -296,11 +281,11 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || completed}>
+                {isSubmitting || completed ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{loadingMessage || 'Đang xử lý...'}</span>
+                    <span>{completed ? 'Đang mở khách sạn…' : 'Đang xử lý…'}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -310,11 +295,12 @@ export default function Onboarding() {
                 )}
               </Button>
               
-              {!isSubmitting && (
+              {!isSubmitting && !completed && (
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   Bằng việc tiếp tục, bạn đồng ý với các điều khoản sử dụng và chính sách bảo mật của chúng tôi.
                 </p>
               )}
+              </fieldset>
             </form>
           </Form>
         </CardContent>

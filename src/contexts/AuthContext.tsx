@@ -173,7 +173,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`
+      // A verified-email link must land on the route that resolves the
+      // authenticated profile and sends an unprovisioned owner to onboarding.
+      // Redirecting to `/` works only incidentally and can expose a landing
+      // page while the profile query is still pending.
+      const redirectUrl = `${window.location.origin}/auth/callback`
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -188,10 +192,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error
 
-      toast({
-        title: t('register.title', 'Đăng ký thành công'),
-        description: t('common:messages.checkEmail', 'Vui lòng kiểm tra email để xác thực tài khoản.'),
-      })
+      // The registration screen decides the next message because local and
+      // production environments may differ on email confirmation.  In
+      // particular, a returned session means the owner can continue directly
+      // to onboarding instead of being told to check an email unnecessarily.
 
       return { data, error: null }
     } catch (error: any) {

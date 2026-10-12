@@ -1,0 +1,43 @@
+# VPS reverse proxy for the RoomQC frontend container.
+# Install as /etc/nginx/sites-available/roomqc.com after certificates exist.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name roomqc.com www.roomqc.com;
+
+    return 301 https://roomqc.com$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.roomqc.com;
+
+    ssl_certificate /etc/letsencrypt/live/roomqc.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/roomqc.com/privkey.pem;
+
+    return 301 https://roomqc.com$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name roomqc.com;
+    server_tokens off;
+
+    ssl_certificate /etc/letsencrypt/live/roomqc.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/roomqc.com/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:8082;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+}

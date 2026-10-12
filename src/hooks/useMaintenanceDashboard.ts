@@ -19,7 +19,7 @@ interface MaintenanceDashboardStats {
 
 interface MaintenanceDashboardResult {
   stats: MaintenanceDashboardStats
-  activeRequests: any[]
+  activeRequests: { urgent: any[]; high: any[]; medium: any[]; low: any[] }
   recentCompletions: any[]
 }
 

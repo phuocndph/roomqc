@@ -67,8 +67,14 @@ export function RegisterForm() {
         }).catch(err => console.error('Failed to send welcome email:', err))
       }
 
-      toast.success('Đăng ký thành công! Vui lòng đăng nhập.')
-      navigate('/auth/login')
+      if (signUpData?.session) {
+        toast.success('Đăng ký thành công! Hãy hoàn tất thiết lập khách sạn.')
+        navigate('/onboarding', { replace: true })
+        return
+      }
+
+      toast.success('Đăng ký thành công! Hãy xác thực email; sau đó hệ thống sẽ đưa bạn tới bước thiết lập khách sạn.')
+      navigate('/auth/login', { replace: true })
     } catch (error: any) {
       console.error('Registration error:', error)
       toast.error('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.')
@@ -98,6 +104,8 @@ export function RegisterForm() {
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
+                        id="register-full-name"
+                        autoComplete="name"
                         placeholder={t('register.fullNamePlaceholder')}
                         className="pl-10"
                         {...field}
@@ -120,7 +128,13 @@ export function RegisterForm() {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
+                        id="register-email"
                         type="email"
+                        autoComplete="email"
+                        inputMode="email"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder={t('register.emailPlaceholder')}
                         className="pl-10"
                         {...field}
@@ -143,7 +157,9 @@ export function RegisterForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
+                        id="register-password"
                         type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder={t('register.passwordPlaceholder')}
                         className="pl-10 pr-10"
                         {...field}
@@ -180,7 +196,9 @@ export function RegisterForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
+                        id="register-confirm-password"
                         type={showConfirmPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         placeholder={t('register.confirmPasswordPlaceholder')}
                         className="pl-10 pr-10"
                         {...field}

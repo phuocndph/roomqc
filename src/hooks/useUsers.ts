@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
-import { User, UserWithRelations } from '@/types/database.types'
+import { AppRole, User, UserWithRelations } from '@/types/database.types'
 import { toast } from 'sonner'
 import { UserFormData } from '@/lib/validations/user.schemas'
 import { logCreate, logUpdate, logDelete } from '@/lib/activityLogger'
@@ -118,7 +118,7 @@ export function useUpdateUser() {
         .eq('id', id)
         .single()
 
-      const roleMapping: Record<string, string> = {
+      const roleMapping: Record<string, AppRole> = {
         tenant_owner: 'owner',
         manager: 'hotel_manager',
         department_manager: 'department_manager',
@@ -157,7 +157,7 @@ export function useUpdateUser() {
       // Edge Function runtime.
       const { error: roleError } = await supabase
         .from('user_roles')
-        .upsert({ user_id: id, role: roleMapping[data.userLevelCode] as any }, {
+        .upsert({ user_id: id, role: roleMapping[data.userLevelCode] }, {
           onConflict: 'user_id,role',
         })
 

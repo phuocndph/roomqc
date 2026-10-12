@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface BookingPayment {
   id: string;
@@ -15,7 +16,7 @@ export interface BookingPayment {
   paid_at: string | null;
   created_by: string | null;
   gateway_transaction_id: string | null;
-  metadata: Record<string, unknown>;
+  metadata: { [key: string]: Json | undefined };
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -28,7 +29,7 @@ export interface CreateBookingPaymentInput {
   amount: number;
   payment_method: 'cash' | 'bank_transfer';
   transaction_reference?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: { [key: string]: Json | undefined };
   notes?: string;
 }
 

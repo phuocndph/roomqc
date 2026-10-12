@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useUser } from '@/hooks/useUser'
 import { useFirstAccessibleRoute } from '@/hooks/useFirstAccessibleRoute'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
+import { AccountSetupNotice } from '@/components/auth/AccountSetupNotice'
+import { getAccountSetupState } from '@/lib/account-setup'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -14,14 +15,13 @@ export default function AuthCallback() {
   const rawNext = searchParams.get('next')
   const nextPath = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null
   const { user: authUser, loading: authLoading, signOut } = useAuth()
-  const { user, isLoading: isUserLoading } = useUser()
+  const { user, isLoading: isUserLoading, error: profileError, refetch } = useUser()
   const { firstAccessibleRoute, isLoading: isPermissionsLoading } = useFirstAccessibleRoute()
-  const { toast } = useToast()
 
   const [showEscape, setShowEscape] = useState(false)
   const [forceFallback, setForceFallback] = useState(false)
 
-  const isLoading = authLoading || isUserLoading || isPermissionsLoading
+  const setupState = getAccountSetupState(user)
 
   // Hiển thị nút "Đăng nhập lại" sau 5s để user không bị kẹt
   useEffect(() => {
@@ -36,20 +36,11 @@ export default function AuthCallback() {
   }, [])
 
   useEffect(() => {
-    if (isLoading && !forceFallback) return
+    // A slow or failed profile request must never be treated as a new account.
+    if (authLoading || isUserLoading || profileError) return
 
     if (!authUser) {
       navigate('/auth/login', { replace: true })
-      return
-    }
-
-    if (nextPath) {
-      navigate(nextPath, { replace: true })
-      return
-    }
-
-    if (!user?.tenant_id || !user?.hotel_id) {
-      navigate('/onboarding', { replace: true })
       return
     }
 
@@ -57,6 +48,20 @@ export default function AuthCallback() {
       navigate('/auth/change-password', { replace: true })
       return
     }
+
+    if (setupState === 'register') {
+      navigate('/onboarding', { replace: true })
+      return
+    }
+
+    if (setupState === 'assignment-required') return
+
+    if (nextPath) {
+      navigate(nextPath, { replace: true })
+      return
+    }
+
+    if (isPermissionsLoading && !forceFallback) return
 
     if (firstAccessibleRoute === null) {
       if (forceFallback) {
@@ -70,7 +75,11 @@ export default function AuthCallback() {
     }
 
     navigate(firstAccessibleRoute, { replace: true })
-  }, [authUser, user, isLoading, firstAccessibleRoute, forceFallback, navigate, toast, nextPath])
+  }, [authUser, user, authLoading, isUserLoading, profileError, setupState, isPermissionsLoading, firstAccessibleRoute, forceFallback, navigate, nextPath])
+
+  if (!authLoading && !isUserLoading && (profileError || setupState === 'assignment-required')) {
+    return <AccountSetupNotice assignmentRequired={!profileError && setupState === 'assignment-required'} onRetry={() => { void refetch() }} />
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">

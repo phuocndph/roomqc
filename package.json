@@ -17,6 +17,7 @@
     "db:lint": "npx supabase@latest db lint --local --schema public,private --level warning --fail-on error",
     "test": "vitest run",
     "test:integration": "node scripts/run-integration-tests.mjs",
+    "test:provisioning": "node scripts/test-provisioning-local.mjs",
     "preview": "vite preview",
     "validate:env": "node scripts/validate-env.mjs",
     "vapid:generate": "node scripts/generate-vapid-keys.mjs"

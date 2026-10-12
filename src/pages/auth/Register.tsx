@@ -12,7 +12,7 @@ const Register = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true })
+      navigate('/auth/callback', { replace: true })
     }
   }, [isAuthenticated, navigate])
 

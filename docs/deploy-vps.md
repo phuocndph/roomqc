@@ -102,6 +102,22 @@ VPS's existing Nginx/Caddy reverse proxy for a domain and HTTPS; proxy the
 domain to `http://127.0.0.1:8082` and preserve the `Host` and `X-Forwarded-*`
 headers.
 
+For `roomqc.com`, use `docker/nginx-vps.conf.example` as the outer Nginx site.
+It redirects HTTP and `www.roomqc.com` to the canonical HTTPS origin, forwards
+requests only to the loopback-bound RoomQC container, and enables HSTS. Validate
+and reload Nginx after installing the site:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+When Cloudflare is enabled, keep the VPS origin certificate valid, set SSL/TLS
+mode to **Full (strict)**, proxy the apex and `www` DNS records, and create an
+edge redirect from `www.roomqc.com/*` to `https://roomqc.com/$1`. Do not cache
+HTML, `/sw.js`, Auth requests, Supabase API responses, or authenticated pages;
+the hashed `/assets/*` files are already immutable and safe to cache.
+
 `VITE_ENABLE_DEMO_DATA` is set to `false` in the VPS template and is rejected
 by the build validator when enabled, so demo-data tools cannot be exposed by
 mistake on a production build.

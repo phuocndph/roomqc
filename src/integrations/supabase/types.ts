@@ -5816,6 +5816,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           actual_cost: number | null
+          assigned_to: string | null
           completed_at: string | null
           completion_notes: string | null
           completion_photos: string[] | null
@@ -5849,6 +5850,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           actual_cost?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
           completion_notes?: string | null
           completion_photos?: string[] | null
@@ -5882,6 +5884,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           actual_cost?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
           completion_notes?: string | null
           completion_photos?: string[] | null
@@ -5913,6 +5916,13 @@ export type Database = {
           warranty_info?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "maintenance_requests_hotel_id_fkey"
             columns: ["hotel_id"]

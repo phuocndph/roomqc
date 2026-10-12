@@ -78,6 +78,9 @@ Triggers:               180     (information_schema.triggers)
 
 ## Bắt đầu từ đâu?
 
+- Mô hình SaaS do RoomQC quản lý → [kế hoạch tổng thể](./08-ops/managed-saas-roadmap.md)
+  và [giai đoạn 1](./08-ops/managed-saas-phase-1.md).
+
 - Mới tham gia dự án → đọc theo thứ tự: `00 → 01 → 03 → 06`.
 - Cần refactor → đọc thẳng `09-refactor/findings.md`.
 - Debug bug nghiệp vụ → tra module ở `01-modules/` + flow ở `03-flows/`.

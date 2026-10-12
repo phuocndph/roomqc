@@ -1563,7 +1563,7 @@ const createDemoSupplementsAndDistribution = async (
       p_supplement_request_ids: [pendingRequest.id],
     } as any)
     assertSeedResult(orderError, 'Phiếu phân phối demo')
-    if (orderResult?.order_id) {
+    if (orderResult && typeof orderResult === 'object' && !Array.isArray(orderResult) && typeof orderResult.order_id === 'string') {
       const { error: linkError } = await supabase
         .from('distribution_orders')
         .update({ supplement_request_id: pendingRequest.id })

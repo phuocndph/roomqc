@@ -276,7 +276,7 @@ export function GroupPaymentDialog({
           booking_ids: paymentBookings.map(b => b.id),
           guest_name: groupData.guestName,
           room_numbers: paymentBookings.map(b => b.room?.room_number).join(', '),
-          room_costs_by_booking: roomCostsByBooking || [],
+          room_costs_by_booking: (roomCostsByBooking || []).map(room => ({ ...room })),
         },
       })
 

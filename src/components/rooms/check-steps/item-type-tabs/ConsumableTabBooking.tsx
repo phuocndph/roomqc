@@ -216,7 +216,7 @@ export function ConsumableTabBooking({
     return categoryItems.filter(item => getItemStatus(item).status !== 'unchecked').length
   }
 
-  if (bookingId && (isLoading || initializeConsumables.isPending)) {
+  if (bookingId && (isLoading || isInitializingConsumables)) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

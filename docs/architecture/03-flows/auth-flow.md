@@ -57,11 +57,26 @@ Memory: `secure-otp-and-password-reset-v1`. Password validation high-strength (z
 Memory: `pwa-credential-management-spec`.
 
 ## Onboarding flow (tenant mới)
-1. Register → tạo `auth.users` (chưa có row trong `public.users`)
-2. `useUser` return `null` → redirect `/onboarding`
-3. User chọn: tạo tenant mới hoặc join existing (qua invite)
-4. Form: tên hotel, address, plan trial
-5. RPC `create_tenant_with_owner` → tạo `tenants` + `users` + `user_roles=owner` + `hotels[0]` + 14-day trial
+1. Register → tạo `auth.users`; chưa có tenant/hotel nào.
+2. Nếu cần xác thực email, liên kết email quay về `/auth/callback`. Nếu không cần,
+   ứng dụng chuyển thẳng tới `/onboarding`.
+3. `AuthCallback` và `OnboardingGuard` thấy hồ sơ chưa có tenant/hotel → chỉ cho
+   đi tới `/onboarding`.
+4. Chủ khách sạn nhập thông tin công ty và khách sạn đầu tiên.
+5. RPC `complete_registration(...)` là điểm cấp phát duy nhất: trong một
+   transaction tạo/retry-safe `tenants`, owner `users`, `user_roles=owner`,
+   `user_hotels`, khách sạn đầu tiên, dữ liệu mặc định và trial 30 ngày.
+6. Một lần bấm lại sau khi RPC thành công chỉ nhận về tenant/hotel đã có;
+   không sinh tenant hay khách sạn trùng.
+
+Wrapper khóa dòng `auth.users` để tuần tự hóa các yêu cầu đầu tiên cùng tài khoản
+ngay cả khi chưa có `public.users`. Callback/guard dùng chung `getAccountSetupState`:
+super admin và owner đã có tenant không phải tạo mới; nhân viên thiếu khách sạn
+cần quản lý gán quyền. Lỗi tải profile có màn hình thử lại, không được hiểu là
+profile chưa tồn tại. Xem [SaaS giai đoạn 1](../08-ops/managed-saas-phase-1.md).
+
+Tài khoản nhân viên không đi theo luồng này: chủ khách sạn tạo/invite nhân viên
+từ khu vực quản lý người dùng, rồi gán vị trí và quyền phù hợp.
 
 ## Permissions checkpoint
 - `RoleGuard` ở route bao bọc page
