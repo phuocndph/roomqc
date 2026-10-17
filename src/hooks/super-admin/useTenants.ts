@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getFriendlyError } from '@/lib/errorMessage'
+import { getTenantPresentation } from '@/lib/admin-tenant-presentation';
 
 /**
- * Get all tenants with subscription details, lifetime revenue, and last activity
+ * Load the legacy tenant list and related rows returned by the Data API.
+ * This is not server-paginated and must not be presented as a global report.
  */
 export function useTenants() {
   return useQuery({
@@ -40,27 +42,33 @@ export function useTenants() {
 
       if (error) throw error;
 
-      // Fetch lifetime revenue for each tenant from invoices
+      // Fetch the paid invoices returned for loaded tenants (API row limits apply).
       const tenantIds = tenants?.map(t => t.id) || [];
       
-      const { data: invoices } = await supabase
+      if (tenantIds.length === 0) return [];
+
+      const { data: invoices, error: invoiceError } = await supabase
         .from('invoices')
         .select('tenant_id, total_amount, status')
         .in('tenant_id', tenantIds)
         .eq('status', 'paid');
 
-      // Calculate lifetime revenue per tenant
+      if (invoiceError) throw invoiceError;
+
+      // Legacy property name retained for consumers; this is a loaded-row subtotal.
       const revenueByTenant: Record<string, number> = {};
       invoices?.forEach(inv => {
         revenueByTenant[inv.tenant_id] = (revenueByTenant[inv.tenant_id] || 0) + (inv.total_amount || 0);
       });
 
       // Fetch last activity for each tenant
-      const { data: activities } = await supabase
+      const { data: activities, error: activityError } = await supabase
         .from('activity_logs')
         .select('tenant_id, created_at')
         .in('tenant_id', tenantIds)
         .order('created_at', { ascending: false });
+
+      if (activityError) throw activityError;
 
       // Get last activity per tenant
       const lastActivityByTenant: Record<string, string> = {};
@@ -73,29 +81,11 @@ export function useTenants() {
       // Merge data and calculate actual status
       const now = new Date();
       return tenants?.map(tenant => {
-        const subscriptionEndDate = tenant.subscription_end_date ? new Date(tenant.subscription_end_date) : null;
-        const isExpired = subscriptionEndDate && subscriptionEndDate < now;
-        const daysUntilExpiry = subscriptionEndDate 
-          ? Math.ceil((subscriptionEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-          : null;
-        const hasSubscription = (tenant.registered_rooms || 0) > 0 && subscriptionEndDate;
-        
-        // Calculate actual status
-        let actualStatus = tenant.subscription_status;
-        if (isExpired && tenant.subscription_status !== 'suspended') {
-          actualStatus = 'expired';
-        } else if (!hasSubscription) {
-          actualStatus = 'not_registered';
-        }
-        
         return {
           ...tenant,
           lifetime_revenue: revenueByTenant[tenant.id] || 0,
           last_activity: lastActivityByTenant[tenant.id] || null,
-          actual_status: actualStatus,
-          is_expired: isExpired,
-          days_until_expiry: daysUntilExpiry,
-          has_subscription: hasSubscription,
+          ...getTenantPresentation(tenant, now),
         };
       }) || [];
     },
@@ -155,7 +145,7 @@ export function useSuspendTenant() {
         description: 'Tenant has been suspended successfully.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: 'Error Suspending Tenant',
         description: getFriendlyError(error),
@@ -193,7 +183,7 @@ export function useReactivateTenant() {
         description: 'Tenant has been reactivated successfully.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: 'Error Reactivating Tenant',
         description: getFriendlyError(error),

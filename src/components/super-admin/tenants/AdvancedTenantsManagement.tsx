@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { exportToExcel } from '@/utils/exportUtils';
 import { useTenants } from '@/hooks/super-admin/useTenants';
@@ -17,6 +17,7 @@ import { TenantAnalytics } from './TenantAnalytics';
 import { BulkActions } from './BulkActions';
 import { Download, Search } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
+import { filterAdminTenants, getAdminTenantPlanOptions } from '@/lib/admin-tenant-presentation';
 
 export function AdvancedTenantsManagement() {
   const { t } = useTranslation('superAdmin');
@@ -26,15 +27,23 @@ export function AdvancedTenantsManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
 
-  const { data: tenants } = useTenants();
+  const { data: tenants = [], isError, isLoading, isFetching } = useTenants();
+  const filteredTenants = useMemo(() => filterAdminTenants(tenants, {
+    statusFilter, planFilter, approvalFilter, searchQuery,
+  }), [tenants, statusFilter, planFilter, approvalFilter, searchQuery]);
+  const planOptions = useMemo(() => getAdminTenantPlanOptions(tenants), [tenants]);
+  const changeFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setSelectedTenants([]);
+  };
 
   const handleExport = () => {
-    if (tenants && tenants.length > 0) {
-      const exportData = tenants.map((t: any) => ({
+    if (!isError && filteredTenants.length > 0) {
+      const exportData = filteredTenants.map((t) => ({
         'Tên': t.name,
-        'Email': t.primary_contact_email || '',
-        'Gói': t.subscription_tier || '',
-        'Trạng thái': t.subscription_status || '',
+        'Email': t.email || '',
+        'Gói': t.subscription_plan?.name || '',
+        'Trạng thái': t.actual_status,
         'Số phòng': t.registered_rooms || 0,
         'Ngày tạo': t.created_at,
         'Hết hạn': t.subscription_end_date || '',
@@ -56,15 +65,16 @@ export function AdvancedTenantsManagement() {
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
+            aria-label={t('tenants.searchPlaceholder')}
             placeholder={t('tenants.searchPlaceholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => changeFilter(setSearchQuery)(e.target.value)}
             className="pl-8 h-8 text-sm"
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={statusFilter} onValueChange={changeFilter(setStatusFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByStatus')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByStatus')} />
           </SelectTrigger>
           <SelectContent>
@@ -80,20 +90,18 @@ export function AdvancedTenantsManagement() {
           </SelectContent>
         </Select>
 
-        <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={planFilter} onValueChange={changeFilter(setPlanFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByPlan')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByPlan')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('tenants.allPlans')}</SelectItem>
-            <SelectItem value="basic">{t('tenants.plans.basic')}</SelectItem>
-            <SelectItem value="premium">{t('tenants.plans.premium')}</SelectItem>
-            <SelectItem value="enterprise">{t('tenants.plans.enterprise')}</SelectItem>
+            {planOptions.map(plan => <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>)}
           </SelectContent>
         </Select>
 
-        <Select value={approvalFilter} onValueChange={setApprovalFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={approvalFilter} onValueChange={changeFilter(setApprovalFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByApproval')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByApproval')} />
           </SelectTrigger>
           <SelectContent>
@@ -104,11 +112,16 @@ export function AdvancedTenantsManagement() {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="sm" onClick={handleExport} className="h-8">
+        <Button variant="outline" size="sm" onClick={handleExport} className="h-8" disabled={isError || isLoading || isFetching || !filteredTenants.length}>
           <Download className="h-3.5 w-3.5 mr-1.5" />
-          {t('tenants.exportData')}
+          Xuất kết quả lọc
         </Button>
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Bộ lọc và file xuất áp dụng trên dữ liệu đã tải, chưa phải báo cáo toàn hệ thống.
+        Tab phân tích dùng nguồn thống kê riêng, không thay đổi theo bộ lọc này.
+      </p>
 
       {/* Bulk Actions */}
       {selectedTenants.length > 0 && (
