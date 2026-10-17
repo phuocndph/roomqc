@@ -4,11 +4,27 @@ Ngày lập: 17/10/2026. Phạm vi: quản lý khách hàng đăng ký RoomQC, g
 thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch mở rộng toàn bộ
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
+
+## Cập nhật triển khai local — 17/10/2026
+
+Bản tích hợp ứng dụng 9886e86 đã triển khai healthy tại RoomQC 8082.
+Migration A2 20261017145741 đã áp dụng lên DB local sau kiểm tra độc lập.
+Kết quả cuối: 724 Vitest đạt/16 skip, 73 kiểm tra DB độc lập, 9 kiểm tra
+Auth HTTP/transaction rollback và 8 Deno đạt; TypeScript/lint/container đạt.
+Browser đã kiểm tra đăng nhập, menu, tìm khách, mở/đóng hồ sơ và focus;
+chưa thực hiện committed browser-write E2E. Đã dọn fixture/candidate.
+
+Đây là các lát cắt đầu A1/A2/A3, không đóng toàn A0–A4 hoặc phát hành VPS.
+Các mô tả cũ về chưa áp DB/chưa deploy là trạng thái lịch sử, không còn
+là trạng thái mới nhất. Chi tiết và backlog còn lại tại
+[báo cáo bàn giao local](roomqc-parallel-local-release-2026-10-17.md).
+
 Tài liệu này bổ sung thứ tự công việc gần nhất cho
 [kế hoạch tổng thể](customer-lifecycle-management-audit-plan-2026-10-17.md).
 **Cập nhật thực hiện:** A0 đã bắt đầu, có bản sửa và kiểm thử local tại
 [báo cáo baseline](a0-browser-baseline-2026-10-17.md). Chưa đóng toàn bộ A0;
-A1–A4 chưa triển khai. Không gọi cron toàn hệ thống hoặc bật thu tiền.
+Ở mốc lập plan, A1–A4 chưa triển khai; trạng thái mới ở cập nhật trên.
+Không gọi cron toàn hệ thống hoặc bật thu tiền.
 
 Bổ sung cùng ngày: đã kiểm thử browser mất phản hồi POST sau commit/retry
 không trùng đơn, thu hồi phiên owner trước submit, khóa admin khi đang mở

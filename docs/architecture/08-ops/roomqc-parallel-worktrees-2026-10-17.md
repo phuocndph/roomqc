@@ -2,6 +2,20 @@
 
 Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
 
+## Cập nhật triển khai local — 17/10/2026
+
+Bản tích hợp ứng dụng 9886e86 đã triển khai healthy tại RoomQC 8082.
+Migration A2 20261017145741 đã áp dụng lên DB local sau kiểm tra độc lập.
+Kết quả cuối: 724 Vitest đạt/16 skip, 73 kiểm tra DB độc lập, 9 kiểm tra
+Auth HTTP/transaction rollback và 8 Deno đạt; TypeScript/lint/container đạt.
+Browser đã kiểm tra đăng nhập, menu, tìm khách, mở/đóng hồ sơ và focus;
+chưa thực hiện committed browser-write E2E. Đã dọn fixture/candidate.
+
+Đây là các lát cắt đầu A1/A2/A3, không đóng toàn A0–A4 hoặc phát hành VPS.
+Các mô tả cũ về chưa áp DB/chưa deploy là trạng thái lịch sử, không còn
+là trạng thái mới nhất. Chi tiết và backlog còn lại tại
+[báo cáo bàn giao local](roomqc-parallel-local-release-2026-10-17.md).
+
 ## Nền chung và bảo toàn công việc
 
 - Repo gốc vẫn ở main, HEAD 00eab56; giữ nguyên thay đổi chưa commit và index
