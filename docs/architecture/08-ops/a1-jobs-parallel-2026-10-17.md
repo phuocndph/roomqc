@@ -52,14 +52,22 @@ trước khi có quy trình phục hồi tự động an toàn.
 - `npx tsc -p tsconfig.app.json --noEmit`: đạt.
   App typecheck có kiểm tra shared module qua import test, không thay thế
   Deno check của Edge entrypoint.
-- Deno không có trên PATH; chưa chạy Deno check/serve/deploy. Không chạy job
-  global, không gọi DB/provider/email và không đổi lịch. Không cần dọn fixture DB.
+- Deno không có trên PATH ở kiểm tra ban đầu; bổ sung kiểm chứng bằng
+  `npx --yes deno@2.9.6 test --no-config --no-lock --deny-net --deny-env --deny-write --deny-run --deny-ffi supabase/functions/check-subscription-status/handler.deno-test.ts`:
+  **8/8 đạt**, có typecheck Deno. Harness gọi actual `requireCronAuth` với
+  `Deno.env.get` được thay tạm bằng dictionary fixture, không đọc env thật;
+  handler, orchestration và Response chạy trên Deno, store/staff là mock.
+  Không import entrypoint, SDK hoặc `Deno.serve`; không mở listener/fetch.
+  Package runner có thể tải binary Deno nhưng test runtime bị deny network.
+  Không chạy job global, DB/provider/email và không đổi lịch. Không cần dọn fixture DB.
 
 Các test gồm: thành công/0 rows; transition lỗi/throw/response malformed;
 owner thiếu/lỗi/throw; notification lỗi/throw và partial work; không retry mù;
 staff lỗi độc lập; HTTP method/config/auth guards; thông tin nhạy cảm không lọt
-vào result/log lỗi; timestamp nhất quán. Auth guard được stub tại boundary;
-helper cron auth không đổi và chưa được tích hợp vào Edge runtime trong đợt này.
+vào result/log lỗi; timestamp nhất quán. Vitest stub auth boundary; Deno harness
+bổ sung actual auth helper với credential fixture (noauth/wrong key/service key/
+cron secret), method guard, thiếu config, authorized POST store mock và partial
+notification failure. Không coi đây là DB integration hay Edge isolate deployed.
 
 ## Còn phải làm trước nghiệm thu A1
 
