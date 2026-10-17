@@ -234,7 +234,8 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
         to_grace_period: knownSubscription?.to_grace_period ?? 0, to_suspended: knownSubscription?.to_suspended ?? 0,
         notifications_sent: knownSubscription?.notifications_sent ?? 0,
         notifications_failed: knownSubscription?.notifications_failed ?? 0, transition_outcome_unknown: true,
-        recovery_required: true, error_codes: ['JOB_EXECUTION_FAILED'],
+        recovery_required: true, error_codes: [...new Set([...(knownSubscription?.error_codes ?? []),
+          ...(knownStaff === 'failed' ? ['STAFF_PRESENCE_FAILED'] : []), 'JOB_EXECUTION_FAILED'])],
       };
     }
     // Legacy transitions/notifications and history finish are separate commits.
