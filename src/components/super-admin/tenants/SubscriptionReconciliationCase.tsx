@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,8 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
   const [cursors, setCursors] = useState<(number | undefined)[]>([undefined]);
   const before = cursors.at(-1);
   const pending = useRef<Command | null>(null);
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => { heading.current?.focus(); }, []);
   const query = useQuery({
     queryKey: ['subscription-reconciliation-case', user?.id, tenantId, paymentId, before],
     queryFn: async ({ signal }) => {
@@ -76,7 +78,7 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
 
   return <section aria-label="Hồ sơ kiểm tra giao dịch" className="rounded-md border p-4 space-y-3">
     <div className="flex items-center justify-between gap-3">
-      <h3 className="font-semibold">Hồ sơ kiểm tra giao dịch</h3>
+      <h3 ref={heading} tabIndex={-1} className="font-semibold">Hồ sơ kiểm tra giao dịch</h3>
       <Button variant="ghost" size="sm" onClick={onClose} disabled={saving || awaitingReceipt}>Ẩn chi tiết hồ sơ</Button>
     </div>
     <p className="text-xs font-mono break-all">Giao dịch: {paymentId}</p>

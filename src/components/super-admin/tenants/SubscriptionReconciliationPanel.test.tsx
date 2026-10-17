@@ -66,4 +66,17 @@ describe('subscription support queue',()=>{
     state.session=false;setup();expect(screen.getByRole('alert')).toHaveTextContent('đăng nhập');
     expect(state.rpc).not.toHaveBeenCalled();
   });
+  it('opens the notebook in place, focuses it, and returns to the same queue action',async()=>{
+    state.rpc.mockImplementation((name:string)=>Promise.resolve(name==='admin_subscription_reconciliation'
+      ? {data:page,error:null} : {data:null,error:{code:'PGRST202'}}));
+    setup();
+    fireEvent.click(await screen.findByRole('button',{name:'Mở hồ sơ kiểm tra'}));
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:'Hồ sơ kiểm tra giao dịch'})).toHaveFocus();
+    expect(await screen.findByRole('alert')).toHaveTextContent('chưa được cài đặt');
+    fireEvent.click(screen.getByRole('button',{name:'Ẩn chi tiết hồ sơ'}));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('button',{name:'Mở hồ sơ kiểm tra'})).toHaveFocus();
+    expect(screen.getByText('Trang 1')).toBeInTheDocument();
+  });
 });

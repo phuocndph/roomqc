@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,11 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
   const [filter, setFilter] = useState<ReconciliationFilter>('all');
   const [cursors, setCursors] = useState<(ReconciliationCursor | null)[]>([null]);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const openers = useRef<Record<string, HTMLButtonElement | null>>({});
+  const lastOpenedPayment = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedPayment === null && lastOpenedPayment.current) openers.current[lastOpenedPayment.current]?.focus();
+  }, [selectedPayment]);
   const before = cursors.at(-1);
   const query = useQuery({
     queryKey: ['subscription-reconciliation', user?.id, tenantId, filter, before],
@@ -36,6 +41,10 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
     enabled: !!user && !!session, retry: false, gcTime: 0, staleTime: 0, refetchInterval: 30000,
   });
   const page = user && session && !query.isFetching && !query.error ? query.data : undefined;
+  // Show one task at a time instead of appending a notebook below 25 rows.
+  // Keep this queue mounted so closing restores its filter/cursor and opener.
+  if (selectedPayment) return <SubscriptionReconciliationCase tenantId={tenantId} paymentId={selectedPayment}
+    onClose={() => setSelectedPayment(null)} />;
   return <section aria-label="Đối soát thuê bao" className="space-y-4 py-3">
     <div className="rounded-md border p-3 text-sm space-y-1">
       <p className="font-medium">Chỉ tra cứu — không xác nhận thanh toán hoặc đổi gói</p>
@@ -68,7 +77,8 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
               {row.invoice_id && <p className="text-xs break-all text-muted-foreground">ID hóa đơn: {row.invoice_id}</p>}
               <p className="text-xs text-muted-foreground">{row.payment_status === 'pending' ? 'Đang chờ' : 'Hoàn tất'} · Hóa đơn: {row.invoice_status ?? '—'}</p>
               <p className="text-xs text-muted-foreground">{row.flags.includes('missing_created_at') ? 'Thiếu thời điểm tạo' : new Date(row.created_at).toLocaleString('vi-VN')}</p>
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => setSelectedPayment(row.id)}>Mở hồ sơ kiểm tra</Button>
+              <Button ref={node => { openers.current[row.id] = node; }} variant="outline" size="sm" className="mt-2"
+                onClick={() => { lastOpenedPayment.current = row.id; setSelectedPayment(row.id); }}>Mở hồ sơ kiểm tra</Button>
             </TableCell>
             <TableCell className="align-top whitespace-nowrap">{row.amount.toLocaleString('vi-VN')} {row.currency}</TableCell>
             <TableCell className="align-top"><div className="flex flex-wrap gap-1">{row.flags.map(flag =>
@@ -85,7 +95,5 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
       <Button variant="outline" size="sm" disabled={!page?.has_more || !page.next_cursor}
         onClick={() => { if (page?.next_cursor) setCursors(value => [...value, page.next_cursor]); }}>Trang sau</Button>
     </div>
-    {selectedPayment && <SubscriptionReconciliationCase tenantId={tenantId} paymentId={selectedPayment}
-      onClose={() => setSelectedPayment(null)} />}
   </section>;
 }
