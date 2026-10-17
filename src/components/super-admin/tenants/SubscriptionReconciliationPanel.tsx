@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionReconciliationCase } from './SubscriptionReconciliationCase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   readReconciliationPage, reconciliationError, reconciliationFlags,
@@ -19,6 +20,7 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
   const { user, session } = useAuth();
   const [filter, setFilter] = useState<ReconciliationFilter>('all');
   const [cursors, setCursors] = useState<(ReconciliationCursor | null)[]>([null]);
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const before = cursors.at(-1);
   const query = useQuery({
     queryKey: ['subscription-reconciliation', user?.id, tenantId, filter, before],
@@ -66,6 +68,7 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
               {row.invoice_id && <p className="text-xs break-all text-muted-foreground">ID hóa đơn: {row.invoice_id}</p>}
               <p className="text-xs text-muted-foreground">{row.payment_status === 'pending' ? 'Đang chờ' : 'Hoàn tất'} · Hóa đơn: {row.invoice_status ?? '—'}</p>
               <p className="text-xs text-muted-foreground">{row.flags.includes('missing_created_at') ? 'Thiếu thời điểm tạo' : new Date(row.created_at).toLocaleString('vi-VN')}</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => setSelectedPayment(row.id)}>Mở hồ sơ kiểm tra</Button>
             </TableCell>
             <TableCell className="align-top whitespace-nowrap">{row.amount.toLocaleString('vi-VN')} {row.currency}</TableCell>
             <TableCell className="align-top"><div className="flex flex-wrap gap-1">{row.flags.map(flag =>
@@ -82,5 +85,7 @@ function ReconciliationQueue({ tenantId }: { tenantId: string }) {
       <Button variant="outline" size="sm" disabled={!page?.has_more || !page.next_cursor}
         onClick={() => { if (page?.next_cursor) setCursors(value => [...value, page.next_cursor]); }}>Trang sau</Button>
     </div>
+    {selectedPayment && <SubscriptionReconciliationCase tenantId={tenantId} paymentId={selectedPayment}
+      onClose={() => setSelectedPayment(null)} />}
   </section>;
 }
