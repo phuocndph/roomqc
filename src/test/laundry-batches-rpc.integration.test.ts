@@ -43,12 +43,11 @@ function assertNoSchemaError(error: unknown, label: string) {
 
 describe.skipIf(!INTEGRATION_ENABLED)('get_laundry_batches_filtered (integration)', () => {
   // A skipped suite must collect without production/local environment files.
-  let client: ReturnType<typeof createClient>;
-  beforeAll(() => {
-    client = createClient(TEST_ENV.url, TEST_ENV.key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+  const makeClient = () => createClient(TEST_ENV.url, TEST_ENV.key, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
+  let client: ReturnType<typeof makeClient>;
+  beforeAll(() => { client = makeClient(); });
 
   const baseParams = {
     p_tenant_id: TEST_ENV.tenantId,

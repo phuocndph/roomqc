@@ -65,12 +65,11 @@ function assertNoSchemaError(error: unknown, label: string) {
 describe.skipIf(!INTEGRATION_ENABLED)('Critical RPC schema guard (integration)', () => {
   // Vitest collects skipped describe callbacks too. Do not construct a client
   // until an explicitly configured integration suite actually runs.
-  let client: ReturnType<typeof createClient>;
-  beforeAll(() => {
-    client = createClient(TEST_ENV.url, TEST_ENV.key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+  const makeClient = () => createClient(TEST_ENV.url, TEST_ENV.key, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
+  let client: ReturnType<typeof makeClient>;
+  beforeAll(() => { client = makeClient(); });
 
   it('create_distribution_order: không có schema error', async () => {
     const { error } = await client.rpc('create_distribution_order', {
