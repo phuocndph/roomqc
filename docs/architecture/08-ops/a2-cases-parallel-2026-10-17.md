@@ -1,5 +1,11 @@
 # A2 — nền tảng hồ sơ kiểm tra, nhánh song song
 
+**Bổ sung kiểm chứng sau bàn giao:** đã có PostgreSQL focused dependency-schema
+integration độc lập; xem [kết quả 73 kiểm tra](a2-cases-db-isolated-validation-2026-10-17.md).
+Các dòng `Not-run` DB bên dưới là trạng thái lúc bàn giao source ban đầu và đã
+được thay thế trong đúng phạm vi SQL ở báo cáo mới. Auth HTTP/full-stack/browser
+và deployment vẫn chưa được kiểm chứng; migration chưa áp DB chính bởi nhánh này.
+
 Ngày: 17/10/2026. Nhánh `codex/roomqc-a2-reconciliation-cases`.
 Baseline: `d42427291fae73314a28c50ed1375bd08a467345`.
 
