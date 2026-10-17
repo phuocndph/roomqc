@@ -1,0 +1,118 @@
+# RoomQC — phân việc song song bằng Git worktree
+
+Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
+
+## Nền chung và bảo toàn công việc
+
+- Repo gốc vẫn ở main, HEAD 00eab56; giữ nguyên thay đổi chưa commit và index
+  của người dùng, không reset/stash/checkout hoặc commit toàn bộ lên main.
+- Source baseline local: d42427291fae73314a28c50ed1375bd08a467345, lưu ở
+  refs/roomqc/baselines/20261017-parallel. Snapshot dùng index tạm riêng,
+  gồm source hiện hành và các bản sửa trước; không chỉ lấy HEAD cũ.
+- Không sao chép .env thật, Supabase .temp, node_modules, backup hay artifacts
+  chứa dữ liệu thử. Các file .env.*.example vẫn là tài liệu cấu hình mẫu.
+- Bốn worktree native Git được tạo trực tiếp vì công cụ managed worktree
+  của ứng dụng không nhận repo trong thư mục con. Không push remote/PR.
+
+Gốc worktree:
+C:/Users/Lenovo/Desktop/Tổng hợp dự án/room-weave-pro-main (1)/roomqc-worktrees/
+
+## Phân luồng và quyền sở hữu
+
+| Luồng | Branch | Thư mục | Phạm vi lượt đầu |
+|---|---|---|---|
+| A1 | codex/roomqc-a1-jobs-monitoring | a1-jobs | Sửa worker báo thành công nhầm, tách kết quả staff/subscription, test orchestration |
+| A2 | codex/roomqc-a2-reconciliation-cases | a2-cases | Foundation hồ sơ phi tài chính, lịch sử bất biến, tạo/xem/ghi chú, quyền/session/replay/version |
+| A3 | codex/roomqc-a3-admin-console | a3-console | Nhãn trial, lọc gói, lỗi tải, hành vi export đúng phạm vi và menu mobile accessible |
+| Rà soát/ghép | codex/roomqc-parallel-integration | integration | Review từng diff, ghép commit đã kiểm tra, hồi quy tổng hợp và ghi giới hạn |
+
+Ba agent thực hiện ba luồng độc lập; agent chính phụ trách rà soát/ghép.
+Đây là chia việc kỹ thuật đồng thời, không đổi các cổng nghiệm thu của plan.
+
+## Quy tắc tránh xung đột
+
+- Mỗi agent chỉ sửa file thuộc phạm vi được giao, có test và báo cáo riêng.
+  Không cùng sửa App/router, package/lock, plan/report tổng hoặc DB types.
+- A1 không sửa case/console. A2 không sửa worker, tenant list/layout hoặc
+  TenantBillingDialog. A3 không sửa case/billing dialog, worker hoặc migration.
+- Mọi migration chỉ là source đề xuất trong nhánh; chưa áp lên DB đang dùng.
+  Agent chính kiểm tra tên/version, quyền và hợp đồng trước khi nghiệm thu.
+- Không tự khởi động/reset Supabase, gọi lifecycle/expiry toàn cụm, nhận/gửi
+  tiền, gọi SePay, gửi email Internet, mở signup, thay CRM hoặc triển khai VPS.
+- Không tự redeploy RoomQC từ từng worktree. Chỉ một bước triển khai sau khi
+  tích hợp/kiểm chứng; frontend mới không được đòi schema chưa có.
+- Chỉ commit file của luồng mình. Không push, merge vào main hay ghi đè
+  working copy đang chạy. Dependency cài riêng từ lockfile, không copy secrets.
+
+## Cổng ghép và báo cáo
+
+1. Agent gửi commit hash, danh sách file, test đã chạy/chưa chạy và phần còn lại.
+2. Review diff từ baseline, kiểm tra quyền, lỗi partial success và tương thích.
+3. Ghép từng commit riêng vào integration; giữ nhánh gốc để đối chiếu.
+4. Chạy lại test phần sửa, TypeScript, lint và suite chung. SQL chưa áp/test DB
+   không được tính là integration pass hoặc deploy-ready.
+5. Ghi rõ thành quả lượt đầu khác với hoàn thành toàn bộ A1/A2/A3/A4.
+
+## Trạng thái khởi tạo
+
+- Đã tạo đủ bốn worktree/branch, cùng baseline; main/index gốc không đổi.
+- Đã giao ba agent thực thi song song. Chưa tích hợp hoặc đưa code mới lên
+  ứng dụng 8082 ở thời điểm lập file này.
+- A1 xác nhận lượt đầu chưa có durable run history/monitor; A2 chưa làm
+  phân công/kết luận; A3 chưa hoàn thành server pagination/thử tải.
+- Các khóa/quyền/chính sách cần chủ dự án vẫn để riêng trong danh sách deferred.
+
+## Kết quả lượt triển khai song song
+
+Ba nhánh đã bàn giao commit và ghép không xung đột vào
+`codex/roomqc-parallel-integration`; chưa merge vào main hoặc deploy 8082.
+
+| Luồng | Commit nhánh | Commit trong integration | Kết quả có mã nguồn |
+|---|---|---|---|
+| A1 | a88538e3af485a603630cd86f0d5e897fff562fb | 7471d0f | Kiểm tra lỗi transition/owner/notification; HTTP không báo success giả; kết quả staff riêng; chỉ dẫn partial/unknown outcome |
+| A2 | e3089982a09dfa334124df5233af2a665dc8dcb5 | 48cb745 | Nền tạo/xem/ghi chú hồ sơ phi tài chính; receipt/version; schema đề xuất; UI thiếu schema/quyền và retry rõ ràng |
+| A3 | e55d634d703230728805a6cbdc93d14d629ba758 | 686c76e | Trial và bộ lọc đúng; email đúng schema; export kết quả lọc; lỗi/retry/cache; menu mobile/tablet có quản lý focus |
+| Kiểm thử nền | a49eab0 (integration) | a49eab0 | Tách 4 bộ test khỏi khởi tạo client Supabase khi không có cấu hình; không thêm env/khóa giả hoặc gọi mạng |
+
+Trong review đã phát hiện/fix pending note sau mất response: refetch thấy
+version mới không được sinh request ID mới. UI giữ nguyên command đến khi có
+receipt hoặc definitive rejection. Giới hạn qua reload/unmount vẫn còn.
+
+### Kiểm chứng
+
+- Bộ test nền không dùng .env: 643 đạt / 16 skip.
+- Sau ghép: **97 file đạt, 723 test đạt / 16 skip** (99 file tổng, 2 file skip),
+  chạy `npm test -- --reporter=dot` trên integration, ngày 17/10/2026.
+- Ba nhánh: test focused A1 47/47, A2 37/37, A3 34/34; các số focused bao gồm
+  regression cũ, không cộng chúng lần nữa vào 723. TypeScript/lint riêng từng
+  nhánh đạt. TypeScript ứng dụng và ESLint toàn bộ file TS/TSX sửa trên bản
+  ghép cuối đều đạt, không warning. Full Vitest đã chạy lại trên bản cuối.
+- Khi ghép, TypeScript bắt lỗi mất generic inference của lazy test client.
+  Đã sửa bằng factory có type suy luận tại commit 5d6f80c rồi kiểm tra lại;
+  không sửa generated types hoặc bỏ qua lỗi compiler.
+- `git diff --check d424272 HEAD` đạt; ba worktree tác vụ sạch sau commit.
+- Main gốc vẫn HEAD 00eab56, index gốc không thay đổi. HTTP 8082 trả 200 trong
+  kiểm tra cuối; đây chỉ là smoke bản cũ đang chạy, không phải E2E bản mới.
+- Không áp migration, gọi DB/job global/provider, build/deploy container,
+  bật signup/thu tiền hoặc sửa CRM trong lượt này.
+
+### Giới hạn và thứ tự tiếp tục
+
+1. A1 chưa có durable run history, monitor/backlog, interrupted/busy,
+   transaction/locking/outbox hoặc retry thông báo an toàn. Run ID hiện chỉ
+   request/log. Không bật lịch hoặc tự replay khi job trả 500.
+2. A2 migration `20261017145741` chưa áp dụng. SQL/Auth/grants/RLS, race thật,
+   advisors và DB lint **not-run**. Chưa phân công/kết luận/mở lại, danh sách
+   tìm lại case cũ, diagnostic flags hoặc pending recovery qua reload.
+3. A3 chưa có pagination/search/count/aggregation phía server, audit analytics,
+   bundle optimization hoặc số đo hiệu năng. Nhãn “đã tải” không thay công việc đó.
+4. Browser E2E, Deno runtime, build/container và triển khai bản ghép chưa chạy;
+   16 integration skip không phải pass. Chưa đóng toàn A0/A1/A2/A3/A4.
+5. Bước kế: kiểm chứng schema A2 trong môi trường DB độc lập có fixture, rồi
+   hoàn thiện các phần còn lại và hồi quy browser. Chỉ đưa vào bản đang chạy
+   sau cổng tương thích schema; không merge nguồn vào main dirty một cách mù.
+
+Báo cáo riêng trong nhánh integration:
+[a1-jobs-parallel-2026-10-17.md](a1-jobs-parallel-2026-10-17.md),
+[a2-cases-parallel-2026-10-17.md](a2-cases-parallel-2026-10-17.md),
+[a3-console-parallel-2026-10-17.md](a3-console-parallel-2026-10-17.md).
