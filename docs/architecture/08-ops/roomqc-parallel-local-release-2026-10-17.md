@@ -120,4 +120,3 @@ Không mở signup công khai, checkout/thu tiền, gọi SePay, gửi email Int
 hoặc sweep lifecycle toàn cụm trong lượt này. Không cam kết số user đồng thời.
 Các báo cáo trước ghi "chưa áp migration/chưa deploy" là mốc lịch sử; trạng
 thái mới nhất được cập nhật tại tài liệu này.
-
