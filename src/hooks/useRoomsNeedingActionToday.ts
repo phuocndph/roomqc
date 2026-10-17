@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { format } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
@@ -18,6 +19,7 @@ export interface MissingRoomItem {
 
 export interface RejectedTaskItem {
   taskId: string
+  roomId: string
   roomNumber: string | null
   assigneeName: string | null
   rejectedAt: string | null
@@ -25,6 +27,7 @@ export interface RejectedTaskItem {
 
 export interface UrgentTaskItem {
   taskId: string
+  roomId: string
   roomNumber: string | null
   title: string
   status: string
@@ -37,8 +40,8 @@ export interface ActionBuckets {
   urgent: UrgentTaskItem[]                 // task priority urgent đang mở
 }
 
-const DIRTY_SET = new Set(['vacant_dirty', 'cleaning', 'occupied_dirty', 'check_out'])
-const OCCUPIED_SET = new Set(['occupied', 'occupied_clean', 'occupied_dirty', 'dnd', 'sleep_out', 'service_refused'])
+const DIRTY_SET = new Set(['vacant_dirty', 'cleaning', 'check_out'])
+const OCCUPIED_SET = new Set(['occupied', 'occupied_clean', 'occupied_dirty', 'check_in', 'dnd', 'sleep_out', 'service_refused', 'skipper'])
 
 /**
  * 4 bucket "Cần xử lý ngay" cho cockpit Trưởng buồng phòng.
@@ -47,13 +50,13 @@ export function useRoomsNeedingActionToday(hotelId?: string | null) {
   const { user } = useUser()
   const tenantId = user?.tenant_id
   const qc = useQueryClient()
+  const today = format(new Date(), 'yyyy-MM-dd')
 
   const query = useQuery<ActionBuckets>({
-    queryKey: ['hk-action-buckets', tenantId, hotelId],
+    queryKey: ['hk-action-buckets', tenantId, hotelId, today],
     enabled: !!tenantId && !!hotelId,
     staleTime: 30_000,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10)
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000).toISOString()
 
       const [roomsRes, bookingsTodayRes, rejectedRes, urgentRes] = await Promise.all([
@@ -72,23 +75,23 @@ export function useRoomsNeedingActionToday(hotelId?: string | null) {
           .eq('tenant_id', tenantId!)
           .eq('hotel_id', hotelId!)
           .eq('check_out_date', today)
-          .in('status', ['checked_out', 'checked_in']),
+          .eq('status', 'checked_out'),
         supabase
           .from('housekeeping_tasks')
-          .select('id, status, updated_at, room:rooms(room_number), assigned_user:users!housekeeping_tasks_assigned_to_fkey(full_name)')
+          .select('id, room_id, status, updated_at, room:rooms(room_number), assigned_user:users!housekeeping_tasks_assigned_to_fkey(full_name)')
           .eq('tenant_id', tenantId!)
           .eq('hotel_id', hotelId!)
-          .eq('status', 'rejected')
+          .in('status', ['rejected_rework', 'rejected'])
           .gte('updated_at', sevenDaysAgo)
           .order('updated_at', { ascending: false })
           .limit(8),
         supabase
           .from('housekeeping_tasks')
-          .select('id, status, priority, title, room:rooms(room_number)')
+          .select('id, room_id, status, priority, title, room:rooms(room_number)')
           .eq('tenant_id', tenantId!)
           .eq('hotel_id', hotelId!)
           .eq('priority', 'urgent')
-          .in('status', ['todo', 'in_progress', 'pending', 'assigned'])
+          .in('status', ['todo', 'in_progress', 'pending', 'assigned', 'rejected_rework'])
           .order('created_at', { ascending: false })
           .limit(8),
       ])
@@ -111,7 +114,7 @@ export function useRoomsNeedingActionToday(hotelId?: string | null) {
       for (const b of bookingsTodayRes.data || []) {
         const room = roomMap.get(b.room_id as string)
         if (!room) continue
-        if (!DIRTY_SET.has(room.status)) continue
+        if (!DIRTY_SET.has(room.status) || checkoutNotCleaned.some(item => item.roomId === room.id)) continue
         checkoutNotCleaned.push({
           roomId: room.id,
           roomNumber: room.room_number,
@@ -129,22 +132,24 @@ export function useRoomsNeedingActionToday(hotelId?: string | null) {
         .map((r) => ({ roomId: r.id, roomNumber: r.room_number, missingCount: r.missing_items || 0 }))
 
       // 3) QC không đạt
-      const rejectedQc: RejectedTaskItem[] = (rejectedRes.data || []).map((t: any) => ({
+      const rejectedQc: RejectedTaskItem[] = (rejectedRes.data || []).map(t => ({
         taskId: t.id,
+        roomId: t.room_id,
         roomNumber: t.room?.room_number ?? null,
         assigneeName: t.assigned_user?.full_name ?? null,
         rejectedAt: t.updated_at,
       }))
 
       // 4) Task khẩn
-      const urgent: UrgentTaskItem[] = (urgentRes.data || []).map((t: any) => ({
+      const urgent: UrgentTaskItem[] = (urgentRes.data || []).map(t => ({
         taskId: t.id,
+        roomId: t.room_id,
         roomNumber: t.room?.room_number ?? null,
-        title: t.title,
+        title: t.title || 'Việc khẩn cấp',
         status: t.status,
       }))
 
-      return { checkoutNotCleaned, missingItems, rejectedQc, urgent }
+      return { checkoutNotCleaned: checkoutNotCleaned.slice(0, 8), missingItems, rejectedQc, urgent }
     },
   })
 
@@ -159,6 +164,9 @@ export function useRoomsNeedingActionToday(hotelId?: string | null) {
         qc.invalidateQueries({ queryKey: ['hk-action-buckets', tenantId, hotelId] }),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'housekeeping_tasks', filter: `hotel_id=eq.${hotelId}` }, () =>
+        qc.invalidateQueries({ queryKey: ['hk-action-buckets', tenantId, hotelId] }),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_items', filter: `tenant_id=eq.${tenantId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-action-buckets', tenantId, hotelId] }),
       )
       .subscribe()

@@ -98,7 +98,7 @@ export function RoomTable({ rooms, isLoading, selectedIds, onSelectionChange }: 
   }
   
   return (
-    <div className="rounded-md border" style={{ fontSize: styles.bodyStyle.fontSize }}>
+    <div className="rounded-none border" style={{ fontSize: styles.bodyStyle.fontSize }}>
       <div className="overflow-x-auto">
         <Table data-density={densityState.preset} className={densityState.preset === 'sm' ? '[&_td]:py-1.5 [&_th]:py-2' : densityState.preset === 'lg' ? '[&_td]:py-4 [&_th]:py-3' : ''}>
           <TableHeader>

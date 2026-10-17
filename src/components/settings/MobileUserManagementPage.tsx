@@ -10,6 +10,7 @@ import { MobileUserListTab } from './mobile/MobileUserListTab'
 import { MobileRolesOverviewTab } from '@/components/users/mobile/MobileRolesOverviewTab'
 import { MobilePermissionConfigurationTab } from '@/components/users/mobile/MobilePermissionConfigurationTab'
 import { useUser } from '@/hooks/useUser'
+import { PendingInvitations } from '@/components/users/PendingInvitations'
 
 export const MobileUserManagementPage = ({ editUserId }: { editUserId?: string | null }) => {
   const navigate = useNavigate()
@@ -42,6 +43,7 @@ export const MobileUserManagementPage = ({ editUserId }: { editUserId?: string |
         title="Người dùng & Phân quyền"
         onBack={() => navigateBack(navigate, '/settings')}
       />
+      <div className="p-4"><PendingInvitations /></div>
 
       <Tabs
         value={activeTab}

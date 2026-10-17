@@ -162,7 +162,7 @@ export const MobileRevenueReportPage = () => {
                 <YAxis hide tickFormatter={formatCompact} />
                 <Tooltip
                   formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-overlay)', fontSize: '12px' }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#mobileRevenueGrad)" />
               </AreaChart>

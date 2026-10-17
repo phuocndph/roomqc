@@ -14,6 +14,8 @@ import { toast } from 'sonner'
 import { useUser } from '@/hooks/useUser'
 import { WebcamCaptureDialog } from './WebcamCaptureDialog'
 import { QRScannerDialog } from './QRScannerDialog'
+import { buildPublicUrl } from '@/utils/getPublicUrl'
+import { workspacePath } from '@/lib/workspace'
 
 export interface ScannedDocumentData {
   full_name: string
@@ -143,7 +145,7 @@ export function DocumentScanner({ onScanComplete }: DocumentScannerProps) {
       setStatus('waiting_mobile')
 
       // Build the scan URL
-      const scanUrl = `${window.location.origin}/scan-document/${data.id}`
+      const scanUrl = buildPublicUrl(`/scan-document/${data.id}`)
 
       // Try to send push notification
       try {
@@ -153,7 +155,7 @@ export function DocumentScanner({ onScanComplete }: DocumentScannerProps) {
             tenant_id: tenantId,
             title: 'Chụp giấy tờ',
             body: 'Nhấn để chụp ảnh giấy tờ tùy thân',
-            action_url: `/scan-document/${data.id}`,
+            action_url: workspacePath(`/scan-document/${data.id}`),
             excludeEndpoints: [],
           },
         })

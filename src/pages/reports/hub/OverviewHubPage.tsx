@@ -39,7 +39,7 @@ export function OverviewHubPage() {
 
       <Link
         to="/reports/daily"
-        className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
+        className="flex items-center justify-between rounded-panel border border-primary/30 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
       >
         <div>
           <div className="text-sm font-semibold">Báo cáo ngày</div>
@@ -57,7 +57,7 @@ export function OverviewHubPage() {
       <OverviewKpiStrip period={period} />
 
       {isAllHotelsMode ? null : hasTarget ? (
-        <div className="rounded-lg border p-4 space-y-4">
+        <div className="rounded-panel border p-4 space-y-4">
           <h3 className="text-sm font-semibold">Tiến độ mục tiêu tháng</h3>
           {target!.revenue_target ? (
             <TargetProgressBar
@@ -77,7 +77,7 @@ export function OverviewHubPage() {
           ) : null}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed p-4 flex items-center justify-between">
+        <div className="rounded-panel border border-dashed p-4 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Chưa đặt mục tiêu tháng này</span>
           <Link
             to="/settings/fixed-costs"
@@ -110,7 +110,7 @@ export function OverviewHubPage() {
               <Link
                 key={r.id}
                 to={r.path}
-                className="rounded-lg border border-border p-3 hover:bg-muted/40 transition-colors group"
+                className="rounded-panel border border-border p-3 hover:bg-muted/40 transition-colors group"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">

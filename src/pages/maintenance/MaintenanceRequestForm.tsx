@@ -21,7 +21,7 @@ import { useItems } from '@/hooks/useItems'
 import { MobileMaintenanceRequestForm } from '@/components/maintenance/MobileMaintenanceRequestForm'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ImageUpload } from '@/components/shared/ImageUpload'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { useHotelContext } from '@/contexts/HotelContext'
@@ -44,11 +44,18 @@ const requestSchema = z.object({
 type RequestFormData = z.infer<typeof requestSchema>
 
 export default function MaintenanceRequestForm() {
+  const { id } = useParams<{ id: string }>()
+  const { isMobile } = useBreakpoint()
+  return isMobile
+    ? <MobileMaintenanceRequestForm key={id || 'new'} />
+    : <DesktopMaintenanceRequestForm key={id || 'new'} />
+}
+
+function DesktopMaintenanceRequestForm() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const roomIdFromUrl = searchParams.get('roomId') || undefined
-  const { isMobile } = useBreakpoint()
   const { t } = useTranslation('maintenance')
   const { t: tCommon } = useTranslation('common')
   const { isAllHotelsMode } = useHotelContext()
@@ -56,11 +63,12 @@ export default function MaintenanceRequestForm() {
   
   const createRequest = useCreateMaintenanceRequest()
   const updateRequest = useUpdateMaintenanceRequest()
-  const { data: existingRequest, isLoading } = useMaintenanceRequest(id || '')
+  const { data: existingRequest, isLoading, isError, refetch } = useMaintenanceRequest(id || '')
   const { data: rooms } = useRooms({})
   const { data: items } = useItems({})
 
   const [photos, setPhotos] = useState<string[]>([])
+  const hydrated = useRef(false)
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -75,47 +83,62 @@ export default function MaintenanceRequestForm() {
     },
   })
 
-  // useEffect phải gọi TRƯỚC điều kiện isMobile
   useEffect(() => {
-    if (isEditMode && existingRequest) {
+    if (isEditMode && existingRequest?.id === id && !hydrated.current) {
       form.reset({
-        issue_type: existingRequest.issue_type as any,
-        priority: existingRequest.priority as any,
+        issue_type: existingRequest.issue_type as RequestFormData['issue_type'],
+        priority: existingRequest.priority as RequestFormData['priority'],
         title: existingRequest.title,
         description: existingRequest.description,
         location: existingRequest.location,
         room_id: existingRequest.room_id || undefined,
         item_id: existingRequest.item_id || undefined,
         expected_completion_date: existingRequest.expected_completion_date || undefined,
-        estimated_cost: existingRequest.estimated_cost || undefined,
+        estimated_cost: existingRequest.estimated_cost ?? undefined,
         photos: existingRequest.photos || [],
       })
       setPhotos(existingRequest.photos || [])
+      hydrated.current = true
     }
-  }, [isEditMode, existingRequest, form])
+  }, [isEditMode, existingRequest, form, id])
 
   useEffect(() => {
     if (isEditMode || !roomIdFromUrl || !rooms) return
-    const room = rooms.find((entry: any) => entry.id === roomIdFromUrl)
+    const room = rooms.find(entry => entry.id === roomIdFromUrl)
     form.setValue('room_id', roomIdFromUrl)
     if (room && !form.getValues('location')) {
       form.setValue('location', `Phòng ${room.room_number}`)
     }
   }, [form, isEditMode, roomIdFromUrl, rooms])
 
-  // Kiểm tra mobile SAU KHI tất cả hooks đã được gọi
-  if (isMobile) {
-    return <MobileMaintenanceRequestForm />
+  const onSubmit = async (data: RequestFormData) => {
+    if (createRequest.isPending || updateRequest.isPending || (isAllHotelsMode && !isEditMode)) return
+    const submitData = {
+      ...data,
+      room_id: data.room_id || null,
+      item_id: data.item_id || null,
+      expected_completion_date: data.expected_completion_date || null,
+      photos,
+    }
+    try {
+      if (isEditMode && id) {
+        await updateRequest.mutateAsync({ id, data: submitData })
+      } else {
+        await createRequest.mutateAsync(submitData)
+      }
+      navigate('/maintenance/requests')
+    } catch {
+      // Mutation hooks display the error; keep the draft open for another attempt.
+    }
   }
 
-  const onSubmit = async (data: RequestFormData) => {
-    const submitData = { ...data, photos }
-    if (isEditMode && id) {
-      await updateRequest.mutateAsync({ id, data: submitData })
-    } else {
-      await createRequest.mutateAsync(submitData)
-    }
-    navigate('/maintenance/requests')
+  if (isEditMode && (isError || (!isLoading && !existingRequest))) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Không tải được yêu cầu bảo trì. Yêu cầu có thể đã bị xóa hoặc bạn không có quyền xem.</AlertDescription>
+        <Button variant="outline" className="mt-3" onClick={() => refetch()}>Thử lại</Button>
+      </Alert>
+    )
   }
 
   if (isEditMode && (isLoading || !existingRequest)) {
@@ -159,7 +182,7 @@ export default function MaintenanceRequestForm() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         className="grid grid-cols-2 md:grid-cols-5 gap-4"
                       >
                         <div className="flex items-center space-x-2">
@@ -208,7 +231,7 @@ export default function MaintenanceRequestForm() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         className="grid grid-cols-2 md:grid-cols-4 gap-4"
                       >
                         <div className="flex items-center space-x-2 border p-3 rounded-lg">
@@ -267,7 +290,7 @@ export default function MaintenanceRequestForm() {
                             <SelectValue placeholder={t('form.roomPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {rooms?.map((room: any) => (
+                            {rooms?.map(room => (
                               <SelectItem key={room.id} value={room.id}>
                                 {t('form.roomDisplay', { number: room.room_number, floor: room.floor })}
                               </SelectItem>
@@ -292,7 +315,7 @@ export default function MaintenanceRequestForm() {
                             <SelectValue placeholder={t('form.itemPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {items?.items?.map((item: any) => (
+                            {items?.items?.map(item => (
                               <SelectItem key={item.id} value={item.id}>
                                 {item.name} ({item.code})
                               </SelectItem>

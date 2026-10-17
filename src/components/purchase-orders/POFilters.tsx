@@ -1,31 +1,32 @@
-import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { POFilters as POFiltersType } from '@/types/purchase-order.types';
-import { Search } from 'lucide-react';
-import { DatePicker } from '@/components/shared/DatePicker';
+} from '@/components/ui/select'
+import { POFilters as POFiltersType } from '@/types/purchase-order.types'
+import { Search } from 'lucide-react'
+import { DatePicker } from '@/components/shared/DatePicker'
 
 interface POFiltersProps {
-  filters: POFiltersType;
-  onChange: (filters: Partial<POFiltersType>) => void;
+  filters: POFiltersType
+  onChange: (filters: Partial<POFiltersType>) => void
 }
 
 const POFilters: React.FC<POFiltersProps> = ({ filters, onChange }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div className="space-y-2">
-        <Label>Tìm kiếm</Label>
+        <Label htmlFor="po-search">Tìm kiếm</Label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Mã đơn, NCC..."
+            id="po-search"
+            placeholder="Mã đơn hoặc nhà cung cấp"
             value={filters.search || ''}
             onChange={(e) => onChange({ search: e.target.value })}
             className="pl-9"
@@ -55,7 +56,7 @@ const POFilters: React.FC<POFiltersProps> = ({ filters, onChange }) => {
           value={filters.sort_by || 'date'}
           onValueChange={(value) => onChange({ sort_by: value as any })}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Sắp xếp đơn đặt hàng">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -64,9 +65,20 @@ const POFilters: React.FC<POFiltersProps> = ({ filters, onChange }) => {
             <SelectItem value="delivery">Ngày giao</SelectItem>
           </SelectContent>
         </Select>
+        <button
+          type="button"
+          className="text-xs font-medium underline underline-offset-4"
+          onClick={() =>
+            onChange({
+              sort_order: filters.sort_order === 'asc' ? 'desc' : 'asc',
+            })
+          }
+        >
+          {filters.sort_order === 'asc' ? 'Tăng dần ↑' : 'Giảm dần ↓'}
+        </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default POFilters;
+export default POFilters

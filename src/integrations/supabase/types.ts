@@ -4541,6 +4541,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          subscription_quote_id: string | null
           created_at: string | null
           created_by: string | null
           discount_amount: number
@@ -4562,6 +4563,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          subscription_quote_id?: string | null
           created_at?: string | null
           created_by?: string | null
           discount_amount?: number
@@ -4583,6 +4585,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          subscription_quote_id?: string | null
           created_at?: string | null
           created_by?: string | null
           discount_amount?: number
@@ -12404,6 +12407,41 @@ export type Database = {
       }
     }
     Functions: {
+      create_subscription_checkout_draft: {
+        Args: { p_quote_id: string; p_request_id: string }
+        Returns: Json
+      }
+      get_subscription_checkout_draft: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      expire_pending_subscription_payments: {
+        Args: { p_limit?: number; p_tenant_id?: string | null }
+        Returns: Json
+      }
+      create_subscription_quote: {
+        Args: {
+          p_request_id: string
+          p_kind: string
+          p_rooms: number
+          p_duration_days?: number | null
+        }
+        Returns: Json
+      }
+      get_subscription_quote: {
+        Args: { p_quote_id: string }
+        Returns: Json
+      }
+      admin_manage_tenant: {
+        Args: {
+          p_tenant_id: string
+          p_action: string
+          p_reason: string
+          p_rooms?: number
+          p_duration_days?: number
+        }
+        Returns: Json
+      }
       _enqueue_stay_registration_internal: {
         Args: { p_booking_id: string }
         Returns: number

@@ -56,8 +56,12 @@ export function useHousekeepingOpsSummary(hotelId?: string | null) {
           .from('distribution_orders')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId!).eq('hotel_id', hotelId!)
-          .in('status', ['pending', 'approved', 'preparing']),
+          .in('status', ['pending', 'released', 'in_progress']),
       ])
+
+      for (const result of [maintAll, maintUrgent, lostStored, laundryProc, laundryComp, distPending]) {
+        if (result.error) throw result.error
+      }
 
       return {
         maintenancePending: maintAll.count || 0,

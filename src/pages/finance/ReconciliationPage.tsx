@@ -1,25 +1,23 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
-import { useToast } from '@/hooks/use-toast'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { getFriendlyError } from '@/lib/errorMessage'
+import { QueryErrorPanel } from '@/components/shared/QueryErrorPanel'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { RefreshCw, Check, Eye } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 
 type AnomalyStatus = 'open' | 'resolved' | 'ignored'
 
@@ -53,20 +51,16 @@ const TYPE_COLOR: Record<Anomaly['anomaly_type'], string> = {
 
 export default function ReconciliationPage() {
   const { tenantId } = useUser()
-  const { toast } = useToast()
-  const qc = useQueryClient()
   const [tab, setTab] = useState<AnomalyStatus>('open')
   const [active, setActive] = useState<Anomaly | null>(null)
-  const [note, setNote] = useState('')
-  const [syncing, setSyncing] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['payment-anomalies', tenantId, tab],
     queryFn: async (): Promise<Anomaly[]> => {
       if (!tenantId) return []
       const { data, error } = await supabase
         .from('payment_anomalies')
-        .select('*')
+        .select('id,anomaly_type,status,sepay_tx_id,sepay_reference,sepay_content,sepay_amount,sepay_date,expected_invoice_number,expected_amount,amount_diff,resolution_note,created_at')
         .eq('tenant_id', tenantId)
         .eq('status', tab)
         .order('created_at', { ascending: false })
@@ -77,63 +71,17 @@ export default function ReconciliationPage() {
     enabled: !!tenantId,
   })
 
-  const resolveMutation = useMutation({
-    mutationFn: async ({
-      id,
-      status,
-      note,
-    }: {
-      id: string
-      status: 'resolved' | 'ignored'
-      note: string
-    }) => {
-      const { error } = await supabase
-        .from('payment_anomalies')
-        .update({
-          status,
-          resolution_note: note || null,
-          resolved_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['payment-anomalies'] })
-      toast({ title: 'Đã cập nhật', description: 'Trạng thái bất thường đã thay đổi.' })
-      setActive(null)
-      setNote('')
-    },
-    onError: (e: Error) => toast({ title: 'Lỗi', description: getFriendlyError(e), variant: 'destructive' }),
-  })
-
-  const triggerSync = async () => {
-    setSyncing(true)
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-sepay-transactions', {})
-      if (error) throw error
-      toast({
-        title: 'Đối soát xong',
-        description: `Khớp ${data?.matched ?? 0} giao dịch, ${data?.anomalies ?? 0} bất thường.`,
-      })
-      qc.invalidateQueries({ queryKey: ['payment-anomalies'] })
-    } catch (e: any) {
-      toast({ title: 'Lỗi đối soát', description: e?.message || 'Không xác định', variant: 'destructive' })
-    } finally {
-      setSyncing(false)
-    }
-  }
-
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Đối soát thanh toán"
-        description="Các giao dịch SePay không khớp với đơn hàng cần được xử lý."
-      >
-        <Button onClick={triggerSync} disabled={syncing} size="sm">
-          <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-          Đối soát ngay
-        </Button>
-      </PageHeader>
+        title="Lịch sử đối soát thuê bao"
+        description="Dữ liệu SePay cũ của thuê bao RoomQC, không phải các khoản thu của khách lưu trú."
+      />
+      <p className="rounded-md border p-3 text-sm" role="note">
+        Chỉ tra cứu. Chưa hỗ trợ kết luận hoặc bỏ qua bất thường từ màn hình này.
+        Vui lòng liên hệ quản trị RoomQC để kiểm tra; không chuyển khoản thêm.
+        Trạng thái lịch sử không xác nhận đã thu tiền hoặc đã cấp gói.
+      </p>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as AnomalyStatus)}>
         <TabsList>
@@ -143,14 +91,16 @@ export default function ReconciliationPage() {
         </TabsList>
 
         <TabsContent value={tab} className="mt-4">
-          {isLoading ? (
+          {isError ? (
+            <QueryErrorPanel title="Không tải được lịch sử đối soát" onRetry={() => void refetch()} retrying={isFetching} />
+          ) : isLoading ? (
             <div className="space-y-2">
               {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16" />)}
             </div>
           ) : !data || data.length === 0 ? (
             <div className="border rounded-lg p-8 text-center text-sm text-muted-foreground">
               {tab === 'open'
-                ? 'Tuyệt vời — không có bất thường nào cần xử lý.'
+                ? 'Không có bản ghi trong phạm vi lịch sử đang xem. Đây không phải xác nhận mọi giao dịch đã khớp.'
                 : 'Chưa có bản ghi.'}
             </div>
           ) : (
@@ -193,18 +143,15 @@ export default function ReconciliationPage() {
                       </div>
                     )}
                   </div>
-                  {tab === 'open' && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
                         setActive(a)
-                        setNote('')
                       }}
                     >
-                      <Eye className="h-4 w-4 mr-1" /> Xử lý
+                      <Eye className="h-4 w-4 mr-1" /> Xem chi tiết
                     </Button>
-                  )}
                 </div>
               ))}
             </div>
@@ -215,7 +162,8 @@ export default function ReconciliationPage() {
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Xử lý bất thường</DialogTitle>
+            <DialogTitle>Chi tiết bất thường — chỉ đọc</DialogTitle>
+            <DialogDescription>Chứng từ lịch sử, không phải xác nhận thanh toán hoặc quyết định cấp gói.</DialogDescription>
           </DialogHeader>
           {active && (
             <div className="space-y-3 text-sm">
@@ -237,35 +185,9 @@ export default function ReconciliationPage() {
                   </div>
                 )}
               </div>
-              <Textarea
-                placeholder="Ghi chú xử lý (tùy chọn): vd. đã liên hệ khách, đã ghi nhận thủ công…"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-              />
+              {active.resolution_note && <p>Ghi chú lịch sử: {active.resolution_note}</p>}
             </div>
           )}
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() =>
-                active &&
-                resolveMutation.mutate({ id: active.id, status: 'ignored', note })
-              }
-              disabled={resolveMutation.isPending}
-            >
-              Bỏ qua
-            </Button>
-            <Button
-              onClick={() =>
-                active &&
-                resolveMutation.mutate({ id: active.id, status: 'resolved', note })
-              }
-              disabled={resolveMutation.isPending}
-            >
-              <Check className="h-4 w-4 mr-1" /> Đánh dấu đã xử lý
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

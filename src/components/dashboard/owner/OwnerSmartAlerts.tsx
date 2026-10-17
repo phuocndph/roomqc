@@ -17,7 +17,7 @@ export function OwnerSmartAlerts() {
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg p-4">
+      <div className="border border-border rounded-none p-4">
         <Skeleton className="h-5 w-32 mb-3" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -107,16 +107,15 @@ export function OwnerSmartAlerts() {
 
   if (visibleAlerts.length === 0) {
     return (
-      <div className="border border-l-4 border-l-green-600 border-y-border border-r-border bg-background rounded-lg p-4">
+      <div className="flex items-center gap-2 py-1 text-sm text-green-800 dark:text-green-300">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full border border-green-600 flex items-center justify-center">
+          <div className="h-5 w-5 rounded-full border border-green-600 flex items-center justify-center">
             <svg className="h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-green-800 dark:text-green-200">Mọi thứ ổn!</h3>
-            <p className="text-xs text-muted-foreground">Không có cảnh báo cần xử lý</p>
+            <p>Không có cảnh báo cần xử lý</p>
           </div>
         </div>
       </div>
@@ -124,7 +123,7 @@ export function OwnerSmartAlerts() {
   }
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="border border-border rounded-none p-4">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
         <h3 className="text-sm font-medium text-foreground">Cảnh báo cần chú ý</h3>
@@ -139,7 +138,7 @@ export function OwnerSmartAlerts() {
             key={alert.id}
             to={alert.link}
             className={cn(
-              'flex items-center justify-between p-3 rounded-lg border transition-colors',
+              'flex items-center justify-between p-3 rounded-none border transition-colors',
               alert.bgColor,
               alert.borderColor,
               'hover:opacity-80'

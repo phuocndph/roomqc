@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client'
 import { AppRole, User, UserWithRelations } from '@/types/database.types'
 import { toast } from 'sonner'
 import { UserFormData } from '@/lib/validations/user.schemas'
-import { logCreate, logUpdate, logDelete } from '@/lib/activityLogger'
+import { logUpdate, logDelete } from '@/lib/activityLogger'
+import { workspacePath } from '@/lib/workspace'
 import { useTenant } from './useTenant'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
@@ -57,7 +58,7 @@ export function useCreateUser() {
         body: {
           email: data.email,
           fullName: data.fullName,
-          password: data.password,
+          path: workspacePath('/auth/accept-invite'),
           userLevelCode: data.userLevelCode,
           hotelId: data.hotelId || null,
           positionId: data.positionId || null,
@@ -75,15 +76,15 @@ export function useCreateUser() {
         throw error
       }
 
-      const user = result.user
-      await logCreate('user', user.id, user.full_name, data)
-      return user
+      if (!result?.success) throw new Error(result?.error || 'Không thể gửi lời mời.')
+      return result.invitation
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['staff-invitations'] })
       queryClient.invalidateQueries({ queryKey: ['check-quota'] })
       queryClient.invalidateQueries({ queryKey: ['tenant-usage'] })
-      toast.success('Người dùng đã được tạo thành công')
+      toast.success('Đã gửi lời mời. Nhân viên sẽ tự đặt mật khẩu để tham gia.')
     },
     onError: (error: Error) => {
       const errorMessage = error.message.toLowerCase()

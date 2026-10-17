@@ -15,7 +15,7 @@ import {
 import { TenantsTable } from './TenantsTable';
 import { TenantAnalytics } from './TenantAnalytics';
 import { BulkActions } from './BulkActions';
-import { Plus, Download, Search } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 
 export function AdvancedTenantsManagement() {
@@ -49,12 +49,6 @@ export function AdvancedTenantsManagement() {
       <PageHeader
         title={t('tenants.title')}
         description={t('tenants.subtitle')}
-        actions={
-          <Button size="sm">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            {t('tenants.addTenant')}
-          </Button>
-        }
       />
 
       {/* Filters */}

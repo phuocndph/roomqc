@@ -31,7 +31,7 @@ export function FinancialOverview({ dateRange }: FinancialOverviewProps) {
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg p-4">
+      <div className="border border-border rounded-none p-4">
         <Skeleton className="h-5 w-40 mb-4" />
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -81,11 +81,11 @@ export function FinancialOverview({ dateRange }: FinancialOverviewProps) {
   ]
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="border border-border rounded-none p-4">
       <h3 className="text-sm font-medium text-foreground mb-4">Tổng quan tài chính</h3>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {metrics.map((metric) => (
-          <div key={metric.label} className={`flex items-start gap-3 p-3 rounded-lg border border-l-4 bg-background ${metric.bgColor}`}>
+          <div key={metric.label} className={`flex items-start gap-3 p-3 rounded-none border border-l-4 bg-background ${metric.bgColor}`}>
             <div className={`p-2 rounded-md ${metric.bgColor}`}>
               <metric.icon className={`h-4 w-4 ${metric.color}`} />
             </div>

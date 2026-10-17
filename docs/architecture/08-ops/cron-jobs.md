@@ -28,3 +28,19 @@
 | `lift-expired-dnd-oos` | `*/10 * * * *` | Auto lift DND/OOS hết hạn |
 | `process-room-check-outbox` | `* * * * *` | Fan-out side effects sau room check |
 | `reconcile-room-check-side-effects` | `*/30 * * * *` | Bù trừ side effect lỗi |
+
+## Cập nhật đã kiểm thử local — 17/10/2026
+
+`expire-pending-payments` đã chuyển sang một RPC service-only
+`expire_pending_subscription_payments(p_limit default500,p_tenant_id defaultNULL)`.
+Payment/invoice expiry commit nguyên tử, SKIP LOCKED không ghi đè confirmation;
+cutoff giữ 24h, trả expired_count/cancelled_invoices/skipped_count/busy.
+`busy=true` là sweep khác đang giữ lock, không phải lỗi và không chứng minh
+queue đã được xử lý. Cần theo dõi lần chạy cuối thành công và backlog.
+
+**Chưa cài hoặc xác nhận lịch production trong lượt này.** Bảng schedule bên
+trên vẫn là tài liệu giả định, không phải bằng chứng cron đang hoạt động.
+Không gọi worker global chỉ để smoke-test trên DB có dữ liệu người dùng;
+integration local dùng service RPC scope đúng tenant fixture. Xem
+[báo cáo](subscription-checkout-drafts-local-validation-2026-10-17.md) và
+[các mục khóa/quyền để làm sau](roomqc-deferred-access-and-decisions-2026-10-17.md).

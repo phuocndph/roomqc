@@ -14,7 +14,6 @@ import { ShiftStatusBanner } from '@/components/staff/ShiftStatusBanner'
 import { GracePeriodBanner } from './GracePeriodBanner'
 import { SuspendedOverlay } from './SuspendedOverlay'
 import { ReadOnlyBanner } from './ReadOnlyBanner'
-import { FreeTrialPopup } from '@/components/promotions/FreeTrialPopup'
 import { AnnouncementHost } from '@/components/announcements/AnnouncementHost'
 import { ChatLauncher } from '@/components/chat/ChatLauncher'
 import { ChatPopupProvider } from '@/components/chat/ChatPopupContext'
@@ -35,6 +34,7 @@ const MainLayoutContent = () => {
   const { isMobile } = useBreakpoint()
   const { user } = useUser()
   const location = useLocation()
+  const isDashboard = ['/', '/housekeeping', '/inventory'].includes(location.pathname)
   const mainRef = useRef<HTMLElement>(null)
   const { isGracePeriodExpired } = useGracePeriod()
   const isStaffUser = isStaff(user)
@@ -77,11 +77,11 @@ const MainLayoutContent = () => {
 
   if (isMobile) {
     return (
-      <div className="min-h-dvh flex flex-col bg-background overflow-x-hidden safe-area-x">
+      <div className={`${isDashboard ? 'h-dvh overflow-hidden' : 'min-h-dvh'} flex flex-col bg-background overflow-x-hidden safe-area-x`}>
         {priorityBanner}
         <MobileHeader />
         {isStaffUser && <ShiftStatusBanner />}
-        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-safe">
+        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-safe">
           {isSuspended ? (
             <SuspendedOverlay />
           ) : (
@@ -102,13 +102,13 @@ const MainLayoutContent = () => {
   }
 
   return (
-    <div className="min-h-dvh flex bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar />
       <div className="min-w-0 flex-1 flex flex-col">
         {priorityBanner}
-        <Header onMenuClick={() => {}} />
+        <div className="shrink-0"><Header onMenuClick={() => {}} /></div>
         {isStaffUser && <ShiftStatusBanner />}
-        <main ref={mainRef} className="min-w-0 flex-1 overflow-auto">
+        <main ref={mainRef} className="min-h-0 min-w-0 flex-1 overflow-auto">
           {isSuspended ? (
             <SuspendedOverlay />
           ) : (
@@ -153,7 +153,6 @@ export const MainLayout = () => {
           <ChatLauncher />
           <ChatNotificationListener />
           <AnnouncementHost slot="popup" />
-          <FreeTrialPopup />
         </ChatPopupProvider>
       </RequireShiftProvider>
     </HotelProvider>

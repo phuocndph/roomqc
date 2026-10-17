@@ -46,7 +46,7 @@ export function useBookingStats() {
   const today = format(new Date(), 'yyyy-MM-dd')
 
   return useQuery({
-    queryKey: ['booking-stats', hotelId, isAllHotelsMode, today],
+    queryKey: ['booking-stats', hotelId, isAllHotelsMode, today, tenantId],
     queryFn: async (): Promise<BookingStats> => {
       // Run all 5 queries in parallel
       let roomsQuery = supabase.from('rooms').select('id', { count: 'exact' }).eq('tenant_id', tenantId)
@@ -103,6 +103,10 @@ export function useBookingStats() {
         revenueQuery,
       ])
 
+      for (const result of [roomsResult, occupiedResult, checkInResult, checkOutResult, revenueResult]) {
+        if (result.error) throw result.error
+      }
+
       const totalRooms = roomsResult.count
       const occupiedRooms = occupiedResult.count
       const occupiedBookings = occupiedResult.data
@@ -143,7 +147,7 @@ export function useTodayCheckouts() {
   const today = format(new Date(), 'yyyy-MM-dd')
 
   return useQuery({
-    queryKey: ['today-checkouts', hotelId, isAllHotelsMode, today],
+    queryKey: ['today-checkouts', hotelId, isAllHotelsMode, today, tenantId],
     queryFn: async (): Promise<TodayCheckout[]> => {
       let query = supabase
         .from('room_bookings')
@@ -172,7 +176,7 @@ export function useTodayCheckouts() {
 
       if (error) {
         console.error('Error fetching today checkouts:', error)
-        return []
+        throw error
       }
 
       return (data || []).map((b: any) => ({
@@ -201,7 +205,7 @@ export function useTodayCheckins() {
   const today = format(new Date(), 'yyyy-MM-dd')
 
   return useQuery({
-    queryKey: ['today-checkins', hotelId, isAllHotelsMode, today],
+    queryKey: ['today-checkins', hotelId, isAllHotelsMode, today, tenantId],
     queryFn: async (): Promise<TodayCheckin[]> => {
       let query = supabase
         .from('room_bookings')
@@ -227,7 +231,7 @@ export function useTodayCheckins() {
 
       if (error) {
         console.error('Error fetching today checkins:', error)
-        return []
+        throw error
       }
 
       return (data || []).map((b: any) => ({

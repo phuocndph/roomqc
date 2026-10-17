@@ -5,36 +5,27 @@ interface StatusBadgeProps {
   status: 'waiting' | 'pending' | 'in_progress' | 'completed' | 'cancelled'
   className?: string
 }
-
+const statuses = {
+  waiting: { label: 'Chờ tiếp nhận', style: 'bg-slate-600 hover:bg-slate-600' },
+  pending: { label: 'Đã tiếp nhận', style: 'bg-blue-700 hover:bg-blue-700' },
+  in_progress: {
+    label: 'Đang xử lý',
+    style: 'bg-amber-700 hover:bg-amber-700',
+  },
+  completed: { label: 'Hoàn thành', style: 'bg-green-700 hover:bg-green-700' },
+  cancelled: { label: 'Đã hủy', style: 'bg-slate-600 hover:bg-slate-600' },
+}
 export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
-  const config = {
-    waiting: {
-      label: 'Đang chờ',
-      className: 'bg-gray-500 text-white',
-    },
-    pending: {
-      label: 'Tiếp nhận',
-      className: 'bg-blue-500 text-white',
-    },
-    in_progress: {
-      label: 'Đang kiểm tra',
-      className: 'bg-yellow-500 text-white',
-    },
-    completed: {
-      label: 'Hoàn thành',
-      className: 'bg-green-500 text-white',
-    },
-    cancelled: {
-      label: 'Đã hủy',
-      className: 'bg-red-500 text-white',
-    },
-  }
-
-  const { label, className: badgeClass } = config[status]
-
+  const config = statuses[status]
   return (
-    <Badge className={cn(badgeClass, className)}>
-      {label}
+    <Badge
+      className={cn(
+        'whitespace-nowrap border-transparent text-white',
+        config?.style || 'bg-slate-600 hover:bg-slate-600',
+        className,
+      )}
+    >
+      {config?.label || status}
     </Badge>
   )
 }

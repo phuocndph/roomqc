@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from '@/hooks/useTenant'
 import { useToast } from '@/hooks/use-toast'
 import type { Guest } from '@/hooks/useGuests'
+import { readAllPages } from '@/lib/readAllPages'
 
 export type GuestSegment = 'all' | 'vip' | 'new' | 'returning' | 'birthday' | 'blacklist'
 export type GuestSortKey = 'created_at' | 'full_name' | 'total_stays' | 'total_spent' | 'last_stay_date'
@@ -17,8 +18,6 @@ export interface GuestListParams {
 }
 
 function applySegment(query: any, segment: GuestSegment) {
-  const now = new Date()
-  const month = now.getMonth() + 1
   switch (segment) {
     case 'vip':
       return query.in('vip_level', ['gold', 'vip', 'platinum'])
@@ -38,6 +37,30 @@ function applySegment(query: any, segment: GuestSegment) {
   }
 }
 
+function guestQuery(tenantId: string, params: GuestListParams) {
+  let query = supabase.from('guests').select('*', { count: 'exact' }).eq('tenant_id', tenantId)
+  query = applySegment(query, params.segment || 'all')
+  const search = params.search?.trim().replace(/[%,()]/g, '')
+  if (search) query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%,id_number.ilike.%${search}%`)
+  return query.order(params.sortBy || 'created_at', { ascending: params.sortDir === 'asc', nullsFirst: false })
+    .order('id', { ascending: true })
+}
+
+export async function fetchAllGuests(
+  tenantId: string,
+  params: GuestListParams = {},
+  options: { signal?: AbortSignal; onProgress?: (loaded: number) => void } = {},
+): Promise<Guest[]> {
+  if (!tenantId) throw new Error('Chưa xác định được doanh nghiệp')
+  const rows = await readAllPages<Guest>((from, to) => {
+    const query = guestQuery(tenantId, params).range(from, to)
+    return options.signal ? query.abortSignal(options.signal) : query
+  }, options)
+  return params.segment === 'birthday'
+    ? rows.filter(guest => guest.date_of_birth && Number(guest.date_of_birth.slice(5, 7)) === new Date().getMonth() + 1)
+    : rows
+}
+
 export function useGuestsV2(params: GuestListParams = {}) {
   const { tenant } = useTenant()
   const tenantId = tenant?.id
@@ -51,41 +74,23 @@ export function useGuestsV2(params: GuestListParams = {}) {
   } = params
 
   return useQuery({
-    queryKey: ['guests-v2', tenantId, segment, search, sortBy, sortDir, page, pageSize],
-    queryFn: async () => {
+    queryKey: ['guests-v2', tenantId, segment, search, sortBy, sortDir, segment === 'birthday' ? 'all' : page, segment === 'birthday' ? 'all' : pageSize],
+    queryFn: async ({ signal }) => {
       if (!tenantId) return { rows: [] as Guest[], total: 0 }
-
-      let q = supabase
-        .from('guests')
-        .select('*', { count: 'exact' })
-        .eq('tenant_id', tenantId)
-
-      q = applySegment(q, segment)
-
-      if (search.trim()) {
-        const s = search.trim().replace(/[%,]/g, '')
-        q = q.or(`full_name.ilike.%${s}%,phone.ilike.%${s}%,email.ilike.%${s}%,id_number.ilike.%${s}%`)
+      const filters = { segment, search, sortBy, sortDir }
+      const from = (page - 1) * pageSize
+      if (segment === 'birthday') {
+        const rows = await fetchAllGuests(tenantId, filters, { signal })
+        return { rows, total: rows.length }
       }
-
-      // Birthday: bring more rows then filter client-side
-      const isBirthday = segment === 'birthday'
-      const effectivePageSize = isBirthday ? 1000 : pageSize
-      const from = isBirthday ? 0 : (page - 1) * pageSize
-      const to = from + effectivePageSize - 1
-
-      q = q.order(sortBy, { ascending: sortDir === 'asc', nullsFirst: false })
-       .range(from, to)
-
-      const { data, error, count } = await q
+      const { data, error, count } = await guestQuery(tenantId, filters).range(from, from + pageSize - 1).abortSignal(signal)
       if (error) throw error
-
-      let rows = (data || []) as Guest[]
-      if (isBirthday) {
-        const month = new Date().getMonth() + 1
-        rows = rows.filter(g => g.date_of_birth && (new Date(g.date_of_birth).getMonth() + 1) === month)
-      }
+      const rows = (data || []) as Guest[]
       return { rows, total: count ?? rows.length }
     },
+    select: result => segment === 'birthday'
+      ? { rows: result.rows.slice((page - 1) * pageSize, page * pageSize), total: result.total }
+      : result,
     enabled: !!tenantId,
   })
 }
@@ -106,39 +111,29 @@ export function useGuestStats() {
 
   return useQuery<GuestStats>({
     queryKey: ['guest-stats', tenantId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!tenantId) {
         return { total: 0, vip: 0, newCount: 0, returning: 0, birthday: 0, blacklist: 0, totalRevenue: 0 }
       }
       const monthNow = new Date().getMonth() + 1
       const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-      const [allRes, totalRes] = await Promise.all([
-        supabase
-          .from('guests')
-          .select('vip_level,total_stays,total_spent,date_of_birth,created_at')
-          .eq('tenant_id', tenantId)
-          .limit(5000),
-        supabase
-          .from('guests')
-          .select('id', { count: 'exact', head: true })
-          .eq('tenant_id', tenantId),
-      ])
-      if (allRes.error) throw allRes.error
-      const rows = allRes.data || []
+      const rows = await readAllPages((from, to) => supabase.from('guests')
+        .select('id,vip_level,total_stays,total_spent,date_of_birth,created_at', { count: 'exact' })
+        .eq('tenant_id', tenantId).order('id').range(from, to).abortSignal(signal), { signal })
 
       let vip = 0, newCount = 0, returning = 0, birthday = 0, blacklist = 0, totalRevenue = 0
-      for (const g of rows as any[]) {
+      for (const g of rows) {
         if (g.vip_level === 'gold' || g.vip_level === 'vip' || g.vip_level === 'platinum') vip++
         if (g.vip_level === 'blacklist') blacklist++
         if (g.total_stays >= 2) returning++
         if (g.created_at && new Date(g.created_at) >= thirtyDaysAgo) newCount++
-        if (g.date_of_birth && (new Date(g.date_of_birth).getMonth() + 1) === monthNow) birthday++
+        if (g.date_of_birth && Number(g.date_of_birth.slice(5, 7)) === monthNow) birthday++
         totalRevenue += Number(g.total_spent || 0)
       }
 
       return {
-        total: totalRes.count ?? rows.length,
+        total: rows.length,
         vip, newCount, returning, birthday, blacklist, totalRevenue,
       }
     },
@@ -185,9 +180,11 @@ export function useMergeGuests() {
 export function exportGuestsToCSV(rows: Guest[], filename = 'khach-hang.csv') {
   const headers = ['Họ tên', 'SĐT', 'Email', 'CCCD', 'Quốc tịch', 'Hạng', 'Lần ở', 'Tổng chi tiêu', 'Lần cuối', 'Ngày tạo']
   const vipMap: Record<string, string> = { normal: 'Thường', silver: 'Bạc', gold: 'Vàng', vip: 'VIP', platinum: 'Bạch kim', blacklist: 'Blacklist' }
-  const escape = (v: any) => {
-    const s = v == null ? '' : String(v)
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  const escape = (v: unknown) => {
+    // Prevent spreadsheet formula execution in user-entered text.
+    const raw = v == null ? '' : String(v)
+    const s = typeof v === 'string' && /^[\s]*[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
   }
   const lines = [headers.join(',')]
   for (const g of rows) {

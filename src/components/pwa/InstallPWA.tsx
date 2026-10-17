@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useToast } from '@/hooks/use-toast';
 import { InstallGuideSheet } from './InstallGuideSheet';
+import { isNativeApp } from '@/lib/native/platform';
 
 export const InstallPWA = () => {
   const { canInstall, installPWA, isInstalled } = usePWAInstall();
@@ -37,7 +38,7 @@ export const InstallPWA = () => {
   };
 
   // Only hide if already installed or dismissed
-  if (isInstalled || dismissed) {
+  if (isNativeApp() || isInstalled || dismissed) {
     return null;
   }
 

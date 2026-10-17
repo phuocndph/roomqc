@@ -1,3 +1,4 @@
+import { isNativeApp } from './native/platform';
 /**
  * Helpers để quyết định có nên kích hoạt Service Worker / PWA hay không.
  *
@@ -37,7 +38,7 @@ export function isPreviewOrIframe(): boolean {
 }
 
 export function shouldEnablePWA(): boolean {
-  return !isPreviewOrIframe();
+  return !isNativeApp() && !isPreviewOrIframe();
 }
 
 /**
@@ -45,6 +46,7 @@ export function shouldEnablePWA(): boolean {
  * Dùng để bật auto-login: chỉ máy cá nhân đã cài app mới tự đăng nhập.
  */
 export function isStandalonePWA(): boolean {
+  if (isNativeApp()) return true;
   if (typeof window === 'undefined') return false;
   try {
     const mql = window.matchMedia?.('(display-mode: standalone)');

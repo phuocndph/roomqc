@@ -1,33 +1,49 @@
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Search } from 'lucide-react'
+import type { MaintenanceFilters as MaintenanceFilterValues } from '@/hooks/useMaintenanceRequests'
 
 interface MaintenanceFiltersProps {
-  filters: any
-  onFiltersChange: (filters: any) => void
+  filters: MaintenanceFilterValues
+  onFiltersChange: (filters: MaintenanceFilterValues) => void
 }
 
-export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFiltersProps) => {
+export const MaintenanceFilters = ({
+  filters,
+  onFiltersChange,
+}: MaintenanceFiltersProps) => {
   return (
-    <div className="border rounded-lg p-3">
+    <div>
       <div className="grid gap-3 md:grid-cols-4">
         <div className="relative md:col-span-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm mã, mô tả, phòng..."
+            aria-label="Tìm yêu cầu bảo trì"
+            placeholder="Tìm mã, tên hoặc mô tả sự cố"
             className="pl-10 h-9"
             value={filters.search || ''}
-            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
+            onChange={(e) =>
+              onFiltersChange({ ...filters, search: e.target.value })
+            }
           />
         </div>
 
         <Select
           value={filters.priority || 'all'}
           onValueChange={(value) =>
-            onFiltersChange({ ...filters, priority: value === 'all' ? undefined : value })
+            onFiltersChange({
+              ...filters,
+              priority: value === 'all' ? undefined : value,
+            })
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9" aria-label="Độ ưu tiên">
             <SelectValue placeholder="Độ ưu tiên" />
           </SelectTrigger>
           <SelectContent>
@@ -62,10 +78,13 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
         <Select
           value={filters.issue_type || 'all'}
           onValueChange={(value) =>
-            onFiltersChange({ ...filters, issue_type: value === 'all' ? undefined : value })
+            onFiltersChange({
+              ...filters,
+              issue_type: value === 'all' ? undefined : value,
+            })
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9" aria-label="Loại sự cố">
             <SelectValue placeholder="Loại" />
           </SelectTrigger>
           <SelectContent>
@@ -81,10 +100,13 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
         <Select
           value={filters.status || 'all'}
           onValueChange={(value) =>
-            onFiltersChange({ ...filters, status: value === 'all' ? undefined : value })
+            onFiltersChange({
+              ...filters,
+              status: value === 'all' ? undefined : value,
+            })
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9" aria-label="Trạng thái yêu cầu">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>

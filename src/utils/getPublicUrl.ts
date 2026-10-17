@@ -1,3 +1,5 @@
+import { workspaceBase, workspacePath } from '@/lib/workspace';
+import { isNativeApp, nativePublicOrigin } from '@/lib/native/platform';
 /**
  * Get the correct public URL for QR payments that bypasses Auth Bridge
  * 
@@ -9,7 +11,7 @@
  * - *.lovable.app (no Auth Bridge - works!)
  */
 export function getPublicBaseUrl(): string {
-  const origin = window.location.origin;
+  const origin = isNativeApp() ? nativePublicOrigin() : window.location.origin;
   
   // Check if we're on Preview domain with Auth Bridge
   // Pattern: {project-id}.lovableproject.com
@@ -20,14 +22,14 @@ export function getPublicBaseUrl(): string {
   if (lovableProjectMatch) {
     // Convert to id-preview--{project-id}.lovable.app format
     const projectId = lovableProjectMatch[1];
-    return `https://id-preview--${projectId}.lovable.app`;
+    return `https://id-preview--${projectId}.lovable.app${workspaceBase()}`;
   }
   
   // For all other domains (Live, custom), use as-is
-  return origin;
+  return `${origin}${workspaceBase()}`;
 }
 
 export function buildPublicUrl(path: string): string {
   const base = getPublicBaseUrl();
-  return new URL(path, base).toString();
+  return new URL(workspacePath(path), new URL(base).origin).toString();
 }

@@ -29,12 +29,20 @@ jobs:
       - name: Install deps
         run: npm ci --no-audit --no-fund
 
+      - name: Install and test directory service
+        run: |
+          npm ci --prefix server/control --no-audit --no-fund
+          npm run test:control
+
+      - name: Customer journey guard regressions (no Supabase required)
+        run: npm run test:customer-journey
+
       - name: ESLint (gồm rule FSM `no-direct-room-status-update`)
         # Existing legacy warnings are reported but do not hide blocking errors.
         run: npm run lint
 
       - name: TypeScript
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit -p tsconfig.app.json
 
       - name: Vitest — RPC signature drift + suite
         run: npm test -- --run

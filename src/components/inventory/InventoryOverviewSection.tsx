@@ -1,68 +1,48 @@
-import { lazy, Suspense } from 'react'
-import { RecentTransactions } from '@/components/inventory/RecentTransactions'
-import { InventoryValueChart } from '@/components/inventory/InventoryValueChart'
-import { InventoryKpiGrid } from '@/components/inventory/hub/InventoryKpiGrid'
-import { InventoryForecastWidget } from '@/components/inventory/hub/InventoryForecastWidget'
-import { InventoryTopConsumedWidget } from '@/components/inventory/hub/InventoryTopConsumedWidget'
-import { CombinedStockAlerts } from '@/components/inventory/hub/CombinedStockAlerts'
-import { InventoryTodoCard } from '@/components/inventory/hub/InventoryTodoCard'
+import { lazy, Suspense, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronDown } from 'lucide-react'
+import { RecentTransactions } from './RecentTransactions'
+import { InventoryKpiGrid } from './hub/InventoryKpiGrid'
+import { CombinedStockAlerts } from './hub/CombinedStockAlerts'
+import { InventoryTodoCard } from './hub/InventoryTodoCard'
 
-// Lazy — only renders in chain mode (component guards itself)
-const InventoryHotelBreakdown = lazy(() =>
-  import('@/components/inventory/hub/InventoryHotelBreakdown').then((m) => ({
-    default: m.InventoryHotelBreakdown,
-  })),
-)
+const InventoryValueChart = lazy(() => import('./InventoryValueChart').then(m => ({ default: m.InventoryValueChart })))
+const InventoryForecastWidget = lazy(() => import('./hub/InventoryForecastWidget').then(m => ({ default: m.InventoryForecastWidget })))
+const InventoryTopConsumedWidget = lazy(() => import('./hub/InventoryTopConsumedWidget').then(m => ({ default: m.InventoryTopConsumedWidget })))
+const InventoryHotelBreakdown = lazy(() => import('./hub/InventoryHotelBreakdown').then(m => ({ default: m.InventoryHotelBreakdown })))
 
 interface Props {
   onNavigate: (tab: string, sub?: string) => void
 }
 
-/**
- * Task-first overview:
- *   1. "Việc cần làm hôm nay" (TodoCard)  ← answers "what now?"
- *   2. KPI grid (4 compact tiles)         ← background context
- *   3. Chart + Forecast / Top + Alerts    ← deeper look
- *   4. Recent transactions                ← audit trail
- *   5. Hotel breakdown (chain mode only, lazy)
- */
 export function InventoryOverviewSection({ onNavigate }: Props) {
-  return (
-    <div className="font-body space-y-4">
-      {/* 1. Việc cần làm hôm nay */}
+  const [analysisOpen, setAnalysisOpen] = useState(false)
+
+  return <div className="space-y-5">
+    <InventoryKpiGrid onNavigate={onNavigate} />
+    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-2">
       <InventoryTodoCard onNavigate={onNavigate} />
-
-      {/* 2. Tình hình kho — compact KPI grid */}
-      <InventoryKpiGrid onNavigate={onNavigate} />
-
-      {/* 3. Bento — chart + insights */}
-      <div className="grid gap-3 lg:grid-cols-12 lg:auto-rows-[152px]">
-        <div className="rounded-xl border border-border/70 bg-card overflow-hidden lg:col-span-8 lg:row-span-2 shadow-tile">
-          <InventoryValueChart />
-        </div>
-        <div className="rounded-xl border border-border/70 bg-card overflow-hidden lg:col-span-4 lg:row-span-2 shadow-tile">
-          <InventoryForecastWidget />
-        </div>
-        <div className="rounded-xl border border-border/70 bg-card overflow-hidden lg:col-span-7 lg:row-span-2 shadow-tile">
-          <InventoryTopConsumedWidget />
-        </div>
-        <div
-          id="low-stock-section"
-          className="rounded-xl border border-border/70 bg-card overflow-hidden lg:col-span-5 lg:row-span-2 shadow-tile"
-        >
-          <CombinedStockAlerts />
-        </div>
-      </div>
-
-      {/* 4. Recent transactions */}
-      <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-tile">
-        <RecentTransactions />
-      </div>
-
-      {/* 5. Hotel breakdown — chain mode only, lazy */}
-      <Suspense fallback={null}>
-        <InventoryHotelBreakdown />
-      </Suspense>
+      <CombinedStockAlerts />
     </div>
-  )
+    <RecentTransactions />
+    <details className="group border bg-card" onToggle={e => setAnalysisOpen(e.currentTarget.open)}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <span><span className="block font-semibold">Phân tích kho</span><span className="mt-1 block text-sm text-muted-foreground">Giá trị tồn kho, dự báo và mức tiêu thụ</span></span>
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+      </summary>
+      {analysisOpen && <div className="space-y-4 border-t p-4">
+        <div className="flex flex-wrap gap-x-5 gap-y-3 text-sm">
+          <Link to="/inventory/analytics" className="font-medium text-primary hover:underline">Phân tích tiêu thụ</Link>
+          <Link to="/inventory/dead-stock" className="font-medium text-primary hover:underline">Hàng tồn trên 90 ngày</Link>
+        </div>
+        <Suspense fallback={<p className="py-6 text-sm text-muted-foreground">Đang tải phân tích…</p>}>
+          <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+            <div className="min-w-0"><InventoryValueChart /></div>
+            <div className="min-w-0 space-y-4"><InventoryForecastWidget /><InventoryTopConsumedWidget /></div>
+          </div>
+        </Suspense>
+      </div>}
+    </details>
+    <Suspense fallback={null}><InventoryHotelBreakdown /></Suspense>
+  </div>
 }

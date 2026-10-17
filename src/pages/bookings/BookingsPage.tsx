@@ -2,9 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, isBefore, isAfter, subDays, addDays } from 'date-fns'
+import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, isBefore, isAfter } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
+import { useBookingList } from '@/hooks/useBookingList'
+import { ListPagination } from '@/components/shared/ListPagination'
+import { usePagedList } from '@/hooks/usePagedList'
 import {
   Calendar,
   Search,
@@ -380,91 +383,7 @@ export function BookingsPage() {
     isError: isBookingsError,
     error: bookingsError,
     refetch: refetchBookings,
-  } = useQuery({
-    queryKey: ['all-bookings', isAllHotelsMode ? 'all' : selectedHotelId, statusFilter, dateRangeFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from('room_bookings')
-        .select(`
-          *,
-          room:rooms(room_number, room_type, floor, status),
-          booking_type,
-          hourly_rate,
-          hourly_start_time,
-          hourly_end_time,
-          booking_hours,
-          monthly_rate,
-          booking_months,
-          booking_group_id
-        `)
-        .order('check_in_date', { ascending: false })
-      
-      if (!isAllHotelsMode && selectedHotelId) {
-        query = query.eq('hotel_id', selectedHotelId)
-      }
-      
-      // Handle special filters
-      if (statusFilter !== 'all' && statusFilter !== 'conflict' && statusFilter !== 'overdue' && statusFilter !== 'overdue_checkin') {
-        query = query.eq('status', statusFilter)
-      }
-      
-      // For conflict and overdue (checked_in), we fetch checked_in only
-      if (statusFilter === 'conflict' || statusFilter === 'overdue') {
-        query = query.eq('status', 'checked_in')
-      }
-
-      // overdue_checkin: filter ở client dựa vào overdueCheckinMap
-      if (statusFilter === 'overdue_checkin') {
-        query = query.eq('status', 'confirmed')
-      }
-
-      // Apply date range filter (except for active statuses that need all-time data)
-      const activeStatuses = ['checked_in', 'conflict', 'overdue', 'overdue_checkin']
-      const isActiveFilter = activeStatuses.includes(statusFilter)
-
-      if (!isActiveFilter && dateRangeFilter !== 'all') {
-        const daysBack = dateRangeFilter === '7d' ? 7 : dateRangeFilter === '30d' ? 30 : 90
-        const fromDate = format(subDays(new Date(), daysBack), 'yyyy-MM-dd')
-        const toDate = format(addDays(new Date(), 30), 'yyyy-MM-dd') // include upcoming bookings
-        if (statusFilter === 'all') {
-          // Keep long-running stays visible in the default list even when their
-          // check-in date is outside the selected reporting window.
-          query = query.or(
-            `and(check_in_date.gte.${fromDate},check_in_date.lte.${toDate}),status.eq.checked_in`,
-          )
-        } else {
-          query = query
-            .gte('check_in_date', fromDate)
-            .lte('check_in_date', toDate)
-        }
-      }
-
-      // For checked_in/active: no date limit (must show ALL active bookings)
-      // but cap at 500 to prevent timeout
-      query = query.limit(isActiveFilter ? 1000 : 500)
-      
-      const { data, error } = await query
-      
-      if (error) {
-        console.error('Error fetching bookings:', error)
-        throw error
-      }
-      
-      return data as BookingWithRoom[]
-    },
-    enabled: !!tenantId,
-    placeholderData: (prev) => prev,
-    staleTime: 30_000,
-  })
-
-  const isAtQueryLimit = (bookings?.length ?? 0) >= (
-    statusFilter === 'checked_in' ||
-    statusFilter === 'conflict' ||
-    statusFilter === 'overdue' ||
-    statusFilter === 'overdue_checkin'
-      ? 1000
-      : 500
-  )
+  } = useBookingList({ tenantId, hotelId: selectedHotelId, allHotels: isAllHotelsMode, status: statusFilter, dateRange: dateRangeFilter })
   
   // Get group booking counts for badge display
   const groupIds = useMemo(() => 
@@ -551,6 +470,11 @@ export function BookingsPage() {
     return 0
   })
   
+  const { page: listPage, rows: visibleBookings, setPage: setListPage } = usePagedList(
+    filteredBookings,
+    JSON.stringify([tenantId, selectedHotelId, isAllHotelsMode, statusFilter, dateRangeFilter, searchQuery]),
+  )
+
   // Stats follow the same filtered list shown in the table so KPI cards do not
   // disagree with an active search or status filter.
   const stats = {
@@ -1363,6 +1287,9 @@ export function BookingsPage() {
           isError={isBookingsError}
           errorMessage={getFriendlyError(bookingsError)}
           onRetry={() => { void refetchBookings() }}
+          page={listPage}
+          onPageChange={setListPage}
+          visibleBookings={visibleBookings}
         />
         
         {/* Dialogs - shared between mobile and desktop */}
@@ -1517,7 +1444,7 @@ export function BookingsPage() {
       />
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {!isBookingsError && !isLoading && <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Card className="border-l-4 border-l-primary">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -1570,7 +1497,7 @@ export function BookingsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
       
       {/* Filters */}
       <div className="space-y-3 rounded-lg border bg-card p-3">
@@ -1637,7 +1564,7 @@ export function BookingsPage() {
                   : 'border-border bg-background text-muted-foreground hover:border-primary/60 hover:text-foreground'
               }`}
             >
-              {label} <span className="ml-1 tabular-nums">{count}</span>
+              {label} {!isBookingsError && !isLoading && <span className="ml-1 tabular-nums">{count}</span>}
             </button>
           ))}
           {hasActiveFilters && (
@@ -1659,15 +1586,6 @@ export function BookingsPage() {
         </div>
       </div>
       
-      {isAtQueryLimit && !isBookingsError && (
-        <Alert variant="destructive" className="mb-3 mx-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Đang hiển thị tối đa {bookings?.length} booking. Vui lòng dùng bộ lọc ngày để thu hẹp kết quả và xem đầy đủ.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Bookings Table */}
       <Card>
         <CardContent className="p-0">
@@ -1722,7 +1640,7 @@ export function BookingsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBookings.map((booking) => {
+                  {visibleBookings.map((booking) => {
                     return (
                       <TableRow 
                         key={booking.id}
@@ -2012,6 +1930,9 @@ export function BookingsPage() {
                   })}
                 </TableBody>
               </Table>
+            </div>
+            <div className="px-4 pb-4">
+              <ListPagination total={filteredBookings.length} page={listPage} onPageChange={setListPage} />
             </div>
             </>
           )}

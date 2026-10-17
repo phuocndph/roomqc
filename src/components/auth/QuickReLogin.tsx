@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { storeCredential } from '@/lib/credential-manager';
+import { workspacePath, workspaceNext } from '@/lib/workspace';
 
 const quickLoginSchema = z.object({
   password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
@@ -41,7 +42,8 @@ export const QuickReLogin = ({ email, onSwitchAccount, onSuccess }: QuickReLogin
       // Lưu credential vào local store (mọi platform) + native API nếu có
       await storeCredential(email, data.password);
       // Full-page navigation để iOS/Android nhận diện "successful login submit"
-      window.location.assign('/auth/callback');
+      const next = workspaceNext(new URLSearchParams(window.location.search).get('next'));
+      window.location.assign(workspacePath('/auth/callback') + (next ? `?next=${encodeURIComponent(next)}` : ''));
     }
   };
 

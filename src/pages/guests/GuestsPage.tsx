@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, Plus, Download, X, RotateCcw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { useHasModulePermission } from '@/hooks/usePermissions'
 import { useUser } from '@/hooks/useUser'
 import { isAdminUser } from '@/lib/userAccess'
 import {
-  useGuestsV2, useGuestStats, exportGuestsToCSV,
+  useGuestsV2, useGuestStats, exportGuestsToCSV, fetchAllGuests,
   type GuestSegment, type GuestSortKey,
 } from '@/hooks/useGuestsV2'
 import { GuestKpiBar } from '@/components/guests/GuestKpiBar'
@@ -19,8 +19,17 @@ import { GuestCardList } from '@/components/guests/GuestCardList'
 import { GuestFormDialog } from '@/components/guests/GuestFormDialog'
 import { MergeGuestsDialog } from '@/components/guests/MergeGuestsDialog'
 import type { Guest } from '@/hooks/useGuests'
+import { QueryErrorPanel } from '@/components/shared/QueryErrorPanel'
+import { toast } from 'sonner'
+
+const SEGMENTS: GuestSegment[] = ['all', 'vip', 'new', 'returning', 'birthday', 'blacklist']
 
 export default function GuestsPage() {
+  const { tenantId } = useUser()
+  return <GuestDirectory key={tenantId || 'pending'} tenantId={tenantId} />
+}
+
+function GuestDirectory({ tenantId }: { tenantId?: string }) {
   const isMobile = useIsMobile()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useUser()
@@ -28,11 +37,14 @@ export default function GuestsPage() {
   const { data: canManagePerm } = useHasModulePermission('bookings', 'manage')
   const canManage = isAdmin || !!canManagePerm
 
-  const segment = (searchParams.get('seg') as GuestSegment) || 'all'
+  const segment: GuestSegment = SEGMENTS.find(value => value === searchParams.get('seg')) || 'all'
   const [search, setSearch] = useState(searchParams.get('q') || '')
   const [sortBy, setSortBy] = useState<GuestSortKey>('created_at')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
+  const [exporting, setExporting] = useState(false)
+  const [exportedCount, setExportedCount] = useState(0)
+  const exportController = useRef<AbortController | null>(null)
   const pageSize = 50
 
   const [formOpen, setFormOpen] = useState(false)
@@ -47,6 +59,7 @@ export default function GuestsPage() {
   }, [search])
 
   useEffect(() => { setPage(1) }, [segment, searchDebounced, sortBy, sortDir])
+  useEffect(() => () => { exportController.current?.abort() }, [tenantId])
 
   const setSegment = (s: GuestSegment) => {
     const p = new URLSearchParams(searchParams)
@@ -54,13 +67,18 @@ export default function GuestsPage() {
     setSearchParams(p, { replace: true })
   }
 
-  const { data: stats, isLoading: statsLoading } = useGuestStats()
-  const { data: listResult, isLoading: listLoading } = useGuestsV2({
+  const statsQuery = useGuestStats()
+  const { data: stats, isLoading: statsLoading } = statsQuery
+  const listQuery = useGuestsV2({
     segment, search: searchDebounced, sortBy, sortDir, page, pageSize,
   })
+  const { data: listResult, isLoading: listLoading } = listQuery
   const guests = listResult?.rows || []
   const total = listResult?.total || 0
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  useEffect(() => {
+    if (listQuery.isSuccess && page > totalPages) setPage(totalPages)
+  }, [listQuery.isSuccess, page, totalPages])
 
   const segmentCounts = useMemo(() => ({
     all: stats?.total,
@@ -76,8 +94,28 @@ export default function GuestsPage() {
     else { setSortBy(k); setSortDir('desc') }
   }
 
-  const handleExport = () => {
-    exportGuestsToCSV(guests, `khach-hang-${new Date().toISOString().slice(0, 10)}.csv`)
+  const handleExport = async () => {
+    if (!tenantId || !canManage || exporting || listQuery.isError) return
+    const controller = new AbortController()
+    exportController.current = controller
+    setExporting(true)
+    setExportedCount(0)
+    try {
+      const rows = await fetchAllGuests(tenantId, { segment, search: searchDebounced, sortBy, sortDir }, {
+        signal: controller.signal,
+        onProgress: setExportedCount,
+      })
+      controller.signal.throwIfAborted()
+      exportGuestsToCSV(rows, `khach-hang-${new Date().toISOString().slice(0, 10)}.csv`)
+      toast.success(`Đã xuất ${rows.length} khách hàng theo bộ lọc đã chọn`)
+    } catch {
+      if (!controller.signal.aborted) toast.error('Chưa xuất được danh sách. Vui lòng thử lại; chưa có file thiếu dữ liệu nào được tải xuống.')
+    } finally {
+      if (exportController.current === controller) {
+        exportController.current = null
+        setExporting(false)
+      }
+    }
   }
 
   const openEdit = (g: Guest) => { setEditingGuest(g); setFormOpen(true) }
@@ -98,7 +136,7 @@ export default function GuestsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">Khách hàng</h1>
-            {!statsLoading && typeof stats?.total === 'number' && (
+            {!statsLoading && !statsQuery.isError && typeof stats?.total === 'number' && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
                 {stats.total}
               </span>
@@ -108,8 +146,8 @@ export default function GuestsPage() {
         </div>
         <div className="flex items-center gap-2 self-start">
           {canManage && (
-            <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleExport} disabled={guests.length === 0}>
-              <Download className="mr-1.5 h-3.5 w-3.5" /> Xuất CSV
+            <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleExport} disabled={exporting || listLoading || listQuery.isError || total === 0 || search !== searchDebounced || !tenantId} title="Xuất toàn bộ khách hàng theo bộ lọc, không chỉ trang đang xem">
+              <Download className="mr-1.5 h-3.5 w-3.5" /> {exporting ? `Đang tải ${exportedCount}…` : 'Xuất tất cả CSV'}
             </Button>
           )}
           {canManage && (
@@ -120,10 +158,18 @@ export default function GuestsPage() {
         </div>
       </div>
 
-      <GuestKpiBar stats={stats} isLoading={statsLoading} active={segment} onSelect={setSegment} />
+      {exporting && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm" role="status">
+          <span>Đang lấy toàn bộ hồ sơ theo bộ lọc lúc bắt đầu xuất…</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => exportController.current?.abort()}>Hủy xuất</Button>
+        </div>
+      )}
+      {statsQuery.isError
+        ? <QueryErrorPanel title="Không tải được thống kê khách hàng" onRetry={() => { void statsQuery.refetch() }} retrying={statsQuery.isFetching} />
+        : <GuestKpiBar stats={stats} isLoading={statsLoading} active={segment} onSelect={setSegment} />}
 
       <div className="space-y-3 rounded-lg border bg-card p-3">
-        <GuestSegmentTabs value={segment} onChange={setSegment} counts={segmentCounts} compact={isMobile} />
+        <GuestSegmentTabs value={segment} onChange={setSegment} counts={statsQuery.isError ? {} : segmentCounts} compact={isMobile} />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
@@ -148,7 +194,7 @@ export default function GuestsPage() {
             />
           </div>
           <div className="flex w-full min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground sm:w-auto sm:shrink-0 sm:justify-end">
-            <span>{searchDebounced ? `${total} kết quả phù hợp` : `${total} khách hàng`}</span>
+            <span>{listQuery.isError ? 'Chưa tải được danh sách' : listLoading ? 'Đang tải…' : searchDebounced ? `${total} kết quả phù hợp` : `${total} khách hàng`}</span>
             {hasActiveFilters && (
               <Button
                 type="button"
@@ -165,7 +211,9 @@ export default function GuestsPage() {
         </div>
       </div>
 
-      {isMobile ? (
+      {listQuery.isError ? (
+        <QueryErrorPanel title="Không tải được danh sách khách hàng" onRetry={() => { void listQuery.refetch() }} retrying={listQuery.isFetching} />
+      ) : isMobile ? (
         <GuestCardList
           guests={guests}
           isLoading={listLoading}
@@ -186,7 +234,7 @@ export default function GuestsPage() {
         />
       )}
 
-      {totalPages > 1 && (
+      {!listQuery.isError && !listLoading && totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div>
             Hiển thị {visibleFrom}–{visibleTo} / {total} khách

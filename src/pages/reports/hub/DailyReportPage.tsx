@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
+import { workspacePath } from '@/lib/workspace'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { formatCurrency, cn } from '@/lib/utils'
 import { OTA_SOURCES } from '@/lib/constants'
@@ -345,12 +346,12 @@ export function DailyReportPage() {
               <KpiRow
                 label="Khách nhận phòng"
                 value={`${movementData?.checkIn ?? 0}`}
-                href="/bookings?status=confirmed"
+                href={workspacePath('/bookings?status=confirmed')}
               />
               <KpiRow
                 label="Khách trả phòng"
                 value={`${movementData?.checkOut ?? 0}`}
-                href="/bookings?status=checked_in"
+                href={workspacePath('/bookings?status=checked_in')}
               />
             </>
           )}

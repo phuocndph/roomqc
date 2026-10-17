@@ -217,6 +217,7 @@ const navigation: NavItem[] = [
       { titleKey: 'changePassword', href: '/settings/change-password', icon: KeyRound, group: 'Tài khoản' },
 
       // Khách sạn & Pháp lý
+      { titleKey: 'Thiết lập phòng ban đầu', href: '/rooms', icon: ClipboardList, roles: ['owner'], group: 'Khách sạn & Pháp lý' },
       { titleKey: 'hotelsSettings', href: '/settings/hotels', icon: Building2, group: 'Khách sạn & Pháp lý' },
       { titleKey: 'hotelPolicy', href: '/settings/hotel-policy', icon: ScrollText, minMode: 'standard', group: 'Khách sạn & Pháp lý' },
       { titleKey: 'bcaConfig', href: '/settings/legal/stay-registration', icon: ShieldCheck, group: 'Khách sạn & Pháp lý' },

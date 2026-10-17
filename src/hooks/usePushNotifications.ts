@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/hooks/useUser';
 import { toast } from 'sonner';
+import { runtimeConfig } from '@/lib/runtime-config';
+import { isNativeApp } from '@/lib/native/platform';
 
-const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined)?.trim() ?? '';
+const VAPID_PUBLIC_KEY = runtimeConfig.vapidPublicKey.trim();
 const SERVICE_WORKER_READY_TIMEOUT_MS = 12_000;
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -55,6 +57,7 @@ function applicationServerKeysMatch(
 }
 
 function getPushSupportError(): string | null {
+  if (isNativeApp()) return 'Thông báo khi đóng ứng dụng chưa được bật trong bản mobile này. Bạn vẫn có thể xem thông báo trong ứng dụng.';
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return 'Thông báo đẩy chỉ hoạt động trong trình duyệt.';
   }

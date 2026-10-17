@@ -188,7 +188,7 @@ export function PendingSupplementsBanner() {
                     </Select>
                   </div>
 
-                  <div className="flex items-start gap-2 rounded-md border bg-background p-2.5">
+                  <div className="flex items-start gap-2 rounded-none border bg-background p-2.5">
                     <Checkbox
                       id="banner-auto-release"
                       checked={autoRelease}

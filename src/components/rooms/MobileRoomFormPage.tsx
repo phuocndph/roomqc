@@ -120,7 +120,7 @@ export function MobileRoomFormPage() {
       return
     }
 
-    if (!isEdit && !quotaCheck.checkQuota()) {
+    if (!isEdit && !(await quotaCheck.checkQuota())) {
       return
     }
 

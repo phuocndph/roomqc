@@ -33,10 +33,14 @@ const navigationRoute = new NavigationRoute(
     ],
   }),
   {
-    denylist: [/^\/~oauth/, /^\/assets\//, /\.[a-z0-9]+$/i],
+    denylist: [/^\/~oauth/, /^\/assets\//, /^\/api\//, /\.[a-z0-9]+$/i],
   }
 );
 registerRoute(navigationRoute);
+
+// Configuration, identities, and Storage objects must not fall into image or
+// navigation caches shared by every workspace on roomqc.com.
+registerRoute(({url}) => url.origin !== self.location.origin || url.pathname.startsWith('/api/'), new NetworkOnly());
 
 // Always fetch changelog.json fresh — never cache (so users see latest release notes)
 registerRoute(

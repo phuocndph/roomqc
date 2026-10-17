@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useLatestConsumptionSnapshots } from '@/hooks/useConsumptionAnalytics'
+import { InventoryPanelError } from './InventoryPanelError'
 
 export function InventoryTopConsumedWidget() {
-  const { data: snapshots, isLoading } = useLatestConsumptionSnapshots(500)
+  const { data: snapshots, isLoading, isError, refetch } = useLatestConsumptionSnapshots(500)
 
   const top = useMemo(() => {
     if (!snapshots) return []
@@ -17,13 +18,14 @@ export function InventoryTopConsumedWidget() {
   return (
     <div className="border rounded-lg bg-card">
       <div className="flex items-center justify-between px-3 py-2 border-b">
-        <div className="text-sm font-semibold">Top tiêu hao</div>
+        <h3 className="text-sm font-semibold">Dùng nhiều nhất</h3>
         <div className="text-[11px] text-muted-foreground">30 ngày</div>
       </div>
       {isLoading ? (
         <div className="p-4 text-xs text-muted-foreground">Đang tải…</div>
-      ) : top.length === 0 ? (
-        <div className="p-4 text-xs text-muted-foreground">Chưa có dữ liệu tiêu hao.</div>
+      ) : isError ? <InventoryPanelError onRetry={() => void refetch()} />
+        : top.length === 0 ? (
+        <div className="p-4 text-sm text-muted-foreground">Chưa có dữ liệu tiêu thụ.</div>
       ) : (
         <ul className="p-3 space-y-2">
           {top.map((s) => {

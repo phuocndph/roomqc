@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from './useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useQueryClient } from '@tanstack/react-query'
+import type { InventoryDashboardStats } from '@/types/inventory.types'
 
 export interface InventoryHubBadges {
   reorderPending: number
@@ -49,10 +50,11 @@ export function useInventoryHubBadges() {
       // (RPC dashboard đọc quantity_in_stock của items).
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` },
+        { event: '*', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` },
         () => {
           qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
           qc.invalidateQueries({ queryKey: ['low-stock-items'] })
+          qc.invalidateQueries({ queryKey: ['inventory-dashboard', tenantId] })
         }
       )
       .subscribe()
@@ -80,14 +82,13 @@ export function useInventoryHubBadges() {
         .eq('tenant_id', tenantId)
         .eq('status', 'pending')
 
-      // "Cần xử lý" = phiếu chờ thao tác của manager:
-      // pending (chờ duyệt) + released (đã xuất kho, chờ phòng confirm).
+      // Include preparation in progress so unfinished work remains visible.
       // Enum thực tế: pending | in_progress | released | completed | cancelled.
       const distQ = supabase
         .from('distribution_orders')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
-        .in('status', ['pending', 'released'])
+        .in('status', ['pending', 'in_progress', 'released'])
 
       // Phiếu xuất "quá hạn" — chờ thao tác >24h
       const staleCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -95,7 +96,7 @@ export function useInventoryHubBadges() {
         .from('distribution_orders')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
-        .in('status', ['pending', 'released'])
+        .in('status', ['pending', 'in_progress', 'released'])
         .lt('created_at', staleCutoff)
 
       // Phiếu kiểm kê đang xử lý = draft + in_progress + approved (chờ complete).
@@ -123,7 +124,12 @@ export function useInventoryHubBadges() {
         }),
       ])
 
-      const lowStock = (dash.data as any)?.low_stock_count ?? 0
+      // Supabase resolves failed queries with { error }; never turn failures into
+      // zero counts and incorrectly tell operators that all work is complete.
+      for (const result of [reorder, dist, distStale, adj, dash]) {
+        if (result.error) throw result.error
+      }
+      const lowStock = (dash.data as unknown as InventoryDashboardStats | null)?.low_stock_count ?? 0
 
       return {
         reorderPending: reorder.count ?? 0,

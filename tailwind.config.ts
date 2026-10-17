@@ -227,9 +227,18 @@ export default {
       },
 
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        panel: "var(--radius-panel)",
+        control: "var(--radius-control)",
+        overlay: "var(--radius-overlay)",
+        badge: "var(--radius-badge)",
+        // Existing large-radius classes belong to cards and content surfaces.
+        DEFAULT: "var(--radius-control)",
+        sm: "var(--radius-badge)",
+        md: "var(--radius-control)",
+        lg: "var(--radius-panel)",
+        xl: "var(--radius-panel)",
+        "2xl": "var(--radius-panel)",
+        "3xl": "var(--radius-panel)",
       },
       keyframes: {
         "accordion-down": {

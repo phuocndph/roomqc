@@ -78,7 +78,7 @@ export function TenantListTable() {
         <CardTitle>Danh sách Tenant ({tenants?.length || 0})</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-none border">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

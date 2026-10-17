@@ -84,7 +84,7 @@ export function RevenueVsCostChart({ data, loading, days = 30 }: Props) {
               contentStyle={{
                 background: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',
-                borderRadius: 6,
+                borderRadius: 'var(--radius-overlay)',
                 fontSize: 12,
               }}
             />

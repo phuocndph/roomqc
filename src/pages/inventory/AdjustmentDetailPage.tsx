@@ -520,7 +520,7 @@ function ItemsTable({
   
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-none border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

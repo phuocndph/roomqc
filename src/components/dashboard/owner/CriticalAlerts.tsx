@@ -13,7 +13,7 @@ export function CriticalAlerts() {
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg p-4">
+      <div className="border border-border rounded-none p-4">
         <Skeleton className="h-5 w-32 mb-3" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -68,7 +68,7 @@ export function CriticalAlerts() {
   }
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="border border-border rounded-none p-4">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
         <h3 className="text-sm font-medium text-foreground">Cảnh báo cần chú ý</h3>
@@ -80,7 +80,7 @@ export function CriticalAlerts() {
             key={alert.id}
             to={alert.link}
             className={cn(
-              'flex items-center justify-between p-3 rounded-lg border transition-colors',
+              'flex items-center justify-between p-3 rounded-none border transition-colors',
               alert.bgColor,
               alert.borderColor,
               'hover:opacity-80'

@@ -5,10 +5,7 @@ import { navigateBack } from '@/lib/navigation'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from '@/contexts/AuthContext'
 import { useBreakpoint } from '@/lib/breakpoints'
-import { toast } from '@/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
@@ -41,13 +38,11 @@ import { useUser } from '@/hooks/useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useTranslation } from 'react-i18next'
 import type { CategoryFormData } from '@/types/items.types'
-import { getFriendlyError } from '@/lib/errorMessage'
 
 export function CategoriesPage() {
   const { t } = useTranslation(['items', 'common'])
   const navigate = useNavigate()
   const { isMobile } = useBreakpoint()
-  const { user: authUser } = useAuth()
   const { tenantId, hotelId, user: profile } = useUser()
   const { selectedHotel, isAllHotelsMode } = useHotelContext()
   const effectiveHotelId = isAllHotelsMode ? null : (selectedHotel?.id ?? hotelId ?? null)
@@ -62,7 +57,6 @@ export function CategoriesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any>(null)
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
-  const [isFixing, setIsFixing] = useState(false)
   const [showTenantAlert, setShowTenantAlert] = useState(true)
   const canAutoFix = !tenantId && profile?.status === 'pending_setup'
 
@@ -134,58 +128,6 @@ export function CategoriesPage() {
       setDeletingCategoryId(null)
     } catch (error) {
       // Error handled by mutation
-    }
-  }
-
-  const handleAutoFix = async () => {
-    if (!authUser?.id || !authUser?.email) {
-      toast({
-        title: 'Lỗi',
-        description: 'Không tìm thấy thông tin user. Vui lòng đăng nhập lại.',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    setIsFixing(true)
-    
-    try {
-      const { data, error } = await supabase.rpc('complete_registration', {
-        p_user_id: authUser.id,
-        p_full_name: authUser.email.split('@')[0] || 'User',
-        p_email: authUser.email,
-        p_phone: '0123456789',
-        p_tenant_name: 'Công ty của tôi',
-        p_hotel_name: 'Khách sạn của tôi',
-        p_hotel_address: '123 Đường ABC, TP.HCM',
-        p_hotel_phone: '0123456789',
-        p_hotel_email: authUser.email,
-        p_total_rooms: 50
-      })
-
-      if (error) throw error
-      
-      const result = data as any
-      if (result?.success) {
-        toast({
-          title: 'Thành công!',
-          description: 'Đã tạo tenant và hotel. Đang tải lại trang...',
-        })
-        
-        setTimeout(() => {
-          window.location.reload()
-        }, 1500)
-      } else {
-        throw new Error(result?.error || 'Không thể tạo tenant/hotel')
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Lỗi',
-        description: getFriendlyError(error),
-        variant: 'destructive',
-      })
-    } finally {
-      setIsFixing(false)
     }
   }
 

@@ -118,7 +118,7 @@ export function ExpenseChart({ months = 12, showBarChart = false }: ExpenseChart
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-overlay)',
                 }}
               />
               <Legend />
@@ -144,7 +144,7 @@ export function ExpenseChart({ months = 12, showBarChart = false }: ExpenseChart
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-overlay)',
                 }}
               />
               <Legend />

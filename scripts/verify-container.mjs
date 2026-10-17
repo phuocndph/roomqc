@@ -44,6 +44,17 @@ if (!/no-store/i.test(loginCache)) failures.push('/auth/login must use Cache-Con
 const loginHtml = login ? await login.text() : ''
 if (loginHtml && !loginHtml.includes('id="root"')) failures.push('/auth/login did not return the app shell')
 
+const workspaceLogin = await request('/app/anthuy/auth/login')
+expectStatus(workspaceLogin, '/app/anthuy/auth/login')
+expectSecurityHeaders(workspaceLogin, '/app/anthuy/auth/login')
+if (workspaceLogin && !(await workspaceLogin.text()).includes('id="root"')) failures.push('Workspace deep link did not return the app shell')
+if (!/no-store/i.test(workspaceLogin?.headers.get('cache-control') || '')) failures.push('Workspace HTML must use Cache-Control: no-store')
+
+// The frontend-only container must never send SPA HTML for a missing API.
+const unavailableControl = await request('/api/control/workspaces/anthuy/bootstrap')
+expectStatus(unavailableControl, '/api/control/workspaces/anthuy/bootstrap', 503)
+if (!/application\/json/i.test(unavailableControl?.headers.get('content-type') || '')) failures.push('Unconfigured control API must return JSON, not the SPA shell')
+
 const serviceWorker = await request('/sw.js')
 expectStatus(serviceWorker, '/sw.js')
 expectSecurityHeaders(serviceWorker, '/sw.js')

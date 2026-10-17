@@ -4,21 +4,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Clock, CheckCircle, XCircle, QrCode, RefreshCw, CreditCard, X } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, XCircle, FileText, RefreshCw, CreditCard, X } from 'lucide-react';
 import { formatVNCurrency } from '@/lib/pricing';
 import { usePendingPayments, type PendingPayment } from '@/hooks/usePendingPayments';
 import { ViewPaymentQRDialog } from '@/components/payment/ViewPaymentQRDialog';
 import { PaymentSuccessDialog } from './PaymentSuccessDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { checkoutError } from '@/lib/subscription-checkout';
+import { isNonPayableSubscriptionDraft } from '@/lib/subscription-payment-safety';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export function PendingPayments() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: payments, isLoading, refetch, isRefetching } = usePendingPayments();
-  const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
+  const { data: payments, isLoading, refetch, isRefetching, error } = usePendingPayments();
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const selectedPayment = !error ? payments?.find(p => p.id === selectedPaymentId) ?? null : null;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [successPayment, setSuccessPayment] = useState<PendingPayment | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -38,6 +41,9 @@ export function PendingPayments() {
           table: 'payment_transactions',
         },
         (payload) => {
+          // Hide stale instructions before waiting for a network refetch.
+          setIsDialogOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['pending-payments-count'] });
           const newStatus = payload.new?.payment_status;
           const oldStatus = payload.old?.payment_status;
           
@@ -79,6 +85,10 @@ export function PendingPayments() {
           refetch();
         }
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' },
+        () => { setIsDialogOpen(false); refetch(); })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'payment_transactions' },
+        () => { setIsDialogOpen(false); refetch(); })
       .subscribe();
 
     return () => {
@@ -112,7 +122,7 @@ export function PendingPayments() {
   };
 
   const handleViewQR = (payment: PendingPayment) => {
-    setSelectedPayment(payment);
+    setSelectedPaymentId(payment.id);
     setIsDialogOpen(true);
   };
 
@@ -138,7 +148,7 @@ export function PendingPayments() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     } catch (error) {
       console.error('Cancel payment error:', error);
-      toast.error('Không thể hủy đơn hàng');
+      toast.error(checkoutError(error));
     } finally {
       setIsCancelling(false);
       setCancelPayment(null);
@@ -173,7 +183,7 @@ export function PendingPayments() {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  Các giao dịch đang chờ xác nhận (tự động cập nhật)
+                  Bản nháp và đơn cũ đang chờ xử lý. Chưa mở thu tiền; không chuyển khoản cho các đơn này.
                 </CardDescription>
               </div>
               <Button
@@ -188,6 +198,7 @@ export function PendingPayments() {
             </div>
           </CardHeader>
           <CardContent>
+            {error && <p role="alert" className="text-destructive">Không tải được đơn hàng. Vui lòng làm mới; thông tin thanh toán tạm ẩn để tránh dùng trạng thái cũ.</p>}
             {pendingPayments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -232,19 +243,21 @@ export function PendingPayments() {
                                 onClick={() => handleGoToPayment(payment)}
                               >
                                 <CreditCard className="h-4 w-4 mr-2" />
-                                Thanh toán
+                                {isNonPayableSubscriptionDraft(payment) ? 'Xem bản nháp' : 'Xem đơn cũ'}
                               </Button>
                             )}
                             <Button
                               size="sm"
                               variant="outline"
+                              aria-label={`Xem trạng thái đơn ${payment.id}`}
                               onClick={() => handleViewQR(payment)}
                             >
-                              <QrCode className="h-4 w-4" />
+                              <FileText className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
+                              aria-label={`Hủy đơn hàng ${payment.id}`}
                               className="text-destructive hover:text-destructive"
                               onClick={() => setCancelPayment(payment)}
                             >
@@ -267,6 +280,7 @@ export function PendingPayments() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         payment={selectedPayment}
+        isChecking={isRefetching}
       />
 
       <PaymentSuccessDialog

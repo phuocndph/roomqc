@@ -45,7 +45,7 @@ export function OccupancyRevparChart({ data, loading }: Props) {
             tickFormatter={(v) => `${Math.round(v / 1_000_000)}tr`}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: 6 }}
+            contentStyle={{ fontSize: 12, borderRadius: 'var(--radius-overlay)' }}
             formatter={(value: number, name: string) =>
               name === 'Công suất' ? `${value.toFixed(1)}%` : formatCurrency(value)
             }

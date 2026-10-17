@@ -1,3 +1,4 @@
+import { scopedStorageKey } from './runtime-config';
 // Extend window interface for PasswordCredential API
 declare global {
   interface Window {
@@ -6,7 +7,7 @@ declare global {
 }
 
 const LEGACY_STORAGE_KEY = 'app_saved_credential_v1';
-const LOGGED_OUT_FLAG = 'app_user_logged_out_v1';
+const LOGGED_OUT_FLAG = scopedStorageKey('app_user_logged_out_v1');
 
 /**
  * SECURITY: We no longer persist plaintext passwords (even XOR-obfuscated) in

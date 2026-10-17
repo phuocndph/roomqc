@@ -17,14 +17,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { getRegistrationErrorMessage } from '@/lib/registration-error-messages'
 import { getAccountSetupState } from '@/lib/account-setup'
 import { AccountSetupNotice } from '@/components/auth/AccountSetupNotice'
+import { controlRequest, workspacePath } from '@/lib/workspace'
+import { runtimeConfig } from '@/lib/runtime-config'
+import { useMyStaffInvitation } from '@/hooks/useMyStaffInvitation'
+import { ResumeStaffInvitation } from '@/components/auth/ResumeStaffInvitation'
 
 const onboardingSchema = z.object({
-  tenantName: z.string().trim().min(2, 'Tên công ty phải có ít nhất 2 ký tự'),
+  tenantName: z.string().trim().refine(value => !value || value.length >= 2, 'Tên công ty phải có ít nhất 2 ký tự'),
   tenantPhone: z.string().trim().min(10, 'Số điện thoại không hợp lệ'),
   hotelName: z.string().trim().min(2, 'Tên khách sạn phải có ít nhất 2 ký tự'),
   hotelAddress: z.string().trim().min(5, 'Địa chỉ phải có ít nhất 5 ký tự'),
-  hotelPhone: z.string().trim().min(10, 'Số điện thoại không hợp lệ'),
-  hotelEmail: z.string().trim().email('Email không hợp lệ'),
+  hotelPhone: z.string().trim().refine(value => !value || value.length >= 10, 'Số điện thoại không hợp lệ'),
+  hotelEmail: z.string().trim().pipe(z.union([z.string().email('Email không hợp lệ'), z.literal('')])),
   totalRooms: z.coerce.number().int('Số phòng phải là số nguyên').min(1, 'Số phòng phải lớn hơn 0').max(10000, 'Số phòng quá lớn'),
 })
 
@@ -34,6 +38,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { user: profile, isLoading: profileLoading, error: profileError, refetch: refetchUser } = useUser()
+  const invitation = useMyStaffInvitation(!profileLoading && (!profile || !!profileError))
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completed, setCompleted] = useState(false)
@@ -45,10 +50,10 @@ export default function Onboarding() {
     defaultValues: {
       tenantName: '',
       tenantPhone: '',
-      hotelName: '',
+      hotelName: runtimeConfig.workspace?.workspace.displayName || '',
       hotelAddress: '',
       hotelPhone: '',
-      hotelEmail: user?.email || '',
+      hotelEmail: '',
       totalRooms: 10,
     },
   })
@@ -65,19 +70,35 @@ export default function Onboarding() {
     setError(null)
 
     try {
+      // Reuse the main contact unless the owner explicitly supplies alternatives.
+      const tenantName = data.tenantName || data.hotelName
+      const hotelPhone = data.hotelPhone || data.tenantPhone
+      const hotelEmail = data.hotelEmail || user.email || ''
       // Call complete_registration function
-      const { data: result, error } = await supabase.rpc('complete_registration', {
+      const workspace = runtimeConfig.workspace
+      const response = workspace ? await (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('Vui lòng đăng nhập lại để tiếp tục thiết lập.')
+        const result = await controlRequest(`/workspaces/${workspace.workspace.slug}/provision`, {
+          method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({fullName:user.user_metadata?.full_name || user.email?.split('@')[0],
+            phone:data.tenantPhone,tenantName,hotelName:data.hotelName,
+            hotelAddress:data.hotelAddress,hotelPhone,hotelEmail,totalRooms:data.totalRooms}),
+        })
+        return {data:result,error:null}
+      })() : await supabase.rpc('complete_registration', {
         p_user_id: user.id,
         p_full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
         p_email: user.email || '',
         p_phone: data.tenantPhone,
-        p_tenant_name: data.tenantName,
+        p_tenant_name: tenantName,
         p_hotel_name: data.hotelName,
         p_hotel_address: data.hotelAddress,
-        p_hotel_phone: data.hotelPhone,
-        p_hotel_email: data.hotelEmail,
+        p_hotel_phone: hotelPhone,
+        p_hotel_email: hotelEmail,
         p_total_rooms: data.totalRooms,
       })
+      const { data: result, error } = response
 
       if (error) {
         throw error
@@ -101,6 +122,12 @@ export default function Onboarding() {
       }
 
       setCompleted(true)
+
+      if (workspace) {
+        // Bootstrap the committed directory mapping before any profile query.
+        window.location.assign(workspacePath('/auth/callback'))
+        return
+      }
 
       toast({
         title: '🎉 Chào mừng bạn!',
@@ -130,7 +157,9 @@ export default function Onboarding() {
     }
   }
 
-  if (profileLoading) return <LoadingSpinner fullScreen />
+  if (profileLoading || invitation.isLoading) return <LoadingSpinner fullScreen />
+  if (invitation.data) return <ResumeStaffInvitation invitation={invitation.data} />
+  if (invitation.isError) return <AccountSetupNotice onRetry={() => { void invitation.refetch() }} />
   if (profileError) return <AccountSetupNotice onRetry={() => { void refetchUser() }} />
   const setupState = getAccountSetupState(profile)
   if (setupState === 'assignment-required') {
@@ -149,7 +178,7 @@ export default function Onboarding() {
             <CardTitle className="text-2xl font-bold">Thiết lập khách sạn</CardTitle>
           </div>
           <CardDescription>
-            Hoàn tất thông tin để bắt đầu sử dụng hệ thống quản lý
+            Chỉ cần thông tin cơ bản để bắt đầu. Bạn có thể chỉnh sửa sau.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -168,44 +197,8 @@ export default function Onboarding() {
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
               <fieldset disabled={isSubmitting || completed} className="space-y-6">
-              {/* Tenant Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  Thông tin công ty
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="tenantName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tên công ty *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="VD: Công ty TNHH ABC" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tenantPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Số điện thoại *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="0901234567" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
               {/* Hotel Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -254,23 +247,37 @@ export default function Onboarding() {
                   />
                   <FormField
                     control={form.control}
-                    name="hotelPhone"
+                    name="tenantPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Số điện thoại *</FormLabel>
+                        <FormLabel>Số điện thoại liên hệ *</FormLabel>
                         <FormControl>
-                          <Input placeholder="0282345678" {...field} />
+                          <Input type="tel" autoComplete="tel" placeholder="0901234567" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+                <p className="text-sm text-muted-foreground">Email liên hệ mặc định: {user?.email}. Số phòng chỉ là quy mô dự kiến; danh sách phòng sẽ được tạo ở bước sau.</p>
+              </div>
+
+              <details className="rounded-lg border p-4" open={!!(form.formState.errors.tenantName || form.formState.errors.hotelPhone || form.formState.errors.hotelEmail) || undefined}>
+                <summary className="cursor-pointer text-sm font-medium">Thông tin bổ sung (không bắt buộc)</summary>
+                <p className="mt-3 text-sm text-muted-foreground">Để trống để dùng tên khách sạn, số điện thoại và email ở trên.</p>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField control={form.control} name="tenantName" render={({ field }) => (
+                    <FormItem><FormLabel>Tên công ty / đơn vị quản lý</FormLabel><FormControl><Input placeholder="Mặc định dùng tên khách sạn" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="hotelPhone" render={({ field }) => (
+                    <FormItem><FormLabel>Điện thoại khách sạn (nếu khác)</FormLabel><FormControl><Input type="tel" placeholder="Mặc định dùng số liên hệ" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
                   <FormField
                     control={form.control}
                     name="hotelEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email *</FormLabel>
+                        <FormLabel>Email khách sạn (nếu khác)</FormLabel>
                         <FormControl>
                           <Input type="email" placeholder="info@hotel.com" {...field} />
                         </FormControl>
@@ -279,7 +286,7 @@ export default function Onboarding() {
                     )}
                   />
                 </div>
-              </div>
+              </details>
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || completed}>
                 {isSubmitting || completed ? (

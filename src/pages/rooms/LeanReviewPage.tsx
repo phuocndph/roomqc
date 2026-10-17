@@ -387,7 +387,7 @@ export default function LeanReviewPage() {
                               />
                             ))}
                             {iss.photos.length > 4 && (
-                              <div className="w-12 h-12 rounded-md border bg-muted flex items-center justify-center text-[12px] font-medium">
+                              <div className="w-12 h-12 rounded-none border bg-muted flex items-center justify-center text-[12px] font-medium">
                                 +{iss.photos.length - 4}
                               </div>
                             )}

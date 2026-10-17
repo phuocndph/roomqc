@@ -20,6 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -31,10 +33,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown, Building2, Users, AlertCircle, Receipt, DollarSign, ShieldCheck, ShieldAlert, ShieldX, DoorOpen } from 'lucide-react';
-import { useTenants, useSuspendTenant, useReactivateTenant, useDeleteTenant } from '@/hooks/super-admin/useTenants';
+import { useTenants, useSuspendTenant, useReactivateTenant } from '@/hooks/super-admin/useTenants';
 import { TenantDetailsDialog } from './TenantDetailsDialog';
 import { ChangePlanDialog } from './ChangePlanDialog';
-import { DeleteTenantDialog } from './DeleteTenantDialog';
 import { TenantBillingDialog } from './TenantBillingDialog';
 import {
   AlertDialog,
@@ -72,14 +73,15 @@ export function TenantsTable({
   const [selectedTenant, setSelectedTenant] = useState<any | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [changePlanOpen, setChangePlanOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [tenantToSuspend, setTenantToSuspend] = useState<any | null>(null);
 
   const suspendMutation = useSuspendTenant();
   const reactivateMutation = useReactivateTenant();
-  const deleteMutation = useDeleteTenant();
+  const [statusAction, setStatusAction] = useState<'suspend' | 'reactivate'>('suspend');
+  const [statusReason, setStatusReason] = useState('');
+  const statusPending = suspendMutation.isPending || reactivateMutation.isPending;
 
   const { data: tenants = [], isLoading } = useTenants();
 
@@ -427,7 +429,12 @@ export function TenantsTable({
               {tenant.subscription_status === 'suspended' ? (
                 <DropdownMenuItem
                   className="text-green-600"
-                  onClick={() => reactivateMutation.mutate(tenant.id)}
+                  onClick={() => {
+                    setTenantToSuspend(tenant);
+                    setStatusAction('reactivate');
+                    setStatusReason('');
+                    setSuspendDialogOpen(true);
+                  }}
                 >
                   {t('tenants.actions.reactivate')}
                 </DropdownMenuItem>
@@ -436,20 +443,16 @@ export function TenantsTable({
                   className="text-orange-600"
                   onClick={() => {
                     setTenantToSuspend(tenant);
+                    setStatusAction('suspend');
+                    setStatusReason('');
                     setSuspendDialogOpen(true);
                   }}
                 >
                   {t('tenants.actions.suspend')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  setSelectedTenant(tenant);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                {t('tenants.actions.delete')}
+              <DropdownMenuItem disabled>
+                Xóa khách hàng — chưa hỗ trợ
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -477,7 +480,7 @@ export function TenantsTable({
     <div className="space-y-4">
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-none border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -569,33 +572,36 @@ export function TenantsTable({
         onOpenChange={setChangePlanOpen}
       />
       
-      <DeleteTenantDialog
-        tenant={selectedTenant}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      />
       
       {/* Suspend Confirmation Dialog */}
-      <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+      <AlertDialog open={suspendDialogOpen} onOpenChange={(open) => { if (!statusPending) setSuspendDialogOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('tenants.dialogs.suspendTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{statusAction === 'suspend' ? t('tenants.dialogs.suspendTitle') : 'Khôi phục quyền truy cập'}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('tenants.dialogs.suspendDescription', { name: tenantToSuspend?.name })}
+              {statusAction === 'suspend' ? t('tenants.dialogs.suspendDescription', { name: tenantToSuspend?.name }) : 'Chỉ khôi phục khi gói còn hiệu lực; thao tác này không gia hạn gói.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <Label htmlFor="tenant-status-reason">Lý do (bắt buộc)</Label>
+          <Input id="tenant-status-reason" value={statusReason} maxLength={1000} onChange={(event) => setStatusReason(event.target.value)} disabled={statusPending} />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('tenants.dialogs.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={statusPending}>{t('tenants.dialogs.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (tenantToSuspend) {
-                  suspendMutation.mutate(tenantToSuspend.id);
-                  setSuspendDialogOpen(false);
-                  setTenantToSuspend(null);
-                }
+              disabled={statusPending || statusReason.trim().length < 5}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!tenantToSuspend) return;
+                const mutation = statusAction === 'suspend' ? suspendMutation : reactivateMutation;
+                mutation.mutate({ tenantId: tenantToSuspend.id, reason: statusReason.trim() }, {
+                  onSuccess: () => {
+                    setSuspendDialogOpen(false);
+                    setTenantToSuspend(null);
+                    setStatusReason('');
+                  },
+                });
               }}
             >
-              {t('tenants.dialogs.suspendConfirm')}
+              {statusPending ? 'Đang xử lý...' : statusAction === 'suspend' ? t('tenants.dialogs.suspendConfirm') : 'Khôi phục'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -129,7 +129,7 @@ export const MobileLaundryReportPage = () => {
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-overlay)',
                     fontSize: '12px',
                   }}
                 />

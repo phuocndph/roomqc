@@ -277,7 +277,7 @@ export function TapeChartBookingSheet({
                 </div>
 
                 {/* 3 số tài chính cốt lõi */}
-                <div className="mt-3 space-y-1.5 rounded-md border bg-muted/30 px-3 py-2.5">
+                <div className="mt-3 space-y-1.5 rounded-none border bg-muted/30 px-3 py-2.5">
                   <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">Tổng</span>
                     <span className="font-semibold tabular-nums">

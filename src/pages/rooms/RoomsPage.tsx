@@ -268,10 +268,12 @@ export function RoomsPage() {
       {/* Bulk Import Dialog */}
       {selectedHotel && (
         <BulkImportRoomsDialog
+          key={selectedHotel.id}
           open={showBulkImport}
           onOpenChange={setShowBulkImport}
           hotelId={selectedHotel.id}
           hotelName={selectedHotel.name}
+          hotelDetails={selectedHotel}
         />
       )}
     </div>

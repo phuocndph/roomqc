@@ -580,7 +580,7 @@ export function RoomTapeChart() {
             </Select>
           )}
 
-          <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+          <div className="flex items-center gap-0.5 rounded-none border p-0.5">
             {[3, 7, 14, 30].map((d) => (
               <button
                 key={d}

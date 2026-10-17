@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from '@/hooks/useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
+import { InventoryPanelError } from './InventoryPanelError'
 
 interface HotelStockRow {
   hotel_id: string
@@ -30,7 +31,7 @@ export function InventoryHotelBreakdown() {
   const enabled =
     !!tenant?.id && isAllHotelsMode && (availableHotels?.length ?? 0) > 1
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['inv-hub-hotel-breakdown', tenant?.id],
     queryFn: async (): Promise<HotelStockRow[]> => {
       if (!tenant?.id) return []
@@ -81,7 +82,8 @@ export function InventoryHotelBreakdown() {
       </div>
       {isLoading ? (
         <div className="p-4 text-xs text-muted-foreground">Đang tính…</div>
-      ) : !data || data.length === 0 ? (
+      ) : isError ? <InventoryPanelError onRetry={() => void refetch()} />
+        : !data || data.length === 0 ? (
         <div className="p-4 text-xs text-muted-foreground">Chưa có dữ liệu kho.</div>
       ) : (
         <div className="overflow-x-auto">
@@ -91,7 +93,7 @@ export function InventoryHotelBreakdown() {
                 <th className="text-left px-3 py-2">Khách sạn</th>
                 <th className="text-right px-3 py-2">Giá trị</th>
                 <th className="text-right px-3 py-2">% tổng</th>
-                <th className="text-right px-3 py-2">SKU</th>
+                <th className="text-right px-3 py-2">Mặt hàng</th>
                 <th className="text-right px-3 py-2">Sắp hết</th>
               </tr>
             </thead>

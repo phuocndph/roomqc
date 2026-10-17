@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { getAuthErrorKey } from '@/lib/auth-error-messages'
 import { useQueryClient } from '@tanstack/react-query'
+import { workspacePath } from '@/lib/workspace'
+import { authRedirectUrl } from '@/lib/native/auth-links'
 
 // Silent refresh interval: 30 minutes
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000
@@ -177,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // authenticated profile and sends an unprovisioned owner to onboarding.
       // Redirecting to `/` works only incidentally and can expose a landing
       // page while the profile query is still pending.
-      const redirectUrl = `${window.location.origin}/auth/callback`
+      const redirectUrl = authRedirectUrl('/auth/callback')
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -213,7 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = useCallback(async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: authRedirectUrl('/auth/change-password'),
       })
 
       if (error) throw error

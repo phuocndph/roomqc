@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import { runtimeConfig } from '@/lib/runtime-config'
 
 interface AccountSetupNoticeProps {
   assignmentRequired?: boolean
@@ -26,6 +27,7 @@ export function AccountSetupNotice({ assignmentRequired = false, onRetry, isRetr
           </Button>
           <Button variant="outline" onClick={() => void signOut()}>Đăng xuất</Button>
         </div>
+        {runtimeConfig.workspace && <p className="text-sm">Kiểm tra bạn đang dùng tài khoản của <strong>{runtimeConfig.workspace.workspace.displayName}</strong>. <a href="/start?mode=login" className="text-blue-700 underline">Chọn doanh nghiệp khác</a></p>}
       </div>
     </div>
   )

@@ -13,6 +13,7 @@ import { UserWithRelations } from '@/types/database.types'
 import { UserFormData } from '@/lib/validations/user.schemas'
 import { Users, Plus, LayoutList, Network } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PendingInvitations } from './PendingInvitations'
 
 interface UserManagementTabProps {
   onManagePermissions?: (userId: string) => void
@@ -97,6 +98,7 @@ export function UserManagementTab({ onManagePermissions, editUserId }: UserManag
 
   return (
     <div className="space-y-4">
+      <PendingInvitations />
       <UserStatsCards users={users || []} />
       
       {/* Filters and Actions */}

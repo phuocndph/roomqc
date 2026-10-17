@@ -116,7 +116,7 @@ export function RoomFormPage() {
     }
 
     // Check quota for new rooms
-    if (!isEdit && !quotaCheck.checkQuota()) {
+    if (!isEdit && !(await quotaCheck.checkQuota())) {
       return
     }
 

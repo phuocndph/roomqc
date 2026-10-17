@@ -145,6 +145,7 @@ export const MobileSidebar = ({ onClose }: MobileSidebarProps) => {
       title: 'Quản lý',
       items: [
         { title: 'Khách sạn', icon: Building2, path: '/settings/hotels' },
+        { title: 'Thiết lập phòng ban đầu', icon: DoorOpen, path: '/rooms', roles: ['owner'] },
         { title: 'Nhân sự', icon: Users, path: '/settings/users', minMode: 'standard' },
       ]
     },

@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft, CheckCircle, XCircle, Clock, AlertTriangle, History
 import { formatVNCurrency } from '@/lib/pricing';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
+import { canDisplaySubscriptionTransferQR, isNonPayableSubscriptionDraft } from '@/lib/subscription-payment-safety';
 export default function SubscriptionPaymentPage() {
   const {
     invoiceId
@@ -146,6 +147,14 @@ export default function SubscriptionPaymentPage() {
   const amount = payment.amount || 0;
   const invoice = payment.invoice as Record<string, unknown> | null;
 
+  if (isNonPayableSubscriptionDraft(payment)) {
+    return <div className="container mx-auto py-6"><Card className="max-w-lg mx-auto">
+      <CardHeader><CardTitle>Bản nháp — chưa được thanh toán</CardTitle>
+        <CardDescription>Đơn này chỉ dùng để kiểm tra báo giá. Không chuyển khoản; gói dịch vụ chưa thay đổi.</CardDescription>
+      </CardHeader><CardContent><Button onClick={handleBack}>Quay lại quản lý đăng ký</Button></CardContent>
+    </Card></div>;
+  }
+
   // Success state
   if (paymentStatus === 'completed') {
     return <div className="container mx-auto py-6">
@@ -220,6 +229,15 @@ export default function SubscriptionPaymentPage() {
           </CardContent>
         </Card>
       </div>;
+  }
+
+  // Expired/refunded/unknown/inconsistent rows must never fall through to QR.
+  if (!canDisplaySubscriptionTransferQR(payment)) {
+    return <div className="container mx-auto py-6"><Card className="max-w-lg mx-auto">
+      <CardHeader><CardTitle>Đơn hàng không còn khả dụng để thanh toán</CardTitle>
+        <CardDescription>Đơn cũ cần đối soát hoặc giao dịch không còn khả dụng. Không chuyển khoản cho đơn này; vui lòng liên hệ hỗ trợ.</CardDescription>
+      </CardHeader><CardContent><Button onClick={handleBack}>Quay lại quản lý đăng ký</Button></CardContent>
+    </Card></div>;
   }
 
   // Pending state - show QR Code

@@ -128,12 +128,12 @@ export function usePurchaseOrder(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchase_orders')
-        .select('*, vendor:vendors(*)')
+        .select('*, vendor:vendors(*), items:purchase_order_items(*, item:items(id, name, code, unit))')
         .eq('id', id)
         .single();
       
       if (error) throw error;
-      return data as PurchaseOrder;
+      return data as unknown as PurchaseOrder;
     },
     enabled: !!id,
   });

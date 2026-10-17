@@ -135,19 +135,21 @@ export function useSuspendTenant() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (tenantId: string) => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .update({ subscription_status: 'suspended' })
-        .eq('id', tenantId)
-        .select()
-        .single();
+    mutationFn: async ({ tenantId, reason }: { tenantId: string; reason: string }) => {
+      const { data, error } = await supabase.rpc('admin_manage_tenant', {
+        p_tenant_id: tenantId, p_action: 'suspend', p_reason: reason,
+      });
 
       if (error) throw error;
+      if (!data || typeof data !== 'object' || Array.isArray(data) || data.id !== tenantId) {
+        throw new Error('Máy chủ chưa xác nhận thay đổi. Vui lòng tải lại trước khi thử lại.');
+      }
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['super-admin-tenants'] });
+      for (const key of ['super-admin-tenants','super-admin-tenant','tenant-subscription','tenant-read-only','tenant','tenant-usage','check-quota']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
       toast({
         title: 'Tenant Suspended',
         description: 'Tenant has been suspended successfully.',
@@ -171,19 +173,21 @@ export function useReactivateTenant() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (tenantId: string) => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .update({ subscription_status: 'active' })
-        .eq('id', tenantId)
-        .select()
-        .single();
+    mutationFn: async ({ tenantId, reason }: { tenantId: string; reason: string }) => {
+      const { data, error } = await supabase.rpc('admin_manage_tenant', {
+        p_tenant_id: tenantId, p_action: 'reactivate', p_reason: reason,
+      });
 
       if (error) throw error;
+      if (!data || typeof data !== 'object' || Array.isArray(data) || data.id !== tenantId) {
+        throw new Error('Máy chủ chưa xác nhận thay đổi. Vui lòng tải lại trước khi thử lại.');
+      }
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['super-admin-tenants'] });
+      for (const key of ['super-admin-tenants','super-admin-tenant','tenant-subscription','tenant-read-only','tenant','tenant-usage','check-quota']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
       toast({
         title: 'Tenant Reactivated',
         description: 'Tenant has been reactivated successfully.',
@@ -192,39 +196,6 @@ export function useReactivateTenant() {
     onError: (error: any) => {
       toast({
         title: 'Error Reactivating Tenant',
-        description: getFriendlyError(error),
-        variant: 'destructive',
-      });
-    },
-  });
-}
-
-/**
- * Delete tenant (soft delete)
- */
-export function useDeleteTenant() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (tenantId: string) => {
-      const { error } = await supabase
-        .from('tenants')
-        .delete()
-        .eq('id', tenantId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['super-admin-tenants'] });
-      toast({
-        title: 'Tenant Deleted',
-        description: 'Tenant has been permanently deleted.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error Deleting Tenant',
         description: getFriendlyError(error),
         variant: 'destructive',
       });

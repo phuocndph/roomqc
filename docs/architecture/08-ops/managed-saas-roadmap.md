@@ -1,5 +1,11 @@
 # RoomQC SaaS do RoomQC vận hành
 
+Điều chỉnh ngày 2026-10-15: kế hoạch thực hiện hiện hành là
+[một tên miền, tự setup, nhiều cụm](./shared-domain-multi-cluster-plan.md), kết hợp
+[wizard tự thiết lập](./customer-auto-setup-plan.md). Bảng giai đoạn dưới đây là
+roadmap ban đầu; kế hoạch mới ưu tiên backend Supabase managed và chuẩn bị
+directory từ đầu, thay cho yêu cầu tự vận hành Supabase ngay.
+
 ## Mục tiêu đã thống nhất
 
 Khách hàng đăng ký và nhập thông tin khách sạn trên một website RoomQC. RoomQC

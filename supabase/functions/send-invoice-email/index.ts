@@ -1,5 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders } from '../_shared/cors.ts'
+import { getBearerToken, isInternalRequest } from '../_shared/internalAuth.ts'
+import { readEmailConfig, validEmail } from '../_shared/email/config.ts'
+import { sendEmail } from '../_shared/email/provider.ts'
+import { escapeHtml } from '../_shared/email/templates.ts'
+
+function escapedFields<T>(value: T): T {
+  if (typeof value === 'string') return escapeHtml(value) as T
+  if (Array.isArray(value)) return value.map(escapedFields) as T
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, escapedFields(field)])) as T
+  return value
+}
 
 function formatVND(amount: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
@@ -16,11 +27,16 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+  if (req.method !== 'POST') return new Response(null, { status: 405, headers: corsHeaders })
 
   try {
+    const internal = isInternalRequest(req), token = getBearerToken(req)
+    if (!internal && !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     const { invoice_id, to_email, pdf_base64, pdf_filename } = await req.json()
 
-    if (!invoice_id || !to_email) {
+    if (!invoice_id || typeof to_email !== 'string' || !validEmail(to_email)
+      || (pdf_base64 && (typeof pdf_base64 !== 'string' || pdf_base64.length > 7_000_000 || !/^[A-Za-z0-9+/=\r\n]+$/.test(pdf_base64)))
+      || (pdf_filename && (typeof pdf_filename !== 'string' || pdf_filename.length > 150 || /[\r\n\\/]/.test(pdf_filename) || !pdf_filename.toLowerCase().endsWith('.pdf')))) {
       return new Response(JSON.stringify({ error: 'Missing invoice_id or to_email' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -30,26 +46,43 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
+    const authData = internal ? { user: null } : (await supabase.auth.getUser(token!)).data
+    if (!internal && !authData.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    const { data: invoice, error: invoiceError } = await supabase
+    const { data: rawInvoice, error: invoiceError } = await supabase
       .from('guest_invoices')
       .select('*')
       .eq('id', invoice_id)
       .single()
 
-    if (invoiceError || !invoice) {
+    if (invoiceError || !rawInvoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    const invoice = escapedFields(rawInvoice)
+    const { data: caller } = !internal ? await supabase.from('users').select('tenant_id,status,account_locked').eq('id', authData.user!.id).single() : { data: null }
+    const permissions = !internal ? await Promise.all(['reports.create','reports.update','bookings.update'].map(code =>
+      supabase.rpc('has_permission', { _user_id: authData.user!.id, _permission_code: code }))) : []
+    const allowed = internal || permissions.some(result => !result.error && result.data === true)
+    if (!internal && (!caller?.tenant_id || caller.status !== 'active' || caller.account_locked || caller.tenant_id !== invoice.tenant_id || !allowed)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // Query hotel info
-    const { data: hotel } = await supabase
+    const { data: rawHotel } = await supabase
       .from('hotels')
       .select('name, address, phone, email, logo_url, website')
       .eq('id', invoice.hotel_id)
       .single()
+
+    const hotel = escapedFields(rawHotel)
+    if (hotel?.logo_url) {
+      try { if (new URL(rawHotel?.logo_url || '').protocol !== 'https:') hotel.logo_url = null }
+      catch { hotel.logo_url = null }
+    }
 
     const hotelName = hotel?.name || 'Hotel'
     const lineItems = (invoice.line_items || []) as any[]
@@ -205,57 +238,20 @@ Deno.serve(async (req) => {
 </body>
 </html>`
 
-    // Update guest_email on the invoice
-    await supabase
-      .from('guest_invoices')
-      .update({ guest_email: to_email, email_sent_at: new Date().toISOString() })
-      .eq('id', invoice_id)
-
-    // Send email via Resend
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')?.trim()
-    if (!RESEND_API_KEY) {
-      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `${hotelName} <notifications@roomqc.com>`,
-        to: [to_email],
-        subject: `Hóa đơn ${invoice.invoice_number} - ${hotelName}`,
-        html: emailHtml,
-        ...(pdf_base64 && pdf_filename ? {
-          attachments: [{
-            filename: pdf_filename,
-            content: pdf_base64,
-          }]
-        } : {}),
-      }),
+    await sendEmail(readEmailConfig(key => Deno.env.get(key)), {
+      id: crypto.randomUUID(), to: to_email, subject: `Hóa đơn ${rawInvoice.invoice_number} - ${rawHotel?.name || 'Hotel'}`,
+      html: emailHtml, text: `Hóa đơn ${rawInvoice.invoice_number}. Tổng cộng: ${formatVND(rawInvoice.total_amount)}.`,
+      ...(pdf_base64 && pdf_filename ? { attachments: [{ filename: pdf_filename, content: pdf_base64 }] } : {}),
     })
 
-    const resendText = await resendResponse.text()
-    if (!resendResponse.ok) {
-      console.error('Resend error:', resendText)
-      return new Response(JSON.stringify({ error: `Email send failed: ${resendText}` }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    console.log('Invoice email sent successfully via Resend:', resendText)
+    // Only record provider acceptance after a successful send.
+    await supabase.from('guest_invoices').update({ guest_email: to_email, email_sent_at: new Date().toISOString() }).eq('id', invoice_id)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: 'Không thể gửi email hóa đơn.' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

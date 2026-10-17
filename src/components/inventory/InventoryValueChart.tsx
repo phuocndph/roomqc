@@ -19,6 +19,7 @@ import {
 } from 'recharts'
 import { useInventoryValueOverTime } from '@/hooks/useInventoryDashboard'
 import { format } from 'date-fns'
+import { InventoryPanelError } from './hub/InventoryPanelError'
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('vi-VN', {
@@ -43,7 +44,7 @@ function formatCompact(amount: number) {
 
 export function InventoryValueChart() {
   const [months, setMonths] = useState(6)
-  const { data: valueData, isLoading } = useInventoryValueOverTime(months)
+  const { data: valueData, isLoading, isError, refetch } = useInventoryValueOverTime(months)
   
   if (isLoading) {
     return (
@@ -59,7 +60,7 @@ export function InventoryValueChart() {
   }
   
   const chartData = valueData?.map(item => ({
-    month: format(new Date(item.month), 'MMM'),
+    month: format(new Date(item.month), 'MM/yyyy'),
     value: item.stock_value,
     inbound: item.value_in,
     outbound: item.value_out,
@@ -68,7 +69,7 @@ export function InventoryValueChart() {
   const totalInbound = chartData.reduce((sum, item) => sum + item.inbound, 0)
   const totalOutbound = chartData.reduce((sum, item) => sum + item.outbound, 0)
   
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number | string }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background/95 backdrop-blur-sm px-3 py-2 shadow-lg text-xs">
@@ -76,7 +77,7 @@ export function InventoryValueChart() {
           <div className="space-y-0.5">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Tồn kho:</span>
-              <span className="font-medium">{formatCurrency(payload[0]?.value || 0)}</span>
+              <span className="font-medium">{formatCurrency(Number(payload[0]?.value ?? 0))}</span>
             </div>
           </div>
         </div>
@@ -103,8 +104,10 @@ export function InventoryValueChart() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <div className="flex-1 min-h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
+        {isError ? <InventoryPanelError onRetry={() => void refetch()} />
+          : chartData.every(item => item.value === 0 && item.inbound === 0 && item.outbound === 0) ? <p className="py-8 text-sm text-muted-foreground">Chưa có biến động kho trong giai đoạn này.</p>
+          : <div className="h-[220px] min-w-0">
+          <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="stockValueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -137,23 +140,23 @@ export function InventoryValueChart() {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </div>}
         
         {/* Summary stats below chart */}
-        <div className="grid grid-cols-2 gap-3 pt-3 mt-2 border-t">
+        {!isError && <div className="grid grid-cols-2 gap-3 pt-3 mt-2 border-t">
           <div className="text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Tổng nhập</p>
             <p className="text-sm font-bold text-green-600">
-              +{formatCompact(totalInbound)}
+              {formatCurrency(totalInbound)}
             </p>
           </div>
           <div className="text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Tổng xuất</p>
             <p className="text-sm font-bold text-orange-600">
-              -{formatCompact(totalOutbound)}
+              {formatCurrency(totalOutbound)}
             </p>
           </div>
-        </div>
+        </div>}
       </CardContent>
     </Card>
   )
