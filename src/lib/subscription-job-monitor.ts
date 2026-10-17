@@ -32,11 +32,19 @@ export function readSubscriptionJobMonitor(value: unknown): SubscriptionJobMonit
   const parsed = monitor.parse(value);
   const allRuns = [...parsed.runs, ...(parsed.active ? [parsed.active] : []), ...(parsed.latest_failure ? [parsed.latest_failure] : [])];
   if (new Set(parsed.runs.map(item => item.id)).size !== parsed.runs.length
-    || (parsed.active && parsed.active.status !== 'running')
+    || (parsed.active && !['running', 'interrupted'].includes(parsed.active.status))
     || (parsed.latest_failure && !['failed', 'interrupted'].includes(parsed.latest_failure.status))
     || allRuns.some(item => Date.parse(item.deadline_at) < Date.parse(item.started_at)
       || (item.finished_at !== null && Date.parse(item.finished_at) < Date.parse(item.started_at))
-      || (item.status === 'running' && item.finished_at !== null)
+      || (item.status === 'running' && (item.finished_at !== null || item.summary !== null || item.blocked_by !== null))
+      || (item.status === 'interrupted' && (item.blocked_by !== null
+        || (item.summary === null ? item.finished_at !== null
+          : item.finished_at === null || !item.summary.transition_outcome_unknown
+            || !item.summary.recovery_required || item.summary.subscription_status !== 'failed')))
+      || (item.status === 'busy' && (item.finished_at === null || item.blocked_by === null || item.summary !== null))
+      || (item.status === 'failed' && (item.finished_at === null || !item.summary
+        || item.blocked_by !== null || !item.summary.recovery_required
+        || (item.summary.subscription_status === 'success' && item.summary.staff_status === 'success')))
       || (item.status === 'success' && (item.finished_at === null || !item.summary
         || item.summary.subscription_status !== 'success' || item.summary.staff_status !== 'success'
         || item.summary.notifications_failed > 0 || item.summary.transition_outcome_unknown

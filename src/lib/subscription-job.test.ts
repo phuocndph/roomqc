@@ -118,7 +118,7 @@ describe('internal subscription job HTTP contract', () => {
       history: {
         begin: vi.fn().mockResolvedValue({ data: { acquired: true, run_id: 'fixture-run-id', status: 'running', blocked_by: null }, error: null }),
         finish: vi.fn().mockImplementation((_id, result) => Promise.resolve({ data: { recorded: true,
-          status: result.subscription_status === 'success' && result.staff_status === 'success' ? 'success' : 'failed' }, error: null })),
+          status: result.transition_outcome_unknown ? 'interrupted' : result.subscription_status === 'success' && result.staff_status === 'success' ? 'success' : 'failed' }, error: null })),
       },
     };
   }
@@ -189,6 +189,18 @@ describe('internal subscription job HTTP contract', () => {
     expect(await response.json()).toMatchObject({ success: false, partial_work_committed: true,
       retry_policy: 'manual_review_before_replay', subscription: { to_grace_period: 2,
         notifications_sent: 1, notifications_failed: 1, recovery_required: true } });
+  });
+  it('does not claim no committed work after a lost first transition response', async () => {
+    const deps = dependencies();
+    deps.runSubscription.mockResolvedValue({ ...successful, status: 'failed', transition_outcome_unknown: true,
+      recovery_required: true, error_codes: ['GRACE_TRANSITION_FAILED'] });
+    const response = await createSubscriptionJobHandler(deps)(request());
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ success: false, partial_work_committed: null,
+      work_may_have_committed: true, history_recorded: true });
+    expect(deps.history.finish).toHaveBeenCalledWith('fixture-run-id', expect.objectContaining({
+      transition_outcome_unknown: true,
+    }));
   });
   it('unexpected errors produce safe 500 instead of disclosing DB details', async () => {
     const deps = dependencies();

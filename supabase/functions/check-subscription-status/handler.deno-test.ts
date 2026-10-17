@@ -64,7 +64,7 @@ function makeContext() {
       finish: (_runId, summary) => {
         calls.finish++;
         return Promise.resolve({ data: { recorded: true,
-          status: summary.subscription_status === 'success' && summary.staff_status === 'success' ? 'success' : 'failed' },
+          status: summary.transition_outcome_unknown ? 'interrupted' : summary.subscription_status === 'success' && summary.staff_status === 'success' ? 'success' : 'failed' },
           error: state.finishFails ? { message: 'fixture-private-payload' } : null });
       },
     },

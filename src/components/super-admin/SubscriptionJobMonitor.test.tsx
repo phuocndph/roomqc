@@ -8,7 +8,7 @@ vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: state.loggedI
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: (...args: unknown[]) => ({ abortSignal: () => state.rpc(...args) }) } }));
 const stamp = '2026-10-17T12:00:00Z';
 const page = () => ({ job: 'check-subscription-status', scope: 'cluster', checked_at: stamp, scheduler_status: 'not_observed', last_success_at: null, active: null, latest_failure: null, runs: [], backlog: { eligible_grace: 4, eligible_suspend: 2, unhandled_expired_active: 3, checked_at: stamp, definition: 'legacy_predicates_only' } });
-const run = (status = 'running') => ({ id: '00000000-0000-4000-8000-000000000001', job: 'check-subscription-status', scope: 'cluster', status, started_at: stamp, finished_at: status === 'running' ? null : stamp, deadline_at: '2026-10-17T12:05:00Z', blocked_by: null, summary: null });
+const run = (status = 'running') => ({ id: '00000000-0000-4000-8000-000000000001', job: 'check-subscription-status', scope: 'cluster', status, started_at: stamp, finished_at: ['running', 'interrupted'].includes(status) ? null : stamp, deadline_at: '2026-10-17T12:05:00Z', blocked_by: status === 'busy' ? '00000000-0000-4000-8000-000000000009' : null, summary: null });
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const view = render(<QueryClientProvider client={client}><SubscriptionJobMonitor /></QueryClientProvider>);
@@ -22,7 +22,7 @@ describe('read-only subscription job monitor', () => {
     expect(await screen.findByText('Chưa có lần chạy thành công được ghi nhận')).toBeInTheDocument();
     expect(screen.getByText('Chưa xác minh lịch chạy')).toBeInTheDocument();
     expect(screen.getByText('4 đủ điều kiện sang ân hạn · 2 đủ điều kiện tạm khóa.')).toBeInTheDocument();
-    expect(screen.getByText('3 active đã hết hạn chưa được điều kiện cũ bao phủ.')).toBeInTheDocument();
+    expect(screen.getByText('3 gói đang dùng hoặc dùng thử đã hết hạn nhưng chưa được điều kiện cũ bao phủ.')).toBeInTheDocument();
     expect(screen.getByText(/không phải toàn bộ backlog/)).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(state.rpc).toHaveBeenCalledWith('admin_subscription_job_monitor');
@@ -44,6 +44,13 @@ describe('read-only subscription job monitor', () => {
     expect(screen.getByText(/Nhân sự: chưa chạy/)).toBeInTheDocument();
     expect(screen.getByText(/Không coi các số trên là toàn bộ thay đổi/)).toBeInTheDocument();
     expect(screen.queryByText('fixture_error')).not.toBeInTheDocument();
+  });
+  it('shows a timed out active marker as blocking instead of rejecting the response', async () => {
+    state.rpc.mockResolvedValue({ data: { ...page(), active: run('interrupted') }, error: null });
+    setup();
+    expect(await screen.findByText('Lượt gián đoạn đang chặn tác vụ mới')).toBeInTheDocument();
+    expect(screen.getByText('Cần kiểm tra thủ công, không tự chạy lại.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
   it.each([
     [{ code: '42501' }, /Phiên quản trị/],

@@ -11,9 +11,9 @@ describe('subscription job monitor contract', () => {
     expect(readSubscriptionJobMonitor(page())).toMatchObject({ last_success_at: null, runs: [], scheduler_status: 'not_observed' });
   });
   it('accepts interrupted work with no summary and failed work with staff not run', () => {
-    const interrupted = { ...run(), status: 'interrupted', summary: null };
-    expect(readSubscriptionJobMonitor({ ...page(), latest_failure: interrupted, runs: [interrupted] }).latest_failure?.status).toBe('interrupted');
-    const failed = { ...run(), status: 'failed', summary: { ...result(), subscription_status: 'failed', staff_status: 'not_run', transition_outcome_unknown: true } };
+    const interrupted = { ...run(), status: 'interrupted', finished_at: null, summary: null };
+    expect(readSubscriptionJobMonitor({ ...page(), active: interrupted, latest_failure: interrupted, runs: [interrupted] }).active?.status).toBe('interrupted');
+    const failed = { ...run(), status: 'failed', summary: { ...result(), subscription_status: 'failed', staff_status: 'not_run', transition_outcome_unknown: true, recovery_required: true } };
     expect(readSubscriptionJobMonitor({ ...page(), runs: [failed] }).runs[0].summary?.staff_status).toBe('not_run');
   });
   it.each([
@@ -30,6 +30,12 @@ describe('subscription job monitor contract', () => {
     { ...page(), runs: [{ ...run(), summary: { ...result(), staff_status: 'not_run' } }] },
   ])('rejects malformed or misleading monitor response %#', value => {
     expect(() => readSubscriptionJobMonitor(value)).toThrow();
+  });
+  it('accepts durably recorded unknown outcome as interrupted with retained counts', () => {
+    const blocked = { ...run(), status: 'interrupted', summary: { ...result(), subscription_status: 'failed',
+      staff_status: 'not_run', transition_outcome_unknown: true, recovery_required: true, error_codes: ['JOB_EXECUTION_FAILED'] } };
+    expect(readSubscriptionJobMonitor({ ...page(), active: blocked, latest_failure: blocked, runs: [blocked] })
+      .active?.summary?.to_grace_period).toBe(1);
   });
   it('distinguishes access, missing schema and network errors without leaking raw details', () => {
     expect(subscriptionJobMonitorError({ code: '42501', message: 'secret log' })).toMatch(/Phiên quản trị/);

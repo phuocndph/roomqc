@@ -52,12 +52,12 @@ export function SubscriptionJobMonitor() {
           <div className="rounded-md border p-3 space-y-1"><h3 className="font-medium">Lần thành công gần nhất</h3><p>{data.last_success_at ? time(data.last_success_at) : 'Chưa có lần chạy thành công được ghi nhận'}</p></div>
           <div className="rounded-md border p-3 space-y-1"><h3 className="font-medium">Lịch chạy</h3><p>Chưa xác minh lịch chạy</p><p className="text-muted-foreground">Có lịch sử thành công không chứng minh cron đang hoạt động.</p></div>
         </div>
-        {data.active && <div className="rounded-md border p-3 space-y-2"><h3 className="font-medium">Lượt đang chạy</h3><RunSummary run={data.active} /></div>}
+        {data.active && <div className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{data.active.status === 'interrupted' ? 'Lượt gián đoạn đang chặn tác vụ mới' : 'Lượt đang chạy'}</h3><RunSummary run={data.active} /></div>}
         {data.latest_failure && <div className="rounded-md border border-destructive p-3 space-y-2"><h3 className="font-medium">Lỗi hoặc gián đoạn gần nhất</h3><RunSummary run={data.latest_failure} /></div>}
         <div className="rounded-md border p-3 text-sm space-y-1">
           <h3 className="font-medium">Cần xử lý theo điều kiện cũ tại thời điểm kiểm tra</h3>
           <p>{data.backlog.eligible_grace} đủ điều kiện sang ân hạn · {data.backlog.eligible_suspend} đủ điều kiện tạm khóa.</p>
-          <p className={data.backlog.unhandled_expired_active > 0 ? 'font-medium text-destructive' : ''}>{data.backlog.unhandled_expired_active} active đã hết hạn chưa được điều kiện cũ bao phủ.</p>
+          <p className={data.backlog.unhandled_expired_active > 0 ? 'font-medium text-destructive' : ''}>{data.backlog.unhandled_expired_active} gói đang dùng hoặc dùng thử đã hết hạn nhưng chưa được điều kiện cũ bao phủ.</p>
           <p className="text-muted-foreground">Đo lúc {time(data.backlog.checked_at)}; không phải toàn bộ backlog hay kết quả của lượt chạy gần nhất.</p>
         </div>
         <details className="rounded-md border p-3"><summary className="cursor-pointer text-sm font-medium">Lịch sử gần nhất ({data.runs.length}/25 lượt tối đa)</summary>

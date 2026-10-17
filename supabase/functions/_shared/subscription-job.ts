@@ -208,7 +208,9 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
         success, run_id: runId, job: 'check-subscription-status', scope: 'cluster',
         checked_at: checkedAt, finished_at: deps.now(),
         to_grace_period: subscription.to_grace_period, to_suspended: subscription.to_suspended,
-        partial_work_committed: !success && subscription.to_grace_period + subscription.to_suspended > 0,
+        partial_work_committed: subscription.transition_outcome_unknown ? null
+          : !success && subscription.to_grace_period + subscription.to_suspended > 0,
+        work_may_have_committed: subscription.transition_outcome_unknown,
         retry_policy: success ? 'not_required' : 'manual_review_before_replay',
         subscription, staff_presence: staffPresence,
       };
@@ -240,7 +242,7 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
     try {
       const finished = await deps.history.finish(runId, summary);
       const data = finished.data;
-      const expected = result.success ? 'success' : 'failed';
+      const expected = summary.transition_outcome_unknown ? 'interrupted' : result.success ? 'success' : 'failed';
       if (finished.error || !data || typeof data !== 'object'
         || !('recorded' in data) || !('status' in data)
         || data.recorded !== true || data.status !== expected) {
