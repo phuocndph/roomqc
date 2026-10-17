@@ -12,7 +12,7 @@
  *
  * Liên quan: docs/architecture/09-refactor/findings.md → F-RPC-OVERLOAD-02.
  */
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 const TEST_ENV = {
@@ -42,8 +42,12 @@ function assertNoSchemaError(error: unknown, label: string) {
 }
 
 describe.skipIf(!INTEGRATION_ENABLED)('get_laundry_batches_filtered (integration)', () => {
-  const client = createClient(TEST_ENV.url, TEST_ENV.key, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  // A skipped suite must collect without production/local environment files.
+  let client: ReturnType<typeof createClient>;
+  beforeAll(() => {
+    client = createClient(TEST_ENV.url, TEST_ENV.key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   });
 
   const baseParams = {

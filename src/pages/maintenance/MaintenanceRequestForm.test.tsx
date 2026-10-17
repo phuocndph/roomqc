@@ -13,6 +13,7 @@ vi.mock('@/hooks/useMaintenanceRequests', () => ({
   useUpdateMaintenanceRequest: () => ({ mutateAsync: state.update, isPending: false }),
 }))
 vi.mock('@/lib/breakpoints', () => ({ useBreakpoint: () => ({ isMobile: false }) }))
+vi.mock('@/components/maintenance/MobileMaintenanceRequestForm', () => ({ MobileMaintenanceRequestForm: () => null }))
 vi.mock('@/hooks/useRooms', () => ({ useRooms: () => ({ data: [] }) }))
 vi.mock('@/hooks/useItems', () => ({ useItems: () => ({ data: { items: [] } }) }))
 vi.mock('@/contexts/HotelContext', () => ({ useHotelContext: () => ({ isAllHotelsMode: false }) }))
