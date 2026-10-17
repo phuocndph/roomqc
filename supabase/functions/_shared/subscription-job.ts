@@ -118,6 +118,22 @@ export async function runStaffPresenceJob(run: () => PromiseLike<{ error: unknow
   }
 }
 
+export interface SubscriptionJobSummary {
+  subscription_status: 'success' | 'failed';
+  staff_status: 'success' | 'failed' | 'not_run';
+  to_grace_period: number;
+  to_suspended: number;
+  notifications_sent: number;
+  notifications_failed: number;
+  transition_outcome_unknown: boolean;
+  recovery_required: boolean;
+  error_codes: string[];
+}
+export interface SubscriptionJobHistory {
+  begin(runId: string): PromiseLike<{ data: unknown; error: unknown }>;
+  finish(runId: string, summary: SubscriptionJobSummary): PromiseLike<{ data: unknown; error: unknown }>;
+}
+
 interface HandlerDependencies {
   authorize(req: Request, headers: Record<string, string>): Response | null;
   configured(): boolean;
@@ -126,6 +142,7 @@ interface HandlerDependencies {
   now(): string;
   runId(): string;
   log(result: Record<string, unknown>): void;
+  history: SubscriptionJobHistory;
 }
 export function createSubscriptionJobHandler(deps: HandlerDependencies) {
   const headers = {
@@ -136,6 +153,10 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
   };
   const respond = (body: Record<string, unknown>, status: number, extra: Record<string, string> = {}) =>
     new Response(JSON.stringify(body), { status, headers: { ...headers, ...extra } });
+  const log = (body: Record<string, unknown>) => {
+    // A log transport failure must not turn an already recorded run into a retry.
+    try { deps.log(body); } catch { /* Durable history is the source of truth. */ }
+  };
   return async (req: Request): Promise<Response> => {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     if (req.method !== 'POST') return respond({ success: false, error: 'METHOD_NOT_ALLOWED' }, 405, { Allow: 'POST, OPTIONS' });
@@ -143,12 +164,47 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
     if (denied) return denied;
     const runId = deps.runId();
     if (!deps.configured()) return respond({ success: false, run_id: runId, error: 'JOB_NOT_CONFIGURED' }, 503);
-    const checkedAt = deps.now();
+    // Persist the start BEFORE ANY legacy side effect. A lost start response can
+    // leave an active marker: fail closed, never retry/acquire again here.
     try {
+      const started = await deps.history.begin(runId);
+      const data = started.data;
+      if (started.error || !data || typeof data !== 'object'
+        || !('run_id' in data) || data.run_id !== runId
+        || !('acquired' in data) || typeof data.acquired !== 'boolean'
+        || !('status' in data) || !['running', 'success', 'failed', 'busy', 'interrupted'].includes(String(data.status))
+        || !('blocked_by' in data) || !(data.blocked_by === null || typeof data.blocked_by === 'string')
+        || (data.acquired && (data.status !== 'running' || data.blocked_by !== null))) {
+        throw new Error('INVALID_JOB_START');
+      }
+      if (!data.acquired) {
+        const blocked = { success: false, run_id: runId, job: 'check-subscription-status', scope: 'cluster',
+          status: data.status, blocked_by: data.blocked_by, error: 'JOB_RUN_NOT_ACQUIRED',
+          history_recorded: true, retry_policy: 'manual_review_before_replay' };
+        log(blocked);
+        return respond(blocked, 409);
+      }
+    } catch {
+      const unavailable = { success: false, run_id: runId, error: 'JOB_HISTORY_START_FAILED',
+        work_started: false, history_recorded: null, recovery_required: true,
+        retry_policy: 'manual_review_before_replay' };
+      log(unavailable);
+      return respond(unavailable, 503);
+    }
+    let result: Record<string, unknown>;
+    let summary: SubscriptionJobSummary;
+    let knownSubscription: SubscriptionJobResult | null = null;
+    let knownStaff: 'success' | 'failed' | 'not_run' = 'not_run';
+    try {
+      const checkedAt = deps.now();
       const subscription = await deps.runSubscription(checkedAt);
-      const staffPresence = await deps.runStaffPresence();
+      knownSubscription = subscription;
+      const staffPresence = await deps.runStaffPresence().catch(() => ({
+        status: 'failed' as const, error_codes: ['STAFF_PRESENCE_FAILED'],
+      }));
+      knownStaff = staffPresence.status;
       const success = subscription.status === 'success' && staffPresence.status === 'success';
-      const result = {
+      result = {
         success, run_id: runId, job: 'check-subscription-status', scope: 'cluster',
         checked_at: checkedAt, finished_at: deps.now(),
         to_grace_period: subscription.to_grace_period, to_suspended: subscription.to_suspended,
@@ -156,14 +212,49 @@ export function createSubscriptionJobHandler(deps: HandlerDependencies) {
         retry_policy: success ? 'not_required' : 'manual_review_before_replay',
         subscription, staff_presence: staffPresence,
       };
-      deps.log(result);
-      return respond(result, success ? 200 : 500);
+      summary = {
+        subscription_status: subscription.status, staff_status: staffPresence.status,
+        to_grace_period: subscription.to_grace_period, to_suspended: subscription.to_suspended,
+        notifications_sent: subscription.notifications_sent, notifications_failed: subscription.notifications_failed,
+        transition_outcome_unknown: subscription.transition_outcome_unknown,
+        recovery_required: subscription.recovery_required || staffPresence.status !== 'success',
+        error_codes: [...new Set([...subscription.error_codes, ...staffPresence.error_codes])],
+      };
     } catch {
       // Do not expose raw SDK errors (may contain PII, tokens or connection strings).
-      const failure = { success: false, run_id: runId, error: 'JOB_EXECUTION_FAILED',
-        recovery_required: true, transition_outcome_unknown: true, retry_policy: 'manual_review_before_replay' };
-      deps.log(failure);
-      return respond(failure, 500);
+      result = { success: false, run_id: runId, error: 'JOB_EXECUTION_FAILED',
+        recovery_required: true, transition_outcome_unknown: true, retry_policy: 'manual_review_before_replay',
+        ...(knownSubscription ? { subscription: knownSubscription,
+          to_grace_period: knownSubscription.to_grace_period, to_suspended: knownSubscription.to_suspended } : {}),
+      };
+      summary = {
+        subscription_status: 'failed', staff_status: knownStaff,
+        to_grace_period: knownSubscription?.to_grace_period ?? 0, to_suspended: knownSubscription?.to_suspended ?? 0,
+        notifications_sent: knownSubscription?.notifications_sent ?? 0,
+        notifications_failed: knownSubscription?.notifications_failed ?? 0, transition_outcome_unknown: true,
+        recovery_required: true, error_codes: ['JOB_EXECUTION_FAILED'],
+      };
     }
+    // Legacy transitions/notifications and history finish are separate commits.
+    // Never report HTTP success if durable completion cannot be confirmed.
+    try {
+      const finished = await deps.history.finish(runId, summary);
+      const data = finished.data;
+      const expected = result.success ? 'success' : 'failed';
+      if (finished.error || !data || typeof data !== 'object'
+        || !('recorded' in data) || !('status' in data)
+        || data.recorded !== true || data.status !== expected) {
+        throw new Error('JOB_HISTORY_NOT_CONFIRMED');
+      }
+    } catch {
+      const unconfirmed = { ...result, success: false, error: 'JOB_HISTORY_FINISH_FAILED',
+        execution_success: result.success, history_recorded: null, work_may_have_committed: true,
+        recovery_required: true, retry_policy: 'manual_review_before_replay' };
+      log(unconfirmed);
+      return respond(unconfirmed, 503);
+    }
+    const recorded = { ...result, history_recorded: true };
+    log(recorded);
+    return respond(recorded, result.success ? 200 : 500);
   };
 }

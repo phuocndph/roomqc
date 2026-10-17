@@ -28,9 +28,9 @@ async function fixture(test: (context: ReturnType<typeof makeContext>) => Promis
 }
 
 function makeContext() {
-  const calls = { transitions: 0, owners: 0, notifications: 0, staff: 0, configured: 0 };
+  const calls = { transitions: 0, owners: 0, notifications: 0, staff: 0, configured: 0, begin: 0, finish: 0 };
   const logs: unknown[] = [];
-  const state = { configured: true, notificationFails: false };
+  const state = { configured: true, notificationFails: false, historyFails: false, busy: false, finishFails: false };
   const store: SubscriptionJobStore = {
     transition: status => {
       calls.transitions++;
@@ -54,6 +54,20 @@ function makeContext() {
     now: () => checkedAt,
     runId: () => 'isolated-deno-fixture-run',
     log: result => logs.push(result),
+    history: {
+      begin: runId => {
+        calls.begin++;
+        return Promise.resolve({ data: { acquired: !state.busy, run_id: runId,
+          status: state.busy ? 'busy' : 'running', blocked_by: state.busy ? 'fixture-active-run' : null },
+          error: state.historyFails ? { message: 'fixture-private-payload' } : null });
+      },
+      finish: (_runId, summary) => {
+        calls.finish++;
+        return Promise.resolve({ data: { recorded: true,
+          status: summary.subscription_status === 'success' && summary.staff_status === 'success' ? 'success' : 'failed' },
+          error: state.finishFails ? { message: 'fixture-private-payload' } : null });
+      },
+    },
   });
   return { calls, logs, state, handler };
 }
@@ -124,4 +138,27 @@ Deno.test('Deno response reports partial work safely after fixture notification 
   const exposed = JSON.stringify({ body, logs: context.logs });
   assert(!exposed.includes('fixture-private-payload') && !exposed.includes(fixtureServiceKey)
     && !exposed.includes(fixtureCronSecret), 'must not expose credentials/raw errors');
+}));
+
+Deno.test('durable history start failure prevents all mocked side effects', () => fixture(async context => {
+  context.state.historyFails = true;
+  const response = await context.handler(request('POST', { 'x-cron-secret': fixtureCronSecret }));
+  assert(response.status === 503, 'history must be mandatory');
+  assert(context.calls.transitions === 0 && context.calls.staff === 0 && context.calls.finish === 0, 'fail closed');
+}));
+
+Deno.test('busy durable marker blocks concurrent work without replay', () => fixture(async context => {
+  context.state.busy = true;
+  const response = await context.handler(request('POST', { 'x-cron-secret': fixtureCronSecret }));
+  assert(response.status === 409 && (await response.json()).success === false, 'busy is not success');
+  assert(context.calls.transitions === 0 && context.calls.finish === 0, 'must not touch active work');
+}));
+
+Deno.test('durable finish failure never produces HTTP success or reruns work', () => fixture(async context => {
+  context.state.finishFails = true;
+  const response = await context.handler(request('POST', { 'x-cron-secret': fixtureCronSecret }));
+  const body = await response.json();
+  assert(response.status === 503 && body.history_recorded === null, 'unknown finish must be explicit');
+  assert(context.calls.begin === 1 && context.calls.finish === 1 && context.calls.transitions === 2, 'no retry');
+  assert(!JSON.stringify({ body, logs: context.logs }).includes('fixture-private-payload'), 'no raw errors');
 }));

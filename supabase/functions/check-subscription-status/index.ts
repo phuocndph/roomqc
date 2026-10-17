@@ -18,6 +18,10 @@ Deno.serve(createSubscriptionJobHandler({
   now: () => new Date().toISOString(),
   runId: () => crypto.randomUUID(),
   log: result => console.log(JSON.stringify(result)),
+  history: {
+    begin: runId => client!.rpc('begin_subscription_status_run', { p_run_id: runId }),
+    finish: (runId, summary) => client!.rpc('finish_subscription_status_run', { p_run_id: runId, p_result: summary }),
+  },
   runSubscription: now => runSubscriptionStatusJob({
     transition: (status, checkedAt) => {
       // Existing predicates/policy preserved. These writes are not atomic with
