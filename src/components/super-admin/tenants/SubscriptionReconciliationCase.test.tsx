@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SubscriptionReconciliationCase } from './SubscriptionReconciliationCase';
 
-const state = vi.hoisted(() => ({ read: vi.fn(), mutate: vi.fn(), session: true }));
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'admin' }, session: state.session ? { user: { id: 'admin' } } : null }) }));
+const state = vi.hoisted(() => ({ read: vi.fn(), mutate: vi.fn(), session: true, actor: '10000000-0000-4000-8000-000000000004' }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: state.actor }, session: state.session ? { user: { id: state.actor } } : null }) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: (name: string, args: unknown) => name === 'admin_subscription_reconciliation_case'
   ? { abortSignal: () => state.read(name, args) } : state.mutate(name, args) } }));
 const tenant = '10000000-0000-4000-8000-000000000001';
@@ -28,6 +28,9 @@ function setup() {
 
 describe('operational reconciliation case notebook (mock server)', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+    sessionStorage.clear();
+    state.actor = actor;
     state.session = true;
     state.read.mockReset().mockResolvedValue({ data: empty, error: null });
     state.mutate.mockReset().mockResolvedValue({ data: { case: item, created: true }, error: null });
@@ -89,7 +92,7 @@ describe('operational reconciliation case notebook (mock server)', () => {
   });
   it('includes the server version on note writes and preserves text on version conflict', async () => {
     state.read.mockResolvedValue({ data: existing, error: null });
-    state.mutate.mockResolvedValue({ data: null, error: { code: 'PT409' } });
+    state.mutate.mockResolvedValue({ data: null, error: { code: 'PT409', message: 'CASE_VERSION_CONFLICT' } });
     setup(); fireEvent.change(await screen.findByLabelText('Ghi chú mới'), { target: { value: 'Ghi chú sau' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu ghi chú' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Tải lại');
@@ -150,7 +153,134 @@ describe('operational reconciliation case notebook (mock server)', () => {
     expect(screen.getByRole('button', { name: 'Đang lưu…' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Ẩn chi tiết hồ sơ' })).toBeDisabled();
     expect(state.mutate).toHaveBeenCalledTimes(1);
-    resolve({ data: null, error: { code: 'PT409' } });
+    resolve({ data: null, error: { code: 'PT409', message: 'CASE_SOURCE_NOT_ELIGIBLE' } });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' })).toBeEnabled());
+  });
+  it('persists before dispatch and replays the same note/version after a full remount', async () => {
+    state.read.mockResolvedValue({ data: existing, error: null });
+    state.mutate.mockImplementationOnce(async (_name, args) => {
+      expect(sessionStorage.length).toBe(1);
+      expect(JSON.parse(sessionStorage.getItem(sessionStorage.key(0)!)!).command.requestId).toBe(args.p_request_id);
+      throw new Error('response lost after commit');
+    });
+    const view = setup();
+    fireEvent.change(await screen.findByLabelText('Ghi chú mới'), { target: { value: 'Giữ nguyên qua F5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu ghi chú' }));
+    await screen.findByRole('alert');
+    const original = state.mutate.mock.calls[0][1];
+    view.unmount();
+    const updated = { ...item, version: 2 };
+    state.read.mockResolvedValue({ data: { ...existing, case: updated,
+      events: [{ ...event, id: payment, version: 2, action: 'note', before_state: item, after_state: updated }, event] }, error: null });
+    setup();
+    expect(await screen.findByLabelText('Ghi chú mới')).toHaveValue('Giữ nguyên qua F5');
+    expect(screen.getByLabelText('Ghi chú mới')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Lưu ghi chú' })).not.toBeInTheDocument();
+    state.mutate.mockResolvedValue({ data: { case: updated, created: false }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await screen.findByText(/Máy chủ đã xác nhận/);
+    expect(state.mutate.mock.calls[1][1]).toEqual(original);
+    expect(sessionStorage.length).toBe(0);
+  });
+  it('keeps a command while a send is in flight and the notebook unmounts', async () => {
+    state.mutate.mockImplementationOnce(() => new Promise(() => {}));
+    const view = setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Đang gửi' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    const original = state.mutate.mock.calls[0][1];
+    view.unmount(); setup();
+    await screen.findByLabelText('Lý do mở hồ sơ');
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await screen.findByText(/Máy chủ đã xác nhận/);
+    expect(state.mutate.mock.calls[1][1]).toEqual(original);
+  });
+  it('isolates commands by actor and source, restoring them only for the original scope', async () => {
+    state.mutate.mockRejectedValue(new Error('network'));
+    const view = setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Riêng người A' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    await screen.findByRole('alert');
+    state.actor = id; view.rerenderCase(tenant, payment);
+    expect(await screen.findByLabelText('Lý do mở hồ sơ')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Thử lại lệnh trước' })).not.toBeInTheDocument();
+    expect(sessionStorage.length).toBe(1);
+    state.actor = actor; view.rerenderCase(tenant, payment);
+    expect(await screen.findByLabelText('Lý do mở hồ sơ')).toHaveValue('Riêng người A');
+    expect(screen.getByRole('button', { name: 'Thử lại lệnh trước' })).toBeEnabled();
+  });
+  it('does not release an unknown command when authorization or the RPC disappears on replay', async () => {
+    state.mutate.mockRejectedValueOnce(new Error('lost response'));
+    const view = setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Chờ xác minh' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    await screen.findByRole('alert');
+    state.mutate.mockResolvedValueOnce({ data: null, error: { code: '42501' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await screen.findByText(/không còn đủ quyền/);
+    expect(sessionStorage.length).toBe(1);
+    view.unmount(); setup();
+    await screen.findByLabelText('Lý do mở hồ sơ');
+    state.mutate.mockResolvedValueOnce({ data: null, error: { code: 'PGRST202' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await screen.findByText(/chưa được cài đặt/);
+    expect(sessionStorage.length).toBe(1);
+  });
+  it('does not send when durable session storage is blocked', async () => {
+    setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Không gửi mất ID' } });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Chưa gửi thêm lệnh');
+    expect(state.mutate).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Thử lại lệnh trước' })).toBeDisabled();
+  });
+  it('blocks new IDs without deleting a corrupt scoped command', async () => {
+    const key = `roomqc:case-pending:v1:${actor}:${tenant}:${payment}`;
+    sessionStorage.setItem(key, '{broken');
+    setup();
+    await screen.findByLabelText('Lý do mở hồ sơ');
+    expect(screen.getByRole('alert')).toHaveTextContent('Chưa gửi thêm lệnh');
+    expect(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' })).toBeDisabled();
+    expect(sessionStorage.getItem(key)).toBe('{broken');
+    expect(state.mutate).not.toHaveBeenCalled();
+  });
+  it('does not allow a new command if receipt storage cleanup fails', async () => {
+    setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Đã nhận receipt' } });
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('blocked'); });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Chưa gửi thêm lệnh');
+    expect(screen.queryByText(/Máy chủ đã xác nhận/)).not.toBeInTheDocument();
+    expect(sessionStorage.length).toBe(1);
+    expect(screen.getByRole('button', { name: 'Thử lại lệnh trước' })).toBeDisabled();
+  });
+  it('retains pending evidence after an invalid receipt or request-ID conflict', async () => {
+    state.mutate.mockResolvedValueOnce({ data: { case: { ...item, tenant_id: id }, created: true }, error: null });
+    setup();
+    fireEvent.change(await screen.findByLabelText('Lý do mở hồ sơ'), { target: { value: 'Phải đúng nguồn' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo hồ sơ kiểm tra' }));
+    await screen.findByRole('alert');
+    const original = state.mutate.mock.calls[0][1];
+    expect(sessionStorage.length).toBe(1);
+    state.mutate.mockResolvedValueOnce({ data: null, error: { code: 'PT409', message: 'CASE_REQUEST_ID_REUSED' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await waitFor(() => expect(state.mutate).toHaveBeenCalledTimes(2));
+    expect(state.mutate.mock.calls[1][1]).toEqual(original);
+    expect(sessionStorage.length).toBe(1);
+    expect(screen.queryByRole('button', { name: 'Tạo hồ sơ kiểm tra' })).not.toBeInTheDocument();
+  });
+  it('releases a persisted command after an explicit post-receipt-lookup version rejection', async () => {
+    state.read.mockResolvedValue({ data: existing, error: null });
+    state.mutate.mockRejectedValueOnce(new Error('network'));
+    const view = setup();
+    fireEvent.change(await screen.findByLabelText('Ghi chú mới'), { target: { value: 'Phiên bản cũ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu ghi chú' }));
+    await screen.findByRole('alert'); view.unmount(); setup();
+    await screen.findByLabelText('Ghi chú mới');
+    state.mutate.mockResolvedValueOnce({ data: null, error: { code: 'PT409', message: 'CASE_VERSION_CONFLICT' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại lệnh trước' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu ghi chú' })).toBeEnabled());
+    expect(sessionStorage.length).toBe(0);
+    expect(screen.getByLabelText('Ghi chú mới')).toHaveValue('Phiên bản cũ');
   });
 });

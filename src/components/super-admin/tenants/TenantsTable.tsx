@@ -1,15 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -49,30 +44,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { filterAdminTenants } from '@/lib/admin-tenant-presentation';
+import type { AdminTenant, TenantDirectoryRequest } from '@/lib/admin-tenant-directory';
 
 interface TenantsTableProps {
-  statusFilter?: string;
-  planFilter?: string;
-  approvalFilter?: string;
-  searchQuery?: string;
+  directory: ReturnType<typeof useTenants>;
+  onPageChange: (page: number) => void;
+  sort: TenantDirectoryRequest['sort'];
+  descending: boolean;
+  onSortChange: (sort: TenantDirectoryRequest['sort'], descending: boolean) => void;
   selectedTenants?: string[];
   onSelectionChange?: (selected: string[]) => void;
 }
 
-type AdminTenant = NonNullable<ReturnType<typeof useTenants>['data']>[number];
-
 export function TenantsTable({
-  statusFilter = 'all',
-  planFilter = 'all',
-  approvalFilter = 'all',
-  searchQuery = '',
+  directory,
+  onPageChange,
+  sort,
+  descending,
+  onSortChange,
   selectedTenants = [],
   onSelectionChange,
 }: TenantsTableProps) {
   const { t } = useTranslation('superAdmin');
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedTenant, setSelectedTenant] = useState<AdminTenant | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [changePlanOpen, setChangePlanOpen] = useState(false);
@@ -86,12 +79,11 @@ export function TenantsTable({
   const [statusReason, setStatusReason] = useState('');
   const statusPending = suspendMutation.isPending || reactivateMutation.isPending;
 
-  const { data: tenants = [], isLoading, isError, isFetching, refetch } = useTenants();
-
-  // Filter tenants based on props
-  const filteredTenants = useMemo(() => isError ? [] : filterAdminTenants(tenants, {
-    statusFilter, planFilter, approvalFilter, searchQuery,
-  }), [tenants, statusFilter, planFilter, approvalFilter, searchQuery, isError]);
+  const { data, isLoading, isError, isFetching, refetch } = directory;
+  const filteredTenants = isError ? [] : data?.items || [];
+  const page = data?.page || 0;
+  const pageCount = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const toggleSort = (value: TenantDirectoryRequest['sort']) => onSortChange(value, sort === value ? !descending : false);
 
   const handleSelectAll = (checked: boolean) => {
     if (onSelectionChange) {
@@ -160,11 +152,12 @@ export function TenantsTable({
   const columns: ColumnDef<AdminTenant>[] = [
     {
       id: 'select',
-      header: ({ table }) => (
+      header: () => (
         <Checkbox
           checked={filteredTenants.length > 0 && filteredTenants.every(tenant => selectedTenants.includes(tenant.id))}
           onCheckedChange={handleSelectAll}
-          aria-label="Chọn tất cả kết quả lọc đã tải"
+          aria-label="Chọn tất cả khách hàng trên trang hiện tại"
+          disabled={isFetching || isError}
         />
       ),
       cell: ({ row }) => (
@@ -172,6 +165,7 @@ export function TenantsTable({
           checked={selectedTenants.includes(row.original.id)}
           onCheckedChange={(checked) => handleSelectRow(row.original.id, checked as boolean)}
           aria-label={`Chọn ${row.original.name}`}
+          disabled={isFetching || isError}
         />
       ),
       enableSorting: false,
@@ -179,11 +173,12 @@ export function TenantsTable({
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => {
+      header: () => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => toggleSort('name')}
+            disabled={isFetching || isError}
             className="whitespace-nowrap"
           >
             {t('tenants.table.tenantName')}
@@ -301,11 +296,12 @@ export function TenantsTable({
     },
     {
       accessorKey: 'subscription_end_date',
-      header: ({ column }) => {
+      header: () => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => toggleSort('subscription_end_date')}
+            disabled={isFetching || isError}
             className="whitespace-nowrap"
           >
             {t('tenants.table.expires')}
@@ -318,19 +314,18 @@ export function TenantsTable({
         if (!date) return <span className="text-muted-foreground">-</span>;
         
         const expiryDate = new Date(date);
-        const daysUntilExpiry = Math.ceil(
-          (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        );
+        const daysUntilExpiry = row.original.days_until_expiry;
         
         return (
           <div className="whitespace-nowrap">
             <div className="text-foreground">{expiryDate.toLocaleDateString()}</div>
-            {daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
+            {daysUntilExpiry === 0 && <div className="text-xs text-orange-600">Hết hạn hôm nay (UTC)</div>}
+            {daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
               <div className="text-xs text-orange-600">
                 {t('tenants.table.daysLeft', { count: daysUntilExpiry })}
               </div>
             )}
-            {daysUntilExpiry < 0 && (
+            {daysUntilExpiry !== null && daysUntilExpiry < 0 && (
               <div className="text-xs text-destructive">{t('tenants.table.expired')}</div>
             )}
           </div>
@@ -339,16 +334,7 @@ export function TenantsTable({
     },
     {
       accessorKey: 'lifetime_revenue',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="whitespace-nowrap"
-        >
-          Đã thu (đã tải)
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Đã thu theo hóa đơn',
       cell: ({ row }) => {
         const revenue = row.original.lifetime_revenue || 0;
         return (
@@ -448,15 +434,9 @@ export function TenantsTable({
     data: filteredTenants,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    state: {
-      sorting,
-      columnFilters,
-    },
+    manualPagination: true,
+    manualSorting: true,
+    getRowId: row => row.id,
   });
 
   return (
@@ -469,7 +449,7 @@ export function TenantsTable({
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        “Đã thu” chỉ cộng hóa đơn trả về trong lần tải hiện tại, không phải doanh thu trọn đời đã đối soát.
+        “Đã thu” cộng toàn bộ hóa đơn trạng thái đã thanh toán của từng khách hàng; không thay thế sổ đối soát.
       </p>
       {/* Table */}
       <div className="rounded-none border">
@@ -523,22 +503,22 @@ export function TenantsTable({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {isError ? 'Chưa có số liệu hợp lệ' : `${table.getFilteredRowModel().rows.length} kết quả lọc trong ${tenants.length} khách hàng đã tải`}
+          {isError ? 'Chưa có số liệu hợp lệ' : data ? `${data.total} khách hàng phù hợp · Trang ${page + 1}/${pageCount}` : 'Đang tải số liệu...'}
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => onPageChange(page - 1)}
+            disabled={isError || isFetching || !data || page === 0}
           >
             {t('tenants.table.previous')}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => onPageChange(page + 1)}
+            disabled={isError || isFetching || !data || page + 1 >= pageCount}
           >
             {t('tenants.table.next')}
           </Button>

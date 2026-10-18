@@ -5,6 +5,25 @@ thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch m
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
 
+## Cập nhật mới nhất: sửa lỗi review — 18/10/2026
+
+Đã cutover worker atomic theo scope, batch/cursor/receipt/outbox; phục hồi
+interrupted có audit; bảo toàn lệnh đối soát qua tải lại tab; directory phân
+trang/tìm kiếm/tổng hợp tại server. Đây là bản local 8082 healthy,
+image review-fixes-20261018, history 520 migration. Dữ liệu nghiệp vụ không đổi.
+
+Kiểm chứng: 823 Vitest đạt/16 skip; worker DB 131, recovery DB 54, directory DB
+32 đạt; TypeScript/lint/Deno entrypoint/build/container đạt; DB lint và security
+advisors sạch ở mức warning/error. Có 5 HTTP kiểm tra từ chối trái quyền.
+Không gọi job được cấp quyền trên DB chính, không bật lịch hoặc triển khai VPS.
+
+Các mốc foundation/giám sát phía dưới là lịch sử tại thời điểm ghi; không còn
+mô tả runtime mới nhất. Không đóng toàn A0–A4 hoặc nghiệm thu production.
+Tiếp theo: browser E2E workflow mới → chốt chính sách expiry chưa được điều
+kiện cũ bao phủ → backup/restore độc lập và staging trước lịch/provider.
+Chi tiết: [báo cáo sửa lỗi local](roomqc-review-fixes-local-2026-10-18.md).
+
+
 ## Mốc nền giao dịch và outbox — 18/10/2026
 
 Đã áp migration `20261018010625` trên DB local: lệnh nội bộ theo một tenant,

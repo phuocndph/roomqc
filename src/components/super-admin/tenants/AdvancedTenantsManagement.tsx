@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { exportToExcel } from '@/utils/exportUtils';
 import { useTenants } from '@/hooks/super-admin/useTenants';
@@ -17,7 +17,7 @@ import { TenantAnalytics } from './TenantAnalytics';
 import { BulkActions } from './BulkActions';
 import { Download, Search } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
-import { filterAdminTenants, getAdminTenantPlanOptions } from '@/lib/admin-tenant-presentation';
+import { defaultTenantDirectoryRequest, type TenantDirectoryRequest } from '@/lib/admin-tenant-directory';
 
 export function AdvancedTenantsManagement() {
   const { t } = useTranslation('superAdmin');
@@ -26,19 +26,25 @@ export function AdvancedTenantsManagement() {
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [sort, setSort] = useState<TenantDirectoryRequest['sort']>('created_at');
+  const [descending, setDescending] = useState(true);
 
-  const { data: tenants = [], isError, isLoading, isFetching } = useTenants();
-  const filteredTenants = useMemo(() => filterAdminTenants(tenants, {
-    statusFilter, planFilter, approvalFilter, searchQuery,
-  }), [tenants, statusFilter, planFilter, approvalFilter, searchQuery]);
-  const planOptions = useMemo(() => getAdminTenantPlanOptions(tenants), [tenants]);
+  const request = { ...defaultTenantDirectoryRequest, statusFilter, planFilter, approvalFilter, searchQuery, page, sort, descending };
+  const directory = useTenants(request);
+  const { data, isError, isLoading, isFetching } = directory;
+  const filteredTenants = isError ? [] : data?.items || [];
+  const visibleSelectedTenants = selectedTenants.filter(id => filteredTenants.some(tenant => tenant.id === id));
+  const planOptions = isError ? [] : data?.plans || [];
+  const changePage = (value: number) => { setPage(value); setSelectedTenants([]); };
   const changeFilter = (setter: (value: string) => void) => (value: string) => {
     setter(value);
+    setPage(0);
     setSelectedTenants([]);
   };
 
   const handleExport = () => {
-    if (!isError && filteredTenants.length > 0) {
+    if (!isError && !isLoading && !isFetching && filteredTenants.length > 0) {
       const exportData = filteredTenants.map((t) => ({
         'Tên': t.name,
         'Email': t.email || '',
@@ -48,7 +54,7 @@ export function AdvancedTenantsManagement() {
         'Ngày tạo': t.created_at,
         'Hết hạn': t.subscription_end_date || '',
       }));
-      exportToExcel(exportData, `tenants-${new Date().toISOString().slice(0, 10)}`, 'Khách hàng');
+      exportToExcel(exportData, `tenants-page-${(data?.page || 0) + 1}-${new Date().toISOString().slice(0, 10)}`, 'Khách hàng');
     }
   };
 
@@ -68,6 +74,7 @@ export function AdvancedTenantsManagement() {
             aria-label={t('tenants.searchPlaceholder')}
             placeholder={t('tenants.searchPlaceholder')}
             value={searchQuery}
+            maxLength={200}
             onChange={(e) => changeFilter(setSearchQuery)(e.target.value)}
             className="pl-8 h-8 text-sm"
           />
@@ -114,19 +121,19 @@ export function AdvancedTenantsManagement() {
 
         <Button variant="outline" size="sm" onClick={handleExport} className="h-8" disabled={isError || isLoading || isFetching || !filteredTenants.length}>
           <Download className="h-3.5 w-3.5 mr-1.5" />
-          Xuất kết quả lọc
+          Xuất trang hiện tại
         </Button>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Bộ lọc và file xuất áp dụng trên dữ liệu đã tải, chưa phải báo cáo toàn hệ thống.
+        Bộ lọc và số kết quả áp dụng toàn bộ khách hàng. File xuất chỉ gồm trang hiện tại.
         Tab phân tích dùng nguồn thống kê riêng, không thay đổi theo bộ lọc này.
       </p>
 
       {/* Bulk Actions */}
-      {selectedTenants.length > 0 && (
+      {!isError && !isFetching && visibleSelectedTenants.length > 0 && (
         <BulkActions
-          selectedTenants={selectedTenants}
+          selectedTenants={visibleSelectedTenants}
           onClearSelection={() => setSelectedTenants([])}
         />
       )}
@@ -140,11 +147,12 @@ export function AdvancedTenantsManagement() {
 
         <TabsContent value="list">
           <TenantsTable
-            statusFilter={statusFilter}
-            planFilter={planFilter}
-            approvalFilter={approvalFilter}
-            searchQuery={searchQuery}
-            selectedTenants={selectedTenants}
+            directory={directory}
+            onPageChange={changePage}
+            sort={sort}
+            descending={descending}
+            onSortChange={(value, desc) => { setSort(value); setDescending(desc); changePage(0); }}
+            selectedTenants={visibleSelectedTenants}
             onSelectionChange={setSelectedTenants}
           />
         </TabsContent>

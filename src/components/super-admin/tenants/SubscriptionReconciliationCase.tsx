@@ -4,26 +4,32 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { readCaseMutation, readCasePage, reconciliationCaseError } from '@/lib/subscription-reconciliation-cases';
+import { CASE_STORAGE_ERROR, clearCaseCommand, loadCaseCommand, persistCaseCommand, type CaseCommand } from '@/lib/reconciliation-case-pending';
 
-type Command = { requestId: string; note: string; action: 'create' | 'note'; version: number | null };
-
-// Remounted on source/tenant changes; notes and pending request IDs never cross sources.
+// Auth and source changes remount local UI, while unresolved commands retain their scoped session entry.
 export function SubscriptionReconciliationCase(props: { tenantId: string; paymentId: string; onClose: () => void }) {
-  const { user } = useAuth();
-  return <CaseNotebook key={`${user?.id}:${props.tenantId}:${props.paymentId}`} {...props} />;
+  const { user, session } = useAuth();
+  return <CaseNotebook key={`${session ? user?.id : 'signed-out'}:${props.tenantId}:${props.paymentId}`} {...props} />;
 }
 
 function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paymentId: string; onClose: () => void }) {
   const { user, session } = useAuth();
-  const [note, setNote] = useState('');
+  const scope = user && session ? { actorId: user.id, tenantId, paymentId } : null;
+  const [restored] = useState(() => {
+    try { return { command: scope ? loadCaseCommand(scope) : null, error: false }; }
+    catch { return { command: null, error: true }; }
+  });
+  const [note, setNote] = useState(restored.command?.note ?? '');
+  const [storageBlocked, setStorageBlocked] = useState(restored.error);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [awaitingReceipt, setAwaitingReceipt] = useState(false);
+  const [awaitingReceipt, setAwaitingReceipt] = useState(!!restored.command);
   const [cursors, setCursors] = useState<(number | undefined)[]>([undefined]);
   const before = cursors.at(-1);
-  const pending = useRef<Command | null>(null);
+  const pending = useRef<CaseCommand | null>(restored.command);
+  const sending = useRef(false);
   const heading = useRef<HTMLHeadingElement | null>(null);
   useEffect(() => { heading.current?.focus(); }, []);
   const query = useQuery({
@@ -41,7 +47,8 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
   const canWrite = !!page && (page.case !== null || page.source.can_create) && before === undefined;
 
   async function save() {
-    if (!user || !session || permissionDenied || saving) return;
+    if (!scope || permissionDenied || sending.current || storageBlocked) return;
+    const recovering = !!pending.current;
     if (!pending.current) {
       if (!page || !canWrite || !note.trim() || note.trim().length > 2000) return;
       pending.current = { requestId: crypto.randomUUID(), note: note.trim(),
@@ -50,6 +57,9 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
     // Never regenerate this command after refocus/refetch/version changes. Only
     // a committed receipt or a definitive rejection may release the pending ID.
     const command = pending.current;
+    try { persistCaseCommand(scope, command); }
+    catch { setStorageBlocked(true); setAwaitingReceipt(true); return; }
+    sending.current = true;
     setSaving(true); setFailure(null); setSaved(null);
     try {
       const { data, error } = await supabase.rpc('admin_mutate_subscription_reconciliation_case' as never, {
@@ -58,6 +68,9 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
       } as never);
       if (error) throw error;
       const result = readCaseMutation(data, tenantId, paymentId);
+      // Only release the request after a validated receipt and durable removal.
+      try { clearCaseCommand(scope, command); }
+      catch { setStorageBlocked(true); setAwaitingReceipt(true); return; }
       pending.current = null; setAwaitingReceipt(false);
       if (command.action === 'create' && !result.created) {
         // A competing admin already opened it. The supplied note was NOT saved.
@@ -70,10 +83,19 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
       setFailure(reconciliationCaseError(error));
       const code = error && typeof error === 'object' && 'code' in error ? error.code : null;
       if (code === '42501') setPermissionDenied(true);
-      if (['42501', 'PT409', 'PT404', '22023', 'PGRST202', '42883'].includes(String(code))) {
-        pending.current = null; setAwaitingReceipt(false);
+      // Auth/schema failures during recovery say nothing about the earlier send.
+      // Keep its exact ID until authorized receipt replay succeeds.
+      const message = error && typeof error === 'object' && 'message' in error ? error.message : null;
+      const definitive = (code === 'PT409' && ['CASE_SOURCE_NOT_ELIGIBLE', 'CASE_SOURCE_CHANGED_TENANT', 'CASE_VERSION_CONFLICT'].includes(String(message)))
+        || (code === 'PT404' && ['CASE_SOURCE_NOT_FOUND', 'CASE_NOT_FOUND'].includes(String(message)))
+        || (!recovering && ['42501', '22023', 'PGRST202', '42883'].includes(String(code)));
+      if (definitive) {
+        try {
+          clearCaseCommand(scope, command);
+          pending.current = null; setAwaitingReceipt(false);
+        } catch { setStorageBlocked(true); setAwaitingReceipt(true); }
       } else setAwaitingReceipt(true);
-    } finally { setSaving(false); }
+    } finally { sending.current = false; setSaving(false); }
   }
 
   return <section aria-label="Hồ sơ kiểm tra giao dịch" className="rounded-md border p-4 space-y-3">
@@ -102,18 +124,19 @@ function CaseNotebook({ tenantId, paymentId, onClose }: { tenantId: string; paym
         {!canWrite && before === undefined && <p>Giao dịch nguồn không còn phù hợp để tạo hồ sơ mới.</p>}
         {canWrite && <div className="space-y-2">
           <label htmlFor="reconciliation-case-note" className="block text-sm font-medium">{page.case ? 'Ghi chú mới' : 'Lý do mở hồ sơ'}</label>
-          <textarea id="reconciliation-case-note" value={note} maxLength={2000} disabled={saving || awaitingReceipt}
+          <textarea id="reconciliation-case-note" value={note} maxLength={2000} disabled={saving || awaitingReceipt || storageBlocked}
             className="w-full min-h-24 rounded-md border bg-background p-2 text-sm"
             onChange={event => { setNote(event.target.value); setSaved(null); }} />
-          {!awaitingReceipt && <Button size="sm" disabled={saving || !note.trim()} onClick={() => void save()}>
+          {!awaitingReceipt && <Button size="sm" disabled={saving || storageBlocked || !note.trim()} onClick={() => void save()}>
             {saving ? 'Đang lưu…' : page.case ? 'Lưu ghi chú' : 'Tạo hồ sơ kiểm tra'}
           </Button>}
         </div>}
       </>}
     {failure && <p role="alert">{failure}</p>}
+    {storageBlocked && <p role="alert">{CASE_STORAGE_ERROR}</p>}
     {awaitingReceipt && session && user && !permissionDenied && <div className="space-y-2">
-      <p className="text-sm">Lệnh trước chưa rõ kết quả. Không nhập lệnh mới hoặc đóng hồ sơ cho đến khi xác nhận; tải lại không hủy lệnh đã gửi.</p>
-      <Button size="sm" disabled={saving} onClick={() => void save()}>{saving ? 'Đang xác nhận…' : 'Thử lại lệnh trước'}</Button>
+      <p className="text-sm">Lệnh trước chưa rõ kết quả. Tải lại hoặc mở lại hồ sơ trong tab này sẽ giữ nguyên lệnh để xác nhận. Không đóng tab, xóa dữ liệu trình duyệt hoặc nhập lại ở thiết bị khác trước khi đối chiếu lịch sử.</p>
+      <Button size="sm" disabled={saving || storageBlocked} onClick={() => void save()}>{saving ? 'Đang xác nhận…' : 'Thử lại lệnh trước'}</Button>
     </div>}
     {saved && session && user && <p role="status">{saved}</p>}
     <div className="flex flex-wrap gap-2">

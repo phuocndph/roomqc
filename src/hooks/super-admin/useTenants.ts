@@ -2,92 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getFriendlyError } from '@/lib/errorMessage'
-import { getTenantPresentation } from '@/lib/admin-tenant-presentation';
+import { defaultTenantDirectoryRequest, readTenantDirectory, tenantDirectoryArguments, type TenantDirectoryRequest } from '@/lib/admin-tenant-directory';
 
 /**
- * Load the legacy tenant list and related rows returned by the Data API.
- * This is not server-paginated and must not be presented as a global report.
+ * Every list filter, count and page is evaluated by the live-admin server RPC.
  */
-export function useTenants() {
+export function useTenants(request: TenantDirectoryRequest = defaultTenantDirectoryRequest) {
+  const args = tenantDirectoryArguments(request);
   return useQuery({
-    queryKey: ['super-admin-tenants'],
+    queryKey: ['super-admin-tenants', args],
     queryFn: async () => {
-      // Fetch tenants with subscription and usage
-      const { data: tenants, error } = await supabase
-        .from('tenants')
-        .select(`
-          *,
-          subscription_plan:subscription_plans(
-            id,
-            name,
-            code,
-            price_monthly,
-            price_yearly,
-            max_hotels,
-            max_users,
-            max_storage_gb
-          ),
-          tenant_usage(
-            current_hotels_count,
-            current_users_count,
-            current_rooms_count,
-            current_items_count,
-            current_storage_bytes,
-            peak_hotels_count,
-            peak_users_count,
-            peak_storage_bytes
-          )
-        `)
-        .order('created_at', { ascending: false });
-
+      // Narrow cast until generated Database types include the new migration.
+      const { data, error } = await supabase.rpc('admin_tenant_directory_page' as never, args as never);
       if (error) throw error;
-
-      // Fetch the paid invoices returned for loaded tenants (API row limits apply).
-      const tenantIds = tenants?.map(t => t.id) || [];
-      
-      if (tenantIds.length === 0) return [];
-
-      const { data: invoices, error: invoiceError } = await supabase
-        .from('invoices')
-        .select('tenant_id, total_amount, status')
-        .in('tenant_id', tenantIds)
-        .eq('status', 'paid');
-
-      if (invoiceError) throw invoiceError;
-
-      // Legacy property name retained for consumers; this is a loaded-row subtotal.
-      const revenueByTenant: Record<string, number> = {};
-      invoices?.forEach(inv => {
-        revenueByTenant[inv.tenant_id] = (revenueByTenant[inv.tenant_id] || 0) + (inv.total_amount || 0);
-      });
-
-      // Fetch last activity for each tenant
-      const { data: activities, error: activityError } = await supabase
-        .from('activity_logs')
-        .select('tenant_id, created_at')
-        .in('tenant_id', tenantIds)
-        .order('created_at', { ascending: false });
-
-      if (activityError) throw activityError;
-
-      // Get last activity per tenant
-      const lastActivityByTenant: Record<string, string> = {};
-      activities?.forEach(act => {
-        if (!lastActivityByTenant[act.tenant_id]) {
-          lastActivityByTenant[act.tenant_id] = act.created_at || '';
-        }
-      });
-
-      // Merge data and calculate actual status
-      const now = new Date();
-      return tenants?.map(tenant => {
-        return {
-          ...tenant,
-          lifetime_revenue: revenueByTenant[tenant.id] || 0,
-          last_activity: lastActivityByTenant[tenant.id] || null,
-          ...getTenantPresentation(tenant, now),
-        };
-      }) || [];
+      return readTenantDirectory(data);
     },
   });
 }

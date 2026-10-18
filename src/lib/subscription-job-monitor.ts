@@ -15,6 +15,9 @@ const run = z.object({
   status: z.enum(['running', 'success', 'failed', 'busy', 'interrupted']),
   started_at: timestamp, finished_at: timestamp.nullable(), deadline_at: timestamp,
   blocked_by: z.string().uuid().nullable(), summary: summary.nullable(),
+  execution_protocol: z.enum(['legacy', 'atomic_v1']).optional(),
+  execution_scope: z.discriminatedUnion('kind', [z.object({ kind: z.literal('cluster') }),
+    z.object({ kind: z.literal('tenants'), tenant_ids: z.array(z.string().uuid()).min(1).max(100) })]).nullable().optional(),
 });
 const monitor = z.object({
   job: z.literal('check-subscription-status'), scope: z.literal('cluster'), checked_at: timestamp,
@@ -24,6 +27,9 @@ const monitor = z.object({
     eligible_grace: count, eligible_suspend: count, unhandled_expired_active: count,
     checked_at: timestamp, definition: z.literal('legacy_predicates_only'),
   }),
+  outbox: z.object({ pending: count, due: count, with_error: count, delivered: count, obsolete: count,
+    oldest_pending_at: timestamp.nullable(), checked_at: timestamp }).optional(),
+  latest_recovery: z.object({ run_id: z.string().uuid(), actor_id: z.string().uuid(), recovered_at: timestamp }).nullable().optional(),
 });
 export type SubscriptionJobRun = z.infer<typeof run>;
 export type SubscriptionJobMonitorData = z.infer<typeof monitor>;
@@ -31,10 +37,12 @@ export type SubscriptionJobMonitorData = z.infer<typeof monitor>;
 export function readSubscriptionJobMonitor(value: unknown): SubscriptionJobMonitorData {
   const parsed = monitor.parse(value);
   const allRuns = [...parsed.runs, ...(parsed.active ? [parsed.active] : []), ...(parsed.latest_failure ? [parsed.latest_failure] : [])];
-  if (new Set(parsed.runs.map(item => item.id)).size !== parsed.runs.length
+  if ((parsed.outbox && (parsed.outbox.due > parsed.outbox.pending || parsed.outbox.with_error > parsed.outbox.pending))
+    || new Set(parsed.runs.map(item => item.id)).size !== parsed.runs.length
     || (parsed.active && !['running', 'interrupted'].includes(parsed.active.status))
     || (parsed.latest_failure && !['failed', 'interrupted'].includes(parsed.latest_failure.status))
-    || allRuns.some(item => Date.parse(item.deadline_at) < Date.parse(item.started_at)
+    || allRuns.some(item => (item.execution_protocol === 'atomic_v1' && !item.execution_scope)
+      || Date.parse(item.deadline_at) < Date.parse(item.started_at)
       || (item.finished_at !== null && Date.parse(item.finished_at) < Date.parse(item.started_at))
       || (item.status === 'running' && (item.finished_at !== null || item.summary !== null || item.blocked_by !== null))
       || (item.status === 'interrupted' && (item.blocked_by !== null

@@ -3,9 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SubscriptionJobMonitor } from './SubscriptionJobMonitor';
 
-const state = vi.hoisted(() => ({ rpc: vi.fn(), loggedIn: true }));
+const state = vi.hoisted(() => ({ rpc: vi.fn(), recovery: vi.fn(), loggedIn: true }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: state.loggedIn ? { id: 'admin-one' } : null, session: state.loggedIn ? { access_token: 'fixture-only' } : null }) }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: (...args: unknown[]) => ({ abortSignal: () => state.rpc(...args) }) } }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: (...args: unknown[]) => args[0] === 'admin_recover_subscription_status_run'
+  ? state.recovery(...args) : ({ abortSignal: () => state.rpc(...args) }) } }));
 const stamp = '2026-10-17T12:00:00Z';
 const page = () => ({ job: 'check-subscription-status', scope: 'cluster', checked_at: stamp, scheduler_status: 'not_observed', last_success_at: null, active: null, latest_failure: null, runs: [], backlog: { eligible_grace: 4, eligible_suspend: 2, unhandled_expired_active: 3, checked_at: stamp, definition: 'legacy_predicates_only' } });
 const run = (status = 'running') => ({ id: '00000000-0000-4000-8000-000000000001', job: 'check-subscription-status', scope: 'cluster', status, started_at: stamp, finished_at: ['running', 'interrupted'].includes(status) ? null : stamp, deadline_at: '2026-10-17T12:05:00Z', blocked_by: status === 'busy' ? '00000000-0000-4000-8000-000000000009' : null, summary: null });
@@ -16,7 +17,7 @@ function setup() {
 }
 
 describe('read-only subscription job monitor', () => {
-  beforeEach(() => { state.loggedIn = true; state.rpc.mockReset().mockResolvedValue({ data: page(), error: null }); });
+  beforeEach(() => { vi.restoreAllMocks(); window.sessionStorage.clear(); state.loggedIn = true; state.recovery.mockReset(); state.rpc.mockReset().mockResolvedValue({ data: page(), error: null }); });
   it('shows unknown last success and unknown schedule, scoped current backlog, no write action', async () => {
     setup();
     expect(await screen.findByText('Chưa có lần chạy thành công được ghi nhận')).toBeInTheDocument();
@@ -96,5 +97,41 @@ describe('read-only subscription job monitor', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
       expect(state.rpc).toHaveBeenCalledTimes(2);
     } finally { vi.useRealTimers(); }
+  });
+  it('restores and replays an ambiguous recovery after remount even when the active run disappeared', async () => {
+    const active = { ...run('interrupted'), execution_protocol: 'atomic_v1', execution_scope: { kind: 'cluster' } };
+    state.rpc.mockResolvedValue({ data: { ...page(), active }, error: null });
+    const first = setup();
+    fireEvent.change(await screen.findByLabelText('Lý do giải phóng (ít nhất 10 ký tự)'), { target: { value: 'Đã đối chiếu lượt chạy bị gián đoạn' } });
+    state.recovery.mockResolvedValueOnce({ data: null, error: { message: 'lost response' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Giải phóng lượt gián đoạn' }));
+    await screen.findByRole('button', { name: 'Thử lại lệnh giải phóng' });
+    const args = state.recovery.mock.calls[0][1];
+    first.unmount();
+    state.rpc.mockResolvedValue({ data: page(), error: null });
+    state.recovery.mockResolvedValueOnce({ data: { run_id: args.p_run_id, request_id: args.p_request_id, released: true, replayed: true }, error: null });
+    setup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Thử lại lệnh giải phóng' }));
+    await screen.findByText(/Đã ghi nhận giải phóng/);
+    expect(state.recovery.mock.calls[1][1]).toEqual(args);
+    expect(window.sessionStorage.length).toBe(0);
+  });
+  it('cannot release legacy runs and sends no command if persistence fails', async () => {
+    state.rpc.mockResolvedValue({ data: { ...page(), active: run('interrupted') }, error: null });
+    const legacy = setup(); await screen.findByText(/Lượt cũ chưa có cơ chế DB/);
+    expect(screen.queryByRole('button', { name: 'Giải phóng lượt gián đoạn' })).not.toBeInTheDocument();
+    legacy.unmount();
+    state.rpc.mockResolvedValue({ data: { ...page(), active: { ...run('interrupted'), execution_protocol: 'atomic_v1', execution_scope: { kind: 'cluster' } } }, error: null });
+    setup(); fireEvent.change(await screen.findByLabelText('Lý do giải phóng (ít nhất 10 ký tự)'), { target: { value: 'Đã kiểm tra và đối chiếu' } });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    fireEvent.click(screen.getByRole('button', { name: 'Giải phóng lượt gián đoạn' }));
+    await screen.findByText(/Không thể bảo toàn lệnh phục hồi/);
+    expect(state.recovery).not.toHaveBeenCalled();
+  });
+  it('shows outbox backlog separately from subscription transitions', async () => {
+    state.rpc.mockResolvedValue({ data: { ...page(), outbox: { pending: 4, due: 2, with_error: 1, delivered: 6, obsolete: 3,
+      oldest_pending_at: stamp, checked_at: stamp } }, error: null });
+    setup(); expect(await screen.findByText('4 đang chờ · 2 đến hạn thử · 1 đang có lỗi.')).toBeInTheDocument();
+    expect(screen.getByText(/Không bao gồm email\/push/)).toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+const withWorker = process.argv.includes('--worker');
 
 const project = (await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8'))
   .match(/^project_id\s*=\s*"([a-z0-9_-]+)"/m)?.[1];
@@ -15,7 +16,8 @@ const qi = value => '"' + value.replaceAll('"', '""') + '"';
 const q = value => value === null ? 'NULL' : "'" + String(value).replaceAll("'", "''") + "'";
 const base = ['exec', '-i', container, 'psql', '-U', 'postgres', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1'];
 const tables = ['auth.users', 'auth.sessions', 'public.users', 'public.user_roles',
-  'public.tenants', 'public.invoices', 'public.payment_transactions', 'public.in_app_notifications'];
+  'public.tenants', 'public.invoices', 'public.payment_transactions', 'public.in_app_notifications',
+  ...(withWorker ? ['public.staff_status'] : [])];
 function sql(db, statement) {
   return execFileSync('docker', [...base, '-d', db], { input: statement, encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'], timeout: 20000, maxBuffer: 5_000_000 }).trim();
@@ -312,6 +314,19 @@ try {
       },
     });
   ok(true,'A run whose deadline expires while waiting for tenant lock cannot mutate the tenant');
+  if (withWorker) {
+    const { runAtomicWorkerChecks } = await import('./subscription-atomic-worker-isolated-cases.mjs');
+    // The preceding legacy deadline fixture is deliberately interrupted. Close
+    // only that disposable fixture so atomic tests can obtain a fresh run.
+    isolated(`UPDATE private.subscription_status_job_runs SET status='failed',finished_at=clock_timestamp(),
+      summary=${q(JSON.stringify(summary))}::jsonb WHERE id=${q(lateRun)};
+      UPDATE private.subscription_lifecycle_notification_outbox SET status='obsolete',last_error_code=NULL,
+        obsolete_at=clock_timestamp() WHERE status='pending';`);
+    isolated(source(`SELECT pg_get_functiondef('public.auto_offline_inactive_staff()'::regprocedure)||';';`));
+    isolated(await readFile(new URL('../supabase/migrations/20261018012844_subscription_lifecycle_worker_batches.sql',import.meta.url),'utf8'));
+    isolated(await readFile(new URL('../supabase/migrations/20261018014615_subscription_scope_validator_volatility.sql',import.meta.url),'utf8'));
+    await runAtomicWorkerChecks({isolated,q,ok,parse,randomUUID,tenant,owner,state,count,denied,concurrent,race,financial,initialFinancial});
+  }
   console.log(`Isolated lifecycle foundation: ${checks} checks passed; no main runtime or lifecycle changes.`);
 } finally {
   if (created) {

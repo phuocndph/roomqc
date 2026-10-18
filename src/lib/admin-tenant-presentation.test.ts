@@ -19,10 +19,17 @@ describe('admin tenant presentation is not entitlement logic', () => {
     expect(getTenantPresentation({ subscription_status: status, subscription_end_date: '2020-01-01' }, now).actual_status).toBe(status);
   });
   it('derives only expired active dates and handles invalid dates without NaN', () => {
-    expect(getTenantPresentation({ subscription_status: 'active', subscription_end_date: now.toISOString() }, now).actual_status).toBe('expired');
+    expect(getTenantPresentation({ subscription_status: 'active', subscription_end_date: '2026-10-16' }, now).actual_status).toBe('expired');
     expect(getTenantPresentation({ subscription_status: 'active', subscription_end_date: 'bad' }, now))
       .toMatchObject({ actual_status: 'active', days_until_expiry: null, has_subscription: false });
     expect(getTenantPresentation({}, now).actual_status).toBe('not_registered');
+  });
+  it.each(['2026-10-17T00:00:00Z', '2026-10-17T12:00:00Z', '2026-10-17T23:59:59Z'])('keeps today valid at %s', time => {
+    const presentation = getTenantPresentation({ subscription_status: 'active', subscription_end_date: '2026-10-17' }, new Date(time));
+    expect(presentation).toMatchObject({ actual_status: 'active', is_expired: false, days_until_expiry: 0 });
+    expect(filterAdminTenants([{ ...tenant('today'), ...presentation }], { ...filters, statusFilter: 'expiring_soon' })).toHaveLength(1);
+    expect(getTenantPresentation({ subscription_status: 'active', subscription_end_date: '2026-10-17' }, new Date('2026-10-18T00:00:00Z')))
+      .toMatchObject({ actual_status: 'expired', is_expired: true, days_until_expiry: -1 });
   });
   it('applies actual status consistently instead of including expired active tenants', () => {
     const expired = { ...tenant('old'), actual_status: 'expired' };

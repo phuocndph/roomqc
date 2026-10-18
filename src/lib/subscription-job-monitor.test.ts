@@ -28,6 +28,8 @@ describe('subscription job monitor contract', () => {
     { ...page(), runs: [{ ...run(), deadline_at: '2020-01-01T00:00:00Z' }] },
     { ...page(), runs: [{ ...run(), summary: { ...result(), recovery_required: true } }] },
     { ...page(), runs: [{ ...run(), summary: { ...result(), staff_status: 'not_run' } }] },
+    { ...page(), runs: [{ ...run(), execution_protocol: 'atomic_v1', execution_scope: null }] },
+    { ...page(), outbox: { pending: 1, due: 2, with_error: 0, delivered: 0, obsolete: 0, oldest_pending_at: stamp, checked_at: stamp } },
   ])('rejects malformed or misleading monitor response %#', value => {
     expect(() => readSubscriptionJobMonitor(value)).toThrow();
   });

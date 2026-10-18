@@ -7,10 +7,14 @@ export interface TenantPresentationInput {
 
 export function getTenantPresentation(tenant: TenantPresentationInput, now = new Date()) {
   const timestamp = tenant.subscription_end_date ? Date.parse(tenant.subscription_end_date) : NaN;
+  // subscription_end_date is a DATE, valid through its whole UTC calendar day.
+  // Keep display/filter semantics aligned with lifecycle and monitor predicates.
+  const endDay = Math.floor(timestamp / 86_400_000);
+  const today = Math.floor(now.getTime() / 86_400_000);
   const daysUntilExpiry = Number.isFinite(timestamp)
-    ? Math.ceil((timestamp - now.getTime()) / 86_400_000)
+    ? endDay - today
     : null;
-  const isExpired = Number.isFinite(timestamp) && timestamp <= now.getTime();
+  const isExpired = Number.isFinite(timestamp) && endDay < today;
   // Trial, grace, suspended and cancelled are explicit server states. A missing
   // paid room allocation must not relabel a trial as an unregistered customer.
   const status = tenant.subscription_status || 'not_registered';
@@ -44,7 +48,7 @@ export function filterAdminTenants<T extends FilterableTenant>(tenants: T[], fil
     const matchesStatus = filters.statusFilter === 'all'
       || (filters.statusFilter === 'expiring_soon'
         ? tenant.actual_status === 'active' && tenant.days_until_expiry !== null
-          && tenant.days_until_expiry > 0 && tenant.days_until_expiry <= 7
+          && tenant.days_until_expiry >= 0 && tenant.days_until_expiry <= 7
         : tenant.actual_status === filters.statusFilter);
     return matchesStatus
       && (filters.planFilter === 'all' || tenant.subscription_plan?.id === filters.planFilter)
