@@ -2,7 +2,26 @@
 
 Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
 
-## Cập nhật mới nhất — 18/10/2026
+## Mốc nền giao dịch và outbox — 18/10/2026
+
+Đã áp migration `20261018010625` trên DB local: lệnh nội bộ theo một tenant,
+transition/audit/outbox nguyên tử, retry in-app chống trùng và bỏ qua thông báo
+cũ sau gia hạn. 70 kiểm tra DB riêng + 25 monitor đạt; lint/advisors warn/error
+đạt, history 516 version khớp, dữ liệu nghiệp vụ không đổi và DB thử đã dọn.
+
+**Đây là foundation private, worker Edge chưa chuyển sang dùng nó.** Hiệu lực
+runtime mới trong đợt này chỉ là sửa monitor đếm ngày hết hạn hôm nay cho đúng
+cột DATE/UTC. Image 8082 vẫn `a1-monitor-e237786`, healthy; lịch vẫn chưa bật.
+Không đánh dấu race/outbox của worker hiện tại hoặc toàn A1 đã hoàn thành.
+
+Bước kế: batch/receipt/cursor và fencing scope → nối worker/dispatcher cùng
+monitor backlog outbox → test actual worker scoped fixture → cutover đường
+legacy và phục hồi interrupted có audit. Không làm lại foundation hoặc mở
+settlement để kiểm thử. Chi tiết:
+[báo cáo nền lifecycle](roomqc-lifecycle-foundation-local-2026-10-18.md).
+
+
+## Mốc giám sát tác vụ — 18/10/2026
 
 Bản local 8082 hiện chạy image `roomqc-local:a1-monitor-e237786`, healthy.
 Đã áp migration `20261017155727`: durable admission/history, busy/interrupted
