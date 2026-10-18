@@ -2,6 +2,25 @@
 
 Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
 
+## Cập nhật mới nhất — 18/10/2026
+
+Bản local 8082 hiện chạy image `roomqc-local:a1-monitor-e237786`, healthy.
+Đã áp migration `20261017155727`: durable admission/history, busy/interrupted
+và monitor super-admin chỉ đọc. Không có authorized global job hoặc lịch mới.
+Kiểm chứng: 769 Vitest đạt/16 skip, 67 DB độc lập, 14 Auth HTTP/rollback-only,
+11 Deno; TypeScript/lint/build/container đạt. Fixture/candidate đã dọn.
+
+A1 vẫn còn transition/renewal locking, audit/outbox/retry, phục hồi interrupted
+và harness worker chỉ chạy tenant fixture. A2 còn workflow hồ sơ; A3 còn
+pagination/aggregation server; A4 còn E2E rộng. Không đóng toàn A0–A4.
+Chi tiết, bằng chứng và thứ tự tiếp theo:
+[báo cáo giám sát local](roomqc-job-monitor-local-release-2026-10-18.md).
+
+Các trạng thái “chưa có durable history/monitor”, “chưa áp migration” hoặc
+“chưa deploy” trong các phần ghi ngày 17/10 dưới đây là lịch sử tại mốc đó.
+Cập nhật 18/10 này là nguồn hiện trạng mới nhất.
+
+
 ## Cập nhật triển khai local — 17/10/2026
 
 Bản tích hợp ứng dụng 9886e86 đã triển khai healthy tại RoomQC 8082.

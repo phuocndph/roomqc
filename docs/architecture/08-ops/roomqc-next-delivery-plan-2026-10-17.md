@@ -5,6 +5,25 @@ thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch m
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
 
+## Cập nhật mới nhất — 18/10/2026
+
+Bản local 8082 hiện chạy image `roomqc-local:a1-monitor-e237786`, healthy.
+Đã áp migration `20261017155727`: durable admission/history, busy/interrupted
+và monitor super-admin chỉ đọc. Không có authorized global job hoặc lịch mới.
+Kiểm chứng: 769 Vitest đạt/16 skip, 67 DB độc lập, 14 Auth HTTP/rollback-only,
+11 Deno; TypeScript/lint/build/container đạt. Fixture/candidate đã dọn.
+
+A1 vẫn còn transition/renewal locking, audit/outbox/retry, phục hồi interrupted
+và harness worker chỉ chạy tenant fixture. A2 còn workflow hồ sơ; A3 còn
+pagination/aggregation server; A4 còn E2E rộng. Không đóng toàn A0–A4.
+Chi tiết, bằng chứng và thứ tự tiếp theo:
+[báo cáo giám sát local](roomqc-job-monitor-local-release-2026-10-18.md).
+
+Các trạng thái “chưa có durable history/monitor”, “chưa áp migration” hoặc
+“chưa deploy” trong các phần ghi ngày 17/10 dưới đây là lịch sử tại mốc đó.
+Cập nhật 18/10 này là nguồn hiện trạng mới nhất.
+
+
 ## Cập nhật triển khai local — 17/10/2026
 
 Bản tích hợp ứng dụng 9886e86 đã triển khai healthy tại RoomQC 8082.
@@ -70,7 +89,7 @@ và [báo cáo checkout](subscription-checkout-review-fixes-2026-10-17.md).
 |---|---|---|
 | P0 trước thu phí | Chưa có payable order/settlement từ snapshot được nghiệm thu | Chưa thể nhận tiền và tự kích hoạt một cách đáng tin cậy; tiếp tục giữ checkout tắt |
 | P0 trước dữ liệu thật | Policy giấy tờ khách tenant-wide đang trong backlog | Cần duyệt phạm vi theo hotel/vị trí trước dùng giấy tờ thật, không chỉ kiểm tra UI |
-| P1 trước lịch production | `check-subscription-status/index.ts` log lỗi cập nhật nhưng vẫn có đường trả `success: true`; chèn thông báo chưa kiểm tra đầy đủ kết quả | Vận hành có thể tưởng job đã thành công. Đây là nhận xét mã nguồn, chưa chạy job global để tái hiện |
+| P1 trước lịch production | Đã sửa success giả và có durable monitor; transition/notification chưa nguyên tử, chưa khóa cùng gia hạn và chưa có outbox/retry | Admission không ngăn race với settlement/gia hạn; notification có thể thiếu sau commit. Giữ lịch tắt, không replay tự động; xem cập nhật 18/10 |
 | P1 | Chưa có baseline browser E2E của phần quản trị/checkout mới | Component/API đạt nhưng thao tác thật, điều hướng, reload, hai tab hoặc mất mạng vẫn có thể lỗi |
 | P1 | Chưa có hồ sơ đối soát có người xử lý, lý do và lịch sử bất biến | Phát hiện được nhưng chưa theo dõi trách nhiệm/kết luận; không được tự đổi trạng thái tài chính để hết cảnh báo |
 | P1 | Đã tồn tại `payment_anomalies`, `/finance` reconciliation và SePay sync cũ; UI cũ ghi trạng thái anomaly trực tiếp | Phải phân định phạm vi và audit quyền DB thực tế trước tái sử dụng; không kết luận có bypass quyền chỉ từ mã UI |
@@ -260,5 +279,7 @@ Khóa/quyền/quyết định chi tiết tiếp tục ở
 5. Lỗi sai tiền, rò dữ liệu, trùng cấp phát hoặc mất dữ liệu chặn phát hành;
    không bỏ qua để đạt mốc thời gian. Test skip/not-run không được tính pass.
 
-**Đợt nên triển khai ngay sau khi duyệt kế hoạch:** A0 rồi A1. Có báo cáo
-và điểm nghiệm thu trước chuyển A2, không vừa mở checkout thật vừa sửa nền.
+**Đợt tiếp theo sau mốc 18/10:** hoàn thiện transaction/audit/outbox và harness
+fixture của A1, sau đó phục hồi interrupted có kiểm soát; tiếp tục workflow A2,
+pagination A3 và hồi quy A4 theo báo cáo mới nhất. Lát cắt durable history và
+monitor đã triển khai local; không cần làm lại hoặc bật checkout/scheduler.
