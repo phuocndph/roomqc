@@ -22,6 +22,14 @@ Sau khi lập run sheet, phần M02/M03 đã tiến triển qua suite 59/59 test
 [báo cáo đợt source](roomqc-p2-source-local-2026-10-19.md). Không suy ra toàn bộ
 M02/M03 hoặc runtime P2 đã đóng: còn worker target binding và số đo exporter thật.
 
+Đợt M04 tiếp theo đã có kiểm chứng exporter/config local trong suite **66/66**;
+xem [báo cáo M04](roomqc-p2-exporter-local-2026-10-19.md) và
+[runbook operator](roomqc-monitoring-operator-runbook.md). Role/query/config và
+Prometheus/exporter đã chạy thật trong fixture riêng, có đối chiếu OS/DB, revoke,
+DB down/password rotate và cleanup. Không phải Linux VPS/staging proof; M05 worker,
+M06 năm service probes/T08 manifest và M07–M10 vẫn chưa đóng. Không mở admission
+hoặc triển khai monitor thường trực chỉ vì suite đạt; artifact 59-test cũ giữ nguyên.
+
 M01–M10 chỉ chia nhỏ P2, không đổi tổng 27 gói/70 acceptance case. Owner thực thi
 là kỹ sư nhận đợt; review/acceptance cần người đối chiếu artifact. Chưa phân công
 song song hay tạo thêm nhánh chỉ bằng việc có bảng công việc này.
@@ -108,8 +116,10 @@ artifact query template không credential, timestamps expected/actual. B02–B06
 
 ### M04 — compose/exporter riêng tư, role tối thiểu (T05)
 
-File mới dự kiến: `deploy/monitoring/compose.yml`, `prometheus.yml`, custom DB
-queries, role provisioning/runbook và mẫu target. Đây chưa phải lệnh đã có sẵn.
+File đã có ở đợt M04: `deploy/monitoring/compose.yml`, `queries.yml`,
+`exporter-roles.sql`, `scripts/render-monitoring-config.mjs` sinh `prometheus.yml`,
+config/stack tests và runbook operator. Đã test fixture local, chưa deploy thường
+trực; alert runtime vẫn ở M07/M08 và Linux/network/TLS vẫn cần staging.
 
 1. Chọn/pin digest Prometheus/node_exporter/postgres_exporter/Alertmanager theo
    architecture và quét tương thích; không dùng `latest` hay tải script chạy thẳng.

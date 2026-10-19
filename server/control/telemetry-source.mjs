@@ -40,10 +40,17 @@ export function queryTemplates(input){
   const queries={cpuUsedPercent:`100 * (1 - avg(rate(node_cpu_seconds_total{${host},mode="idle"}[1m])))`,
     memoryAvailableBytes:`node_memory_MemAvailable_bytes{${host}}`,memoryTotalBytes:`node_memory_MemTotal_bytes{${host}}`,
     dbConnectionsUsed:`roomqc_connections_used{${db}}`};
+  const healthQueries={nodeUp:`up{${host}}`,postgresUp:`up{${db}}`,databaseUp:`pg_up{${db}}`,
+    databaseScrapeError:`pg_exporter_last_scrape_error{${db}}`,monitorPermission:`roomqc_connections_monitor_permission{${db}}`,
+    cpuCollector:`node_scrape_collector_success{${host},collector="cpu"}`,
+    memoryCollector:`node_scrape_collector_success{${host},collector="meminfo"}`,
+    filesystemCollector:`node_scrape_collector_success{${host},collector="filesystem"}`};
+  Object.assign(queries,healthQueries);
   // timestamp() removes __name__. Distinct synthetic labels prevent union from
   // discarding an older metric that has the same labels as a fresh metric.
   const freshness=[`timestamp(node_memory_MemAvailable_bytes{${host}})`,`timestamp(node_memory_MemTotal_bytes{${host}})`,
     `min(timestamp(node_cpu_seconds_total{${host},mode="idle"}))`,`timestamp(roomqc_connections_used{${db}})`];
+  for(const query of Object.values(healthQueries))freshness.push(`timestamp(${query})`);
   for(const mount of target.dataMounts){
     const selector=`${host},mountpoint=${label(mount.mountpoint)},device=${label(mount.device)},fstype=${label(mount.fstype)}`;
     for(const [field,metric]of [['freeBytes','node_filesystem_avail_bytes'],['totalBytes','node_filesystem_size_bytes'],
@@ -96,6 +103,10 @@ export class PrometheusSource {
         const batch=await Promise.all(items.slice(at,at+4).map(async([key,query])=>[key,await this.scalar(query,bounded,queryAt)]));
         for(const [key,value]of batch)values[key]=value;
       }
+      for(const key of ['nodeUp','postgresUp','databaseUp','monitorPermission','cpuCollector','memoryCollector','filesystemCollector']){
+        if(values[key]!==1)throw invalid();
+      }
+      if(values.databaseScrapeError!==0)throw invalid();
       const disks=target.dataMounts.map(mount=>{
         const read=field=>values['disk:'+mount.id+':'+field],inodeFree=read('inodeFree'),inodeTotal=read('inodeTotal');
         if(read('readonly')!==0||!Number.isSafeInteger(inodeFree)||!Number.isSafeInteger(inodeTotal)||inodeTotal<=0||inodeFree<0||inodeFree>inodeTotal)throw invalid();

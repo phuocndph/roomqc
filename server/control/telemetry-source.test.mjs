@@ -12,6 +12,7 @@ export function target(){return {clusterId:'fixture-a',hostId:'fixture-host',env
     {id:'storage',mountpoint:'/data/objects',device:'/dev/sdb1',fstype:'xfs'}]}}
 function response(value,timestamp=at/1000){return {status:'success',data:{resultType:'vector',result:[{metric:{},value:[timestamp,String(value)]}]}}}
 function values(){return {cpuUsedPercent:30,memoryAvailableBytes:8*gib,memoryTotalBytes:16*gib,dbConnectionsUsed:10,
+  nodeUp:1,postgresUp:1,databaseUp:1,monitorPermission:1,databaseScrapeError:0,cpuCollector:1,memoryCollector:1,filesystemCollector:1,
   'disk:database:freeBytes':100*gib,'disk:database:totalBytes':200*gib,'disk:database:inodeFree':80,'disk:database:inodeTotal':100,'disk:database:readonly':0,
   'disk:storage:freeBytes':60*gib,'disk:storage:totalBytes':120*gib,'disk:storage:inodeFree':90,'disk:storage:inodeTotal':100,'disk:storage:readonly':0,
   sourceObservedAt:at/1000-30}}
@@ -44,12 +45,12 @@ test('telemetry inventory binds host/cluster/scope and real mounts, rejecting am
 });
 
 test('query templates select fixed inventory and retain every source timestamp using distinct union labels',()=>{
-  const queries=queryTemplates(target());assert.equal(Object.keys(queries).length,15);
+  const queries=queryTemplates(target());assert.equal(Object.keys(queries).length,23);
   for(const query of Object.values(queries))for(const field of ['host_id="fixture-host"','cluster_id="fixture-a"','environment="local"'])assert.ok(query.includes(field));
   assert.ok(queries.cpuUsedPercent.includes('[1m]'));
   assert.ok(queries['disk:storage:freeBytes'].includes('mountpoint="/data/objects",device="/dev/sdb1",fstype="xfs"'));
   const unique=[...queries.sourceObservedAt.matchAll(/"roomqc_source", "(s\d+)"/g)].map(match=>match[1]);
-  assert.equal(unique.length,14);assert.equal(new Set(unique).size,14);
+  assert.equal(unique.length,22);assert.equal(new Set(unique).size,22);
 });
 
 test('collection produces one coherent v2 sample from separate disks and never hides a failing service',async()=>{
@@ -88,6 +89,13 @@ test('collection rejects stale/future/invalid source time, incomplete probes and
   await assert.rejects(()=>fakeSource().collect(target(),{auth:true}),{code:'INVALID_PROBES'});
 });
 
+test('exporter, collector and monitoring permission failures cannot produce healthy-looking numeric samples',async()=>{
+  for(const key of ['nodeUp','postgresUp','databaseUp','monitorPermission','cpuCollector','memoryCollector','filesystemCollector']){
+    for(const value of [0,0.5,2])await assert.rejects(()=>fakeSource({[key]:value}).collect(target(),probes),{code:'TELEMETRY_SOURCE_INVALID'});
+  }
+  await assert.rejects(()=>fakeSource({databaseScrapeError:1}).collect(target(),probes),{code:'TELEMETRY_SOURCE_INVALID'});
+});
+
 test('all queries use the same evaluation instant with at most four concurrent requests',async()=>{
   const byQuery=new Map(Object.entries(queryTemplates(target())).map(([key,query])=>[query,key]));
   let active=0,maxActive=0;const seen=[];
@@ -96,7 +104,7 @@ test('all queries use the same evaluation instant with at most four concurrent r
     assert.equal(init.method,'GET');assert.equal(init.redirect,'error');assert.equal(cluster.id,'prometheus');
     try{await delay(2);return {ok:true,json:async()=>response(values()[byQuery.get(url.searchParams.get('query'))])}}finally{active--}
   }});
-  await source.collect(target(),probes);assert.equal(maxActive,4);assert.equal(active,0);assert.equal(seen.length,15);
+  await source.collect(target(),probes);assert.equal(maxActive,4);assert.equal(active,0);assert.equal(seen.length,23);
   for(const url of seen){assert.equal(url.searchParams.get('time'),String(at/1000));assert.equal(url.searchParams.get('timeout'),'3s')}
 });
 

@@ -35,7 +35,7 @@ sách giữ/xóa dữ liệu để hoàn thành luồng kỹ thuật.
 ## 2. Điểm xuất phát đã kiểm tra
 
 Nguồn tích hợp: `roomqc-worktrees/integration`, nhánh `codex/roomqc-parallel-integration`.
-Commit đã kiểm chứng gần nhất: `d0f9b7b` (nền directory trước đó: `8d0628e`). Checkout chính là `room-weave-pro-main`, có nhiều
+Commit đã kiểm chứng gần nhất trước lượt này: `dec5fdf` (admin/health: `d0f9b7b`, nền directory: `8d0628e`). M04 đang được kiểm thử riêng trong integration. Checkout chính là `room-weave-pro-main`, có nhiều
 thay đổi từ trước; chỉ đồng bộ file đúng phạm vi sau kiểm tra, bảo toàn index và
 các thay đổi nghiệp vụ khác.
 
@@ -181,8 +181,9 @@ signup của stack chính vẫn đóng. Chưa tuyên bố tài nguyên VPS đã 
 Thực hiện theo M01–M04/M06 trong run sheet P2; M05/M07–M10 khép T06/T07. Mã M
 chỉ chia nhỏ T05–T07, không thêm gói hay đổi 70 acceptance case.
 
-File dự kiến mới: `deploy/monitoring/compose.yml`, `prometheus.yml`, `rules/`,
-`exporter-roles.sql`. Đường dẫn mới là thiết kế, chưa phải công cụ đã có.
+M04 đã có `deploy/monitoring/compose.yml`, `queries.yml`, `exporter-roles.sql` và
+renderer sinh `prometheus.yml`; đã kiểm chứng fixture local, chưa deploy thường
+trực. `rules/` và alert runtime còn thuộc M07/M08. Xem báo cáo M04 trong tracker.
 
 1. Pin version/digest node_exporter, postgres_exporter, Prometheus, Alertmanager.
    Ghi overhead CPU/RAM/disk; giới hạn scrape/retention. Grafana chỉ mạng quản trị.
@@ -757,6 +758,7 @@ Supabase Cloud đã có hiệu lực trên container local đang dùng.
 | Gateway mặc định chuyển Kong → Envoy | T08/T18/T22 | Inventory release/config hiện có; chốt gateway trong manifest. Test toàn bộ route/RPC/WebSocket/headers. Giữ bản cũ đã pin nếu chưa kiểm chứng chuyển đổi; không phụ thuộc service name `kong` trong bộ cài mới |
 | `API_EXTERNAL_URL` có hậu tố `/auth/v1` ở cấu hình mới | T13/T18/T22 | Đối chiếu release/template; test xác thực/reset/invite/mobile, không nối hậu tố hai lần; không sửa URL production chỉ vì default upstream đổi |
 | Postgres major 15 → 17 không tự nâng volume | T18/T19 | Ghi major/extension/collation. Cài mới chọn bộ tương thích; nâng dữ liệu cũ thành đợt có backup/restore/upgrade test riêng, không đổi tag rồi mount volume cũ |
+| Minor PostgreSQL 15.19/17.11: ltree, btree_gist/NaN, pgcrypto legacy cipher và custom operator | T18/T19/T24 | Kiểm tra extension/index/cipher/operator theo changelog cho từng release đích; reindex/chuyển mã hóa/restore compatibility chỉ trong đợt nâng cấp có bằng chứng. Chưa chạy các thao tác này trên DB nghiệp vụ trong lượt lập plan |
 | Bảng mới không mặc định được Data API expose | T08/T11/T24 | Kiểm tra grants/privileges và RLS trên release đích. Manifest server-only phải từ chối anon/staff; endpoint nghiệp vụ chỉ cấp đúng role/policy, không mở toàn schema để hết lỗi |
 | TLS 1.2 CBC cũ bị loại ở HTTP API Cloud từ 10/11 | T18/T22 | Test trust/cipher bằng client web/Android và proxy thật; không gán lịch Cloud thành việc đã cập nhật self-host |
 
@@ -766,5 +768,147 @@ Nguồn đối chiếu:
 - [Thay đổi gateway](https://supabase.com/changelog/48048-self-hosted-supabase-envoy-becomes-the-default-api-gateway-b).
 - [Thay đổi Auth external URL](https://supabase.com/changelog/47093-self-hosted-supabase-api-external-url-to-include-auth-v1).
 - [Nâng major PostgreSQL](https://supabase.com/changelog/46080-self-hosted-supabase-upgrading-from-pg-15-to-17-breaking-change).
+- [Tương thích minor PostgreSQL 15.19/17.11](https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes).
 - [Quyền Data API](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically).
 - [TLS](https://supabase.com/changelog/cbc-tls-ciphers-deprecated).
+
+
+## 17. Phiếu chuẩn bị triển khai tiếp theo — chốt ngày 19/10/2026
+
+Đây là run sheet bổ sung, không thay 27 gói, 25 bước hoặc 70 case bên trên.
+Tình trạng công việc lấy ở tracker; việc có tên file, script hoặc cấu hình chưa
+chứng minh đã deploy. Lượt rà này không mở signup, đổi DNS, gửi email thật hoặc
+ghi vào Supabase nghiệp vụ. M04 được tiếp tục trong sandbox riêng theo mục 17.3.
+
+### 17.1. Mốc nguồn và runtime phải phân biệt
+
+- Nguồn đã kiểm chứng trước lượt này: dec5fdf, suite 59/59; artifact source cũ giữ nguyên.
+- Runtime quan sát 15:19 +07:00: /api/control/livez và /api/control/readyz tại
+  8091 trả 200; readyz qua proxy 8082 trả 200, schema 0005-health-snapshot-guard.sql.
+- Image control đang chạy:
+  sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1.
+  Image frontend:
+  sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b.
+- Nhánh integration có M04 đang hoàn thiện: compose, DB queries/role, renderer,
+  monitoring-config và thay đổi telemetry-source. Không gán hash image trên cho mã mới.
+- Bộ unit/DB hiện tại đã chạy 64/64 trước khi thêm kiểm thử stack monitoring thật.
+  Kết quả này không chứng minh exporter chạy được, không là 64/70 acceptance.
+- Tài nguyên Docker Desktop chỉ phản ánh Linux VM; B01 Linux VPS vẫn cần staging.
+
+### 17.2. Điều kiện bắt đầu mỗi ticket
+
+1. Ghi ID T/M/P và acceptance ID liên quan, phạm vi môi trường và người nhận việc.
+2. Ghi git diff/source hash, image/schema/config trước khi chạy; nhận diện phần đang dở.
+3. Fixture phải có run ID và manifest tên container/network/volume/temp directory;
+   không nhận tên project/DB nghiệp vụ làm fixture hoặc tự fallback khi thiếu config.
+4. Chỉ chạy một migrator với quyền phù hợp tại target được duyệt; runtime không giữ
+   quyền DDL. Không chỉnh checksum file đã có history.
+5. Chốt contract trước API/UI: dữ liệu nào server sở hữu, version/idempotency, lỗi,
+   timeout, pagination và DTO không chứa bí mật.
+6. Ghi trước expected/actual, negative control và điều kiện cleanup. Test lỗi vẫn
+   phải thu hồi đúng tài nguyên đã tạo, không down -v hoặc xóa theo glob.
+7. Thiếu secret bên ngoài thì ghi deferred_external đúng gate; tiếp tục phần local
+   độc lập. Không dùng fixture success hoặc nới quyền để lấp thiếu cấu hình.
+8. Người thực hiện có thể là cùng một kỹ sư qua nhiều đợt; review, người trực và
+   người duyệt pilot/public phải được chỉ định trước cổng tương ứng.
+
+### 17.3. Đợt gần nhất: M04 → M05 → M06/T08 → M07/M08 → M10
+
+| Bước con | Việc cụ thể theo thứ tự | File/đầu ra | Đóng bước bằng bằng chứng |
+|---|---|---|---|
+| M04-a | Rà digest, UID, resource/log limits, private network và host mount; xác nhận không cần privileged/PID host/Docker socket | deploy/monitoring/compose.yml và test config | Compose chạy được trên môi trường đã ghi; exporter/DB không publish port |
+| M04-b | Áp role thống kê mới trong PostgreSQL disposable; cấp LOGIN/password qua secret channel; kiểm tra quyền PUBLIC không cho đọc/ghi business fixture | exporter-roles.sql, queries.yml | Đọc thống kê đúng; business SELECT/DML/DDL và tự tăng quyền đều bị từ chối |
+| M04-c | Render bundle mới từ target inventory; không ghi đè thư mục có sẵn, không in DSN/password | monitoring-config.mjs, render-monitoring-config.mjs | --help không ghi; input sai dừng; bundle readable đúng container UID; rerender cùng thư mục bị chặn |
+| M04-d | Discover filesystem thực chứa volume fixture; đối chiếu CPU, MemAvailable, disk/inode và số client DB | monitoring-stack.test.mjs, log mới | Sai mount/unsupported FS phải fail; không thay bằng ổ bất kỳ để lấy số |
+| M04-e | Thu hồi quyền thống kê, dừng DB, dùng mật khẩu cũ và rotate có chủ đích | Cùng integration test | Nguồn từ chối mẫu lỗi; sau sửa có mẫu thật mới; không mở admission |
+| M04-f | Kiểm tra socket qua các đường symlink, non-root/capabilities; dọn tài nguyên theo ownership | Runtime inspect + cleanup guard | Không còn container/network/volume/temp fixture, không ảnh hưởng stack khác |
+| M05-a | Thêm entrypoint worker riêng, pool metrics, chu kỳ 30s và giới hạn target/fanout | workers/health-worker.mjs và compose, dự kiến | Không scrape trong HTTP handler; không chồng vòng hoặc queue vô hạn |
+| M05-b | Khóa snapshot vào expected target fingerprint hiện hành; đổi cấu hình làm bằng chứng cũ mất hiệu lực ngay | Config/HealthStore + migration nếu cần | Chưa có mẫu target mới vẫn không được dùng snapshot target cũ để nhận khách |
+| M05-c | Sweep stale độc lập với source collect; heartbeat/readiness; SIGTERM/kill/restart | Worker tests + DB tests | >120s chặn tại reserve dù worker ngừng; window/generation không lùi |
+| M06/T08 | Triển khai manifest server-only và canary của đủ Auth/REST/Storage/Realtime/Functions | Migration Supabase bằng CLI, probe adapter/tests | Key sai/release sai/service down bị phân biệt; không hard-code năm probe true |
+| M07/M08 | Alert lifecycle + ack command/audit + notification outbox/cooldown/retry | Store/API/dispatcher tests | Một lỗi một alert; ack không mở gate; mất response/restart không gửi dồn vô hạn |
+| M10 | Suite hồi quy + runtime sandbox + source/image/schema manifest và handoff | Artifact mới, tracker, runbook | Pass/fail/not-run riêng; M09/external còn thiếu không bị đánh dấu pass |
+
+M04 dùng fixture PostgreSQL riêng; chưa phải full Supabase và chưa chứng minh năm
+service hoạt động. Chu kỳ scrape local có thể 5s để kiểm thử; staging/production
+không lấy cấu hình test này làm chuẩn. Nếu host bind không hỗ trợ propagation,
+chọn cấu hình tối thiểu đã thử, không sửa mount propagation toàn host hoặc cấp
+privileged. Khi thay mount/inventory phải kiểm tra lại exporter và warmup.
+
+### 17.4. Hợp đồng phải khép trước signup/UI
+
+| Ranh giới | Nội dung bắt buộc | Trường hợp phải chặn |
+|---|---|---|
+| Registry → backend | Cluster ID/endpoint trong inventory, DNS/IP pinning, TLS đúng hostname, credential ref, release/schema manifest | Endpoint lạ, ref mất, version lệch, manifest không xác minh |
+| Metrics → admission | Target/schema/policy version, generation, observedAt/validUntil; xét từng mount | Unknown/stale/sai target/critical/không đủ warmup |
+| Reserve → Auth | Workspace UUID/slug, affinity và expiry gốc; cluster do server chọn | Retry muốn đổi cụm, body tự gán role/tenant/gói |
+| Provision → receipt | Workspace/cluster/owner/tenant/hotel/routing version khớp toàn bộ | Email chưa verify, token sai cụm, receipt conflict |
+| Worker → activation | Job lease/fencing + receipt hợp lệ; local commit nguyên tử | Worker cũ trả muộn; routing version đã đổi; outcome chưa rõ |
+| Admin → mutation | Authority cố định kiểm tra mỗi request, capability, command ID, expectedVersion/reason | Quyền bị revoke, stale dialog, cùng key khác payload |
+| Console → tenant summary | Control server đọc đúng cluster+tenant, DTO tối thiểu, cache có authority scope | Không fallback tenant ID sang backend mặc định |
+| Backup → gate | Backup set nhất quán, checksum/offsite verified, restore proof còn hạn | File dump đơn lẻ, thiếu objects/key hoặc backup cùng host |
+
+T03 còn phải kiểm tra Auth/revoke/MFA thật. T09 đã có race ở directory, nhưng phải
+chạy lại với backend thật sau M06/T08. Không bật nút mở admission chỉ vì API 200.
+
+### 17.5. Run sheet T11–T17: đăng ký và giao diện
+
+1. Cài GET /api/control/workspaces/{slug}/setup-status theo OpenAPI; chỉ owner/session
+   đúng cụm được xem trạng thái riêng tư. Không làm public bootstrap lộ email/job.
+2. Hợp nhất UI chờ email → khai báo → đang xử lý → active. Đây là trạng thái hiển
+   thị, không tự thêm mọi nhãn UX vào enum workspace.
+3. Reload/hai tab/thiết bị mới phải resume bằng phiên và binding server, không chỉ
+   sessionStorage. Timeout không xóa form hoặc hướng dẫn tạo khách sạn lần nữa.
+4. Khi bắt đầu provision, ghi job cùng transaction. Claim/lease ngắn; gọi backend
+   ngoài transaction; activate/ack chỉ sau kiểm tra fencing và receipt.
+5. Receipt verified → activate; missing → chủ tiếp tục; unavailable → retry;
+   conflict → needs_review. Mỗi nhánh phải có negative test, không gộp thành network error.
+6. Limiter bền vững qua restart/nhiều API instance; tách signup/login/invite/reset.
+   Kiểm thử direct Auth và forwarded headers, không chỉ nút frontend.
+7. Tái sử dụng /super-admin layout: chỉ thêm Hạ tầng và Đăng ký mới; alert/backup
+   là section/deep link. /settings/audit-log vẫn là nhật ký khách sạn.
+8. Registrations UI đọc workspace API, không tạo thêm nguồn dữ liệu song song.
+   Cursor 25/100 và filter trong URL; count server; Back giữ ngữ cảnh.
+9. Close/open/limit/recheck dùng dialog có ảnh hưởng/lý do/version; giữ command ID
+   khi F5 hoặc mất response. 202 chỉ nghĩa đã nhận công việc.
+10. Nghiệm thu 390px/zoom 200%/bàn phím/scroll và session revoke; màu thông dụng,
+    có chữ/icon, không pastel khó đọc hoặc menu phụ trùng.
+
+### 17.6. Budget, nghiệm thu và quyết định lên VPS
+
+- T10 lập bảng pool thực tế theo database: số replica × pool mỗi service + kết nối
+  tạm (exporter/backup/migrator) + phần dự phòng vận hành không vượt budget đã đo.
+  Không coi 1 user = 1 DB connection; không tăng max_connections để thay load test.
+- T18 chỉ nhận inventory có OS/architecture/RAM/CPU/disk/inode và mount thật; pin
+  full Supabase release. Cài lại/restart không đổi volume hoặc che dữ liệu cũ.
+- T19 phải khôi phục directory + Auth/DB + object bytes + cấu hình/key liên quan
+  từ bản ngoài host; kiểm tra file hash, login, mapping, receipt và queue.
+- T21 dùng hai backend có DB/Auth/key riêng. Hai URL cùng DB không phải đa cụm.
+  Token sai cụm bị chặn đồng thời positive control ở đúng cụm vẫn hoạt động.
+- T22 test browser với API thật: owner → email → onboarding → phòng → mời staff →
+  phân quyền → nghiệp vụ → admin xử lý lỗi, kèm kill/lost-response có kiểm soát.
+- T23 tăng tải 10/25/50/100 phiên có think time; soak ít nhất 60 phút. Công bố
+  maximum tested và operating limit có headroom; không cam kết 100.000 đồng thời.
+- T24 kiểm tra đủ A01–G08 theo môi trường; G08 thuộc pilot, không pass ở staging.
+  Lỗi Critical/High về quyền, dữ liệu, phân bổ hoặc restore chặn cổng liên quan.
+- T25 một khách nội bộ trước, rồi nhóm 5–10 khách được chọn khi đủ bằng chứng;
+  quan sát ít nhất 7 ngày. Public và thu phí vẫn là hai cổng riêng.
+- Khách sạn active không bị khóa hoặc tự đổi cụm khi đóng nhận mới. Với lỗi dữ
+  liệu/quyền: dừng mở rộng, giữ bằng chứng, đóng signup/claim mới theo runbook;
+  rollback image tương thích, không xóa binding/volume để thử lại.
+
+### 17.7. Báo cáo và phần cần RoomQC cung cấp sau
+
+Mỗi đợt ghi: T/M/P IDs → commit/tree hash → image/schema/config thực dùng → lệnh
+và expected/actual → acceptance pass/fail/not-run → lỗi/owner → cleanup/rollback.
+Không cộng số test qua các lượt, không dùng số assertion làm phần trăm sản phẩm.
+
+Đầu vào gom một lượt theo gate: VPS Linux staging/đường CI hoặc SSH; DNS/TLS của
+roomqc.com và origin được duyệt; email provider/domain verified; chống bot production;
+kho offsite + khóa khôi phục độc lập; alert/heartbeat ngoài host; operator/MFA và
+danh sách khách pilot. Không yêu cầu gửi bí mật trong chat. Thiếu các mục này không
+chặn code/test local, nhưng chặn công bố đã nghiệm thu môi trường thật.
+
+Dự toán 21–33 ngày công tại mục 3 là khoảng kế hoạch còn lại ở mốc trước; phải
+re-estimate sau M04/M06 và sau kiểm thử hai backend. Không đổi thành lịch cam kết,
+không chia theo số nhánh; chờ external và ít nhất 7 ngày pilot tính riêng.

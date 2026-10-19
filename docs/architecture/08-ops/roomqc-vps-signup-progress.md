@@ -10,7 +10,7 @@ control local `0005`, kiểm tra 44/44 test, lệnh admin/allocation và health 
 xem [báo cáo đợt admin/health](roomqc-control-admin-health-local-2026-10-19.md).
 Kế hoạch P2 đã chia nhỏ thành [M01–M10](roomqc-p2-monitoring-delivery-plan-2026-10-19.md),
 gắn file/test/phụ thuộc và gate; các mã M không thêm scope hoặc acceptance case.
-Collector/exporter/manifest backend và các gate release còn thiếu; không tính
+Collector thường trực, probe/manifest backend và các gate release còn thiếu; không tính
 hoàn tất P1-03/P2/P3 chỉ vì các phần nền này đã được kiểm chứng local.
 
 [Manifest kết quả](../../../artifacts/roomqc-control-foundation-2026-10-19.json)
@@ -26,7 +26,7 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P1-01 | Đã triển khai và kiểm chứng nền tảng local | Migration history/checksum/lock; 15 bảng nghiệp vụ directory; baseline cũ được bảo vệ; grant ba group role; chưa phải nghiệm thu release |
 | P1-02 | API + DB local đã chạy | Volume/restart/proxy/health/shutdown đạt; worker được nối ở P4, chưa tính worker runtime đã triển khai |
 | P1-03 | Một phần đã kiểm chứng local | Command/version/receipt/audit và HTTP authority boundary đạt; còn Auth thật/revoke/MFA và support/recheck identity |
-| P2-01 | Chưa triển khai | Exporter riêng tư, map host/disk, probe dịch vụ thật |
+| P2-01 | Một phần đã kiểm chứng local | Exporter/Prometheus riêng tư đã chạy trên DB fixture, đối chiếu filesystem/OS/DB và lỗi quyền/password/down; chưa có đủ năm service probe hoặc bằng chứng Linux staging |
 | P2-02 | Một phần đã kiểm chứng local | Evaluator/HealthStore + sample v2 multi-mount/target identity và source adapter đã test; chưa có worker/exporter/probes thường trực hoặc metric VPS |
 | P2-03 | Chưa triển khai | Deduplicate/ack/resolve/heartbeat ngoài máy |
 | P3-01 | Một phần đã kiểm chứng local | Registry draft/secret resolver/pinned DNS có test; thiếu manifest RPC/full validation/rotation/TLS môi trường thật |
@@ -49,6 +49,20 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P8-01 | Chưa triển khai | Pilot có người dùng được chọn và ít nhất 7 ngày quan sát |
 
 ## Bằng chứng kiểm chứng mới
+
+Đợt M04 exporter/config: suite control **66/66 test đạt, 0 skip**, gồm stack
+Prometheus/node_exporter/postgres_exporter và PostgreSQL disposable thực. Nguồn đo
+kiểm tra exporter up/collector success/permission/scrape error; mất quyền thống kê,
+DB down và mật khẩu cũ đều không được tạo mẫu khỏe. File secret Unix được kiểm tra
+quyền đọc của UID/GID container. [Báo cáo](roomqc-p2-exporter-local-2026-10-19.md)
+và [runbook](roomqc-monitoring-operator-runbook.md) ghi giới hạn. Không cộng 66 với
+59/44 đợt cũ; không quy đổi thành 66/70 acceptance. Chưa deploy monitoring thường
+trực hoặc đổi image control. Năm probes fixture vẫn false, không gán fixture cho
+local-a hoặc mở signup. M05/M06/T08/M07–M10 còn phải triển khai/nghiệm thu.
+
+Plan đã bổ sung [phiếu chuẩn bị mục 17](roomqc-vps-signup-execution-plan-2026-10-19.md#17-phiếu-chuẩn-bị-triển-khai-tiếp-theo--chốt-ngày-19102026),
+gồm đầu vào/đầu ra từng bước, ranh giới dữ liệu, điều kiện dừng, checklist signup/UI
+và phần external giữ riêng. Các cổng staging/pilot/public chưa được mở bằng plan này.
 
 Đợt P2 multi-mount/source: **59/59 test đạt, 0 skip**, gồm PostgreSQL disposable và
 Prometheus `promtool` chạy biểu thức thực với 14 nguồn timestamp lần lượt bị cũ.

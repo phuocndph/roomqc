@@ -1,0 +1,36 @@
+# Completion excerpt; command: npm run test:control:db
+# Final full-suite run on 2026-10-19, Windows / Docker Desktop VM.
+✔ owned real monitoring stack: host-volume mapping, private exporters, least privilege, permission loss, DB outage and password rotation (122144.1483ms)
+ℹ Owned sandbox started; waiting for actual exporter samples (five service probes intentionally remain false).
+ℹ {"event":"monitoring_fixture_comparison","scope":"docker-desktop-vm","cpuPercent":{"exporter":3.8356637634799906,"os":3.983024490082565,"tolerancePoints":5},"memoryBytes":{"exporterTotal":16131489792,"osTotal":16131489792,"exporterAvailable":12802359296,"osAvailable":12812283904,"tolerancePercentOfTotal":5},"filesystem":{"id":"database","exporterTotal":1081101176832,"osTotal":1081101176832,"exporterAvailable":918465409024,"osAvailable":918465409024,"toleranceBytes":134217728},"connections":{"exporter":1,"osExcludingObserver":1,"tolerance":1},"fiveServiceProbesVerified":false,"admissionOpened":false}
+ℹ OS/volume/DB comparison and isolation passed; testing permission loss and database outage.
+ℹ Permission-loss, DB-down, old-credential rejection and explicit credential rotation passed; no admission was opened.
+✔ liveness survives database failures; readiness and legacy health alias fail closed (49.7192ms)
+✔ graceful shutdown waits for an accepted request before closing the database (9.1847ms)
+✔ a stalled request cannot hold shutdown past its deadline (118.2208ms)
+✔ destination policy normalizes mapped IPv6 and rejects metadata, link-local, multicast, transition and reserved addresses (6.2848ms)
+✔ DNS policy checks every answer, exact inventory origin and explicitly approved private destinations (1.9279ms)
+✔ real HTTP connection pins verified DNS once, preserves hostname, rejects redirects and bounds response size (24.5887ms)
+✔ DNS resolution observes the request deadline before any network connection (33.7633ms)
+✔ receipt validation checks all binding fields and never serializes secrets (1.5025ms)
+✔ support authorization always uses the configured canonical cluster with user credentials (3.9539ms)
+✔ support never probes or mutates without durable started audit and expected identity (0.6982ms)
+✔ support CLI uses explicit intent and private environment token, with safe origin and errors (2.1379ms)
+✔ real Prometheus engine: every required source timestamp participates despite colliding labels; CPU rate and disk templates evaluate (1365.1381ms)
+✔ telemetry inventory binds host/cluster/scope and real mounts, rejecting ambiguous or unsupported mappings (11.7536ms)
+✔ query templates select fixed inventory and retain every source timestamp using distinct union labels (0.7941ms)
+✔ collection produces one coherent v2 sample from separate disks and never hides a failing service (8.3756ms)
+✔ scalar rejects empty/ambiguous/malformed/stale evaluation results instead of coercing them to zero (14.496ms)
+✔ collection rejects stale/future/invalid source time, incomplete probes and readonly or invalid inode counters (27.9799ms)
+✔ exporter, collector and monitoring permission failures cannot produce healthy-looking numeric samples (39.5969ms)
+✔ all queries use the same evaluation instant with at most four concurrent requests (73.3347ms)
+✔ internal deadline cannot be disabled by caller signal; cancellation stops further fanout (60.9307ms)
+✔ real loopback HTTP transport enforces origin/response bounds, rejects redirects and never leaks raw payloads (92.3291ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 66
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 122311.6748

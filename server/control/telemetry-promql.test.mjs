@@ -25,7 +25,8 @@ test('real Prometheus engine: every required source timestamp participates despi
       series.push({series:`node_cpu_seconds_total{${host},mode="idle",cpu="0"}`,values:'0+21x4'});
       for(const [key,query]of Object.entries(queries)){
         if(['cpuUsedPercent','sourceObservedAt'].includes(key))continue;
-        const value=key.includes('readonly')?0:key.includes('inode')?100:key==='dbConnectionsUsed'?10:1024**3;
+        const value=key.includes('readonly')||key==='databaseScrapeError'?0:key.includes('inode')?100:key==='dbConnectionsUsed'?10
+          :['nodeUp','postgresUp','databaseUp','monitorPermission','cpuCollector','memoryCollector','filesystemCollector'].includes(key)?1:1024**3;
         series.push({series:query,values:`${value}+0x4`});
       }
       // At t=120s all sources are fresh except one last sampled at t=60s.

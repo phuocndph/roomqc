@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "date": "2026-10-19",
+  "environment": "local",
+  "measurementScope": "docker-desktop-vm",
+  "sourceBase": "dec5fdfdbbe51403bba423a153af0aa671f4c7ec",
+  "sourceHashes": {
+    "server/control/monitoring-config.mjs": "dc0d07cff247ed929d6a7c2c08b81ea836eaccaf972b2e55d01f4e038acf3a65",
+    "server/control/monitoring-config.test.mjs": "390220222abcee0ef301ae9bf100291a02b65df843d3f3a835e833c9e4ea79a1",
+    "server/control/monitoring-stack.test.mjs": "138874d2b07e5b883aa0835ba84134ad05e0f7ce3e58e62ec68c56e449e811c4",
+    "server/control/telemetry-source.mjs": "fbf68a7d0a396472e0b1d360832bb3b2672625bb7cf6c8f9e361ca04b44eba61",
+    "server/control/telemetry-source.test.mjs": "1cd83b6f67ae2029ddf62f9be2531eb3e2526c62d2ddf9eb25cd6b33f6aaa55a",
+    "server/control/telemetry-promql.test.mjs": "9f372bc2d03b0d48db2a3be78e4be5e2c2625e7437c010bf1619fb66cc27222d",
+    "scripts/render-monitoring-config.mjs": "348895613f4fa9cbe1b9fd45128e800174ac639b9a10201ba3fd00bc50fe01e3",
+    "deploy/monitoring/compose.yml": "b72f49ea302d142b7acee700cf5e7ca5907c351b962053e05529ce0e95d614a1",
+    "deploy/monitoring/queries.yml": "a4b9be8143565490e7e928945dffb8f7c64209879f7283e1983d21df611f6e4a",
+    "deploy/monitoring/exporter-roles.sql": "125acfb320d8d02237b62f4d51e32ce7a2181f72a3109df9ff2cac42bc789803"
+  },
+  "command": "npm run test:control:db",
+  "result": {
+    "exitCode": 0,
+    "tests": 66,
+    "passed": 66,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 122311.6748
+  },
+  "logScope": "Completion excerpt from the final complete suite; earlier test lines are not duplicated here.",
+  "realDependencies": [
+    "owned disposable PostgreSQL 16",
+    "pinned Prometheus runtime and promtool",
+    "pinned node_exporter",
+    "pinned postgres_exporter"
+  ],
+  "comparison": {
+    "event": "monitoring_fixture_comparison",
+    "scope": "docker-desktop-vm",
+    "cpuPercent": {
+      "exporter": 3.8356637634799906,
+      "os": 3.983024490082565,
+      "tolerancePoints": 5
+    },
+    "memoryBytes": {
+      "exporterTotal": 16131489792,
+      "osTotal": 16131489792,
+      "exporterAvailable": 12802359296,
+      "osAvailable": 12812283904,
+      "tolerancePercentOfTotal": 5
+    },
+    "filesystem": {
+      "id": "database",
+      "exporterTotal": 1081101176832,
+      "osTotal": 1081101176832,
+      "exporterAvailable": 918465409024,
+      "osAvailable": 918465409024,
+      "toleranceBytes": 134217728
+    },
+    "connections": {
+      "exporter": 1,
+      "osExcludingObserver": 1,
+      "tolerance": 1
+    },
+    "fiveServiceProbesVerified": false,
+    "admissionOpened": false
+  },
+  "verified": [
+    "actual fixture volume filesystem mapping",
+    "independent CPU/RAM/disk/inode/DB comparison",
+    "dedicated monitor role and denied business reads/writes/DDL",
+    "private non-root read-only exporters without published ports or Docker socket",
+    "revoke statistics permission rejects sample",
+    "database outage rejects sample",
+    "old password rejects after connection termination",
+    "explicit password file rotation and exporter recreation recover",
+    "renderer rejects existing output and unsafe secret configuration",
+    "cleanup validates exact ownership before removal",
+    "all mandatory timestamp sources covered by real PromQL engine"
+  ],
+  "twoMountTemplate": {
+    "queries": 23,
+    "requiredTimestampSources": 22
+  },
+  "images": {
+    "prometheus": "prom/prometheus:v3.2.1@sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62",
+    "nodeExporter": "prom/node-exporter:v1.9.1@sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a",
+    "postgresExporter": "prometheuscommunity/postgres-exporter:v0.17.1@sha256:38606faa38c54787525fb0ff2fd6b41b4cfb75d455c1df294927c5f611699b17",
+    "postgresFixture": "postgres:16-alpine@sha256:b7587f3cb74f4f4b2a4f9d67f052edbf95eb93f4fec7c5ada3792546caaf7383"
+  },
+  "unchangedRuntime": {
+    "controlImage": "sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1",
+    "frontendImage": "sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b",
+    "directorySchema": "0005-health-snapshot-guard.sql",
+    "signupEnabled": false,
+    "directoryPublishedPorts": [],
+    "readyzStatus": 200
+  },
+  "cleanup": {
+    "checkedAt": "2026-10-19T16:04:59+07:00",
+    "ownedTestContainers": 0,
+    "ownedMonitorContainers": 0,
+    "ownedTestVolumes": 0,
+    "ownedMonitorVolumes": 0,
+    "ownedMonitorNetworks": 0
+  },
+  "notVerified": [
+    "Linux VPS metric proof B01",
+    "five full Supabase service probes and server-only manifest",
+    "continuous health worker and expected-target binding invalidation",
+    "alert outbox/delivery and external heartbeat",
+    "production TLS and deployment/secret rotation",
+    "offsite restore and capacity/pilot"
+  ],
+  "acceptance": {
+    "B01": "local integration partial; Linux staging not_run",
+    "B02": "exporter/permission/DB failure local evidence; full service/TLS cases pending",
+    "B03": "private compose/config/source local evidence; staging public-network proof pending",
+    "fullP2": "incomplete"
+  },
+  "planCounts": {
+    "packages": 27,
+    "executionSteps": 25,
+    "acceptanceCases": 70
+  },
+  "deployed": false,
+  "businessDatabaseMutated": false
+}
