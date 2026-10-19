@@ -2,7 +2,19 @@
 
 Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
 
-## Cập nhật mới nhất: sửa lỗi review — 18/10/2026
+## Cập nhật mới nhất: E2E và khôi phục — 19/10/2026
+
+Đã kiểm tra browser directory/hồ sơ/phục hồi job trên bản sao đầy đủ và thử
+restore PostgreSQL độc lập. Bổ sung backup hàng đợi PGMQ; sửa giữ lượt thử,
+setup tiếp sau ngắt và cleanup dở dang. 12 Node regression cùng Auth/HTTP/DB
+thật đạt; tài nguyên thử và khóa tạm đã dọn. Không thay image/migration của
+8082, không bật scheduler/provider. Bản gốc vẫn giữ dirty work và index riêng.
+
+Chưa đóng A0–A4 hoặc nghiệm thu production; còn chính sách expiry, actual
+Edge worker/staging, backup offsite/Storage/Vault và thử tải.
+[Báo cáo đầy đủ](roomqc-e2e-restore-local-2026-10-19.md).
+
+## Mốc sửa lỗi review — 18/10/2026
 
 Đã cutover worker atomic theo scope, batch/cursor/receipt/outbox; phục hồi
 interrupted có audit; bảo toàn lệnh đối soát qua tải lại tab; directory phân

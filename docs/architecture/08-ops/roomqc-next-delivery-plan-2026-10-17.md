@@ -5,7 +5,20 @@ thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch m
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
 
-## Cập nhật mới nhất: sửa lỗi review — 18/10/2026
+## Cập nhật mới nhất: E2E và khôi phục — 19/10/2026
+
+Đã kiểm tra browser các luồng directory, hồ sơ đối soát và phục hồi job với
+mất phản hồi sau commit/F5/retry trên DB sao chép. Đã restore độc lập 203 bảng
+cùng dữ liệu, 385 policy, 903 constraint và 460 function; bổ sung backup PGMQ.
+Sửa công cụ giữ lượt thử, tiếp tục setup và cleanup dở dang; 12 Node regression
+và kiểm tra Auth/HTTP/DB thật đạt. Sandbox và khóa tạm đã dọn, backup giữ nguyên.
+
+Runtime 8082 vẫn image review-fixes-20261018 healthy; không áp migration hoặc
+bật lịch/provider. Chưa đóng A0–A4 hay nghiệm thu production. Bước tiếp: chính
+sách expiry → actual Edge worker/staging → backup offsite/Storage/Vault,
+giám sát và thử tải. [Bằng chứng và giới hạn](roomqc-e2e-restore-local-2026-10-19.md).
+
+## Mốc sửa lỗi review — 18/10/2026
 
 Đã cutover worker atomic theo scope, batch/cursor/receipt/outbox; phục hồi
 interrupted có audit; bảo toàn lệnh đối soát qua tải lại tab; directory phân
