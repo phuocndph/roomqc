@@ -30,6 +30,13 @@ DB down/password rotate và cleanup. Không phải Linux VPS/staging proof; M05 
 M06 năm service probes/T08 manifest và M07–M10 vẫn chưa đóng. Không mở admission
 hoặc triển khai monitor thường trực chỉ vì suite đạt; artifact 59-test cũ giữ nguyên.
 
+Chuẩn bị M06 mới nhất: manifest RPC/verifier và tests hiện là bản nháp chưa commit
+ở integration. Lượt full-backend sandbox đã dừng ở phase start trước SQL ứng dụng,
+đã cleanup đúng project; chưa chứng minh cài mới, quyền full app hoặc đủ năm probe.
+Theo [điểm nhận việc 18.3](roomqc-vps-signup-execution-plan-2026-10-19.md#183-cập-nhật-chuẩn-bị-m06-và-điều-kiện-bắt-đầu-kế-tiếp),
+khép startup/migration chain, audit PUBLIC/SECURITY DEFINER và dependency Functions
+offline trước khi nối pipeline. Không lấy test manifest trên fixture thay M06.
+
 M01–M10 chỉ chia nhỏ P2, không đổi tổng 27 gói/70 acceptance case. Owner thực thi
 là kỹ sư nhận đợt; review/acceptance cần người đối chiếu artifact. Chưa phân công
 song song hay tạo thêm nhánh chỉ bằng việc có bảng công việc này.
@@ -182,7 +189,7 @@ Không coi các endpoint dự kiến dưới đây là đã được xác minh t
    kết quả `true` cố định để qua gate khi chưa có function hay credential.
 5. Chốt typed result phân biệt missing config/unreachable/denied/invalid/stale;
    boolean cho evaluator được derive, chi tiết đã lọc dùng giải thích vận hành.
-6. T08 manifest RPC server-only chưa có phải làm trước khi đóng validation đầy đủ.
+6. T08 manifest RPC server-only mới có bản nháp, phải khép trước khi đóng validation đầy đủ.
    Tạo migration Supabase bằng CLI đã kiểm tra `--help`, kiểm tra grants/RLS và advisors.
    Fingerprint schema thực so với build artifact tin cậy; không chỉ trả hash do
    operator nhập. Worker dùng credential probe riêng, không business service_role.

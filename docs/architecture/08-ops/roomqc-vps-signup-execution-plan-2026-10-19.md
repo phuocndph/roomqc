@@ -11,6 +11,8 @@ không tạo thêm một roadmap độc lập hoặc thay đổi tổng 70 tình
 - Kết quả thực hiện: [tracker](roomqc-vps-signup-progress.md), không suy ra từ tài liệu thiết kế.
 - Phiếu giao việc cho phần còn lại: [mục 18–23](#18-điểm-bắt-đầu-đã-đối-chiếu-và-thứ-tự-giao-việc),
   bổ sung sau đợt M05; giữ nguyên 27 gói, 25 bước và 70 case.
+- Điểm bắt đầu trước lượt code kế tiếp: [mục 18.3](#183-cập-nhật-chuẩn-bị-m06-và-điều-kiện-bắt-đầu-kế-tiếp);
+  backend sandbox chưa khởi động đạt, không dùng bản nháp manifest để mở signup.
 
 ## 1. Đích bàn giao và ranh giới phiên bản đầu
 
@@ -48,7 +50,7 @@ các thay đổi nghiệp vụ khác.
 | Proxy frontend | GET `8082/api/control/healthz` trả 200 JSON `status=ok` | Chứng minh proxy local; chưa chứng minh luồng khách đăng ký |
 | Migration, grants, restart | Đợt `d0f9b7b` ghi 44/44 test, 0 skip; gồm migration, restart, role grants và race | Không phải 44/70 acceptance release, không cộng lặp 17 test nền |
 | Admin command, registry, evaluator, admission | Receipt/version/audit atomic, gate DB/affinity, HTTP pinned DNS và snapshot đã kiểm chứng local | Còn Auth/revoke thật, manifest/probes và E2E; chưa đóng toàn bộ P1/P3 |
-| Kiểm tra release cụm | Gateway có gọi `control_cluster_manifest`; tìm trong source chưa có migration định nghĩa RPC này | Phải bổ sung và kiểm tra trong backend sandbox |
+| Kiểm tra release cụm | Gateway cũ có gọi `control_cluster_manifest`; lượt chuẩn bị M06 đã có migration/verifier bản nháp riêng | Chưa nối verifier mới vào gateway/worker; phải kiểm chứng full backend trước đóng T08 |
 | Giám sát | Source/exporter local M04 và worker/target binding M05 đã kiểm chứng; suite gần nhất 87/87 | Chưa có đủ năm service probe; worker chưa bật thường trực; chưa chứng minh tài nguyên hoặc sức chứa VPS |
 | Giao diện hạ tầng/đăng ký mới | Có super-admin và tenant console cũ | Tái sử dụng layout; bổ sung API/client/routes, không coi đã có console hạ tầng |
 | VPS/TLS/email thật/offsite/pilot | Chưa có bằng chứng triển khai tương ứng trong đợt này | Giữ `not_run` ở môi trường thật; tiếp tục phần code/local độc lập |
@@ -947,14 +949,14 @@ Mọi file ghi **dự kiến** đều chưa được coi là đã tồn tại ho
 
 | Hạng mục | Quan sát/bằng chứng ngày 19/10 | Hệ quả khi bắt đầu |
 |---|---|---|
-| Source integration | `a3c17c65bdfef6e50ba8864e230aed7693d13c91`, sạch trước lượt sửa tài liệu này | Mọi implementation mới ghi source base và diff riêng |
+| Source integration tại baseline M05 | `a3c17c65bdfef6e50ba8864e230aed7693d13c91`; plan tiếp theo commit `6b91fd6` | Bản nháp M06 chưa commit ghi riêng ở mục 18.3; không nhầm với image đang chạy |
 | Source directory | Đã có `0006-telemetry-target-binding.sql` | Không sửa nội dung các migration cũ để né checksum |
 | Directory thường trực | `/api/control/readyz` trả schema `0005-health-snapshot-guard.sql` | Chưa áp `0006` vào stack thường trực; có source không đồng nghĩa đã deploy |
 | Control thường trực | Image `sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1`; 8091 ready 200 | Không gán kết quả M05 cho image cũ |
 | Frontend thường trực | Image `sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b`; proxy 8082 ready 200 | Giao diện mới phải build/deploy riêng sau nghiệm thu |
 | Signup | `ROOMQC_CONTROL_SIGNUP_ENABLED=false` trong container control | Giữ đóng ngoài sandbox trong các đợt code/local |
 | Monitoring | Có source/config/exporter/worker test; chưa có monitoring/health worker thường trực của release mới | Không trình bày trạng thái mẫu như số đo VPS thật |
-| Test gần nhất | 87/87, 0 fail/skip trong artifact M05, có PostgreSQL/exporter thật và process smoke | Hồi quy cần giữ; không phải 87/70 case và không phải toàn bộ E2E |
+| Test gần nhất có artifact đầy đủ | 87/87, 0 fail/skip trong artifact M05, có PostgreSQL/exporter thật và process smoke | Lượt terminal M06 ghi riêng ở mục 18.3; không phải 87/70 case hoặc toàn bộ E2E |
 | Backend nghiệp vụ | Project `ehjtoajnlnuvuiwkpmbp` đang phục vụ local | Không dùng làm nơi thử migration, fault, demo signup hoặc reset dữ liệu |
 | Trang đang mở | `/settings/audit-log` thuộc khách sạn | Hai màn quản trị nền tảng nằm ở `/super-admin`, không ghép tài nguyên VPS vào nhật ký khách sạn |
 
@@ -989,6 +991,45 @@ chốt lại phần còn lại sau đợt 1–2, dựa trên chi phí full stack
 không suy ra ngày hoàn thành từ số test hoặc số nhánh. Ít nhất 7 ngày pilot và
 thời gian chờ nhà cung cấp vẫn tính riêng.
 
+### 18.3. Cập nhật chuẩn bị M06 và điều kiện bắt đầu kế tiếp
+
+Ngày 19/10, sau commit tài liệu `6b91fd6`, integration có các file bản nháp
+chưa commit: `release-manifest.mjs`, hai file test tương ứng, migration
+`20261019114214_control_cluster_release_manifest.sql` và runner
+`scripts/test-control-backend-sandbox.mjs`. Tên migration đã sinh qua CLI.
+Đây là công việc đang dở trong integration, chưa đồng bộ mã sang checkout chính
+hoặc đưa vào image thường trực.
+
+| Việc đã thử | Kết quả thực tế | Cách tính khi nhận việc |
+|---|---|---|
+| Manifest/role/fingerprint trên PostgreSQL + PostgREST fixture | Có positive/negative và schema-drift tests; terminal full control ghi 92/92, 0 fail/skip | Chưa có log toàn lượt đóng gói thành artifact; chưa phải full app role audit, năm probes hoặc acceptance release |
+| Dựng backend rỗng từ bộ self-host chính thức | Upstream `self-hosted/v0.8.3`, commit `bc27d2661edd09a5d0b8d76ce33da6d4071a756e`; runner đặt mạng internal, không publish port | Tag/commit upstream chưa thay bộ khóa image digest và release artifact của RoomQC |
+| Lượt sandbox `roomqc-probe-251c7aae4879` | Dừng ở phase `start`, `applied=0`; cleanup báo 9 Docker objects, state `cleaned=true`; kiểm tra theo project label không còn container/network/volume | Chưa chứng minh cài mới hoặc toàn bộ migration chain; chưa xác định nguyên nhân khởi động từ log riêng |
+| Nối runtime | Gateway vẫn dùng validation cũ; health entrypoint chưa cấu hình đủ probe | T08/M06 vẫn `in_progress_unverified`; không đổi thành `local_verified` |
+
+**Lượt triển khai đầu tiên sau plan này:**
+
+1. Nhận diện năm file bản nháp và ownership state; đọc chẩn đoán riêng của lượt
+   khởi động lỗi, ghi nguyên nhân đã xác nhận. Không mặc định lỗi nằm ở migration:
+   lượt đó chưa chạy SQL ứng dụng. Không dump env/rendered Compose/secret vào báo cáo.
+2. Khép runner full backend: preflight tài nguyên, pull/build images, start core,
+   SQL replay đầy đủ, chuẩn bị Functions/canaries, verify rồi cleanup. Mỗi phase có
+   deadline riêng và trạng thái phục hồi; lỗi ở đâu ghi rõ ở đó.
+3. Giữ self-host Compose sandbox không publish port; chạy kiểm tra từ container
+   probe cùng mạng được sở hữu. Không chuyển sang CLI dev rồi chấp nhận bind
+   `0.0.0.0` để đi qua lỗi sandbox.
+4. Khóa digest các image đã kiểm; runner replay SQL không thay bằng chứng đường
+   migration production. Lỗi lịch sử khi cài mới phải có bước sửa/upgrade rõ,
+   không bỏ qua file, đổi checksum migration đã áp hoặc đánh dấu cài mới thành công.
+5. Chỉ tạo expected schema hash từ fresh build tin cậy đã đạt; rà quyền role probe
+   trên toàn bộ app, chuẩn bị dependencies Functions không cần Internet lúc chạy.
+6. Nối năm probe và validation chống race; sau đó mới thực hiện pipeline/drill
+   mục 19.5. Lưu log đầy đủ, artifact và cập nhật tracker khi có bằng chứng mới.
+
+**Điều kiện ra khỏi lượt này:** full backend cài được, manifest/grants đúng,
+năm probe có positive/negative control và cleanup đúng phạm vi. Nếu mới đạt một
+phần thì bàn giao phần đó với trạng thái thực; không mở gate signup.
+
 ## 19. Phiếu triển khai gần nhất — M06/T08 và khép giám sát
 
 ### 19.1. T08-a — khóa release, sandbox và hợp đồng probe
@@ -1000,11 +1041,13 @@ thời gian chờ nhà cung cấp vẫn tính riêng.
 1. Đọc docs/changelog hiện hành rồi khóa một bộ image/config tương thích. Lưu
    version và digest Auth, REST, DB, Storage, Realtime, Functions, gateway. Không
    ghép image mới nhất riêng lẻ; không coi image cache là release đã kiểm chứng.
-2. Với CLI local, khám phá `--help`/version trước. Sandbox có `project_id` mới,
-   working directory tuyệt đối, config/migrations/ports riêng. Guard từ chối
-   project nghiệp vụ, đường dẫn bên ngoài run root, volume đã tồn tại không có
-   ownership hoặc cleanup manifest không khớp. Không chạy `supabase start` ở
-   root có `project_id=ehjtoajnlnuvuiwkpmbp`.
+2. Sandbox dùng official self-host Compose pinned, project mới, working directory
+   tuyệt đối, config/migrations/volume riêng, mạng internal và không publish port;
+   probe container trong cùng mạng. Guard từ chối project nghiệp vụ, đường dẫn bên
+   ngoài run root, volume đã tồn tại không có ownership hoặc cleanup manifest
+   không khớp. CLI chỉ dùng đúng tác vụ đã khám phá `--help`/version, ví dụ sinh
+   migration; không chạy `supabase start` ở root nghiệp vụ hoặc lấy dev CLI làm
+   bộ cài production.
 3. Khởi tạo từ migrations/release artifact tin cậy, dữ liệu tổng hợp và inbox thử;
    không dump tài khoản/email/password của khách sang fixture. Khi cần hai backend,
    A/B phải có key/DB/volume riêng; thiếu RAM thì kiểm tra tuần tự hoặc staging,
@@ -1060,6 +1103,14 @@ C01/C04 và fixture P0-03, chưa đóng toàn bộ các case này.
    validation; nếu cần cache/background verification phải có version và TTL rõ,
    drift/stale phải chặn. Không dùng cache hash vô hạn để bỏ qua drift.
 
+**Rà quyền trên full app trước khi nối worker:** liệt kê toàn bộ effective grants
+của role probe, gồm quyền kế thừa từ PUBLIC, role membership và EXECUTE của mọi
+function trong schema exposed. Đặc biệt kiểm tra các SECURITY DEFINER có sẵn:
+role không được đọc/ghi nghiệp vụ gián tiếp qua RPC dù bảng đã bị revoke.
+Test quyền trên fixture nhỏ chỉ là điều kiện đầu; chưa thay audit full schema.
+Các quyền PUBLIC quá rộng cần migration mới có test hồi quy cho owner/staff,
+không sửa migration lịch sử hoặc thu hồi đại trà làm hỏng nghiệp vụ.
+
 **Test bắt buộc:** dedicated role thành công; anon/owner/staff bị từ chối; dedicated
 role không SELECT/DML/DDL business; sai cluster/release/nonce/hash/migration/ACL
 bị reject; DB down không trả manifest valid. Run advisors và kiểm tra quyền SQL
@@ -1088,6 +1139,13 @@ là unconfigured, không lấy `/health.version` thay kiểm tra database.
 Canary được tạo ở lúc deploy/migration hoặc fixture setup, không tạo owner/hotel
 mới mỗi 30 giây. Object không có PII; topic chỉ run ID/nonce; function không có
 side effect. Không có cleanup nào được xóa bucket/user/object ngoài manifest sở hữu.
+
+**Chuẩn bị Functions khi runtime không có Internet:** inventory tất cả import
+remote/JSR/npm của main handler và canary, khóa version/lockfile và chuẩn bị
+dependency cache hoặc bundle trong build phase được kiểm soát. Runtime chỉ dùng
+artifact đã chuẩn bị; chứng minh cold start và invoke khi egress bị chặn.
+Không mở Internet thường trực, bỏ signature/auth hoặc trả kết quả giả để né
+dependency chưa có. Image/cache/bundle hashes phải nằm trong release manifest.
 
 **Thực hiện transport:**
 

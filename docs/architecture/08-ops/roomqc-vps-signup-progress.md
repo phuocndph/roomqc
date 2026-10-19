@@ -22,6 +22,16 @@ Kiểm tra read-only lúc 18:24 +07:00 ngày 19/10 xác nhận readyz direct/pro
 runtime `0005`, image control/frontend không đổi và signup false. Lượt này chỉ
 cập nhật tài liệu; không nâng trạng thái implementation/acceptance của gói nào.
 
+Bổ sung chuẩn bị M06 sau commit plan `6b91fd6`: integration có bản nháp manifest,
+role probe, verifier/tests và full-backend runner chưa commit; mã này chưa đồng bộ
+sang checkout chính hoặc image thường trực. Terminal full control ghi 92/92,
+0 fail/skip nhưng chưa có artifact log toàn lượt. Full backend sandbox
+`roomqc-probe-251c7aae4879` dừng ở `start`, chưa chạy migration ứng dụng
+(`applied=0`); cleanup 9 Docker objects và kiểm tra project label không còn
+container/network/volume. Chưa đủ full-app permission audit hoặc năm probe,
+không đóng M06/T08. Điểm bắt đầu và checklist tiếp theo ở
+[mục 18.3](roomqc-vps-signup-execution-plan-2026-10-19.md#183-cập-nhật-chuẩn-bị-m06-và-điều-kiện-bắt-đầu-kế-tiếp).
+
 [Manifest kết quả](../../../artifacts/roomqc-control-foundation-2026-10-19.json)
 ghi source base/hash, image, schema, command và trạng thái riêng từng acceptance ID.
 
@@ -38,7 +48,7 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P2-01 | Một phần đã kiểm chứng local | Exporter/Prometheus riêng tư đã chạy trên DB fixture, đối chiếu filesystem/OS/DB và lỗi quyền/password/down; chưa có đủ năm service probe hoặc bằng chứng Linux staging |
 | P2-02 | Một phần đã kiểm chứng local | Worker/config/entrypoint/target binding và timeout/race/stale đã test; chưa bật thường trực, thiếu M06/T08/full backend pipeline và metric VPS |
 | P2-03 | Chưa triển khai | Deduplicate/ack/resolve/heartbeat ngoài máy |
-| P3-01 | Một phần đã kiểm chứng local | Registry draft/secret resolver/pinned DNS có test; thiếu manifest RPC/full validation/rotation/TLS môi trường thật |
+| P3-01 | Một phần đã kiểm chứng local | Registry/secret resolver/pinned DNS có test; manifest RPC/verifier đang có bản nháp riêng, chưa nối/full app audit; còn full validation/rotation/TLS môi trường thật |
 | P3-02 | Một phần đã kiểm chứng local | Gate/reservation race/close/version/expiry/affinity đạt trên fixture directory; chưa E2E backend, signup vẫn đóng |
 | P3-03 | Chưa triển khai | Pool/job/report budget và noisy-neighbor có số đo |
 | P4-01 | Một phần | Affinity đã nối reserve/expiry và có test; private setup-status/resume/UI chưa nối |
