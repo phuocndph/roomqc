@@ -4,6 +4,13 @@ Cập nhật 19/10/2026. Mục tiêu giữ nguyên toàn bộ [27 gói](roomqc-v
 và [70 kịch bản nghiệm thu](roomqc-vps-signup-acceptance-rollout-2026-10-19.md).
 Không coi đợt nền tảng local là hoàn tất plan hoặc sẵn sàng mở cho khách thật.
 
+Kế hoạch thực thi đã cụ thể hóa tại [25 bước / 8 đợt](roomqc-vps-signup-execution-plan-2026-10-19.md).
+Lượt cập nhật plan ban đầu quan sát runtime `0003`. Đợt tiếp theo đã triển khai
+control local `0005`, kiểm tra 44/44 test, lệnh admin/allocation và health snapshot;
+xem [báo cáo đợt admin/health](roomqc-control-admin-health-local-2026-10-19.md).
+Collector/exporter/manifest backend và các gate release còn thiếu; không tính
+hoàn tất P1-03/P2/P3 chỉ vì các phần nền này đã được kiểm chứng local.
+
 [Manifest kết quả](../../../artifacts/roomqc-control-foundation-2026-10-19.json)
 ghi source base/hash, image, schema, command và trạng thái riêng từng acceptance ID.
 
@@ -16,19 +23,19 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P0-03 | Một phần | Sandbox DB directory có ownership/cleanup và race thật; fixture Auth/staff/email/hai backend còn phải mở rộng |
 | P1-01 | Đã triển khai và kiểm chứng nền tảng local | Migration history/checksum/lock; 15 bảng nghiệp vụ directory; baseline cũ được bảo vệ; grant ba group role; chưa phải nghiệm thu release |
 | P1-02 | API + DB local đã chạy | Volume/restart/proxy/health/shutdown đạt; worker được nối ở P4, chưa tính worker runtime đã triển khai |
-| P1-03 | Chưa hoàn tất | Authority support cũ giữ nguyên; command identity/version/audit nguyên tử và admin operation map cần triển khai tiếp |
+| P1-03 | Một phần đã kiểm chứng local | Command/version/receipt/audit và HTTP authority boundary đạt; còn Auth thật/revoke/MFA và support/recheck identity |
 | P2-01 | Chưa triển khai | Exporter riêng tư, map host/disk, probe dịch vụ thật |
-| P2-02 | Chưa triển khai | Snapshot/freshness/generation/window/hysteresis |
+| P2-02 | Một phần đã kiểm chứng local | Evaluator + HealthStore atomic/restart/stale/generation đạt; chưa collector, multi-mount và metric thật |
 | P2-03 | Chưa triển khai | Deduplicate/ack/resolve/heartbeat ngoài máy |
-| P3-01 | Chưa triển khai | Registry DB, credential resolver/inventory/validation/rotation |
-| P3-02 | Chưa triển khai | Admission thật; hiện global signup đóng để bảo vệ giai đoạn chuyển |
+| P3-01 | Một phần đã kiểm chứng local | Registry draft/secret resolver/pinned DNS có test; thiếu manifest RPC/full validation/rotation/TLS môi trường thật |
+| P3-02 | Một phần đã kiểm chứng local | Gate/reservation race/close/version/expiry/affinity đạt trên fixture directory; chưa E2E backend, signup vẫn đóng |
 | P3-03 | Chưa triển khai | Pool/job/report budget và noisy-neighbor có số đo |
-| P4-01 | Chưa triển khai | Affinity backfill đã có; reservation/resume/setup-status/private ownership chưa nối |
+| P4-01 | Một phần | Affinity đã nối reserve/expiry và có test; private setup-status/resume/UI chưa nối |
 | P4-02 | Chưa triển khai | Job table đã có; enqueue/claim/fencing/reconcile worker chưa nối |
 | P4-03 | Chưa triển khai | Trusted proxy/anti-abuse/direct Auth/email callback |
 | P5-01 | Chưa triển khai | Entry admin authority, client/query key/routes |
 | P5-02 | Chưa triển khai | Màn hình hạ tầng và command dialog |
-| P5-03 | Chưa triển khai | Đăng ký/timeline/recheck và tenant-summary đúng cụm |
+| P5-03 | Một phần API đọc | Workspace list/detail + timeline cursor đã test 1.005 metadata; chưa console/recheck/tenant-summary |
 | P5-04 | Chưa triển khai | Keyboard/mobile/contrast/Back/scroll và thao tác admin |
 | P6-01 | Chưa hoàn tất | Có local directory/control compose; chưa có bộ cài full Supabase VPS/TLS/manifest |
 | P6-02 | Chưa triển khai | Backup ngoài máy và restore directory+cluster+objects+secret |
@@ -40,6 +47,13 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P8-01 | Chưa triển khai | Pilot có người dùng được chọn và ít nhất 7 ngày quan sát |
 
 ## Bằng chứng kiểm chứng mới
+
+Đợt admin/health mới: **44/44 test đạt, 0 skip** với directory sandbox độc lập;
+runtime local `0005`, signup đóng. [Báo cáo](roomqc-control-admin-health-local-2026-10-19.md)
+ghi phạm vi, giới hạn và việc còn lại; [artifact](../../../artifacts/roomqc-control-admin-health-2026-10-19.json)
+giữ bằng chứng cho source/image mới. Không cộng 44 với 17 của bản nền.
+
+### Bằng chứng lịch sử của đợt nền tảng
 
 Lệnh `npm run test:control:db`: **17 test đạt, 0 fail, 0 skip**. Trong đó 6 test
 Postgres container độc lập bao phủ:
@@ -89,9 +103,9 @@ máy, hiệu năng VPS, browser E2E hoặc hành vi pilot.
 
 ## Thứ tự làm tiếp
 
-1. P1-03: command receipt, expected version và authority/capability cho API admin.
-2. P2: exporter + collector/evaluator + cảnh báo, đối chiếu metric với nguồn thật.
-3. P3: registry/policy/admission nối nguồn DB; mới xét mở signup trong sandbox.
+1. P2: exporter + collector/multi-mount + cảnh báo, đối chiếu metric với nguồn thật.
+2. P1-03/P3: Auth thật, manifest RPC/full validation và credential/TLS rotation.
+3. P3: nghiệm thu gate đã nối DB qua backend thật; mới xét mở signup trong sandbox.
 4. P4/P5: recovery worker/resume và UI admin; P6/P7 trước triển khai staging/pilot.
 
 VPS/domain/DNS/TLS, email delivery thực và đích backup ngoài máy chưa được cung

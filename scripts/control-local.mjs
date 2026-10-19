@@ -105,11 +105,13 @@ async function verify(){
 async function restartCheck(){
   await verify(); // Never stop a directory until ownership and closed signup are established.
   inspectService('roomqc-control');inspectService('directory');
-  const snapshot=()=>compose(['exec','-T','directory','psql','-U','postgres','-d','roomqc_control','-X','-qAt','-c',
-    `SELECT md5(jsonb_build_object('history',(SELECT jsonb_agg(m ORDER BY version) FROM roomqc_control.schema_migrations m),
-      'clusters',(SELECT jsonb_agg(c ORDER BY id) FROM roomqc_control.clusters c),
-      'workspaces',(SELECT jsonb_agg(w ORDER BY id) FROM roomqc_control.workspaces w),
-      'attempts',(SELECT jsonb_agg(a ORDER BY id) FROM roomqc_control.attempts a))::text);`]).trim();
+  const stateTables=[['schema_migrations','version'],['hosts','id'],['clusters','id'],['cluster_policies','cluster_id'],
+    ['cluster_health_current','cluster_id'],['cluster_admission_current','cluster_id'],['control_commands','id'],
+    ['provisioning_jobs','id'],['signup_affinities','email_hash'],['signup_affinity_conflicts','email_hash'],
+    ['cluster_events','id'],['alerts','id'],['backup_runs','id'],['workspaces','id'],['attempts','id'],['support_actions','id']];
+  const snapshotSql='SELECT md5(jsonb_build_object('+stateTables.map(([table,key])=>
+    `'${table}',(SELECT jsonb_agg(t ORDER BY ${key}) FROM roomqc_control.${table} t)`).join(',')+')::text)';
+  const snapshot=()=>compose(['exec','-T','directory','psql','-U','postgres','-d','roomqc_control','-X','-qAt','-c',snapshotSql]).trim();
   const before=snapshot();
   compose(['stop','directory']);
   try{
@@ -123,7 +125,7 @@ async function restartCheck(){
     try{verified=await verify();break}catch{await new Promise(resolve=>setTimeout(resolve,250))}
   }
   assert.ok(verified,'Control must recover after directory and API restart');assert.equal(snapshot(),before);
-  return {restart:'passed',directoryData:'unchanged',dbDown:{livez:200,readyz:503},...verified};
+  return {restart:'passed',directoryData:'unchanged',verifiedTables:stateTables.length,dbDown:{livez:200,readyz:503},...verified};
 }
 
 if(!['preflight','prepare','up','verify','restart-check','stop'].includes(command))throw new Error('Use preflight, prepare, up, verify, restart-check or stop');

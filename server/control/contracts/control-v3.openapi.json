@@ -243,7 +243,7 @@
     "/admin/clusters": {
       "get": {
         "operationId": "get__admin_clusters",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
         "security": [
           {
@@ -303,7 +303,7 @@
     "/admin/workspaces": {
       "get": {
         "operationId": "get__admin_workspaces",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
         "security": [
           {
@@ -522,7 +522,7 @@
     "/admin/audit": {
       "get": {
         "operationId": "get__admin_audit",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
         "security": [
           {
@@ -578,7 +578,7 @@
     "/admin/overview": {
       "get": {
         "operationId": "get__admin_overview",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Server aggregate counts across all rows; never derive totals from a page.",
         "security": [
           {
@@ -607,7 +607,7 @@
     "/admin/clusters/{id}": {
       "get": {
         "operationId": "get__admin_clusters_id_",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "",
         "security": [
           {
@@ -645,7 +645,7 @@
     "/admin/clusters/register": {
       "post": {
         "operationId": "post__admin_clusters_register",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Select an approved inventory endpoint and server credential reference. Pending validation, admission closed. No arbitrary probe URL.",
         "security": [
           {
@@ -695,7 +695,7 @@
     "/admin/clusters/{id}/commands": {
       "post": {
         "operationId": "post__admin_clusters_id_commands",
-        "x-implementation": "planned",
+        "x-implementation": "partial-local",
         "description": "Version check, mutation, append-only event and command receipt commit atomically. Health checks run outside DB locks; reopening requires all admission gates.",
         "security": [
           {
@@ -753,7 +753,7 @@
     "/admin/workspaces/{id}": {
       "get": {
         "operationId": "get__admin_workspaces_id_",
-        "x-implementation": "planned",
+        "x-implementation": "implemented-local",
         "description": "Redacted workspace/history/receipt; never exposes email_hash or bearer tokens.",
         "security": [
           {
@@ -784,6 +784,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of timeline events per page.",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque timeline cursor bound to this workspace.",
+            "schema": { "type": "string", "maxLength": 1024 }
           }
         ]
       }
@@ -1563,6 +1575,7 @@
               "close_admission",
               "open_admission",
               "set_draining",
+              "set_serving",
               "update_policy",
               "validate"
             ]
@@ -1631,7 +1644,7 @@
             "if": {
               "properties": {
                 "operation": {
-                  "const": "set_draining"
+                  "enum": ["set_draining", "set_serving"]
                 }
               },
               "required": [

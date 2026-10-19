@@ -1,3 +1,4 @@
+import {registryConfiguration} from './registry.mjs';
 export function loadConfig(env = process.env) {
   const production = env.NODE_ENV === 'production';
   const allowLocal = !production && env.ROOMQC_CONTROL_ALLOW_LOCAL === 'true';
@@ -44,7 +45,8 @@ export function loadConfig(env = process.env) {
   const poolMax=boundedInteger('ROOMQC_CONTROL_POOL_MAX',5,1,30);
   const poolBudget=boundedInteger('ROOMQC_CONTROL_POOL_BUDGET',20,2,100);
   if(poolMax>=poolBudget)throw new Error('Control pool must leave capacity for migrations, workers and monitoring');
-  return { production, publicOrigin, emailKey, databaseUrl, migrationDatabaseUrl, clusters, supportClusterId,poolMax,poolBudget,
+  const registry=registryConfiguration(env,clusters,allowLocal);
+  return { production, allowLocal, publicOrigin, emailKey, databaseUrl, migrationDatabaseUrl, clusters, supportClusterId,poolMax,poolBudget,...registry,
     shutdownTimeoutMs:boundedInteger('ROOMQC_CONTROL_SHUTDOWN_TIMEOUT_MS',25000,100,60000),
     reservationMinutes:boundedInteger('ROOMQC_CONTROL_RESERVATION_MINUTES',1440,15,10080),
     signupHourLimit:boundedInteger('ROOMQC_CONTROL_SIGNUP_HOUR_LIMIT',100,1,10000),

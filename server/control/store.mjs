@@ -1,11 +1,12 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { migrateDirectory, importInitialRegistry, migrationManifest, verifyHistory } from './migrate.mjs';
+import { ControlError,uuidPattern } from './errors.mjs';
+import {AdminDirectory,clusterSelect,withCredential} from './admin.mjs';
+import {admissionDecision} from './health-policy.mjs';
+import {resolveCredential,registryConfiguration} from './registry.mjs';
+export {ControlError,uuidPattern} from './errors.mjs';
 
-export class ControlError extends Error {
-  constructor(status, code, message) { super(message); this.status = status; this.code = code; }
-}
-export const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function bindingMatches(workspace,binding) {
   return !!binding && ['tenant_id','hotel_id','owner_id'].every(k=>uuidPattern.test(binding[k] || ''))
     && binding.workspace_id===workspace.id
@@ -26,11 +27,14 @@ export function validateSlug(value) {
 
 export class ControlStore {
   constructor(config) {
+    // Programmatic test/CLI callers use the same registry resolver as loadConfig.
+    if(!config.credentials||!config.inventory)Object.assign(config,registryConfiguration({},config.clusters,!config.production&&config.allowLocal!==false));
     this.config = config;
     this.pool = new pg.Pool({ connectionString: config.databaseUrl, max: config.poolMax ?? 5,
       connectionTimeoutMillis: 3000, idleTimeoutMillis: 30000, statement_timeout: 8000,
       idle_in_transaction_session_timeout:10000,application_name:'roomqc-control' });
     this.pool.on('error', () => console.error('Control database idle connection failed'));
+    this.admin=new AdminDirectory(this);
   }
   hashEmail(email) { return createHmac('sha256', this.config.emailKey).update(email.trim().toLowerCase()).digest('hex'); }
   async migrate() {
@@ -49,8 +53,8 @@ export class ControlStore {
       'signup_affinity_conflicts','alerts','backup_runs',
     ]]);
     if(shape.rows[0].present!==15)throw new ControlError(503,'CONTROL_SCHEMA_INCOMPLETE','Cấu trúc database điều phối chưa đầy đủ.');
-    const {rows}=await this.pool.query(`SELECT id,api_url,publishable_key,vapid_public_key FROM roomqc_control.clusters WHERE id=ANY($1::text[])`,[this.config.clusters.map(c=>c.id)]);
-    if(this.config.clusters.some(c=>!rows.some(r=>r.id===c.id && r.api_url===c.url && r.publishable_key===c.publishableKey && r.vapid_public_key===c.vapidPublicKey))) {
+    const {rows}=await this.pool.query(`SELECT id,api_url,inventory_ref,credential_ref FROM roomqc_control.clusters WHERE id=ANY($1::text[])`,[this.config.clusters.map(c=>c.id)]);
+    if(this.config.clusters.some(c=>!rows.some(r=>r.id===c.id&&r.api_url===c.url))) {
       throw new ControlError(503,'CONTROL_REGISTRY_MISMATCH','Cấu hình cụm chưa được đồng bộ.');
     }
     const privilege=await this.pool.query(`SELECT r.rolsuper OR r.rolcreatedb OR r.rolcreaterole
@@ -61,6 +65,12 @@ export class ControlStore {
       FROM pg_roles r WHERE r.rolname=current_user`);
     if(privilege.rows[0].excessive) throw new ControlError(503,'CONTROL_RUNTIME_PRIVILEGES','Dịch vụ phải dùng tài khoản database runtime riêng.');
     return {status:'ready',schemaVersion:manifest.at(-1).version};
+  }
+  async clusterCredential(workspace){
+    const {rows}=await this.pool.query('SELECT * FROM roomqc_control.clusters WHERE id=$1',[workspace.cluster_id]);
+    const row=rows[0];
+    if(!row||(workspace.api_url&&row.api_url!==workspace.api_url)||row.status==='offline')throw new ControlError(503,'CLUSTER_UNAVAILABLE','Cụm dữ liệu chưa sẵn sàng.');
+    return resolveCredential(this.config,row);
   }
   async reserve({ slug, email, displayName }, requestId) {
     validateSlug(slug);
@@ -88,15 +98,19 @@ export class ControlStore {
       if(Number(budget.rows[0].hourly)>=(this.config.signupHourLimit??100) || Number(budget.rows[0].email_daily)>=(this.config.emailDayLimit??3)) {
         throw new ControlError(429,'SIGNUP_LIMIT','Đã đạt giới hạn đăng ký tạm thời. Hãy tiếp tục đăng ký đã có hoặc thử lại sau.');
       }
-      const eligibleIds = this.config.clusters.map(c => c.id);
-      const selected = await client.query(`SELECT c.id FROM roomqc_control.clusters c
-        LEFT JOIN roomqc_control.workspaces w ON w.cluster_id=c.id AND w.status<>'expired'
-        WHERE c.status='active' AND c.schema_version=1 AND c.id=ANY($1::text[])
-        GROUP BY c.id HAVING count(w.id)<c.max_workspaces
-        ORDER BY count(w.id)::numeric/c.max_workspaces,c.id LIMIT 1`, [eligibleIds]);
-      if (!selected.rowCount) throw new ControlError(503, 'NO_CAPACITY', 'Hệ thống đang tạm dừng nhận đăng ký mới. Vui lòng thử lại sau.');
+      const conflict=await client.query('SELECT 1 FROM roomqc_control.signup_affinity_conflicts WHERE email_hash=$1',[emailHash]);
+      if(conflict.rowCount)throw new ControlError(409,'AFFINITY_REVIEW_REQUIRED','Đăng ký cần hỗ trợ đối soát. Vui lòng dùng tài khoản đã có; không tạo doanh nghiệp khác.');
+      const affinity=await client.query('SELECT cluster_id FROM roomqc_control.signup_affinities WHERE email_hash=$1',[emailHash]);
+      const clusters=await client.query(clusterSelect+(affinity.rowCount?' WHERE c.id=$1':''),affinity.rowCount?[affinity.rows[0].cluster_id]:[]);
+      const selected=clusters.rows.map(row=>withCredential(this.config,row)).filter(row=>admissionDecision(row).decision==='open')
+        .sort((a,b)=>a.allocated_count/a.tenant_limit-b.allocated_count/b.tenant_limit||a.id.localeCompare(b.id))[0];
+      if(!selected)throw new ControlError(503,affinity.rowCount?'AFFINITY_CLUSTER_BLOCKED':'NO_CAPACITY',
+        affinity.rowCount?'Cụm đã gán đang tạm ngừng nhận thiết lập mới. Hãy tiếp tục đăng ký cũ hoặc liên hệ hỗ trợ.':'Hệ thống đang tạm dừng nhận đăng ký mới. Vui lòng thử lại sau.');
       const { rows } = await client.query(`INSERT INTO roomqc_control.workspaces(id,slug,display_name,email_hash,cluster_id,expires_at)
-        VALUES($1,$2,$3,$4,$5,now()+make_interval(mins=>$6)) RETURNING *`, [randomUUID(),slug,displayName.trim(),emailHash,selected.rows[0].id,this.config.reservationMinutes??1440]);
+        VALUES($1,$2,$3,$4,$5,now()+make_interval(mins=>$6)) RETURNING *`, [randomUUID(),slug,displayName.trim(),emailHash,selected.id,this.config.reservationMinutes??1440]);
+      await client.query(`UPDATE roomqc_control.workspaces SET admission_policy_version=$2,admission_health_generation=$3 WHERE id=$1`,[rows[0].id,selected.policy_version,selected.source_generation]);
+      await client.query(`INSERT INTO roomqc_control.signup_affinities(email_hash,cluster_id,policy_version) VALUES($1,$2,$3)
+        ON CONFLICT(email_hash) DO NOTHING`,[emailHash,selected.id,selected.policy_version]);
       await client.query('INSERT INTO roomqc_control.attempts(request_id,workspace_id,outcome) VALUES($1,$2,$3)', [requestId,rows[0].id,'reserved']);
       await client.query('COMMIT');
       return rows[0];
@@ -120,6 +134,12 @@ export class ControlStore {
     const client=await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(727001)');
+      const current=(await client.query('SELECT * FROM roomqc_control.workspaces WHERE id=$1 FOR UPDATE',[workspace.id])).rows[0];
+      if(current?.status==='reserved'){
+        const cluster=await this.admin.cluster(current.cluster_id,client),gate=admissionDecision(cluster,{ignoreCapacity:true});
+        if(gate.decision!=='open')throw new ControlError(503,'PROVISIONING_WAIT','Cụm đang tạm ngừng thiết lập mới. Đăng ký được giữ nguyên; vui lòng thử lại sau.');
+      }
       const {rows}=await client.query(`UPDATE roomqc_control.workspaces SET status=CASE WHEN status='reserved' THEN 'provisioning' ELSE status END,
         owner_id=$2,expires_at=NULL,updated_at=now()
         WHERE id=$1 AND email_hash=$3 AND (owner_id IS NULL OR owner_id=$2)
@@ -141,9 +161,11 @@ export class ControlStore {
     if(row.status==='reserved' && row.expires_at && new Date(row.expires_at)<=new Date()) {
       throw new ControlError(410,'RESERVATION_EXPIRED','Đăng ký đã hết hạn giữ chỗ. Hãy mở trang đăng ký để tiếp tục; tài khoản đã tạo vẫn được giữ nguyên.');
     }
-    if (!this.config.clusters.some(c => c.id === row.cluster_id && c.url === row.api_url) || row.cluster_status === 'offline') {
+    if (row.cluster_status === 'offline') {
       throw new ControlError(503, 'CLUSTER_UNAVAILABLE', 'Cụm dữ liệu đang tạm thời không khả dụng. Vui lòng thử lại sau.');
     }
+    const credential=await this.clusterCredential(row);
+    row.publishable_key=credential.publishableKey;row.vapid_public_key=credential.vapidPublicKey;
     if (['suspended','migrating'].includes(row.status)) throw new ControlError(503, 'WORKSPACE_UNAVAILABLE', 'Doanh nghiệp đang tạm ngưng hoặc bảo trì.');
     return row;
   }

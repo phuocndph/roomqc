@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { ControlError } from './store.mjs';
 import { inspectSupport, reconcileSupport } from './support.mjs';
+import {clusterCommand,requireCapability} from './admin.mjs';
+import {adminRead} from './admin-read.mjs';
 
 const prefix = '/api/control';
 function publicBootstrap(w) {
@@ -51,9 +53,35 @@ export function createControlServer({config,store,gateway,lifecycle={draining:fa
       for (const [key,value] of buckets) if(value.reset<=now) buckets.delete(key);
       const bucket=buckets.get(ip) || {count:0,reset:now+60000};
       bucket.count++; buckets.set(ip,bucket);
-      if(bucket.count>120 || buckets.size>10000) throw new ControlError(429,'RATE_LIMIT','Quá nhiều yêu cầu. Vui lòng thử lại sau.');
+      if(bucket.count>120 || buckets.size>10000) {
+        const error=new ControlError(429,'RATE_LIMIT','Quá nhiều yêu cầu. Vui lòng thử lại sau.');
+        error.retryAfter=Math.max(1,Math.ceil((bucket.reset-now)/1000));throw error;
+      }
       if(req.method==='POST' && req.headers.origin!==config.publicOrigin) throw new ControlError(403,'ORIGIN_DENIED','Nguồn yêu cầu không hợp lệ.');
       if(req.method==='POST' && !/^application\/json(?:;|$)/i.test(req.headers['content-type'] || '')) throw new ControlError(415,'CONTENT_TYPE','Yêu cầu phải là JSON.');
+      if(path.startsWith(`${prefix}/admin/`)){
+        const token=req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
+        const actor=await gateway.supportActor(token);
+        requireCapability(actor,req.method==='GET'?'platform-read':'infra-operate',config);
+        const adminPath=path.slice(`${prefix}/admin`.length);
+        if(req.method==='GET'){send(200,await adminRead(store,adminPath,new URL(req.url,'http://control.invalid').searchParams,gateway));return}
+        const body=await readBody(req),key=req.headers['idempotency-key'];
+        if(adminPath==='/clusters/register'){
+          send(200,{...await store.admin.register(actor,body,key,requestId),requestId});return;
+        }
+        const target=adminPath.match(/^\/clusters\/([a-z][a-z0-9-]{1,39})\/commands$/);
+        if(target){
+          const command=clusterCommand(body,key,target[1]);
+          let result=await store.admin.replay(actor,command);
+          if(!result){
+            let validation;
+            if(command.operation==='validate')validation=await gateway.validateCluster(await store.admin.cluster(target[1]));
+            result=await store.admin.execute(actor,command,requestId,validation);
+          }
+          send(200,{...result,requestId});return;
+        }
+        throw new ControlError(404,'NOT_FOUND','Không tìm thấy thao tác quản trị.');
+      }
       if(req.method==='POST' && [`${prefix}/support/lookup`,`${prefix}/support/reconcile`].includes(path)) {
         const token=req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
         const actor=await gateway.supportActor(token);
@@ -110,6 +138,7 @@ export function createControlServer({config,store,gateway,lifecycle={draining:fa
       throw new ControlError(405,'METHOD_NOT_ALLOWED','Phương thức không hỗ trợ.');
     } catch(error) {
       const status=error instanceof ControlError?error.status:503;
+      if(status===429)res.setHeader('Retry-After',String(error.retryAfter??60));
       if(failureWorkspaceId) {
         try {await store.recordFailure(failureWorkspaceId,requestId,error instanceof ControlError?error.code:'CONTROL_UNAVAILABLE')}
         catch {console.error(JSON.stringify({requestId,code:'ATTEMPT_AUDIT_UNAVAILABLE'}))}

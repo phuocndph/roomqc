@@ -10,6 +10,9 @@ import pg from 'pg';
 import { migrateDirectory,importInitialRegistry,migrationManifest } from './migrate.mjs';
 import { ControlStore } from './store.mjs';
 import { startControl } from './server.mjs';
+import {fixtureConfig,seedOperationalCluster} from './test-fixtures.mjs';
+import {registerAdminCases} from './admin-cases.mjs';
+import {registerTelemetryCases} from './telemetry-cases.mjs';
 
 const enabled=process.env.ROOMQC_CONTROL_DB_TEST==='true';
 const run=randomBytes(6).toString('hex'),name=`roomqc-control-dbtest-${run}`;
@@ -20,7 +23,7 @@ const pools=[];
 const docker=args=>execFileSync('docker',args,{encoding:'utf8',timeout:30000,maxBuffer:1_000_000,
   env:{...process.env,POSTGRES_PASSWORD:password},stdio:['pipe','pipe','pipe']});
 const cluster={id:'cluster-a',url:'http://127.0.0.1:54321',publishableKey:'test-public',serviceKey:'test-server',vapidPublicKey:'test-vapid',maxWorkspaces:99};
-const config=url=>({databaseUrl:url,emailKey:'isolated-test-'.repeat(4),clusters:[cluster],poolMax:3,publicOrigin:'http://localhost:8082',host:'127.0.0.1',port:0});
+const config=url=>fixtureConfig(url,[cluster]);
 async function database(label){
   await admin.query(`CREATE DATABASE ${label}`);
   const url=new URL(base);url.pathname='/'+label;
@@ -59,8 +62,9 @@ dbtest('empty directory: concurrent migrators apply once and repeated imports pr
     }
   }finally{await blocker.query('SELECT pg_advisory_unlock(727000)');blocker.release()}
   const results=await pending;assert.equal(overlapped,true,'Both migrators must actually wait on the same lock');
-  assert.equal(results.reduce((sum,r)=>sum+r.applied.length,0),3);
-  const history=await pool.query('SELECT * FROM roomqc_control.schema_migrations ORDER BY version');assert.equal(history.rowCount,3);
+  const manifest=await migrationManifest();
+  assert.equal(results.reduce((sum,r)=>sum+r.applied.length,0),manifest.length);
+  const history=await pool.query('SELECT * FROM roomqc_control.schema_migrations ORDER BY version');assert.equal(history.rowCount,manifest.length);
   await importInitialRegistry(pool,[cluster]);
   await pool.query("UPDATE roomqc_control.clusters SET max_workspaces=7 WHERE id='cluster-a'");
   await pool.query("UPDATE roomqc_control.cluster_policies SET tenant_limit=6,row_version=2 WHERE cluster_id='cluster-a'");
@@ -86,7 +90,9 @@ dbtest('legacy v2 upgrade preserves bindings/audit/limits and records conflictin
   const beforeState=await pool.query('SELECT * FROM roomqc_control.workspaces ORDER BY id');
   const beforeAudit=await pool.query('SELECT * FROM roomqc_control.support_actions');
   await migrateDirectory(pool);await importInitialRegistry(pool,[cluster]);
-  assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.workspaces ORDER BY id')).rows,beforeState.rows);
+  const upgraded=(await pool.query('SELECT * FROM roomqc_control.workspaces ORDER BY id')).rows;
+  assert.deepEqual(upgraded.map(row=>Object.fromEntries(Object.keys(beforeState.rows[0]).map(key=>[key,row[key]]))),beforeState.rows);
+  assert.ok(upgraded.every(row=>row.admission_policy_version===null&&row.admission_health_generation===null));
   assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.support_actions')).rows,beforeAudit.rows);
   assert.equal((await pool.query('SELECT * FROM roomqc_control.signup_affinities')).rowCount,0);
   assert.deepEqual((await pool.query('SELECT cluster_ids FROM roomqc_control.signup_affinity_conflicts')).rows[0].cluster_ids,['cluster-a','cluster-b']);
@@ -116,15 +122,17 @@ dbtest('checksum mismatch stops; a failed new migration rolls back both DDL and 
   const temp=await mkdtemp(join(tmpdir(),'roomqc-directory-migrations-'));
   try{
     for(const item of manifest)await writeFile(join(temp,item.version),item.sql);
-    await writeFile(join(temp,'0004-rollback-probe.sql'),'CREATE TABLE roomqc_control.rollback_probe(id int); SELECT * FROM roomqc_control.nonexistent_probe;');
+    const next=String(manifest.length+1).padStart(4,'0');
+    await writeFile(join(temp,next+'-rollback-probe.sql'),'CREATE TABLE roomqc_control.rollback_probe(id int); SELECT * FROM roomqc_control.nonexistent_probe;');
     await assert.rejects(()=>migrateDirectory(pool,{location:pathToFileURL(temp+'/')}),{code:'42P01'});
     assert.equal((await pool.query("SELECT to_regclass('roomqc_control.rollback_probe') AS value")).rows[0].value,null);
-    assert.equal((await pool.query('SELECT * FROM roomqc_control.schema_migrations')).rowCount,3);
+    assert.equal((await pool.query('SELECT * FROM roomqc_control.schema_migrations')).rowCount,manifest.length);
   }finally{await rm(temp,{recursive:true})}
 });
 
 dbtest('runtime grants allow signup and readiness but reject DDL, audit deletion and migration history changes',async()=>{
   const {pool,url}=await database('runtime_directory');await migrateDirectory(pool);await importInitialRegistry(pool,[cluster]);
+  await seedOperationalCluster(pool);
   await pool.query(`CREATE ROLE control_test_api LOGIN PASSWORD '${password}' IN ROLE roomqc_control_api`);
   const runtimeUrl=new URL(url);runtimeUrl.username='control_test_api';
   const store=new ControlStore(config(runtimeUrl.href));
@@ -170,3 +178,6 @@ dbtest('HTTP liveness remains available with an unmigrated database; readiness c
     assert.deepEqual(await(await fetch(api+'/healthz')).json(),{status:'ok'});
   }finally{await runtime.shutdown()}
 });
+
+registerAdminCases({dbtest,database,password,cluster});
+registerTelemetryCases({dbtest,database,password,cluster});

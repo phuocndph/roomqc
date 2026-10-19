@@ -5,6 +5,10 @@ Mọi ticket dưới đây ở trạng thái **planned** khi lập tài liệu. 
 kiến, không khẳng định đã tồn tại. Mỗi ticket đóng bằng artifact và bằng chứng
 nghiệm thu, không đóng chỉ vì đã có code hoặc đã mock thành công.
 
+Chi tiết thực hiện theo hiện trạng: [25 bước trong 8 đợt](roomqc-vps-signup-execution-plan-2026-10-19.md).
+Trạng thái hiện tại lấy từ [tracker](roomqc-vps-signup-progress.md); các nhãn planned
+khi lập gói không phủ nhận nền local đã có bằng chứng. Mã P0–P8 giữ nguyên.
+
 ## 1. Quy tắc thực hiện
 
 - Source tích hợp hiện tại: worktree `roomqc-worktrees/integration`, baseline `b95fc86`.
@@ -385,6 +389,10 @@ và signup → admin UI → deployment/backup → acceptance. Giao diện có th
 sớm nhưng không triển khai nút ghi khi backend chưa có kiểm tra quyền/audit.
 
 ## 12. Gói công việc đầu tiên khi bắt đầu implementation
+
+Đây là thứ tự khởi đầu khi lập gói. Nền local đã có bằng chứng riêng; bước thực tế
+tiếp theo chuyển sang T01–T04 trong plan thực thi: kiểm chứng thay đổi control đang
+dở, command/authority và migration mới trước khi làm telemetry/admission.
 
 Thực hiện P0-01/02/03 và P1-01/02 trước. Bàn giao một control runtime local thường
 trực, directory riêng giữ dữ liệu sau restart, health/proxy đúng và migration có

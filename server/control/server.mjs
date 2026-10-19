@@ -4,7 +4,7 @@ import { ControlStore } from './store.mjs';
 import { ClusterGateway } from './cluster.mjs';
 import { createControlServer } from './app.mjs';
 
-export async function startControl(config,{store=new ControlStore(config),gateway=new ClusterGateway(config)}={}) {
+export async function startControl(config,{store=new ControlStore(config),gateway=new ClusterGateway(config,undefined,store)}={}) {
   const lifecycle={draining:false};
   const server=createControlServer({config,store,gateway,lifecycle});
   server.requestTimeout=30000;server.headersTimeout=10000;

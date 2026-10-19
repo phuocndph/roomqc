@@ -1,0 +1,59 @@
+
+> vite_react_shadcn_ts@0.0.0 test:control:db
+> node scripts/test-control-directory.mjs
+
+✔ admin command identity is canonical and binds target, version, reason and strict server-owned payload (2.619ms)
+✔ capabilities require a verified actor from the configured authority; pagination rejects unknown or duplicated filters (0.8992ms)
+✔ OpenAPI references and operations are unique, admin routes require bearer capability and declared commands parse (5.0951ms)
+✔ registry validates origins, public keys, cluster IDs, production TLS and shared push key (3.5489ms)
+✔ slug validation rejects ambiguous, reserved and non-ASCII slugs (0.3479ms)
+✔ gateway uses the selected cluster, validates Auth remotely, and never sends server credentials on user requests (3.2169ms)
+{"requestId":"2904b4b3-ffb3-489a-9546-4a6499d12bb1","code":"CONTROL_UNAVAILABLE"}
+{"requestId":"2b00d04c-5029-44e1-8f2b-87464e4d5283","code":"CONTROL_UNAVAILABLE"}
+✔ HTTP boundary rejects origin spoofing, unauthenticated provisioning and strips privileged body fields (44.9249ms)
+✔ empty directory: concurrent migrators apply once and repeated imports preserve operator limits (1395.3032ms)
+✔ legacy v2 upgrade preserves bindings/audit/limits and records conflicting email history without guessing (267.4795ms)
+✔ unknown legacy schema and tenant backends are rejected before recording migration history (248.9977ms)
+✔ checksum mismatch stops; a failed new migration rolls back both DDL and history (245.1808ms)
+✔ runtime grants allow signup and readiness but reject DDL, audit deletion and migration history changes (410.8579ms)
+{"requestId":"947ddea6-8671-4460-9166-4b8457344408","code":"CONTROL_UNAVAILABLE"}
+✔ HTTP liveness remains available with an unmigrated database; readiness changes after an explicit migration (355.7027ms)
+✔ admin commands: 20 overlapping replays commit one mutation, event and stable receipt (299.7552ms)
+✔ admin commands: competing versions have one winner and audit failure rolls back mutation and receipt (330.8554ms)
+✔ admin opening rechecks health, backups and policy; draining/serving never silently reopen admission (357.831ms)
+✔ registry registration is draft, inventory-only, idempotent and rejects duplicate host/cluster (259.4153ms)
+✔ admission: 20 competing new registrations can reserve only the final slot; retry does not extend expiry (530.8265ms)
+✔ admission: durable email affinity survives expiry; first provision rechecks gate while started work stays recoverable (341.6944ms)
+✔ allocation and admin close serialize on one lock; no new reservation after close has committed (281.9357ms)
+✔ admin pagination preserves microseconds, filter scope and redaction across 1,005 workspaces and a long timeline (326.2209ms)
+✔ admin HTTP checks authority on every attempt and retry after a lost committed response returns the original receipt (311.862ms)
+✔ health snapshot: runtime metrics role persists warmup across process restarts and cannot approve reopening (395.6349ms)
+✔ health snapshot: duplicate/older samples cannot overwrite newer state or generations, including concurrent collectors (274.0735ms)
+✔ health snapshot: stale transition is durable and idempotent; a fresh sample needs warmup again (264.353ms)
+✔ health snapshot: failed transition audit rolls back snapshot and operator latch atomically (270.1376ms)
+✔ telemetry contract rejects invalid units, missing/nonfinite values, incomplete probes and invalid timestamps (3.9686ms)
+✔ resource policy validates bounded thresholds and nonoverlapping warning/critical limits (0.316ms)
+✔ healthy telemetry requires five continuous minutes; gaps and policy changes restart warmup (1.4089ms)
+✔ CPU and memory use sustained windows at their boundaries rather than a single spike (1.4293ms)
+✔ disk bytes, disk percentage and inode independently block immediately; critical state survives restart until recovery (0.915ms)
+✔ database connection saturation and probe failures require their own sustained intervals (0.304ms)
+✔ admission fails closed for every required gate and opening cannot ignore metrics, backup or capacity (0.7285ms)
+✔ liveness survives database failures; readiness and legacy health alias fail closed (38.3044ms)
+✔ graceful shutdown waits for an accepted request before closing the database (7.4233ms)
+✔ a stalled request cannot hold shutdown past its deadline (112.3177ms)
+✔ destination policy normalizes mapped IPv6 and rejects metadata, link-local, multicast, transition and reserved addresses (4.9812ms)
+✔ DNS policy checks every answer, exact inventory origin and explicitly approved private destinations (1.7446ms)
+✔ real HTTP connection pins verified DNS once, preserves hostname, rejects redirects and bounds response size (20.627ms)
+✔ DNS resolution observes the request deadline before any network connection (32.7141ms)
+✔ receipt validation checks all binding fields and never serializes secrets (0.9535ms)
+✔ support authorization always uses the configured canonical cluster with user credentials (3.4427ms)
+✔ support never probes or mutates without durable started audit and expected identity (0.4776ms)
+✔ support CLI uses explicit intent and private environment token, with safe origin and errors (1.4971ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8904.7898

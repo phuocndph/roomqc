@@ -5,8 +5,12 @@ Theo dõi thực hiện: [tiến độ và bằng chứng](roomqc-vps-signup-pro
 [runbook local](roomqc-control-local-runbook.md). Trạng thái trong plan là phạm vi
 phải đạt; chỉ tracker mới ghi phần đã kiểm chứng, không suy ra hoàn tất từ thiết kế.
 
+Thứ tự thực thi hiện hành: [plan chi tiết 25 bước, 8 đợt](roomqc-vps-signup-execution-plan-2026-10-19.md).
+Bản này đối chiếu nền local đã chạy ở `0003`, mã mới chưa kiểm chứng, file cần sửa,
+test, bàn giao và gate cho đủ 27 gói / 70 tình huống; ưu tiên tiếp theo là T01–T04.
+
 Ngày lập: 19/10/2026, Asia/Bangkok. Baseline tích hợp: `b95fc86`.
-Trạng thái: **kế hoạch chuẩn bị triển khai; các phần bổ sung bên dưới chưa được thực hiện**.
+Trạng thái: **kế hoạch hiện hành; nền local đã triển khai một phần, các phần còn lại theo tracker**.
 Phạm vi: khách tự đăng ký trên RoomQC, được cấp không gian trong cụm do RoomQC vận hành;
 đội vận hành biết tài nguyên còn lại, quản lý việc nhận khách và xử lý đăng ký kẹt.
 
@@ -135,7 +139,9 @@ cần làm được tính từ dữ liệu được phép xem và bằng chứng
 
 ### 4.2. Bảng dữ liệu đề xuất, nằm trong database directory
 
-Tên mới bên dưới là hợp đồng dự kiến; chưa có migration được áp dụng.
+Bảng dưới mô tả thiết kế đích. Nền directory local đã áp `0001`–`0003`; migration
+`0004` đang phát triển, chưa áp trong runtime được quan sát. Có bảng chưa đồng
+nghĩa luồng API/worker/UI tương ứng đã hoàn tất; đối chiếu tracker khi triển khai.
 
 | Bảng / thay đổi | Trường chính | Ràng buộc, chỉ mục và cách dùng |
 |---|---|---|
@@ -192,7 +198,7 @@ Hiện tại DB và `ROOMQC_CONTROL_CLUSTERS` cùng giữ cấu hình. Phiên b�
 
 | Nhóm | Số đo tối thiểu | Cách lấy / ý nghĩa |
 |---|---|---|
-| Host | CPU busy trung bình 5 phút; MemAvailable/total; disk free bytes/%; inode free/% | node_exporter, chỉ filesystem chứa DB/Storage và host; bỏ pseudo filesystem |
+| Host | CPU busy từ rate 1 phút, duy trì ngưỡng 5 phút; MemAvailable/total; disk free bytes/%; inode free/% | node_exporter, đo từng filesystem chứa DB/Storage và host; bỏ pseudo filesystem |
 | Database | Kết nối đang dùng/ngân sách; transaction latency; deadlocks; DB/WAL size; lock wait | postgres_exporter bằng role giám sát ít quyền, không dump query chứa thông tin khách |
 | Dịch vụ | Auth/REST/Storage/Realtime/Functions probe, 5xx và p95 tại gateway | Probe phải phân biệt unauthorized hợp lệ với backend lỗi; không chỉ kiểm tra cổng mở |
 | Cấp phát | reserved/provisioning/active; tuổi job lâu nhất; retry/failure | Query directory; count trong transaction khi phân bổ |
@@ -462,10 +468,14 @@ host, vì monitoring cùng VPS không báo được khi cả máy chết.
 | P7 | Hai backend thật, browser E2E, fault injection, đo tải | P3–P6 | 3–5 |
 | P8 | Pilot một cụm, theo dõi, báo cáo quyết định mở rộng | P7 và quyền/cấu hình thật | 1–2 + 7 ngày quan sát |
 
-Tổng sơ bộ **23–36 ngày công kỹ thuật còn lại** cho phạm vi này; chưa gồm thời gian
+Ước lượng ban đầu **23–36 ngày công kỹ thuật** cho phạm vi này; chưa gồm thời gian
 chờ hạ tầng/provider hoặc sửa lỗi phát sinh lớn. Nhiều việc có thể thực hiện song
 song theo work package; không lấy tổng ngày công chia số agent làm lịch giao cam kết.
 Chốt lại sau P0/P1. Không cộng chồng với các roadmap cũ có cùng phạm vi.
+
+Ước lượng trên được lập trước đợt nền tảng. Dự toán phần còn lại hiện được cập nhật
+trong plan thực thi là **21–33 ngày công + ít nhất 7 ngày quan sát pilot**, cần chốt
+lại sau đợt 1; không cộng hai ước lượng và không coi đây là lịch bàn giao cam kết.
 
 Mốc bàn giao sử dụng được:
 

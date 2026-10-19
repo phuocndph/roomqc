@@ -1,6 +1,6 @@
 import { ControlError, bindingMatches, supportSnapshot, uuidPattern } from './store.mjs';
 
-async function receiptStatus(workspace,gateway) {
+export async function receiptStatus(workspace,gateway) {
   if(workspace.cluster_status==='offline') return {status:'unavailable'};
   try {
     const binding=await gateway.binding(workspace);
