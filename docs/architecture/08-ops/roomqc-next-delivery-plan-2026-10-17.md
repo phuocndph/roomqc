@@ -5,7 +5,19 @@ thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch m
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
 
-## Cập nhật mới nhất: E2E và khôi phục — 19/10/2026
+## Cập nhật mới nhất: Edge worker HTTP local — 19/10/2026
+
+Đã chạy entrypoint worker thật qua HTTP/supabase-js/PostgREST trên bản restore
+độc lập: 23/23 kiểm tra với 58 tenant mẫu đạt, gồm batch đủ 50, scope, từ chối
+owner/anon, không trùng khi gọi lại và giao lại outbox sau sửa owner. 13 Node
+regression công cụ đạt. Đã dọn sandbox/khóa tạm, giữ backup; DB chính không đổi.
+
+Không sửa runtime/policy, không bật lịch/provider. Bước actual Edge local đã
+xong; còn staging với dispatcher/proxy thực tế, chính sách expiry, backup
+offsite/Storage/Vault và thử tải. Không đóng toàn A0–A4 hoặc nghiệm thu production.
+[Báo cáo và giới hạn](roomqc-edge-http-local-2026-10-19.md).
+
+## Mốc E2E và khôi phục — 19/10/2026
 
 Đã kiểm tra browser các luồng directory, hồ sơ đối soát và phục hồi job với
 mất phản hồi sau commit/F5/retry trên DB sao chép. Đã restore độc lập 203 bảng

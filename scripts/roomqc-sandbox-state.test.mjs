@@ -37,11 +37,11 @@ test('a killed operation lock can be recovered', async t => {
   await (await lockSandbox(file))();
 });
 function fakeDocker({ missingNetwork = false, foreign = false, offline = false, interrupt = false } = {}) {
-  const objects = new Map(['roomqc-web-', 'roomqc-api-', 'roomqc-rest-', 'roomqc-auth-', 'roomqc-restore-'].map(prefix => {
+  const objects = new Map(['roomqc-edge-', 'roomqc-edge-bundle-', 'roomqc-web-', 'roomqc-api-', 'roomqc-rest-', 'roomqc-auth-', 'roomqc-restore-'].map(prefix => {
     const name = prefix + run;
     return [name, { Name: '/' + name, Config: { Labels: { [prefix === 'roomqc-restore-' ? 'roomqc.restore-verification' : 'roomqc.acceptance']: run } } }];
   }));
-  if (foreign) objects.get('roomqc-auth-' + run).Config.Labels['roomqc.acceptance'] = 'somebody-else';
+  if (foreign) objects.get((typeof foreign === 'string' ? foreign : 'roomqc-auth-') + run).Config.Labels['roomqc.acceptance'] = 'somebody-else';
   const removed = [];
   const docker = args => {
     if (offline) throw Object.assign(new Error('offline'), { stderr: 'cannot connect to Docker daemon' });
@@ -65,7 +65,9 @@ test('missing network does not prevent credential cleanup; cleanup can repeat', 
   const file = await fixture(t); await reserveSandbox(state(), file);
   const fake = fakeDocker({ missingNetwork: true }), deleted = [];
   await cleanupSandbox(state(), fake.docker, async name => deleted.push(name), file);
-  assert.equal(fake.removed.length, 5); assert.ok(deleted.includes('roomqc-auth-' + run + '.local'));
+  assert.equal(fake.removed.length, 7); assert.ok(deleted.includes('roomqc-auth-' + run + '.local'));
+  assert.ok(deleted.includes('roomqc-edge-' + run + '.local'));
+  assert.ok(deleted.includes('roomqc-edge-bundle-' + run + '.local'));
   assert.equal(await readSandbox(file), null);
   await cleanupSandbox(state(), fake.docker, async () => {}, file);
 });
@@ -75,7 +77,7 @@ test('cleanup resumes after removal succeeded but response was lost', async t =>
   await assert.rejects(cleanupSandbox(state(), fake.docker, async () => {}, file), /interruption/);
   assert.ok(await readSandbox(file));
   await cleanupSandbox(state(), fake.docker, async () => {}, file);
-  assert.equal(new Set(fake.removed).size, 5); assert.equal(await readSandbox(file), null);
+  assert.equal(new Set(fake.removed).size, 7); assert.equal(await readSandbox(file), null);
 });
 test('foreign labels fail before deleting any container or file', async t => {
   const file = await fixture(t); await reserveSandbox(state(), file);
@@ -88,6 +90,13 @@ test('Docker outage preserves retry state and credentials', async t => {
   let files = 0;
   await assert.rejects(cleanupSandbox(state(), fakeDocker({ offline: true }).docker, async () => files++, file), /offline/);
   assert.equal(files, 0); assert.ok(await readFile(file));
+});
+
+test('foreign Edge ownership prevents cleanup before any deletion', async t => {
+  const file = await fixture(t); await reserveSandbox(state(), file);
+  const fake = fakeDocker({ foreign: 'roomqc-edge-' }); let files = 0;
+  await assert.rejects(cleanupSandbox(state(), fake.docker, async () => files++, file));
+  assert.equal(fake.removed.length, 0); assert.equal(files, 0); assert.ok(await readSandbox(file));
 });
 test('orphan cleanup cannot remove another recorded run', async t => {
   const file = await fixture(t); await reserveSandbox({ run: 'fedcba543210', container: 'roomqc-restore-fedcba543210' }, file);

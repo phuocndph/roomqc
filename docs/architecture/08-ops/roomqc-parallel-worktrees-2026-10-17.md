@@ -2,7 +2,16 @@
 
 Ngày: 17/10/2026, Asia/Bangkok. Theo yêu cầu tăng tốc triển khai của chủ dự án.
 
-## Cập nhật mới nhất: E2E và khôi phục — 19/10/2026
+## Cập nhật mới nhất: Edge worker HTTP local — 19/10/2026
+
+Đã kiểm thử entrypoint thật với runtime riêng trên DB restore: 23/23 kiểm tra
+HTTP/DB và 13 Node regression đạt. 58 tenant mẫu kiểm chứng scope, batch 50,
+auth, lặp không trùng và retry outbox. Tài nguyên/khóa thử đã dọn, backup giữ.
+Không đổi DB/image 8082 hoặc bật lịch/provider; không đóng A0–A4. Còn staging,
+chính sách expiry, backup offsite/Storage/Vault và thử tải.
+[Báo cáo đầy đủ](roomqc-edge-http-local-2026-10-19.md).
+
+## Mốc E2E và khôi phục — 19/10/2026
 
 Đã kiểm tra browser directory/hồ sơ/phục hồi job trên bản sao đầy đủ và thử
 restore PostgreSQL độc lập. Bổ sung backup hàng đợi PGMQ; sửa giữ lượt thử,

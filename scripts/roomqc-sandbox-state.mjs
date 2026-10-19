@@ -89,7 +89,7 @@ export async function cleanupSandbox(state, docker, removeFile, file = sandboxFi
   validateSandbox(state);
   const recorded = await readSandbox(file);
   if (recorded) assert.equal(recorded.run, state.run, 'Cleanup state ownership changed');
-  const allowed = ['roomqc-web-', 'roomqc-api-', 'roomqc-rest-', 'roomqc-auth-'].map(prefix => prefix + state.run);
+  const allowed = ['roomqc-edge-', 'roomqc-edge-bundle-', 'roomqc-web-', 'roomqc-api-', 'roomqc-rest-', 'roomqc-auth-'].map(prefix => prefix + state.run);
   for (const name of state.services || []) assert.ok(allowed.includes(name));
   const targets = [...allowed, state.container];
   const existing = [];
@@ -113,7 +113,7 @@ export async function cleanupSandbox(state, docker, removeFile, file = sandboxFi
   }
   for (const name of existing) docker(['rm', '-f', name]);
   if (network) docker(['network', 'rm', networkName]);
-  for (const name of ['roomqc-auth-', 'roomqc-rest-']) await removeFile(name + state.run + '.local');
+  for (const name of ['roomqc-auth-', 'roomqc-rest-', 'roomqc-edge-', 'roomqc-edge-bundle-']) await removeFile(name + state.run + '.local');
   for (const name of ['roomqc-sandbox-hba.local', 'roomqc-sandbox-nginx.local',
     'roomqc-sandbox-hba-' + state.run + '.local', 'roomqc-sandbox-nginx-' + state.run + '.local']) await removeFile(name);
   await removeIfPresent(file);

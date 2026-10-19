@@ -107,6 +107,12 @@ try {
     if ($request_method = OPTIONS) { return 204; }
     location /auth/v1/ { proxy_hide_header Access-Control-Allow-Origin; proxy_pass http://${state.auth}:9999/; }
     location /rest/v1/ { proxy_hide_header Access-Control-Allow-Origin; proxy_pass http://${state.rest}:3000/; }
+    location = /functions/v1/check-subscription-status {
+      resolver 127.0.0.11 valid=1s;
+      set $worker roomqc-edge-${state.run};
+      proxy_read_timeout 75s;
+      proxy_pass http://$worker:9000;
+    }
     location / { default_type application/json; return 503 '{"error":"SANDBOX_EXTERNAL_SERVICE_DISABLED"}'; }
   }`);
   let gateway = inspect(state.gateway);
