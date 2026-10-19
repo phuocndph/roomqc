@@ -4,6 +4,16 @@ Ngày lập: 17/10/2026. Phạm vi: quản lý khách hàng đăng ký RoomQC, g
 thanh toán thuê bao và vận hành nền tảng. Không phải kế hoạch mở rộng toàn bộ
 nghiệp vụ khách sạn, ứng dụng mobile hoặc 100.000 người đồng thời.
 
+## Kế hoạch chuẩn bị triển khai VPS và đăng ký — 19/10/2026
+
+Đã lập [kế hoạch VPS/signup chi tiết](roomqc-vps-signup-implementation-plan-2026-10-19.md),
+kèm [work packages](roomqc-vps-signup-work-packages-2026-10-19.md) và
+[70 tình huống nghiệm thu/rollout](roomqc-vps-signup-acceptance-rollout-2026-10-19.md).
+Phạm vi: control bền vững, số đo VPS, gate nhận khách, registry/admin UI, phục hồi
+đăng ký, backup và pilot. Đây là kế hoạch, chưa triển khai các phần mới. Ước lượng
+23–36 ngày công còn lại và 7 ngày quan sát, chốt lại sau baseline/contract. Đợt đầu
+là P0 + P1 runtime/migration; chưa mở signup công khai hoặc thay policy gói.
+
 
 ## Cập nhật mới nhất: Edge worker HTTP local — 19/10/2026
 
