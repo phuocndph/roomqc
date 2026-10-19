@@ -13,6 +13,15 @@ gắn file/test/phụ thuộc và gate; các mã M không thêm scope hoặc acc
 Collector thường trực, probe/manifest backend và các gate release còn thiếu; không tính
 hoàn tất P1-03/P2/P3 chỉ vì các phần nền này đã được kiểm chứng local.
 
+Lượt chuẩn bị triển khai tiếp theo đã bổ sung [phiếu giao việc mục 18–23](roomqc-vps-signup-execution-plan-2026-10-19.md#18-điểm-bắt-đầu-đã-đối-chiếu-và-thứ-tự-giao-việc):
+manifest/schema fingerprint và quyền probe; đủ năm service; pipeline/fault thực;
+alert/outbox; signup/resume/lease; hai màn admin; VPS/offsite/E2E/tải/pilot.
+Mỗi bước có dependency, file/đầu ra, negative control và acceptance liên quan;
+đầu vào external gom tại mục 22. Không tạo thêm roadmap hoặc tăng 27/25/70.
+Kiểm tra read-only lúc 18:24 +07:00 ngày 19/10 xác nhận readyz direct/proxy 200,
+runtime `0005`, image control/frontend không đổi và signup false. Lượt này chỉ
+cập nhật tài liệu; không nâng trạng thái implementation/acceptance của gói nào.
+
 [Manifest kết quả](../../../artifacts/roomqc-control-foundation-2026-10-19.json)
 ghi source base/hash, image, schema, command và trạng thái riêng từng acceptance ID.
 

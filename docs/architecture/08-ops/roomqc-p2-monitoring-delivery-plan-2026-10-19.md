@@ -165,11 +165,18 @@ stale >120s vẫn chặn ở reserve ngay cả watchdog ngừng. A07/B05–B07/C
 
 ### M06 — probe có ý nghĩa cho năm dịch vụ (T05; phụ thuộc T08)
 
+Phiếu giao việc chi tiết, quyền/schema drift/transport và tiêu chí khép pipeline
+ở [mục 19 của kế hoạch thực thi](roomqc-vps-signup-execution-plan-2026-10-19.md#19-phiếu-triển-khai-gần-nhất--m06t08-và-khép-giám-sát).
+Không coi các endpoint dự kiến dưới đây là đã được xác minh trên release hiện tại.
+
 1. Chốt probe matrix theo image/release: endpoint/protocol/credential ref, payload
    tối thiểu, response shape, deadline, quyền và canary resource IDs.
-2. Auth health + REST canary limit zero + Storage status; verify đủ DB/runtime thay
-   vì bất kỳ 200/401. Nếu release không có endpoint tương ứng, adapter phải nêu lỗi.
-3. Realtime phải handshake ứng dụng đúng cụm, đóng kết nối sau kiểm tra; Functions
+2. Auth phải chứng minh DB/session hoạt động theo image đã pin; REST gọi manifest/
+   canary có nonce và đúng identity; Storage đọc object private tổng hợp rồi kiểm
+   bytes/hash. Health version, REST limit zero hoặc Storage process status riêng
+   lẻ chưa đủ; endpoint không có/không đủ nghĩa thì probe unconfigured, không pass.
+3. Realtime phải handshake ứng dụng và round-trip nonce đúng cụm trên kênh canary
+   có quyền riêng, đóng kết nối sau kiểm tra; Functions
    chạy canary nhỏ trả cluster/release nonce, không gọi tác vụ/email nghiệp vụ.
 4. Canary ở sandbox/staging riêng, role tối thiểu, cleanup allowlist. Không dựng
    kết quả `true` cố định để qua gate khi chưa có function hay credential.
@@ -177,6 +184,8 @@ stale >120s vẫn chặn ở reserve ngay cả watchdog ngừng. A07/B05–B07/C
    boolean cho evaluator được derive, chi tiết đã lọc dùng giải thích vận hành.
 6. T08 manifest RPC server-only chưa có phải làm trước khi đóng validation đầy đủ.
    Tạo migration Supabase bằng CLI đã kiểm tra `--help`, kiểm tra grants/RLS và advisors.
+   Fingerprint schema thực so với build artifact tin cậy; không chỉ trả hash do
+   operator nhập. Worker dùng credential probe riêng, không business service_role.
 
 Test: từng service tắt/sai release/sai key/response, timeout tổng có trần, canary
 positive ở đúng cụm. B02/C01; test TLS/rotation thật tiếp T08/P6. Chưa có probe
