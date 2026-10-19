@@ -1,3 +1,5 @@
+-- ARCHIVE: unversioned directory v2 fixture, retained for upgrade verification.
+-- Runtime/migration CLI uses migrate.mjs and numbered migrations instead.
 -- Separate control database. Never apply this file to a tenant backend.
 BEGIN;
 CREATE SCHEMA IF NOT EXISTS roomqc_control;

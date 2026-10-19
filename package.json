@@ -19,6 +19,8 @@
     "mobile:apk": "node scripts/mobile.mjs apk",
     "test:mobile": "vitest run src/lib/native src/components/mobile/NativeAppBridge.test.tsx",
     "control:start": "node --env-file-if-exists=.env.control server/control/server.mjs",
+    "control:local": "node scripts/control-local.mjs",
+    "test:control:db": "node scripts/test-control-directory.mjs",
     "control:migrate": "node --env-file-if-exists=.env.control server/control/server.mjs --migrate",
     "control:expire": "node --env-file-if-exists=.env.control server/control/server.mjs --expire-reservations",
     "control:support": "node --env-file-if-exists=.env.control server/control/support-cli.mjs",

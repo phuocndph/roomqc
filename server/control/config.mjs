@@ -8,6 +8,8 @@ export function loadConfig(env = process.env) {
   const databaseUrl = env.ROOMQC_CONTROL_DATABASE_URL;
   if (!databaseUrl) throw new Error('ROOMQC_CONTROL_DATABASE_URL is required');
   if (production && new URL(databaseUrl).searchParams.get('sslmode') !== 'verify-full') throw new Error('Production control database requires sslmode=verify-full');
+  const migrationDatabaseUrl = env.ROOMQC_CONTROL_MIGRATION_DATABASE_URL || null;
+  if (production && migrationDatabaseUrl && new URL(migrationDatabaseUrl).searchParams.get('sslmode') !== 'verify-full') throw new Error('Production migration database requires sslmode=verify-full');
   const clusters = JSON.parse(env.ROOMQC_CONTROL_CLUSTERS || '[]');
   if (!Array.isArray(clusters) || clusters.length === 0) throw new Error('Configure at least one cluster');
   const ids = new Set();
@@ -24,6 +26,12 @@ export function loadConfig(env = process.env) {
     if (serviceRole || /^sb_secret_/.test(cluster.publishableKey) || cluster.publishableKey === cluster.serviceKey) throw new Error('Public key cannot be secret');
     if (!Number.isInteger(cluster.maxWorkspaces) || cluster.maxWorkspaces < 1) throw new Error('Invalid cluster capacity');
     cluster.url = url.origin;
+    if (cluster.internalUrl) {
+      const internal = new URL(cluster.internalUrl);
+      if (internal.username || internal.password || internal.search || internal.hash || internal.pathname !== '/') throw new Error('Internal cluster URL must be an origin');
+      if (internal.protocol !== 'https:' && !(allowLocal && ['localhost','127.0.0.1','[::1]','host.docker.internal'].includes(internal.hostname) && internal.protocol === 'http:')) throw new Error('Internal cluster URL requires HTTPS');
+      cluster.internalUrl = internal.origin;
+    }
   }
   if(new Set(clusters.map(c=>c.vapidPublicKey)).size!==1) throw new Error('Shared-origin clusters must use the same platform VAPID key');
   const supportClusterId = env.ROOMQC_CONTROL_SUPPORT_CLUSTER_ID || null;
@@ -33,7 +41,11 @@ export function loadConfig(env = process.env) {
     if(!Number.isInteger(value)||value<min||value>max)throw new Error(`${name} must be an integer between ${min} and ${max}`);
     return value;
   };
-  return { production, publicOrigin, emailKey, databaseUrl, clusters, supportClusterId,
+  const poolMax=boundedInteger('ROOMQC_CONTROL_POOL_MAX',5,1,30);
+  const poolBudget=boundedInteger('ROOMQC_CONTROL_POOL_BUDGET',20,2,100);
+  if(poolMax>=poolBudget)throw new Error('Control pool must leave capacity for migrations, workers and monitoring');
+  return { production, publicOrigin, emailKey, databaseUrl, migrationDatabaseUrl, clusters, supportClusterId,poolMax,poolBudget,
+    shutdownTimeoutMs:boundedInteger('ROOMQC_CONTROL_SHUTDOWN_TIMEOUT_MS',25000,100,60000),
     reservationMinutes:boundedInteger('ROOMQC_CONTROL_RESERVATION_MINUTES',1440,15,10080),
     signupHourLimit:boundedInteger('ROOMQC_CONTROL_SIGNUP_HOUR_LIMIT',100,1,10000),
     emailDayLimit:boundedInteger('ROOMQC_CONTROL_EMAIL_DAY_LIMIT',3,1,20),

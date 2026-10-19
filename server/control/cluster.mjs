@@ -10,7 +10,7 @@ export class ClusterGateway {
   async request(cluster,path,{ token, body, method = 'POST' } = {}) {
     let response;
     try {
-      response = await this.fetcher(`${cluster.url}${path}`, { method, redirect: 'error',
+      response = await this.fetcher(`${cluster.internalUrl || cluster.url}${path}`, { method, redirect: 'error',
         signal: AbortSignal.timeout(20000), headers: { apikey: token ? cluster.publishableKey : cluster.serviceKey,
           ...(token || !cluster.serviceKey.startsWith('sb_secret_') ? {Authorization: `Bearer ${token || cluster.serviceKey}`} : {}), 'Content-Type':'application/json' },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }) });

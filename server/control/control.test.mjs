@@ -17,6 +17,9 @@ test('registry validates origins, public keys, cluster IDs, production TLS and s
   assert.equal(loadConfig({...env,ROOMQC_CONTROL_SIGNUP_ENABLED:undefined}).signupEnabled,false);
   assert.equal(loadConfig(env).supportClusterId,null);
   assert.equal(loadConfig(env).port,8091);
+  assert.equal(loadConfig(env).poolMax,5);
+  assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_POOL_MAX:'20',ROOMQC_CONTROL_POOL_BUDGET:'20'}));
+  assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_SHUTDOWN_TIMEOUT_MS:'0'}));
   assert.equal(loadConfig({...env,ROOMQC_CONTROL_SUPPORT_CLUSTER_ID:'cluster-a'}).supportClusterId,'cluster-a');
   assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_SUPPORT_CLUSTER_ID:'injected-cluster'}));
   for(const port of ['0','-1','bad','65536']) assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_PORT:port}));
@@ -32,6 +35,11 @@ test('registry validates origins, public keys, cluster IDs, production TLS and s
     assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_CLUSTERS:JSON.stringify([{...clusters[0],...change}])}));
   }
   assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_CLUSTERS:JSON.stringify([...clusters,{...clusters[0],id:'cluster-b',vapidPublicKey:'other'}])}));
+  const internalUrl='http://host.docker.internal:54321';
+  assert.equal(loadConfig({...env,ROOMQC_CONTROL_CLUSTERS:JSON.stringify([{...clusters[0],internalUrl}])}).clusters[0].internalUrl,internalUrl);
+  for(const internalUrl of ['http://metadata.google.internal','http://169.254.169.254','http://host.docker.internal:54321/path','https://user:password@example.invalid']){
+    assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_CLUSTERS:JSON.stringify([{...clusters[0],internalUrl}])}));
+  }
 });
 
 test('slug validation rejects ambiguous, reserved and non-ASCII slugs',()=>{
@@ -52,6 +60,9 @@ test('gateway uses the selected cluster, validates Auth remotely, and never send
   assert.equal(calls[1].init.headers.apikey,'server-secret');
   assert.throws(()=>gateway.cluster({...workspace,api_url:'https://injected.invalid'}));
   await assert.rejects(()=>gateway.user(workspace,''));
+  config.clusters[0].internalUrl='http://host.docker.internal:54321';
+  await gateway.binding({...workspace,id:'workspace'});
+  assert.ok(calls.at(-1).url.startsWith('http://host.docker.internal:54321/'));
 });
 
 test('HTTP boundary rejects origin spoofing, unauthenticated provisioning and strips privileged body fields',async()=>{

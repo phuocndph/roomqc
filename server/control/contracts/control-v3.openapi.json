@@ -1,0 +1,2655 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RoomQC control directory v3",
+    "version": "3.0.0-draft",
+    "description": "Foundation implementation plus explicitly marked planned APIs. Inventory of routes is not evidence of runtime availability."
+  },
+  "servers": [
+    {
+      "url": "/api/control"
+    }
+  ],
+  "x-pagination": {
+    "order": "created_at DESC, id DESC",
+    "defaultLimit": 25,
+    "maxLimit": 100
+  },
+  "x-retry": {
+    "HTTP409": "Read current version; do not generate a replacement command silently.",
+    "HTTP429": "Retry-After required.",
+    "HTTP503": "Preserve intent and command ID; show unavailable."
+  },
+  "paths": {
+    "/livez": {
+      "get": {
+        "operationId": "get__livez",
+        "x-implementation": "implemented-foundation",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Live"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "get__readyz",
+        "x-implementation": "implemented-foundation",
+        "description": "DB, version history, registry and runtime privilege checks. No remote cluster-health requirement.",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ready"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "get__healthz",
+        "x-implementation": "implemented-foundation",
+        "description": "DB, version history, registry and runtime privilege checks. No remote cluster-health requirement.",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/signup-intents": {
+      "post": {
+        "operationId": "post__signup_intents",
+        "x-implementation": "implemented-foundation",
+        "description": "Global signup flag plus admission in v3; Origin must match public origin.",
+        "responses": {
+          "201": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Signup"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{slug}/bootstrap": {
+      "get": {
+        "operationId": "get__workspaces_slug_bootstrap",
+        "x-implementation": "implemented-foundation",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bootstrap"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/workspaces/{slug}/provision": {
+      "post": {
+        "operationId": "post__workspaces_slug_provision",
+        "x-implementation": "implemented-foundation",
+        "description": "Requires a live verified owner session at the assigned cluster; no bearer token persisted.",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Provision"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/workspaces/{slug}/setup-status": {
+      "get": {
+        "operationId": "get__workspaces_slug_setup_status",
+        "x-implementation": "planned",
+        "description": "Owner email hash/session matched on assigned cluster; not platform-admin impersonation.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "workspace-owner",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/clusters": {
+      "get": {
+        "operationId": "get__admin_clusters",
+        "x-implementation": "planned",
+        "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "draining",
+                "offline"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/workspaces": {
+      "get": {
+        "operationId": "get__admin_workspaces",
+        "x-implementation": "planned",
+        "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacePage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "reserved",
+                "provisioning",
+                "active",
+                "suspended",
+                "migrating",
+                "expired"
+              ]
+            }
+          },
+          {
+            "name": "clusterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ]
+      }
+    },
+    "/admin/alerts": {
+      "get": {
+        "operationId": "get__admin_alerts",
+        "x-implementation": "planned",
+        "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "acknowledged",
+                "resolved"
+              ]
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "warning",
+                "critical"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/backups": {
+      "get": {
+        "operationId": "get__admin_backups",
+        "x-implementation": "planned",
+        "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "clusterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "directory",
+                "cluster",
+                "objects",
+                "bundle"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "operationId": "get__admin_audit",
+        "x-implementation": "planned",
+        "description": "Whitelisted filters, stable server cursor and bounded page. Cluster outage remains visible as unavailable.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "clusterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ]
+      }
+    },
+    "/admin/overview": {
+      "get": {
+        "operationId": "get__admin_overview",
+        "x-implementation": "planned",
+        "description": "Server aggregate counts across all rows; never derive totals from a page.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/admin/clusters/{id}": {
+      "get": {
+        "operationId": "get__admin_clusters_id_",
+        "x-implementation": "planned",
+        "description": "",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cluster"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/clusters/register": {
+      "post": {
+        "operationId": "post__admin_clusters_register",
+        "x-implementation": "planned",
+        "description": "Select an approved inventory endpoint and server credential reference. Pending validation, admission closed. No arbitrary probe URL.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "infra-operate",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Persist this UUID through retries and reload. Same actor+operation+key with different payload returns 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCluster"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clusters/{id}/commands": {
+      "post": {
+        "operationId": "post__admin_clusters_id_commands",
+        "x-implementation": "planned",
+        "description": "Version check, mutation, append-only event and command receipt commit atomically. Health checks run outside DB locks; reopening requires all admission gates.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "infra-operate",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Persist this UUID through retries and reload. Same actor+operation+key with different payload returns 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Command"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/workspaces/{id}": {
+      "get": {
+        "operationId": "get__admin_workspaces_id_",
+        "x-implementation": "planned",
+        "description": "Redacted workspace/history/receipt; never exposes email_hash or bearer tokens.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/workspaces/{id}/tenant-summary": {
+      "get": {
+        "operationId": "get__admin_workspaces_id_tenant_summary",
+        "x-implementation": "planned",
+        "description": "Service-to-service read only at bound cluster; unavailable is distinct from zero. No owner impersonation or default-cluster fallback.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/workspaces/{id}/recheck": {
+      "post": {
+        "operationId": "post__admin_workspaces_id_recheck",
+        "x-implementation": "planned",
+        "description": "",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "support-reconcile",
+        "responses": {
+          "202": {
+            "description": "Accepted for background work; not a completed repair.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecheckResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Persist this UUID through retries and reload. Same actor+operation+key with different payload returns 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/alerts/{id}/acknowledge": {
+      "post": {
+        "operationId": "post__admin_alerts_id_acknowledge",
+        "x-implementation": "planned",
+        "description": "Acknowledge never resolves measurements or reopens admission.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "infra-operate",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Persist this UUID through retries and reload. Same actor+operation+key with different payload returns 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/support/lookup": {
+      "post": {
+        "operationId": "post__support_lookup",
+        "x-implementation": "implemented-foundation",
+        "description": "Existing canonical live-admin authority; receipt verification and redacted bounded history.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "platform-read",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportLookup"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/support/reconcile": {
+      "post": {
+        "operationId": "post__support_reconcile",
+        "x-implementation": "implemented-foundation",
+        "description": "Existing routingVersion contract retained. V3 command receipts are a planned extension, not currently claimed implemented.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "x-capability": "support-reconcile",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportReconcile"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Stable error; no SQL detail, token, raw provider payload or customer email.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message",
+          "requestId"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]+$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Live": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "alive"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Ready": {
+        "type": "object",
+        "required": [
+          "status",
+          "schemaVersion"
+        ],
+        "properties": {
+          "status": {
+            "const": "ready"
+          },
+          "schemaVersion": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Page": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Signup": {
+        "type": "object",
+        "required": [
+          "slug",
+          "email",
+          "displayName"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,47}$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignupResult": {
+        "type": "object",
+        "required": [
+          "slug",
+          "expiresAt",
+          "path"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/app/"
+          }
+        }
+      },
+      "Provision": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "hotelName": {
+            "type": "string"
+          },
+          "hotelAddress": {
+            "type": "string"
+          },
+          "hotelPhone": {
+            "type": "string"
+          },
+          "hotelEmail": {
+            "type": "string"
+          },
+          "totalRooms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": true,
+        "x-behavior": "Only listed business fields forwarded; owner/email/role/subscription/IDs are server supplied."
+      },
+      "ProvisionResult": {
+        "type": "object",
+        "required": [
+          "success",
+          "tenant_id",
+          "hotel_id",
+          "idempotent"
+        ],
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hotel_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idempotent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Bootstrap": {
+        "type": "object",
+        "required": [
+          "version",
+          "workspace",
+          "cluster"
+        ],
+        "properties": {
+          "version": {
+            "const": 1
+          },
+          "workspace": {
+            "type": "object",
+            "required": [
+              "id",
+              "slug",
+              "displayName",
+              "tenantId",
+              "status",
+              "routingVersion",
+              "reservationExpiresAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "tenantId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "status": {
+                "enum": [
+                  "reserved",
+                  "provisioning",
+                  "active"
+                ]
+              },
+              "routingVersion": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "reservationExpiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          },
+          "cluster": {
+            "type": "object",
+            "required": [
+              "id",
+              "url",
+              "publishableKey",
+              "vapidPublicKey"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "publishableKey": {
+                "type": "string"
+              },
+              "vapidPublicKey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "required": [
+          "cpuUsedPercent",
+          "memoryAvailableBytes",
+          "memoryTotalBytes",
+          "dataDiskFreeBytes",
+          "dataDiskTotalBytes",
+          "dataDiskInodeFreePercent",
+          "dbConnectionsUsed",
+          "dbConnectionBudget"
+        ],
+        "properties": {
+          "cpuUsedPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "memoryAvailableBytes": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "memoryTotalBytes": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "dataDiskFreeBytes": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "dataDiskTotalBytes": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "dataDiskInodeFreePercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "dbConnectionsUsed": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "dbConnectionBudget": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "required": [
+          "status",
+          "observedAt",
+          "receivedAt",
+          "validUntil",
+          "generation",
+          "metrics",
+          "reasonCodes"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "healthy",
+              "degraded",
+              "unreachable",
+              "unknown"
+            ]
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/Metrics"
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Admission": {
+        "type": "object",
+        "required": [
+          "decision",
+          "reasonCodes",
+          "policyVersion",
+          "evaluatedAt",
+          "healthGeneration"
+        ],
+        "properties": {
+          "decision": {
+            "enum": [
+              "open",
+              "blocked",
+              "manual_closed"
+            ]
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "policyVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "healthGeneration": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          }
+        }
+      },
+      "Cluster": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "rowVersion",
+          "validationState",
+          "hostId",
+          "tenantLimit",
+          "allocatedCount",
+          "health",
+          "admission",
+          "credentialConfigured"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "draining",
+              "offline"
+            ]
+          },
+          "rowVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "validationState": {
+            "enum": [
+              "pending",
+              "valid",
+              "invalid"
+            ]
+          },
+          "hostId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "backendKind": {
+            "enum": [
+              "self_hosted",
+              "managed"
+            ]
+          },
+          "tenantLimit": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "allocatedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "health": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Health"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "admission": {
+            "$ref": "#/components/schemas/Admission"
+          },
+          "credentialConfigured": {
+            "type": "boolean"
+          },
+          "releaseId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "x-no-secret-fields": true
+      },
+      "Command": {
+        "type": "object",
+        "required": [
+          "operation",
+          "expectedVersion",
+          "reason",
+          "payload"
+        ],
+        "properties": {
+          "operation": {
+            "enum": [
+              "close_admission",
+              "open_admission",
+              "set_draining",
+              "update_policy",
+              "validate"
+            ]
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 1000
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "close_admission"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "open_admission"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "set_draining"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "update_policy"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [
+                    "tenantLimit"
+                  ],
+                  "properties": {
+                    "tenantLimit": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    },
+                    "thresholds": {
+                      "type": "object"
+                    },
+                    "reopenMode": {
+                      "enum": [
+                        "manual",
+                        "automatic"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "validate"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CommandResult": {
+        "type": "object",
+        "required": [
+          "commandId",
+          "requestId",
+          "status",
+          "targetVersion",
+          "result"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "succeeded"
+            ]
+          },
+          "targetVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "result": {
+            "type": "object"
+          }
+        }
+      },
+      "RecheckResult": {
+        "type": "object",
+        "required": [
+          "commandId",
+          "jobId",
+          "requestId",
+          "status",
+          "statusUrl"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "const": "queued"
+          },
+          "statusUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SetupStatus": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "step",
+          "nextAction",
+          "lastErrorCode",
+          "requestId"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "step": {
+            "enum": [
+              "waiting_email",
+              "ready_to_setup",
+              "provisioning",
+              "waiting_owner",
+              "needs_review",
+              "retry",
+              "active"
+            ]
+          },
+          "nextAction": {
+            "enum": [
+              "verify_email",
+              "continue_setup",
+              "wait",
+              "contact_support",
+              "open_workspace"
+            ]
+          },
+          "lastErrorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RegisterCluster": {
+        "type": "object",
+        "required": [
+          "id",
+          "hostId",
+          "backendKind",
+          "endpointRef",
+          "credentialRef",
+          "expectedVersion",
+          "reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$"
+          },
+          "hostId": {
+            "type": "string"
+          },
+          "backendKind": {
+            "enum": [
+              "self_hosted",
+              "managed"
+            ]
+          },
+          "endpointRef": {
+            "type": "string"
+          },
+          "credentialRef": {
+            "type": "string"
+          },
+          "expectedVersion": {
+            "const": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportLookup": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 48
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportReconcile": {
+        "type": "object",
+        "required": [
+          "query",
+          "workspaceId",
+          "routingVersion",
+          "reason"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 48
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "routingVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReasonCommand": {
+        "type": "object",
+        "required": [
+          "expectedVersion",
+          "reason"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "Job": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "state",
+          "attempts",
+          "nextAttemptAt",
+          "leaseUntil",
+          "lastErrorCode",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "enum": [
+              "queued",
+              "leased",
+              "retry",
+              "waiting_owner",
+              "needs_review",
+              "succeeded",
+              "cancelled"
+            ]
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "leaseUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastErrorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Workspace": {
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "displayName",
+          "clusterId",
+          "tenantId",
+          "hotelId",
+          "ownerId",
+          "status",
+          "routingVersion",
+          "lastErrorCode",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "clusterId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "hotelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "reserved",
+              "provisioning",
+              "active",
+              "suspended",
+              "migrating",
+              "expired"
+            ]
+          },
+          "routingVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lastErrorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "required": [
+          "id",
+          "clusterId",
+          "type",
+          "source",
+          "actorId",
+          "requestId",
+          "commandId",
+          "createdAt",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "clusterId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "admin",
+              "collector",
+              "admission",
+              "provisioning",
+              "system"
+            ]
+          },
+          "actorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "commandId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "before": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "after": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Alert": {
+        "type": "object",
+        "required": [
+          "id",
+          "resourceId",
+          "type",
+          "severity",
+          "openedAt",
+          "lastSeenAt",
+          "acknowledgedAt",
+          "acknowledgedBy",
+          "resolvedAt",
+          "rowVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "warning",
+              "critical"
+            ]
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "acknowledgedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rowVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "Backup": {
+        "type": "object",
+        "required": [
+          "id",
+          "clusterId",
+          "scope",
+          "backupId",
+          "manifestHash",
+          "verificationState",
+          "completedAt",
+          "restoreTestAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clusterId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "enum": [
+              "directory",
+              "cluster",
+              "objects",
+              "bundle"
+            ]
+          },
+          "backupId": {
+            "type": "string"
+          },
+          "manifestHash": {
+            "type": "string"
+          },
+          "verificationState": {
+            "enum": [
+              "pending",
+              "verified",
+              "failed"
+            ]
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "restoreTestAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Overview": {
+        "type": "object",
+        "required": [
+          "asOf",
+          "clusterCount",
+          "admissionOpenCount",
+          "workspaceCounts",
+          "openCriticalAlerts",
+          "staleClusterIds"
+        ],
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clusterCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "admissionOpenCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "workspaceCounts": {
+            "type": "object",
+            "properties": {
+              "reserved": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "provisioning": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "active": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "suspended": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "migrating": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "expired": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "openCriticalAlerts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "staleClusterIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "TenantSummary": {
+        "type": "object",
+        "required": [
+          "clusterId",
+          "tenantId",
+          "status",
+          "observedAt",
+          "tenant",
+          "errorCode"
+        ],
+        "properties": {
+          "clusterId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "tenant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "subscriptionStatus",
+                  "trialEndsAt",
+                  "hotelCount",
+                  "staffCount",
+                  "roomCount"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "subscriptionStatus": {
+                    "type": "string"
+                  },
+                  "trialEndsAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "hotelCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "staffCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "roomCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkspaceDetails": {
+        "type": "object",
+        "required": [
+          "workspace",
+          "receipt",
+          "job",
+          "timeline"
+        ],
+        "properties": {
+          "workspace": {
+            "$ref": "#/components/schemas/Workspace"
+          },
+          "receipt": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "verified",
+                  "missing",
+                  "conflict",
+                  "unavailable"
+                ]
+              },
+              "binding": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "workspace_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "tenant_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "hotel_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "owner_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Job"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeline": {
+            "type": "object",
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClusterPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/Cluster"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkspacePage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/Workspace"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BackupPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/Backup"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "LegacyHealth": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "x-null-and-failure-policy": "Missing values are null, never zero; stale metrics stay visible and disable commands as appropriate. API totals use server aggregates. Admin fields never include credential values, raw email hashes or signed backup URLs."
+}

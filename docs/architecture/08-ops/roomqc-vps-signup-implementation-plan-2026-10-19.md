@@ -1,5 +1,10 @@
 # RoomQC — kế hoạch quản lý VPS và đăng ký tự động
 
+Theo dõi thực hiện: [tiến độ và bằng chứng](roomqc-vps-signup-progress.md),
+[baseline](roomqc-vps-signup-baseline.md), [ADR](../adr/roomqc-control-v3.md),
+[runbook local](roomqc-control-local-runbook.md). Trạng thái trong plan là phạm vi
+phải đạt; chỉ tracker mới ghi phần đã kiểm chứng, không suy ra hoàn tất từ thiết kế.
+
 Ngày lập: 19/10/2026, Asia/Bangkok. Baseline tích hợp: `b95fc86`.
 Trạng thái: **kế hoạch chuẩn bị triển khai; các phần bổ sung bên dưới chưa được thực hiện**.
 Phạm vi: khách tự đăng ký trên RoomQC, được cấp không gian trong cụm do RoomQC vận hành;

@@ -19,7 +19,7 @@ async function readBody(req) {
   catch { throw new ControlError(400,'INVALID_JSON','Nội dung yêu cầu không hợp lệ.'); }
 }
 
-export function createControlServer({config,store,gateway}) {
+export function createControlServer({config,store,gateway,lifecycle={draining:false}}) {
   const buckets=new Map();
   return createServer(async (req,res) => {
     const requestId=randomUUID();
@@ -28,11 +28,22 @@ export function createControlServer({config,store,gateway}) {
     res.setHeader('Content-Type','application/json; charset=utf-8');
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('X-Request-Id',requestId);
-    const send=(status,data) => { res.writeHead(status); res.end(JSON.stringify(data)); };
+    const send=(status,data) => {
+      if(lifecycle.draining)res.setHeader('Connection','close');
+      res.writeHead(status);res.end(JSON.stringify(data));
+    };
     try {
       const path=new URL(req.url,'http://control.invalid').pathname;
-      if (req.method==='GET' && path===`${prefix}/healthz`) {
-        await store.pool.query('SELECT 1'); send(200,{status:'ok'}); return;
+      if (req.method==='GET' && path===`${prefix}/livez`) {
+        send(200,{status:'alive'}); return;
+      }
+      if(lifecycle.draining) {
+        res.setHeader('Connection','close');
+        throw new ControlError(503,'CONTROL_DRAINING','Dịch vụ đang khởi động lại. Vui lòng thử lại.');
+      }
+      if (req.method==='GET' && [`${prefix}/healthz`,`${prefix}/readyz`].includes(path)) {
+        const readiness=await store.readiness();
+        send(200,path.endsWith('/healthz')?{status:'ok'}:readiness);return;
       }
       if (!['GET','POST'].includes(req.method)) throw new ControlError(405,'METHOD_NOT_ALLOWED','Phương thức không hỗ trợ.');
       // Do not trust forwarded IP headers from arbitrary clients. Front proxy adds a shared limiter as well.

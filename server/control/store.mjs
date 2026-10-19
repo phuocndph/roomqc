@@ -1,6 +1,6 @@
 import { createHmac, randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import pg from 'pg';
+import { migrateDirectory, importInitialRegistry, migrationManifest, verifyHistory } from './migrate.mjs';
 
 export class ControlError extends Error {
   constructor(status, code, message) { super(message); this.status = status; this.code = code; }
@@ -27,22 +27,40 @@ export function validateSlug(value) {
 export class ControlStore {
   constructor(config) {
     this.config = config;
-    this.pool = new pg.Pool({ connectionString: config.databaseUrl, max: 5,
-      connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000, statement_timeout: 8000 });
+    this.pool = new pg.Pool({ connectionString: config.databaseUrl, max: config.poolMax ?? 5,
+      connectionTimeoutMillis: 3000, idleTimeoutMillis: 30000, statement_timeout: 8000,
+      idle_in_transaction_session_timeout:10000,application_name:'roomqc-control' });
     this.pool.on('error', () => console.error('Control database idle connection failed'));
   }
   hashEmail(email) { return createHmac('sha256', this.config.emailKey).update(email.trim().toLowerCase()).digest('hex'); }
   async migrate() {
-    await this.pool.query(await readFile(new URL('./schema.sql', import.meta.url), 'utf8'));
-    for (const cluster of this.config.clusters) {
-      // Never silently redirect existing workspaces to a different backend.
-      const existing = await this.pool.query('SELECT api_url FROM roomqc_control.clusters WHERE id=$1', [cluster.id]);
-      if (existing.rows[0] && existing.rows[0].api_url !== cluster.url) throw new Error('Cluster endpoint changed; explicit migration is required');
-      await this.pool.query(`INSERT INTO roomqc_control.clusters(id,api_url,publishable_key,vapid_public_key,max_workspaces)
-        VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET
-        publishable_key=excluded.publishable_key,vapid_public_key=excluded.vapid_public_key,max_workspaces=excluded.max_workspaces`,
-      [cluster.id, cluster.url, cluster.publishableKey, cluster.vapidPublicKey, cluster.maxWorkspaces]);
+    const result=await migrateDirectory(this.pool);
+    await importInitialRegistry(this.pool,this.config.clusters);
+    return result;
+  }
+  async readiness() {
+    this.manifest ??= migrationManifest();
+    const manifest=await this.manifest;
+    if(await verifyHistory(this.pool,manifest)!==manifest.length) throw new ControlError(503,'CONTROL_SCHEMA_PENDING','Database điều phối chưa hoàn tất nâng cấp.');
+    const shape=await this.pool.query(`SELECT count(*)::integer AS present FROM unnest($1::text[]) AS expected(name)
+      WHERE to_regclass('roomqc_control.'||name) IS NOT NULL`,[[
+      'hosts','clusters','workspaces','attempts','support_actions','cluster_policies','cluster_health_current',
+      'cluster_admission_current','control_commands','cluster_events','provisioning_jobs','signup_affinities',
+      'signup_affinity_conflicts','alerts','backup_runs',
+    ]]);
+    if(shape.rows[0].present!==15)throw new ControlError(503,'CONTROL_SCHEMA_INCOMPLETE','Cấu trúc database điều phối chưa đầy đủ.');
+    const {rows}=await this.pool.query(`SELECT id,api_url,publishable_key,vapid_public_key FROM roomqc_control.clusters WHERE id=ANY($1::text[])`,[this.config.clusters.map(c=>c.id)]);
+    if(this.config.clusters.some(c=>!rows.some(r=>r.id===c.id && r.api_url===c.url && r.publishable_key===c.publishableKey && r.vapid_public_key===c.vapidPublicKey))) {
+      throw new ControlError(503,'CONTROL_REGISTRY_MISMATCH','Cấu hình cụm chưa được đồng bộ.');
     }
+    const privilege=await this.pool.query(`SELECT r.rolsuper OR r.rolcreatedb OR r.rolcreaterole
+      OR has_schema_privilege(current_user,'roomqc_control','CREATE')
+      OR has_table_privilege(current_user,'roomqc_control.schema_migrations','INSERT,UPDATE,DELETE')
+      OR has_table_privilege(current_user,'roomqc_control.attempts','UPDATE,DELETE')
+      OR has_table_privilege(current_user,'roomqc_control.cluster_events','UPDATE,DELETE') AS excessive
+      FROM pg_roles r WHERE r.rolname=current_user`);
+    if(privilege.rows[0].excessive) throw new ControlError(503,'CONTROL_RUNTIME_PRIVILEGES','Dịch vụ phải dùng tài khoản database runtime riêng.');
+    return {status:'ready',schemaVersion:manifest.at(-1).version};
   }
   async reserve({ slug, email, displayName }, requestId) {
     validateSlug(slug);
