@@ -143,6 +143,12 @@ Test: scrape thật, thiếu quyền/down/password rotate, bên ngoài không tr
 File mới dự kiến: `server/control/workers/health-worker.mjs`, config/entrypoint,
 compose worker, tests. Không nhét vòng scrape vào handler HTTP.
 
+Cập nhật M05: đã có worker/config/entrypoint/compose opt-in và directory migration
+`0006` cho desired-target binding. Runtime thường trực chưa thay schema/image;
+entrypoint thiếu adapter M06 sẽ fail-closed, không sinh mẫu khỏe. Xem
+[runbook worker](roomqc-health-worker-runbook.md). M05 vẫn partial đến khi đạt
+full probe/backend pipeline + fault/restart/10-phút drill ở M06/M10.
+
 1. Pool riêng role metrics, budget tổng gồm API/reconcile/monitor/exporter; vòng 30s
    có jitter, không chồng vòng trên cùng instance. Giới hạn số target đồng thời.
 2. Collect/probe ngoài transaction, record ngắn qua HealthStore; stale sweep vẫn

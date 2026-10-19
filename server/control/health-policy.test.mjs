@@ -15,7 +15,8 @@ function walk(start,end,previous={},metrics={},probes={},version=1){let result;f
 function readyRow(){return {status:'active',credential_configured:true,validation_state:'valid',release_id:'release-v3',schema_manifest_hash:'a'.repeat(64),
   release_compatible:true,frontend_ready:true,frontend_current:true,manual_closed:false,operator_reopen_required:false,policy_version:1,
   health_valid_until:new Date(base+120000).toISOString(),health_observed_at:new Date(base).toISOString(),metric_status:'healthy',
-  evaluator_state:{policyVersion:1,blockedReasons:[]},backup_completed_at:new Date(base).toISOString(),backup_restore_test_at:new Date(base).toISOString(),
+  telemetry_target_fingerprint:'c'.repeat(64),telemetry_inventory_matches:true,
+  evaluator_state:{policyVersion:1,sampleSchemaVersion:2,targetFingerprint:'c'.repeat(64),blockedReasons:[]},backup_completed_at:new Date(base).toISOString(),backup_restore_test_at:new Date(base).toISOString(),
   backup_manifest_hash:'b'.repeat(64),allocated_count:4,tenant_limit:5,source_generation:3}}
 function multi(at=0,disks=[{id:'database',freeBytes:100*gib,totalBytes:200*gib,inodeFreePercent:80},
   {id:'storage',freeBytes:60*gib,totalBytes:120*gib,inodeFreePercent:80}],extra={}){
@@ -138,6 +139,8 @@ test('database connection saturation and probe failures require their own sustai
 test('admission fails closed for every required gate and opening cannot ignore metrics, backup or capacity',()=>{
   const row=readyRow(),decision=admissionDecision(row,{now:base});assert.equal(decision.decision,'open');assert.equal(decision.healthGeneration,3);
   const conditions=[['status','draining','CLUSTER_DRAINING'],['status','offline','CLUSTER_OFFLINE'],['credential_configured',false,'CREDENTIAL_MISSING'],
+    ['telemetry_target_fingerprint',null,'METRICS_TARGET_UNCONFIGURED'],['telemetry_inventory_matches',false,'METRICS_TARGET_CONFIGURATION_CHANGED'],
+    ['evaluator_state',{sampleSchemaVersion:2,targetFingerprint:'d'.repeat(64)},'METRICS_TARGET_CHANGED'],
     ['release_compatible',false,'RELEASE_UNVERIFIED'],['frontend_current',false,'FRONTEND_NOT_READY'],['manual_closed',true,'MANUAL_CLOSED'],
     ['operator_reopen_required',true,'OPERATOR_REOPEN_REQUIRED'],['health_valid_until',new Date(base).toISOString(),'METRICS_STALE'],
     ['evaluator_state',{policyVersion:2,blockedReasons:[]},'METRICS_POLICY_CHANGED'],['evaluator_state',{},'METRICS_UNVERIFIED'],

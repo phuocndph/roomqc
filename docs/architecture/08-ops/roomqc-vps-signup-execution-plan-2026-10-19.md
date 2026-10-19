@@ -912,3 +912,17 @@ chặn code/test local, nhưng chặn công bố đã nghiệm thu môi trườn
 Dự toán 21–33 ngày công tại mục 3 là khoảng kế hoạch còn lại ở mốc trước; phải
 re-estimate sau M04/M06 và sau kiểm thử hai backend. Không đổi thành lịch cam kết,
 không chia theo số nhánh; chờ external và ít nhất 7 ngày pilot tính riêng.
+
+### 17.8. Cập nhật thực hiện M05 — không thay scope/gate
+
+Đợt [M05 local](roomqc-p2-health-worker-local-2026-10-19.md) thêm worker/config/
+entrypoint/compose opt-in và directory target binding `0006`; 87/87 test + process
+offline SIGTERM/restart đã đạt. Runtime vẫn `0005`, signup đóng; M05/T06 partial,
+không coi worker có source là hoàn tất monitoring. [Runbook worker](roomqc-health-worker-runbook.md)
+ghi điều kiện bật, quyền, budget và thao tác đổi target.
+
+Thứ tự tiếp theo: M06/T08 đủ release manifest + năm probe có ý nghĩa trên full
+Supabase sandbox riêng; khép pipeline thật/restart/kill/DB down-up/10 phút drill
+M05/M10; rồi alert lifecycle M07/M08 và external M09. Legacy cluster chưa có host
+mapping phải xử lý bằng quy trình audit trước binding, không tự điền host theo tên.
+Tiếp tục P3–P8 và đủ 70 case; 87 test local không phải số acceptance đã đóng.

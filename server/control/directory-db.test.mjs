@@ -13,6 +13,7 @@ import { startControl } from './server.mjs';
 import {fixtureConfig,seedOperationalCluster} from './test-fixtures.mjs';
 import {registerAdminCases} from './admin-cases.mjs';
 import {registerTelemetryCases} from './telemetry-cases.mjs';
+import {registerTelemetryBindingCases} from './telemetry-binding-cases.mjs';
 
 const enabled=process.env.ROOMQC_CONTROL_DB_TEST==='true';
 const run=randomBytes(6).toString('hex'),name=`roomqc-control-dbtest-${run}`;
@@ -34,7 +35,8 @@ before(async()=>{
   if(!enabled)return;
   try{
     docker(['run','-d','--name',name,'--label',`roomqc.control-directory-test=${run}`,'--env','POSTGRES_PASSWORD',
-      '--tmpfs','/var/lib/postgresql/data:rw,nosuid,size=256m','-p','127.0.0.1::5432',image]);created=true;
+      // Each case owns a separate database; reserve space for the expanded suite.
+      '--tmpfs','/var/lib/postgresql/data:rw,nosuid,size=512m','-p','127.0.0.1::5432',image]);created=true;
     const info=JSON.parse(docker(['inspect',name]))[0];
     base=`postgresql://postgres:${password}@127.0.0.1:${info.NetworkSettings.Ports['5432/tcp'][0].HostPort}/postgres`;
     admin=new pg.Pool({connectionString:base,max:2});pools.push(admin);
@@ -181,3 +183,4 @@ dbtest('HTTP liveness remains available with an unmigrated database; readiness c
 
 registerAdminCases({dbtest,database,password,cluster});
 registerTelemetryCases({dbtest,database,password,cluster});
+registerTelemetryBindingCases({dbtest,database,password,cluster});

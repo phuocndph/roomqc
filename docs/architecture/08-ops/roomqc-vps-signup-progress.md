@@ -27,7 +27,7 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P1-02 | API + DB local đã chạy | Volume/restart/proxy/health/shutdown đạt; worker được nối ở P4, chưa tính worker runtime đã triển khai |
 | P1-03 | Một phần đã kiểm chứng local | Command/version/receipt/audit và HTTP authority boundary đạt; còn Auth thật/revoke/MFA và support/recheck identity |
 | P2-01 | Một phần đã kiểm chứng local | Exporter/Prometheus riêng tư đã chạy trên DB fixture, đối chiếu filesystem/OS/DB và lỗi quyền/password/down; chưa có đủ năm service probe hoặc bằng chứng Linux staging |
-| P2-02 | Một phần đã kiểm chứng local | Evaluator/HealthStore + sample v2 multi-mount/target identity và source adapter đã test; chưa có worker/exporter/probes thường trực hoặc metric VPS |
+| P2-02 | Một phần đã kiểm chứng local | Worker/config/entrypoint/target binding và timeout/race/stale đã test; chưa bật thường trực, thiếu M06/T08/full backend pipeline và metric VPS |
 | P2-03 | Chưa triển khai | Deduplicate/ack/resolve/heartbeat ngoài máy |
 | P3-01 | Một phần đã kiểm chứng local | Registry draft/secret resolver/pinned DNS có test; thiếu manifest RPC/full validation/rotation/TLS môi trường thật |
 | P3-02 | Một phần đã kiểm chứng local | Gate/reservation race/close/version/expiry/affinity đạt trên fixture directory; chưa E2E backend, signup vẫn đóng |
@@ -49,6 +49,15 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P8-01 | Chưa triển khai | Pilot có người dùng được chọn và ít nhất 7 ngày quan sát |
 
 ## Bằng chứng kiểm chứng mới
+
+Đợt M05 worker/target binding: suite cuối **87/87 test đạt, 0 fail, 0 skip**, có
+log đầy đủ và manifest/hash riêng tại [báo cáo M05](roomqc-p2-health-worker-local-2026-10-19.md).
+Hai worker trên DB fixture đã kiểm tra đổi target khi collect, mẫu cũ bị reject;
+definition scope/mount/budget, audit rollback, role boundary và DB transaction
+timeout thật. Process container offline đã test SIGTERM/restart và fail-closed.
+M05 vẫn partial: entrypoint thiếu adapter M06 không được ready hoặc tạo mẫu khỏe;
+còn full service pipeline và fault/10-phút drill. Source có migration `0006`,
+runtime vẫn `0005`, image thường trực không đổi/signup đóng. [Runbook worker](roomqc-health-worker-runbook.md).
 
 Đợt M04 exporter/config: suite control **66/66 test đạt, 0 skip**, gồm stack
 Prometheus/node_exporter/postgres_exporter và PostgreSQL disposable thực. Nguồn đo
@@ -129,7 +138,8 @@ máy, hiệu năng VPS, browser E2E hoặc hành vi pilot.
 ## Thứ tự làm tiếp
 
 1. P2: exporter + collector/multi-mount + cảnh báo, đối chiếu metric với nguồn thật.
-   Multi-mount/source đã có test; tiếp theo M04/M05/M06 (runtime/exporter/probes),
+   M04 local và phần source/runtime M05 đã test; tiếp theo M06/T08 đủ probe/manifest,
+   rồi khép pipeline và fault/drill M05/M10,
    rồi M07/M08/M09 (alert/delivery/external heartbeat), theo run sheet P2.
 2. P1-03/P3: Auth thật, manifest RPC/full validation và credential/TLS rotation.
 3. P3: nghiệm thu gate đã nối DB qua backend thật; mới xét mở signup trong sandbox.

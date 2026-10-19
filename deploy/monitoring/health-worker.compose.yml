@@ -1,0 +1,41 @@
+{
+  "name": "${ROOMQC_HEALTH_PROJECT:?owned worker project required}",
+  "services": {
+    "health-worker": {
+      "profiles": ["health-worker"],
+      "image": "${ROOMQC_HEALTH_IMAGE:?reviewed immutable worker image required}",
+      "command": ["node", "workers/health-runtime.mjs"],
+      "user": "1000:1000",
+      "read_only": true,
+      "cap_drop": ["ALL"],
+      "security_opt": ["no-new-privileges:true"],
+      "init": true,
+      "restart": "unless-stopped",
+      "stop_grace_period": "25s",
+      "environment": {
+        "NODE_ENV": "production",
+        "ROOMQC_HEALTH_CONFIG_FILE": "/etc/roomqc/health.json",
+        "ROOMQC_HEALTH_DATABASE_URL_FILE": "/run/secrets/metrics-dsn"
+      },
+      "volumes": [{"type": "bind", "source": "${ROOMQC_HEALTH_CONFIG_FILE:?approved worker metadata required}",
+        "target": "/etc/roomqc/health.json", "read_only": true, "bind": {"create_host_path": false}}],
+      "secrets": ["metrics-dsn"],
+      "tmpfs": ["/tmp:rw,nosuid,noexec,size=8m"],
+      "networks": ["directory", "metrics"],
+      "mem_limit": "256m",
+      "cpus": "0.5",
+      "pids_limit": 64,
+      "labels": {"roomqc.health-stack": "${ROOMQC_HEALTH_PROJECT:?owned worker project required}"},
+      "logging": {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}},
+      "healthcheck": {
+        "test": ["CMD", "node", "-e", "fetch('http://127.0.0.1:8093/readyz',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
+        "interval": "30s", "timeout": "3s", "retries": 3, "start_period": "30s"
+      }
+    }
+  },
+  "secrets": {"metrics-dsn": {"file": "${ROOMQC_HEALTH_DATABASE_URL_FILE:?dedicated metrics secret required}"}},
+  "networks": {
+    "directory": {"external": true, "name": "${ROOMQC_HEALTH_DIRECTORY_NETWORK:?approved directory network required}"},
+    "metrics": {"external": true, "name": "${ROOMQC_HEALTH_METRICS_NETWORK:?approved private metrics network required}"}
+  }
+}

@@ -111,6 +111,11 @@ export function admissionDecision(row,{now=Date.now(),ignoreManual=false,ignoreR
   if(row.validation_state!=='valid'||!row.release_id||!row.schema_manifest_hash||row.release_compatible!==true)reasons.push('RELEASE_UNVERIFIED');
   if(!row.frontend_ready||row.frontend_current!==true)reasons.push('FRONTEND_NOT_READY');
   if(!ignoreManual&&row.manual_closed)reasons.push('MANUAL_CLOSED');
+  if(!row.telemetry_target_fingerprint)reasons.push('METRICS_TARGET_UNCONFIGURED');
+  else{
+    if(row.telemetry_inventory_matches!==true)reasons.push('METRICS_TARGET_CONFIGURATION_CHANGED');
+    if(row.evaluator_state?.sampleSchemaVersion!==2||row.evaluator_state?.targetFingerprint!==row.telemetry_target_fingerprint)reasons.push('METRICS_TARGET_CHANGED');
+  }
   const expiry=Date.parse(row.health_valid_until),observed=Date.parse(row.health_observed_at);
   if(!Number.isFinite(expiry)||expiry<=now||!Number.isFinite(observed)||observed>now+5000)reasons.push('METRICS_STALE');
   else{

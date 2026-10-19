@@ -2,6 +2,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {ControlError,uuidPattern} from './errors.mjs';
 import {admissionDecision,policyThresholds} from './health-policy.mjs';
 import {resolveCredential} from './registry.mjs';
+import {telemetryTargetFingerprint} from './telemetry-source.mjs';
 
 const capabilities=new Set(['platform-read','infra-operate','support-reconcile']);
 export function requireCapability(actor,capability,config){
@@ -15,11 +16,15 @@ function exact(value,fields){return value&&typeof value==='object'&&!Array.isArr
 const stable=value=>value&&typeof value==='object'?(Array.isArray(value)?value.map(stable):Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])]))):value;
 export function clusterCommand(body,key,targetId){
   if(!uuidPattern.test(key||'')||!exact(body,['operation','expectedVersion','reason','payload'])||!Number.isSafeInteger(body.expectedVersion)||body.expectedVersion<1
-    ||typeof body.reason!=='string'||body.reason.trim().length<5||body.reason.trim().length>1000||!exact(body.payload,body.operation==='update_policy'?['tenantLimit','thresholds','reopenMode']:[])
-    ||!['close_admission','open_admission','set_draining','set_serving','update_policy','validate'].includes(body.operation)){
+    ||typeof body.reason!=='string'||body.reason.trim().length<5||body.reason.trim().length>1000||!exact(body.payload,body.operation==='update_policy'?['tenantLimit','thresholds','reopenMode']:body.operation==='bind_telemetry_target'?['targetFingerprint']:[])
+    ||!['close_admission','open_admission','set_draining','set_serving','update_policy','validate','bind_telemetry_target'].includes(body.operation)){
     throw new ControlError(400,'INVALID_COMMAND','Yêu cầu cần mã lệnh ổn định, phiên bản, lý do và nội dung hợp lệ.');
   }
   let payload={};
+  if(body.operation==='bind_telemetry_target'){
+    if(typeof body.payload.targetFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(body.payload.targetFingerprint))throw new ControlError(400,'INVALID_TELEMETRY_TARGET','Nguồn đo chưa được duyệt.');
+    payload={targetFingerprint:body.payload.targetFingerprint};
+  }
   if(body.operation==='update_policy'){
     if(!Number.isSafeInteger(body.payload.tenantLimit)||body.payload.tenantLimit<1||body.payload.tenantLimit>1000000
       ||(body.payload.reopenMode!==undefined&&!['manual','automatic'].includes(body.payload.reopenMode)))throw new ControlError(400,'INVALID_POLICY','Hạn mức hoặc chế độ khôi phục không hợp lệ.');
@@ -44,18 +49,21 @@ export function withCredential(config,row){
   let configured=true;try{resolveCredential(config,row)}catch{configured=false}
   const entry=config.inventory?.get(row.inventory_ref||row.id);
   return {...row,credential_configured:configured,release_compatible:!!entry?.releaseId&&entry.releaseId===row.release_id&&entry.schemaManifestHash===row.schema_manifest_hash,
-    frontend_current:entry?.frontendReady===true};
+    frontend_current:entry?.frontendReady===true,
+    telemetry_inventory_matches:!!entry?.telemetryTarget&&telemetryTargetFingerprint(entry.telemetryTarget)===row.telemetry_target_fingerprint};
 }
 export function publicCluster(row,config,options){
   const value=withCredential(config,row),admission=admissionDecision(value,options);
   const stale=!Number.isFinite(Date.parse(row.health_valid_until))||Date.parse(row.health_valid_until)<=(options?.now??Date.now());
+  const invalidHealth=admission.reasonCodes.filter(code=>['METRICS_TARGET_UNCONFIGURED','METRICS_TARGET_CONFIGURATION_CHANGED',
+    'METRICS_TARGET_CHANGED','METRICS_POLICY_CHANGED','METRICS_UNVERIFIED','METRICS_STALE'].includes(code));
   return {id:row.id,status:row.status,rowVersion:Number(row.row_version),validationState:row.validation_state,hostId:row.host_id,
     backendKind:row.backend_kind,tenantLimit:row.tenant_limit,allocatedCount:row.allocated_count,credentialConfigured:value.credential_configured,
-    releaseId:row.release_id,admission,health:row.health_observed_at?{status:stale?'unknown':row.metric_status,observedAt:row.health_observed_at,receivedAt:row.received_at,
+    releaseId:row.release_id,admission,health:row.health_observed_at?{status:stale||invalidHealth.length?'unknown':row.metric_status,observedAt:row.health_observed_at,receivedAt:row.received_at,
       validUntil:row.health_valid_until,generation:Number(row.source_generation),metrics:row.normalized_values,
       schemaVersion:row.evaluator_state?.sampleSchemaVersion??1,measurementScope:row.evaluator_state?.measurementScope??null,
       dataDisks:row.evaluator_state?.dataDisks?.map(({id,freeBytes,totalBytes,inodeFreePercent})=>({id,freeBytes,totalBytes,inodeFreePercent}))??null,
-      reasonCodes:[...new Set([...(row.reason_codes??[]),...(stale?['METRICS_STALE']:[])])]}:null};
+      reasonCodes:[...new Set([...(row.reason_codes??[]),...invalidHealth,...(stale?['METRICS_STALE']:[])])]}:null};
 }
 
 export class AdminDirectory {
@@ -85,6 +93,16 @@ export class AdminDirectory {
       await client.query(`INSERT INTO roomqc_control.control_commands(id,actor_id,authority_cluster_id,operation,target_id,idempotency_key,payload_hash,expected_version,reason,status)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'started')`,[commandId,actor.id,actor.clusterId,command.operation,command.targetId,command.key,command.payloadHash,command.expectedVersion,command.reason]);
       switch(command.operation){
+        case 'bind_telemetry_target':{
+          const entry=this.config.inventory?.get(before.inventory_ref||before.id),target=entry?.telemetryTarget;
+          if(!target||target.clusterId!==before.id||target.hostId!==entry.hostId||entry.hostId!==before.host_id||target.environment!==entry.environment
+            ||telemetryTargetFingerprint(target)!==command.payload.targetFingerprint){
+            throw new ControlError(409,'TELEMETRY_TARGET_NOT_APPROVED','Nguồn đo đã thay đổi hoặc chưa có trong cấu hình được duyệt.');
+          }
+          await client.query('UPDATE roomqc_control.clusters SET telemetry_target_fingerprint=$2,telemetry_target_definition=$3::jsonb WHERE id=$1',
+            [before.id,command.payload.targetFingerprint,JSON.stringify(target)]);
+          break;
+        }
         case 'close_admission':
           await client.query('UPDATE roomqc_control.cluster_policies SET manual_closed=true,updated_at=now() WHERE cluster_id=$1',[before.id]);break;
         case 'open_admission':{
@@ -115,8 +133,11 @@ export class AdminDirectory {
       }
       await client.query('UPDATE roomqc_control.clusters SET row_version=row_version+1 WHERE id=$1',[before.id]);
       const after=await this.cluster(before.id,client),result={status:'succeeded',targetVersion:Number(after.row_version),result:publicCluster(after,this.config)};
+      const binding=row=>({fingerprint:row.telemetry_target_fingerprint??null,version:Number(row.telemetry_target_version),boundAt:row.telemetry_target_bound_at??null});
+      const beforeAudit={...publicCluster(before,this.config),...(command.operation==='bind_telemetry_target'?{telemetryBinding:binding(before)}:{})};
+      const afterAudit={...result.result,...(command.operation==='bind_telemetry_target'?{telemetryBinding:binding(after)}:{})};
       await client.query(`INSERT INTO roomqc_control.cluster_events(cluster_id,type,before_state,after_state,actor_id,source,request_id,command_id)
-        VALUES($1,$2,$3::jsonb,$4::jsonb,$5,'admin',$6,$7)`,[before.id,command.operation,JSON.stringify(publicCluster(before,this.config)),JSON.stringify(result.result),actor.id,requestId,commandId]);
+        VALUES($1,$2,$3::jsonb,$4::jsonb,$5,'admin',$6,$7)`,[before.id,command.operation,JSON.stringify(beforeAudit),JSON.stringify(afterAudit),actor.id,requestId,commandId]);
       await client.query("UPDATE roomqc_control.control_commands SET status='succeeded',result=$2::jsonb,finished_at=now() WHERE id=$1",[commandId,JSON.stringify(result)]);
       await client.query('COMMIT');return {...result,commandId};
     }catch(error){await client.query('ROLLBACK');throw error}finally{client.release()}

@@ -45,7 +45,7 @@ test('OpenAPI references and operations are unique, admin routes require bearer 
     if(path.startsWith('/admin/')){assert.deepEqual(operation.security,[{Bearer:[]}]);assert.ok(operation['x-capability'])}
   }
   for(const operation of contract.components.schemas.Command.properties.operation.enum){
-    const payload=operation==='update_policy'?{tenantLimit:10}:{};
+    const payload=operation==='update_policy'?{tenantLimit:10}:operation==='bind_telemetry_target'?{targetFingerprint:'a'.repeat(64)}:{};
     assert.equal(clusterCommand({...input,operation,payload},randomUUID(),'cluster-a').operation,operation);
   }
   const parameters=contract.paths['/admin/workspaces/{id}'].get.parameters.map(p=>p.name);

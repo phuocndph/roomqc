@@ -3,13 +3,16 @@ import {randomUUID} from 'node:crypto';
 import pg from 'pg';
 import {HealthStore} from './telemetry.mjs';
 import {migrateDirectory,importInitialRegistry} from './migrate.mjs';
-import {fixtureConfig,seedOperationalCluster} from './test-fixtures.mjs';
+import {fixtureConfig,seedOperationalCluster,fixtureTarget} from './test-fixtures.mjs';
+import {telemetryTargetFingerprint} from './telemetry-source.mjs';
 import {ControlStore} from './store.mjs';
 import {clusterCommand,publicCluster} from './admin.mjs';
 
-function sample(at,metrics={}){return {observedAt:new Date(at).toISOString(),metrics:{cpuUsedPercent:30,memoryAvailableBytes:8*1024**3,memoryTotalBytes:16*1024**3,
+function sample(at,metrics={}){const m={cpuUsedPercent:30,memoryAvailableBytes:8*1024**3,memoryTotalBytes:16*1024**3,
   dataDiskFreeBytes:100*1024**3,dataDiskTotalBytes:200*1024**3,dataDiskInodeFreePercent:80,dbConnectionsUsed:10,dbConnectionBudget:100,...metrics},
-  probes:{auth:true,rest:true,storage:true,realtime:true,functions:true}}}
+  target=fixtureTarget('cluster-a');return {observedAt:new Date(at).toISOString(),metrics:m,
+    probes:{auth:true,rest:true,storage:true,realtime:true,functions:true},schemaVersion:2,targetFingerprint:telemetryTargetFingerprint(target),
+    measurementScope:target.measurementScope,requiredMountIds:['database'],dataDisks:[{id:'database',freeBytes:m.dataDiskFreeBytes,totalBytes:m.dataDiskTotalBytes,inodeFreePercent:m.dataDiskInodeFreePercent}]}}
 export function registerTelemetryCases({dbtest,database,password,cluster}){
   async function fixture(name){
     const {pool,url}=await database(name);await migrateDirectory(pool);await importInitialRegistry(pool,[cluster]);
@@ -87,8 +90,15 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
   dbtest('multi-mount health: metrics role persists v2 identity/disks through restarts; storage critical blocks only new allocation',async()=>{
     const {pool,metricsPool,api}=await fixture('health_multi');
     try{
+      const target={...fixtureTarget('cluster-a'),dataMounts:[...fixtureTarget('cluster-a').dataMounts,
+        {id:'storage',mountpoint:'/fixture/storage',device:'/dev/sdb1',fstype:'xfs'}]};
+      api.config.inventory.get('cluster-a').telemetryTarget=target;const fingerprint=telemetryTargetFingerprint(target);
+      await pool.query('UPDATE roomqc_control.clusters SET telemetry_target_fingerprint=$1,telemetry_target_definition=$2::jsonb',[fingerprint,JSON.stringify(target)]);
+      await pool.query('ALTER TABLE roomqc_control.clusters DISABLE TRIGGER invalidate_telemetry_target');
+      await pool.query("UPDATE roomqc_control.clusters SET telemetry_target_bound_at=now()-interval '1 hour'");
+      await pool.query('ALTER TABLE roomqc_control.clusters ENABLE TRIGGER invalidate_telemetry_target');
       const now=Date.now();let clock=now-300000,writer=new HealthStore(metricsPool,{clock:()=>clock});
-      const v2=(at,storageFree=60*1024**3)=>({...sample(at),schemaVersion:2,targetFingerprint:'c'.repeat(64),measurementScope:'docker-desktop-vm',
+      const v2=(at,storageFree=60*1024**3)=>({...sample(at),schemaVersion:2,targetFingerprint:fingerprint,measurementScope:'docker-desktop-vm',
         requiredMountIds:['database','storage'],dataDisks:[{id:'database',freeBytes:100*1024**3,totalBytes:200*1024**3,inodeFreePercent:80},
           {id:'storage',freeBytes:storageFree,totalBytes:120*1024**3,inodeFreePercent:80}]});
       for(let i=0;i<=10;i++){
@@ -102,7 +112,7 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
       const before=(await pool.query('SELECT * FROM roomqc_control.workspaces WHERE id=$1',[active.id])).rows[0];
       clock=now+1;await new HealthStore(metricsPool,{clock:()=>clock}).record('cluster-a',v2(clock,9*1024**3));
       const saved=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];
-      assert.equal(saved.evaluator_state.targetFingerprint,'c'.repeat(64));assert.equal(saved.evaluator_state.dataDisks[1].freeBytes,9*1024**3);
+      assert.equal(saved.evaluator_state.targetFingerprint,fingerprint);assert.equal(saved.evaluator_state.dataDisks[1].freeBytes,9*1024**3);
       assert.equal(saved.evaluator_state.measurementScope,'docker-desktop-vm');assert.deepEqual(Object.keys(saved.evaluator_state.affectedMounts),['storage']);
       assert.ok(saved.reason_codes.includes('DISK_CRITICAL'));
       const dto=publicCluster(await api.admin.cluster('cluster-a'),api.config,{now:clock});
@@ -118,17 +128,23 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
     const {pool,metricsPool,api}=await fixture('health_target');
     try{
       const now=Date.now();let clock=now-300000;const writer=new HealthStore(metricsPool,{clock:()=>clock});
-      const v2=at=>({...sample(at),schemaVersion:2,targetFingerprint:'c'.repeat(64),measurementScope:'linux-host',requiredMountIds:['database'],
+      const v2=at=>({...sample(at),requiredMountIds:['database'],
         dataDisks:[{id:'database',freeBytes:100*1024**3,totalBytes:200*1024**3,inodeFreePercent:80}]});
       for(let i=0;i<=10;i++){clock=now-300000+i*30000;await writer.record('cluster-a',v2(clock))}
       const before=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];assert.equal(before.metric_status,'healthy');
       clock=now+1;await assert.rejects(()=>writer.record('cluster-a',{...v2(clock),requiredMountIds:['missing']}),{code:'INVALID_DISKS'});
       assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0],before);
-      const changed=await new HealthStore(metricsPool,{clock:()=>clock}).record('cluster-a',{...v2(clock),targetFingerprint:'d'.repeat(64)});
+      await assert.rejects(()=>writer.record('cluster-a',{...v2(clock),targetFingerprint:'d'.repeat(64)}),{code:'TELEMETRY_TARGET_MISMATCH'});
+      const target={...fixtureTarget('cluster-a'),dbConnectionBudget:101};api.config.inventory.get('cluster-a').telemetryTarget=target;
+      await api.admin.execute({id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'bind_telemetry_target',expectedVersion:1,
+        reason:'Approve changed isolated telemetry target',payload:{targetFingerprint:telemetryTargetFingerprint(target)}},randomUUID(),'cluster-a'),randomUUID());
+      clock=Date.now()+10;
+      const next={...v2(clock),targetFingerprint:telemetryTargetFingerprint(target)};next.metrics.dbConnectionBudget=101;
+      const changed=await new HealthStore(metricsPool,{clock:()=>clock}).record('cluster-a',next);
       assert.ok(changed.reasonCodes.includes('METRICS_WARMING'));
       const after=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];
       assert.equal(after.evaluator_state.recoverySince,clock);assert.equal(after.evaluator_state.firstValidAt,clock);
-      assert.equal(after.evaluator_state.targetFingerprint,'d'.repeat(64));assert.ok(Number(after.source_generation)>Number(before.source_generation));
+      assert.equal(after.evaluator_state.targetFingerprint,telemetryTargetFingerprint(target));assert.ok(Number(after.source_generation)>Number(before.source_generation));
     }finally{await metricsPool.end();await api.close()}
   });
 }

@@ -1,5 +1,6 @@
 import {ControlError} from './errors.mjs';
 import {normalizeAddress} from './safe-http.mjs';
+import {validateTelemetryTarget} from './telemetry-source.mjs';
 const idPattern=/^[a-z][a-z0-9-]{1,63}$/;
 export function registryConfiguration(env,clusters,allowLocal){
   const credentials=new Map(clusters.map(c=>[c.credentialRef||c.id,{ref:c.credentialRef||c.id,publishableKey:c.publishableKey,serviceKey:c.serviceKey,vapidPublicKey:c.vapidPublicKey}]));
@@ -26,7 +27,14 @@ export function registryConfiguration(env,clusters,allowLocal){
     }
     if(!item.url||!Array.isArray(item.approvedAddresses??[])||(item.approvedAddresses??[]).length>64)throw new Error('Inventory endpoint is incomplete');
     for(const address of item.approvedAddresses??[])normalizeAddress(address);
-    inventory.set(item.id,{...item});
+    let telemetryTarget;
+    if(item.telemetryTarget!==undefined){
+      telemetryTarget=validateTelemetryTarget(item.telemetryTarget);
+      if(telemetryTarget.clusterId!==item.id||telemetryTarget.hostId!==item.hostId||telemetryTarget.environment!==item.environment){
+        throw new Error('Telemetry inventory must match its approved cluster, host and environment');
+      }
+    }
+    inventory.set(item.id,{...item,...(telemetryTarget?{telemetryTarget}: {})});
   }
   return {credentials,inventory};
 }

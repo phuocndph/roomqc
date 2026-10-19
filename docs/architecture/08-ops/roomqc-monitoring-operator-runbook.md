@@ -5,6 +5,10 @@ chưa bao gồm health worker, đủ năm service probe, alert dispatcher hoặc
 Theo [M04/M05/M06](roomqc-p2-monitoring-delivery-plan-2026-10-19.md) và
 [plan thực thi](roomqc-vps-signup-execution-plan-2026-10-19.md).
 
+Đợt M05 sau đó đã thêm source/config/entrypoint worker và target binding, chưa bật
+thường trực; xem [runbook worker](roomqc-health-worker-runbook.md). Adapter đủ năm
+service/manifest vẫn chưa có; bộ exporter không tự chứng minh backend khỏe.
+
 ## 1. Điều kiện trước cấu hình
 
 1. Operator nhận inventory đã duyệt: host/cluster/environment, filesystem/device/mount
