@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
-import {clusterCommand,requireCapability} from './admin.mjs';
+import {clusterCommand,requireCapability,publicCluster} from './admin.mjs';
 import {pageOptions} from './admin-read.mjs';
 
 const actor={id:randomUUID(),clusterId:'authority'},config={supportClusterId:'authority'};
@@ -50,4 +50,20 @@ test('OpenAPI references and operations are unique, admin routes require bearer 
   }
   const parameters=contract.paths['/admin/workspaces/{id}'].get.parameters.map(p=>p.name);
   assert.ok(parameters.includes('limit')&&parameters.includes('cursor'));
+});
+
+test('multi-mount health DTO matches declared safe fields, labels scope and preserves stale values without leaking device or path',async()=>{
+  const now=Date.now(),row={id:'fixture',row_version:1,health_observed_at:new Date(now-121000).toISOString(),
+    health_valid_until:new Date(now-1000).toISOString(),metric_status:'healthy',source_generation:3,reason_codes:[],
+    evaluator_state:{sampleSchemaVersion:2,measurementScope:'docker-desktop-vm',dataDisks:[{id:'storage',freeBytes:10,totalBytes:100,
+      inodeFreePercent:80,mountpoint:'/private/volume',device:'/dev/private',credentialRef:'private-ref'}]}};
+  const health=publicCluster(row,config,{now}).health;
+  assert.equal(health.status,'unknown');assert.ok(health.reasonCodes.includes('METRICS_STALE'));
+  assert.equal(health.schemaVersion,2);assert.equal(health.measurementScope,'docker-desktop-vm');
+  assert.deepEqual(health.dataDisks,[{id:'storage',freeBytes:10,totalBytes:100,inodeFreePercent:80}]);
+  const contract=JSON.parse(await readFile(new URL('./contracts/control-v3.openapi.json',import.meta.url),'utf8'));
+  for(const key of Object.keys(health))assert.ok(Object.hasOwn(contract.components.schemas.Health.properties,key),key);
+  for(const key of Object.keys(health.dataDisks[0]))assert.ok(Object.hasOwn(contract.components.schemas.DataDisk.properties,key),key);
+  const legacy=publicCluster({...row,evaluator_state:{}},config,{now}).health;
+  assert.equal(legacy.schemaVersion,1);assert.equal(legacy.dataDisks,null);assert.equal(legacy.measurementScope,null);
 });

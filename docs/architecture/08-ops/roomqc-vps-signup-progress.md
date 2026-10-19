@@ -8,6 +8,8 @@ Kế hoạch thực thi đã cụ thể hóa tại [25 bước / 8 đợt](roomq
 Lượt cập nhật plan ban đầu quan sát runtime `0003`. Đợt tiếp theo đã triển khai
 control local `0005`, kiểm tra 44/44 test, lệnh admin/allocation và health snapshot;
 xem [báo cáo đợt admin/health](roomqc-control-admin-health-local-2026-10-19.md).
+Kế hoạch P2 đã chia nhỏ thành [M01–M10](roomqc-p2-monitoring-delivery-plan-2026-10-19.md),
+gắn file/test/phụ thuộc và gate; các mã M không thêm scope hoặc acceptance case.
 Collector/exporter/manifest backend và các gate release còn thiếu; không tính
 hoàn tất P1-03/P2/P3 chỉ vì các phần nền này đã được kiểm chứng local.
 
@@ -25,7 +27,7 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P1-02 | API + DB local đã chạy | Volume/restart/proxy/health/shutdown đạt; worker được nối ở P4, chưa tính worker runtime đã triển khai |
 | P1-03 | Một phần đã kiểm chứng local | Command/version/receipt/audit và HTTP authority boundary đạt; còn Auth thật/revoke/MFA và support/recheck identity |
 | P2-01 | Chưa triển khai | Exporter riêng tư, map host/disk, probe dịch vụ thật |
-| P2-02 | Một phần đã kiểm chứng local | Evaluator + HealthStore atomic/restart/stale/generation đạt; chưa collector, multi-mount và metric thật |
+| P2-02 | Một phần đã kiểm chứng local | Evaluator/HealthStore + sample v2 multi-mount/target identity và source adapter đã test; chưa có worker/exporter/probes thường trực hoặc metric VPS |
 | P2-03 | Chưa triển khai | Deduplicate/ack/resolve/heartbeat ngoài máy |
 | P3-01 | Một phần đã kiểm chứng local | Registry draft/secret resolver/pinned DNS có test; thiếu manifest RPC/full validation/rotation/TLS môi trường thật |
 | P3-02 | Một phần đã kiểm chứng local | Gate/reservation race/close/version/expiry/affinity đạt trên fixture directory; chưa E2E backend, signup vẫn đóng |
@@ -47,6 +49,15 @@ ghi source base/hash, image, schema, command và trạng thái riêng từng acc
 | P8-01 | Chưa triển khai | Pilot có người dùng được chọn và ít nhất 7 ngày quan sát |
 
 ## Bằng chứng kiểm chứng mới
+
+Đợt P2 multi-mount/source: **59/59 test đạt, 0 skip**, gồm PostgreSQL disposable và
+Prometheus `promtool` chạy biểu thức thực với 14 nguồn timestamp lần lượt bị cũ.
+Đây là suite mới chứa test hồi quy cũ, không cộng 59 với 44 và không đổi thành
+59/70 acceptance release. [Báo cáo và giới hạn](roomqc-p2-source-local-2026-10-19.md).
+Code đợt này chưa deploy vào control image thường trực; source adapter chưa phải
+health worker chạy nền, nguồn fixture không được gán cho cụm local-a.
+
+### Đợt admin/health trước đó
 
 Đợt admin/health mới: **44/44 test đạt, 0 skip** với directory sandbox độc lập;
 runtime local `0005`, signup đóng. [Báo cáo](roomqc-control-admin-health-local-2026-10-19.md)
@@ -98,12 +109,14 @@ máy, hiệu năng VPS, browser E2E hoặc hành vi pilot.
 | A05 | Đạt local cho lock/rerun/checksum/rollback |
 | A06 | Đạt các kiểm tra grants local nêu trên; role/secrets trên VPS phải kiểm tra lại |
 | A07 | Đạt API/DB/shutdown local; worker chưa triển khai nên case tổng thể chưa đóng |
-| A08–A11 | Command/admin v3 chưa xong; không lấy support test cũ làm bằng chứng đóng |
+| A08–A11 | Command/version/replay/race/audit boundary có bằng chứng local ở `d0f9b7b`; còn Auth/revoke thật và browser reload, không đóng tổng thể |
 | B01–G08 | Chưa đóng theo release mới; các assertion nền tảng không thay nghiệm thu riêng |
 
 ## Thứ tự làm tiếp
 
 1. P2: exporter + collector/multi-mount + cảnh báo, đối chiếu metric với nguồn thật.
+   Multi-mount/source đã có test; tiếp theo M04/M05/M06 (runtime/exporter/probes),
+   rồi M07/M08/M09 (alert/delivery/external heartbeat), theo run sheet P2.
 2. P1-03/P3: Auth thật, manifest RPC/full validation và credential/TLS rotation.
 3. P3: nghiệm thu gate đã nối DB qua backend thật; mới xét mở signup trong sandbox.
 4. P4/P5: recovery worker/resume và UI admin; P6/P7 trước triển khai staging/pilot.

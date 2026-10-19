@@ -11,7 +11,9 @@ khi lập gói không phủ nhận nền local đã có bằng chứng. Mã P0�
 
 ## 1. Quy tắc thực hiện
 
-- Source tích hợp hiện tại: worktree `roomqc-worktrees/integration`, baseline `b95fc86`.
+- Source tích hợp: worktree `roomqc-worktrees/integration`; `b95fc86` là baseline
+  thiết kế ban đầu. Nền kiểm chứng đợt admin/health là `d0f9b7b`; khi nhận ticket
+  phải đối chiếu HEAD/diff và artifact mới ở tracker, không quay về baseline cũ.
   Checkout chính có nhiều thay đổi sẵn có; phải bảo toàn và chỉ đồng bộ file đúng phạm vi.
 - P0 xác nhận integration/base trước khi tạo nhánh; không lấy main cũ làm nền mặc định.
 - Một đầu mối sở hữu migration directory, hợp đồng API và thứ tự version; các nhánh

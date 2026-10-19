@@ -1392,6 +1392,17 @@
         },
         "additionalProperties": false
       },
+      "DataDisk": {
+        "type": "object",
+        "required": ["id", "freeBytes", "totalBytes", "inodeFreePercent"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$"},
+          "freeBytes": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+          "totalBytes": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+          "inodeFreePercent": {"type": "number", "minimum": 0, "maximum": 100}
+        },
+        "additionalProperties": false
+      },
       "Health": {
         "type": "object",
         "required": [
@@ -1401,7 +1412,10 @@
           "validUntil",
           "generation",
           "metrics",
-          "reasonCodes"
+          "reasonCodes",
+          "schemaVersion",
+          "measurementScope",
+          "dataDisks"
         ],
         "properties": {
           "status": {
@@ -1430,6 +1444,21 @@
           },
           "metrics": {
             "$ref": "#/components/schemas/Metrics"
+          },
+          "schemaVersion": {
+            "enum": [1, 2],
+            "description": "Legacy one-disk metrics or v2 independently measured required data mounts."
+          },
+          "measurementScope": {
+            "enum": ["linux-host", "docker-desktop-vm", null],
+            "description": "Null for legacy snapshots. Docker Desktop VM is not Linux VPS capacity evidence."
+          },
+          "dataDisks": {
+            "type": ["array", "null"],
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {"$ref": "#/components/schemas/DataDisk"},
+            "description": "Null for v1; safe mount IDs and values only, never filesystem paths or device names. Stale values remain visible but are not healthy."
           },
           "reasonCodes": {
             "type": "array",

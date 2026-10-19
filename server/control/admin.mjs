@@ -53,6 +53,8 @@ export function publicCluster(row,config,options){
     backendKind:row.backend_kind,tenantLimit:row.tenant_limit,allocatedCount:row.allocated_count,credentialConfigured:value.credential_configured,
     releaseId:row.release_id,admission,health:row.health_observed_at?{status:stale?'unknown':row.metric_status,observedAt:row.health_observed_at,receivedAt:row.received_at,
       validUntil:row.health_valid_until,generation:Number(row.source_generation),metrics:row.normalized_values,
+      schemaVersion:row.evaluator_state?.sampleSchemaVersion??1,measurementScope:row.evaluator_state?.measurementScope??null,
+      dataDisks:row.evaluator_state?.dataDisks?.map(({id,freeBytes,totalBytes,inodeFreePercent})=>({id,freeBytes,totalBytes,inodeFreePercent}))??null,
       reasonCodes:[...new Set([...(row.reason_codes??[]),...(stale?['METRICS_STALE']:[])])]}:null};
 }
 

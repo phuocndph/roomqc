@@ -5,7 +5,7 @@ import {HealthStore} from './telemetry.mjs';
 import {migrateDirectory,importInitialRegistry} from './migrate.mjs';
 import {fixtureConfig,seedOperationalCluster} from './test-fixtures.mjs';
 import {ControlStore} from './store.mjs';
-import {clusterCommand} from './admin.mjs';
+import {clusterCommand,publicCluster} from './admin.mjs';
 
 function sample(at,metrics={}){return {observedAt:new Date(at).toISOString(),metrics:{cpuUsedPercent:30,memoryAvailableBytes:8*1024**3,memoryTotalBytes:16*1024**3,
   dataDiskFreeBytes:100*1024**3,dataDiskTotalBytes:200*1024**3,dataDiskInodeFreePercent:80,dbConnectionsUsed:10,dbConnectionBudget:100,...metrics},
@@ -82,6 +82,53 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
       await assert.rejects(()=>new HealthStore(metricsPool).record('cluster-a',sample(Date.now(),{dataDiskFreeBytes:1024})),{code:'P0001'});
       assert.equal((await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rowCount,0);
       assert.equal((await pool.query('SELECT operator_reopen_required FROM roomqc_control.cluster_policies')).rows[0].operator_reopen_required,false);
+    }finally{await metricsPool.end();await api.close()}
+  });
+  dbtest('multi-mount health: metrics role persists v2 identity/disks through restarts; storage critical blocks only new allocation',async()=>{
+    const {pool,metricsPool,api}=await fixture('health_multi');
+    try{
+      const now=Date.now();let clock=now-300000,writer=new HealthStore(metricsPool,{clock:()=>clock});
+      const v2=(at,storageFree=60*1024**3)=>({...sample(at),schemaVersion:2,targetFingerprint:'c'.repeat(64),measurementScope:'docker-desktop-vm',
+        requiredMountIds:['database','storage'],dataDisks:[{id:'database',freeBytes:100*1024**3,totalBytes:200*1024**3,inodeFreePercent:80},
+          {id:'storage',freeBytes:storageFree,totalBytes:120*1024**3,inodeFreePercent:80}]});
+      for(let i=0;i<=10;i++){
+        clock=now-300000+i*30000;if(i===5)writer=new HealthStore(metricsPool,{clock:()=>clock});await writer.record('cluster-a',v2(clock));
+      }
+      // Warmup latches operator approval; healthy metrics must never clear it.
+      await api.admin.execute({id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'open_admission',expectedVersion:1,
+        reason:'Approve warm metrics in isolated multi-mount test',payload:{}},randomUUID(),'cluster-a'),randomUUID());
+      const active=await api.reserve({slug:'existing-health-client',email:'existing@example.invalid',displayName:'Existing fixture'},randomUUID());
+      await pool.query("UPDATE roomqc_control.workspaces SET status='active',tenant_id=$2,hotel_id=$3,owner_id=$4 WHERE id=$1",[active.id,randomUUID(),randomUUID(),randomUUID()]);
+      const before=(await pool.query('SELECT * FROM roomqc_control.workspaces WHERE id=$1',[active.id])).rows[0];
+      clock=now+1;await new HealthStore(metricsPool,{clock:()=>clock}).record('cluster-a',v2(clock,9*1024**3));
+      const saved=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];
+      assert.equal(saved.evaluator_state.targetFingerprint,'c'.repeat(64));assert.equal(saved.evaluator_state.dataDisks[1].freeBytes,9*1024**3);
+      assert.equal(saved.evaluator_state.measurementScope,'docker-desktop-vm');assert.deepEqual(Object.keys(saved.evaluator_state.affectedMounts),['storage']);
+      assert.ok(saved.reason_codes.includes('DISK_CRITICAL'));
+      const dto=publicCluster(await api.admin.cluster('cluster-a'),api.config,{now:clock});
+      assert.equal(dto.health.schemaVersion,2);assert.equal(dto.health.measurementScope,'docker-desktop-vm');assert.equal(dto.health.dataDisks.length,2);
+      assert.equal(dto.admission.decision,'blocked');await assert.rejects(()=>api.reserve({slug:'blocked-health-client',email:'new@example.invalid',displayName:'New fixture'},randomUUID()),{code:'NO_CAPACITY'});
+      assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.workspaces WHERE id=$1',[active.id])).rows[0],before);
+      const stale=publicCluster(await api.admin.cluster('cluster-a'),api.config,{now:clock+120000});assert.equal(stale.health.status,'unknown');
+      assert.equal(stale.health.dataDisks[1].freeBytes,9*1024**3,'Old values remain visible, never relabeled healthy');
+      await assert.rejects(()=>metricsPool.query('UPDATE roomqc_control.cluster_policies SET operator_reopen_required=false'),{code:'42501'});
+    }finally{await metricsPool.end();await api.close()}
+  });
+  dbtest('multi-mount health: rejected samples do not advance generation and target changes reset persisted warmup/recovery',async()=>{
+    const {pool,metricsPool,api}=await fixture('health_target');
+    try{
+      const now=Date.now();let clock=now-300000;const writer=new HealthStore(metricsPool,{clock:()=>clock});
+      const v2=at=>({...sample(at),schemaVersion:2,targetFingerprint:'c'.repeat(64),measurementScope:'linux-host',requiredMountIds:['database'],
+        dataDisks:[{id:'database',freeBytes:100*1024**3,totalBytes:200*1024**3,inodeFreePercent:80}]});
+      for(let i=0;i<=10;i++){clock=now-300000+i*30000;await writer.record('cluster-a',v2(clock))}
+      const before=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];assert.equal(before.metric_status,'healthy');
+      clock=now+1;await assert.rejects(()=>writer.record('cluster-a',{...v2(clock),requiredMountIds:['missing']}),{code:'INVALID_DISKS'});
+      assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0],before);
+      const changed=await new HealthStore(metricsPool,{clock:()=>clock}).record('cluster-a',{...v2(clock),targetFingerprint:'d'.repeat(64)});
+      assert.ok(changed.reasonCodes.includes('METRICS_WARMING'));
+      const after=(await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0];
+      assert.equal(after.evaluator_state.recoverySince,clock);assert.equal(after.evaluator_state.firstValidAt,clock);
+      assert.equal(after.evaluator_state.targetFingerprint,'d'.repeat(64));assert.ok(Number(after.source_generation)>Number(before.source_generation));
     }finally{await metricsPool.end();await api.close()}
   });
 }

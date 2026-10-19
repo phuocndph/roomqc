@@ -1,6 +1,6 @@
 # RoomQC — kế hoạch thực thi chi tiết quản lý VPS và đăng ký tự động
 
-Ngày cập nhật: 19/10/2026, Asia/Bangkok. Trạng thái: **chuẩn bị triển khai**.
+Ngày cập nhật: 19/10/2026, Asia/Bangkok. Trạng thái: **đang triển khai, nền đã kiểm chứng local; chưa đạt staging/pilot**.
 Tài liệu này cụ thể hóa thứ tự thực hiện trên hiện trạng đã quan sát, không ghi nhận
 các đầu việc dưới đây là đã hoàn thành. Mỗi mã T là bước con của 27 gói P0–P8,
 không tạo thêm một roadmap độc lập hoặc thay đổi tổng 70 tình huống nghiệm thu.
@@ -35,23 +35,33 @@ sách giữ/xóa dữ liệu để hoàn thành luồng kỹ thuật.
 ## 2. Điểm xuất phát đã kiểm tra
 
 Nguồn tích hợp: `roomqc-worktrees/integration`, nhánh `codex/roomqc-parallel-integration`.
-Commit nền gần nhất: `8d0628e`. Checkout chính là `room-weave-pro-main`, có nhiều
+Commit đã kiểm chứng gần nhất: `d0f9b7b` (nền directory trước đó: `8d0628e`). Checkout chính là `room-weave-pro-main`, có nhiều
 thay đổi từ trước; chỉ đồng bộ file đúng phạm vi sau kiểm tra, bảo toàn index và
 các thay đổi nghiệp vụ khác.
 
 | Phần | Bằng chứng hiện có | Cách tính trong kế hoạch này |
 |---|---|---|
-| Control API + directory riêng | Container healthy; GET `8091/api/control/livez` và `/readyz` trả 200; readyz ghi `0003-runtime-grants.sql` | Giữ nền, kiểm tra hồi quy khi đổi schema/runtime |
+| Control API + directory riêng | Báo cáo admin/health ghi runtime `0005`, image và fingerprint 16 bảng | Bằng chứng local của đợt đã hoàn tất, không coi là health VPS hiện tại |
 | Proxy frontend | GET `8082/api/control/healthz` trả 200 JSON `status=ok` | Chứng minh proxy local; chưa chứng minh luồng khách đăng ký |
-| Migration, grants, restart | Artifact nền ghi 17/17 test đạt ở phiên bản trước | Bằng chứng lịch sử; không gán kết quả đó cho mã đang sửa |
-| Admin command, registry, evaluator, admission | Có thay đổi chưa commit trong `server/control/` và migration `0004` | `in_progress_unverified`; phải có test trước đồng bộ/deploy |
+| Migration, grants, restart | Đợt `d0f9b7b` ghi 44/44 test, 0 skip; gồm migration, restart, role grants và race | Không phải 44/70 acceptance release, không cộng lặp 17 test nền |
+| Admin command, registry, evaluator, admission | Receipt/version/audit atomic, gate DB/affinity, HTTP pinned DNS và snapshot đã kiểm chứng local | Còn Auth/revoke thật, manifest/probes và E2E; chưa đóng toàn bộ P1/P3 |
 | Kiểm tra release cụm | Gateway có gọi `control_cluster_manifest`; tìm trong source chưa có migration định nghĩa RPC này | Phải bổ sung và kiểm tra trong backend sandbox |
-| Giám sát | Có evaluator thuần mới; chưa có bộ collector/exporter/alert runtime tương ứng | Chưa nghiệm thu P2 |
+| Giám sát | HealthStore/evaluator + v2 multi-mount/source adapter đã test trong suite 59/59; biểu thức timestamp qua Prometheus thật | Local verified cho module, chưa có collector/exporter/probes/alert thường trực; không phải sức chứa VPS |
 | Giao diện hạ tầng/đăng ký mới | Có super-admin và tenant console cũ | Tái sử dụng layout; bổ sung API/client/routes, không coi đã có console hạ tầng |
 | VPS/TLS/email thật/offsite/pilot | Chưa có bằng chứng triển khai tương ứng trong đợt này | Giữ `not_run` ở môi trường thật; tiếp tục phần code/local độc lập |
 
-Lượt lập plan này chỉ đọc mã nguồn, tài liệu và health; không chạy lại full test,
-không áp `0004`, không bật signup, không restart hay thay đổi DB nghiệp vụ.
+Hiện trạng đối chiếu source/tracker/artifact. Đợt P2 sau khi cập nhật plan đã chạy
+suite 59 test trong sandbox riêng; xem [báo cáo P2](roomqc-p2-source-local-2026-10-19.md).
+Không suy ra vừa đo VPS hoặc image thường trực đã đổi theo source. Artifact gốc
+được giữ nguyên, không áp migration hay thay đổi DB nghiệp vụ và không bật signup.
+
+### Phần đã làm không lặp lại và thứ tự còn lại
+
+T02–T04 đã có một phần quan trọng đạt local ở đợt admin/health; giữ test làm hồi quy,
+không viết lại để khớp mô tả cũ. T01 vẫn kiểm tra phạm vi mỗi đợt; P1-03 còn Auth
+thật/revoke/MFA và support command identity. Tiếp theo là T05–T07, rồi T08–T10.
+Danh sách thao tác nhỏ, file/test và tiêu chí đóng đợt P2 ở
+[run sheet giám sát](roomqc-p2-monitoring-delivery-plan-2026-10-19.md).
 
 ### Quy tắc ghi nhận tiến độ
 
@@ -167,6 +177,9 @@ signup của stack chính vẫn đóng. Chưa tuyên bố tài nguyên VPS đã 
 ## 5. Đợt 2 — nguồn số đo, quyết định sức khỏe và cảnh báo
 
 ### T05 — dựng monitoring riêng tư, đo đúng tài nguyên (P2-01)
+
+Thực hiện theo M01–M04/M06 trong run sheet P2; M05/M07–M10 khép T06/T07. Mã M
+chỉ chia nhỏ T05–T07, không thêm gói hay đổi 70 acceptance case.
 
 File dự kiến mới: `deploy/monitoring/compose.yml`, `prometheus.yml`, `rules/`,
 `exporter-roles.sql`. Đường dẫn mới là thiết kế, chưa phải công cụ đã có.
@@ -468,6 +481,8 @@ local làm bộ cài production.
 
 1. Pin bộ Supabase self-host đầy đủ, frontend/proxy/control/worker/directory và
    monitoring; ghi image digests, schema/contract, host architecture và data mounts.
+   Trước khi chọn bundle, qua bảng tương thích ở mục 16: không lấy compose upstream
+   mới nhất để vô tình nâng PG major, đổi Kong/Envoy hoặc callback Auth của hệ hiện có.
 2. Preflight read-only kiểm tra OS/RAM/disk/inode/clock/Docker/port/DNS/TLS/secret,
    tên môi trường/volume hiện có. Sai host, thiếu secret hoặc volume mismatch phải
    dừng trước prepare/apply; không tự format, đổi ownership rộng hoặc tạo DB rỗng.
@@ -727,6 +742,29 @@ không phải lý do bỏ dở T01–T17 hay đánh dấu triển khai VPS/email
 | Public | Anti-abuse/Auth/proxy/monitoring/support đã nghiệm thu, pilot đủ bằng chứng, limit/kill switch đã thử | Đăng ký công khai có hạn mức |
 | Paid | Gate thanh toán/settlement/provider/chính sách gói và quyền dữ liệu riêng đã đạt | Thu phí/cấp gói thật theo backlog billing |
 
-Ưu tiên thực thi tiếp theo là **T01–T04**: khép thay đổi control đang dở và kiểm
-chứng bản mới. Sau đó **T05–T10** làm cho quyết định nhận khách dựa trên tài nguyên
-thật. Đây là nền bắt buộc trước khi mở luồng signup và console cho người dùng thực tế.
+Ưu tiên thực thi tiếp theo là **T05–T07**: nối collector/exporter/probe/cảnh báo
+dựa trên multi-mount/source adapter đã test. Tiếp theo **T08–T10**, cùng phần Auth
+còn lại ở T03, trước luồng signup và console. Các test T01–T04 vẫn là hàng rào hồi quy.
+
+## 16. Tương thích Supabase phải khóa trước bộ cài và cutover
+
+Đã đọc changelog và tài liệu Docker ngày 19/10/2026; chưa nâng cấp dịch vụ theo các
+thông báo này. Áp dụng tùy release self-host đã chọn, không mặc định chính sách
+Supabase Cloud đã có hiệu lực trên container local đang dùng.
+
+| Thay đổi cần rà | Bước chịu trách nhiệm | Kiểm tra và cách xử lý |
+|---|---|---|
+| Gateway mặc định chuyển Kong → Envoy | T08/T18/T22 | Inventory release/config hiện có; chốt gateway trong manifest. Test toàn bộ route/RPC/WebSocket/headers. Giữ bản cũ đã pin nếu chưa kiểm chứng chuyển đổi; không phụ thuộc service name `kong` trong bộ cài mới |
+| `API_EXTERNAL_URL` có hậu tố `/auth/v1` ở cấu hình mới | T13/T18/T22 | Đối chiếu release/template; test xác thực/reset/invite/mobile, không nối hậu tố hai lần; không sửa URL production chỉ vì default upstream đổi |
+| Postgres major 15 → 17 không tự nâng volume | T18/T19 | Ghi major/extension/collation. Cài mới chọn bộ tương thích; nâng dữ liệu cũ thành đợt có backup/restore/upgrade test riêng, không đổi tag rồi mount volume cũ |
+| Bảng mới không mặc định được Data API expose | T08/T11/T24 | Kiểm tra grants/privileges và RLS trên release đích. Manifest server-only phải từ chối anon/staff; endpoint nghiệp vụ chỉ cấp đúng role/policy, không mở toàn schema để hết lỗi |
+| TLS 1.2 CBC cũ bị loại ở HTTP API Cloud từ 10/11 | T18/T22 | Test trust/cipher bằng client web/Android và proxy thật; không gán lịch Cloud thành việc đã cập nhật self-host |
+
+Nguồn đối chiếu:
+
+- [Self-host Docker và lựa chọn bộ release](https://supabase.com/docs/guides/self-hosting/docker).
+- [Thay đổi gateway](https://supabase.com/changelog/48048-self-hosted-supabase-envoy-becomes-the-default-api-gateway-b).
+- [Thay đổi Auth external URL](https://supabase.com/changelog/47093-self-hosted-supabase-api-external-url-to-include-auth-v1).
+- [Nâng major PostgreSQL](https://supabase.com/changelog/46080-self-hosted-supabase-upgrading-from-pg-15-to-17-breaking-change).
+- [Quyền Data API](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically).
+- [TLS](https://supabase.com/changelog/cbc-tls-ciphers-deprecated).

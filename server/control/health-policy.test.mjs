@@ -17,6 +17,11 @@ function readyRow(){return {status:'active',credential_configured:true,validatio
   health_valid_until:new Date(base+120000).toISOString(),health_observed_at:new Date(base).toISOString(),metric_status:'healthy',
   evaluator_state:{policyVersion:1,blockedReasons:[]},backup_completed_at:new Date(base).toISOString(),backup_restore_test_at:new Date(base).toISOString(),
   backup_manifest_hash:'b'.repeat(64),allocated_count:4,tenant_limit:5,source_generation:3}}
+function multi(at=0,disks=[{id:'database',freeBytes:100*gib,totalBytes:200*gib,inodeFreePercent:80},
+  {id:'storage',freeBytes:60*gib,totalBytes:120*gib,inodeFreePercent:80}],extra={}){
+  const first=disks[0];return {...sample(at,{dataDiskFreeBytes:first.freeBytes,dataDiskTotalBytes:first.totalBytes,dataDiskInodeFreePercent:first.inodeFreePercent}),
+    schemaVersion:2,targetFingerprint:'c'.repeat(64),measurementScope:'linux-host',requiredMountIds:disks.map(d=>d.id),dataDisks:disks,...extra};
+}
 
 test('telemetry contract rejects invalid units, missing/nonfinite values, incomplete probes and invalid timestamps',()=>{
   for(const metrics of [{cpuUsedPercent:NaN},{cpuUsedPercent:Infinity},{cpuUsedPercent:-1},{cpuUsedPercent:101},
@@ -37,6 +42,53 @@ test('resource policy validates bounded thresholds and nonoverlapping warning/cr
   for(const policy of [{unknown:1},{constructor:1},JSON.parse('{"__proto__":1}'),{cpuBlockPercent:95},{diskBlockBytes:10*gib+0.1},{cpuWarnPercent:75,cpuBlockPercent:75},
     {diskWarnBytes:20*gib,diskBlockBytes:20*gib},{memoryWarnPercent:20},{reopenMode:'automatic'}])assert.throws(()=>policyThresholds(policy),{code:'INVALID_POLICY'});
   assert.equal(policyThresholds({cpuBlockPercent:90}).cpuBlockPercent,90);
+});
+
+test('multi-mount samples reject missing, duplicate, contradictory disks, unknown versions and missing target identity',()=>{
+  assert.equal(normalizeSample(multi(),base).dataDisks.length,2);
+  for(const change of [{requiredMountIds:[]},{requiredMountIds:['database','database']},{requiredMountIds:['database','absent']},
+    {dataDisks:[multi().dataDisks[0]]},{dataDisks:[multi().dataDisks[0],multi().dataDisks[0]]},
+    {targetFingerprint:''},{measurementScope:'windows-host'},{metrics:sample().metrics,dataDisks:[{...multi().dataDisks[0],freeBytes:99*gib},multi().dataDisks[1]]}]){
+    assert.throws(()=>normalizeSample(multi(0,undefined,change),base),{code:'INVALID_DISKS'});
+  }
+  for(const disk of [{freeBytes:NaN},{totalBytes:0},{freeBytes:1.5},{freeBytes:201*gib},{inodeFreePercent:-1},{inodeFreePercent:101}]){
+    const disks=multi().dataDisks;disks[1]={...disks[1],...disk};assert.throws(()=>normalizeSample(multi(0,disks),base),{code:'INVALID_DISKS'});
+  }
+  for(const schemaVersion of [undefined,1,3])assert.throws(()=>normalizeSample({...multi(),schemaVersion},base),{code:'INVALID_SAMPLE_VERSION'});
+});
+
+test('every actual disk and inode is evaluated independently; critical storage cannot be hidden by a healthy database disk',()=>{
+  for(const index of [0,1])for(const [change,code] of [[{freeBytes:9*gib,totalBytes:30*gib},'DISK_CRITICAL'],
+    [{freeBytes:14*gib,totalBytes:100*gib},'DISK_CRITICAL'],[{inodeFreePercent:9},'INODE_CRITICAL']]){
+    const disks=multi().dataDisks;disks[index]={...disks[index],...change};
+    const result=evaluateSample(multi(0,disks),{}, {},1,base);
+    assert.ok(result.state.blockedReasons.includes(code));assert.deepEqual(Object.keys(result.state.affectedMounts),[disks[index].id]);
+  }
+  const disks=[{id:'database',freeBytes:21*gib,totalBytes:60*gib,inodeFreePercent:80},
+    {id:'storage',freeBytes:100*gib,totalBytes:300*gib,inodeFreePercent:80}];
+  let result;
+  for(let at=0;at<=300000;at+=30000)result=evaluateSample(multi(at,disks),result?.state,{},1,base+at);
+  assert.equal(result.status,'healthy','Do not combine 21 GiB from database with 300 GiB from storage');
+  const equal=[{id:'database',freeBytes:15*gib,totalBytes:100*gib,inodeFreePercent:10},multi().dataDisks[1]];
+  assert.equal(evaluateSample(multi(0,equal),{}, {},1,base).state.blockedReasons.includes('DISK_CRITICAL'),false);
+});
+
+test('target/schema/scope/mount identity changes restart warmup and recovery instead of inheriting old healthy windows',()=>{
+  let warm;for(let at=0;at<=300000;at+=30000)warm=evaluateSample(multi(at),warm?.state,{},1,base+at);
+  assert.equal(warm.status,'healthy');
+  for(const change of [{targetFingerprint:'d'.repeat(64)},{measurementScope:'docker-desktop-vm'},
+    {requiredMountIds:['database','objects'],dataDisks:[multi().dataDisks[0],{...multi().dataDisks[1],id:'objects'}]}]){
+    const result=evaluateSample(multi(330000,undefined,change),JSON.parse(JSON.stringify(warm.state)),{},1,base+330000);
+    assert.ok(result.state.blockedReasons.includes('METRICS_WARMING'));assert.equal(result.state.recoverySince,base+330000);
+  }
+  const legacy=walk(0,300000);
+  assert.ok(evaluateSample(multi(330000),legacy.state,{},1,base+330000).state.warming);
+  const disks=multi().dataDisks;disks[1].freeBytes=9*gib;
+  const fault=evaluateSample(multi(330000,disks),warm.state,{},1,base+330000);
+  let recovered;
+  for(let at=360000;at<=930000;at+=30000)recovered=evaluateSample(multi(at),JSON.parse(JSON.stringify(recovered?.state??fault.state)),{},1,base+at);
+  assert.ok(recovered.state.blockedReasons.includes('DISK_CRITICAL'));
+  assert.equal(evaluateSample(multi(960000),recovered.state,{},1,base+960000).status,'healthy');
 });
 
 test('healthy telemetry requires five continuous minutes; gaps and policy changes restart warmup',()=>{

@@ -19,7 +19,7 @@ export class HealthStore {
         await client.query('COMMIT');return {accepted:false,reason:'SAMPLE_NOT_NEWER',generation:Number(previous.source_generation)};
       }
       const result=evaluateSample(clean,previous?.evaluator_state??{},policy.thresholds,Number(policy.row_version),now);
-      const state={...result.state,probes:result.probes};
+      const state={...result.state,probes:result.probes,...(result.dataDisks?{schemaVersion:2,dataDisks:result.dataDisks,requiredMountIds:result.requiredMountIds}:{})};
       const saved=(await client.query(`INSERT INTO roomqc_control.cluster_health_current(cluster_id,source_generation,observed_at,
         received_at,valid_until,metric_status,normalized_values,reason_codes,evaluator_state)
         VALUES($1,nextval('roomqc_control.health_generation_seq'),$2,now(),$2::timestamptz+interval '120 seconds',$3,$4::jsonb,$5,$6::jsonb)

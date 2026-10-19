@@ -6,10 +6,13 @@ Theo dõi thực hiện: [tiến độ và bằng chứng](roomqc-vps-signup-pro
 phải đạt; chỉ tracker mới ghi phần đã kiểm chứng, không suy ra hoàn tất từ thiết kế.
 
 Thứ tự thực thi hiện hành: [plan chi tiết 25 bước, 8 đợt](roomqc-vps-signup-execution-plan-2026-10-19.md).
-Bản này đối chiếu nền local đã chạy ở `0003`, mã mới chưa kiểm chứng, file cần sửa,
-test, bàn giao và gate cho đủ 27 gói / 70 tình huống; ưu tiên tiếp theo là T01–T04.
+Bản thực thi đã cập nhật nền local kiểm chứng ở `d0f9b7b`/schema `0005`, tách mã P2
+chưa kiểm chứng, file/test/bàn giao và gate cho đủ 27 gói / 70 tình huống. Ưu tiên
+tiếp theo là T05–T07; xem [run sheet P2](roomqc-p2-monitoring-delivery-plan-2026-10-19.md).
 
-Ngày lập: 19/10/2026, Asia/Bangkok. Baseline tích hợp: `b95fc86`.
+Ngày lập: 19/10/2026, Asia/Bangkok. Baseline thiết kế ban đầu: `b95fc86`;
+commit đã kiểm chứng gần nhất: `d0f9b7b`. Mục 2 lưu hiện trạng khi lập thiết kế,
+không phải kết luận runtime hiện hành; hiện trạng mới lấy ở tracker và plan thực thi.
 Trạng thái: **kế hoạch hiện hành; nền local đã triển khai một phần, các phần còn lại theo tracker**.
 Phạm vi: khách tự đăng ký trên RoomQC, được cấp không gian trong cụm do RoomQC vận hành;
 đội vận hành biết tài nguyên còn lại, quản lý việc nhận khách và xử lý đăng ký kẹt.
@@ -139,9 +142,9 @@ cần làm được tính từ dữ liệu được phép xem và bằng chứng
 
 ### 4.2. Bảng dữ liệu đề xuất, nằm trong database directory
 
-Bảng dưới mô tả thiết kế đích. Nền directory local đã áp `0001`–`0003`; migration
-`0004` đang phát triển, chưa áp trong runtime được quan sát. Có bảng chưa đồng
-nghĩa luồng API/worker/UI tương ứng đã hoàn tất; đối chiếu tracker khi triển khai.
+Bảng dưới mô tả thiết kế đích. Đợt local `d0f9b7b` đã áp `0001`–`0005` theo báo cáo
+admin/health. Có bảng chưa đồng nghĩa luồng API/worker/UI tương ứng đã hoàn tất;
+đối chiếu tracker và artifact đúng commit/image khi triển khai.
 
 | Bảng / thay đổi | Trường chính | Ràng buộc, chỉ mục và cách dùng |
 |---|---|---|

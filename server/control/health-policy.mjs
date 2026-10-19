@@ -31,28 +31,58 @@ export function normalizeSample(sample,now=Date.now()){
   const probes=sample.probes;
   const probeNames=['auth','rest','storage','realtime','functions'];
   if(!probes||Object.keys(probes).length!==probeNames.length||probeNames.some(key=>typeof probes[key]!=='boolean'))throw new ControlError(422,'INVALID_PROBES','Thiếu kết quả kiểm tra dịch vụ.');
-  return {observedAt:new Date(observed).toISOString(),metrics:Object.fromEntries(names.map(k=>[k,m[k]])),probes:{...probes}};
+  let disks;
+  if(sample.schemaVersion===2){
+    const required=sample.requiredMountIds;
+    if(typeof sample.targetFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(sample.targetFingerprint)||!['linux-host','docker-desktop-vm'].includes(sample.measurementScope)
+      ||!Array.isArray(required)||!required.length||required.length>16||new Set(required).size!==required.length
+      ||required.some(id=>typeof id!=='string'||!/^[a-z][a-z0-9-]{0,39}$/.test(id))||!Array.isArray(sample.dataDisks)
+      ||sample.dataDisks.length!==required.length)throw new ControlError(422,'INVALID_DISKS','Thiếu danh sách ổ dữ liệu bắt buộc.');
+    disks=sample.dataDisks.map(d=>{
+      if(!d||!required.includes(d.id)||!Number.isSafeInteger(d.freeBytes)||!Number.isSafeInteger(d.totalBytes)||d.totalBytes<=0
+        ||d.freeBytes<0||d.freeBytes>d.totalBytes||!Number.isFinite(d.inodeFreePercent)||d.inodeFreePercent<0||d.inodeFreePercent>100){
+        throw new ControlError(422,'INVALID_DISKS','Số đo ổ dữ liệu không hợp lệ.');
+      }
+      return {id:d.id,freeBytes:d.freeBytes,totalBytes:d.totalBytes,inodeFreePercent:d.inodeFreePercent};
+    });
+    if(new Set(disks.map(d=>d.id)).size!==required.length)throw new ControlError(422,'INVALID_DISKS','Ổ dữ liệu bị trùng hoặc thiếu.');
+    if(m.dataDiskFreeBytes!==disks[0].freeBytes||m.dataDiskTotalBytes!==disks[0].totalBytes||m.dataDiskInodeFreePercent!==disks[0].inodeFreePercent){
+      throw new ControlError(422,'INVALID_DISKS','Số đo tương thích phải thuộc cùng một ổ dữ liệu thực.');
+    }
+  }else if((sample.schemaVersion!==undefined&&sample.schemaVersion!==1)||sample.dataDisks!==undefined||sample.requiredMountIds!==undefined
+    ||sample.targetFingerprint!==undefined||sample.measurementScope!==undefined)throw new ControlError(422,'INVALID_SAMPLE_VERSION','Phiên bản số đo không được hỗ trợ.');
+  return {observedAt:new Date(observed).toISOString(),metrics:Object.fromEntries(names.map(k=>[k,m[k]])),probes:{...probes},
+    ...(disks?{schemaVersion:2,targetFingerprint:sample.targetFingerprint,measurementScope:sample.measurementScope,
+      requiredMountIds:[...sample.requiredMountIds],dataDisks:disks}: {})};
 }
 
 // Window state is persisted with the sample. A restart never erases a sustained fault.
 export function evaluateSample(sample,previous={},thresholds={},policyVersion=1,now=Date.now()){
   const clean=normalizeSample(sample,now),m=clean.metrics,t=policyThresholds(thresholds),at=Date.parse(clean.observedAt);
   if(previous.lastObservedAt!=null&&at<=previous.lastObservedAt)throw new ControlError(409,'SAMPLE_NOT_NEWER','Số đo không mới hơn snapshot hiện tại.');
-  const since={...(previous.since||{})},state={since,firstValidAt:previous.firstValidAt??at,policyVersion};
-  const continued=previous.lastObservedAt!=null&&previous.policyVersion===policyVersion&&at-previous.lastObservedAt<=120000;
+  const schemaVersion=clean.schemaVersion??1,targetFingerprint=clean.targetFingerprint??null;
+  const since={...(previous.since||{})},state={since,firstValidAt:previous.firstValidAt??at,policyVersion,sampleSchemaVersion:schemaVersion,
+    ...(schemaVersion===2?{targetFingerprint,measurementScope:clean.measurementScope,requiredMountIds:[...clean.requiredMountIds]}: {})};
+  const continued=previous.lastObservedAt!=null&&previous.policyVersion===policyVersion&&at-previous.lastObservedAt<=120000
+    &&(previous.sampleSchemaVersion??1)===schemaVersion&&(previous.targetFingerprint??null)===targetFingerprint
+    &&(schemaVersion===1||(previous.measurementScope===clean.measurementScope
+      &&JSON.stringify([...(previous.requiredMountIds??[])].sort())===JSON.stringify([...clean.requiredMountIds].sort())));
   if(!continued){state.firstValidAt=at;for(const key of Object.keys(since))delete since[key]}
   state.lastObservedAt=at;
   const block=[],warning=[];
   const sustained=(code,bad,window,list)=>{if(!bad){delete since[code];return}since[code]??=at;if(at-since[code]>=window)list.push(code)};
-  const memory=m.memoryAvailableBytes/m.memoryTotalBytes*100,disk=m.dataDiskFreeBytes/m.dataDiskTotalBytes*100,connections=m.dbConnectionsUsed/m.dbConnectionBudget*100;
+  const memory=m.memoryAvailableBytes/m.memoryTotalBytes*100,connections=m.dbConnectionsUsed/m.dbConnectionBudget*100;
+  const disks=clean.dataDisks??[{id:'legacy',freeBytes:m.dataDiskFreeBytes,totalBytes:m.dataDiskTotalBytes,inodeFreePercent:m.dataDiskInodeFreePercent}];
   sustained('CPU_CRITICAL',m.cpuUsedPercent>=t.cpuBlockPercent,300000,block);
   sustained('CPU_HIGH',m.cpuUsedPercent>=t.cpuWarnPercent,300000,warning);
   sustained('MEMORY_CRITICAL',memory<t.memoryBlockPercent,120000,block);
   sustained('MEMORY_LOW',memory<t.memoryWarnPercent,300000,warning);
-  sustained('DISK_CRITICAL',disk<t.diskBlockPercent||m.dataDiskFreeBytes<t.diskBlockBytes,0,block);
-  sustained('DISK_LOW',disk<t.diskWarnPercent||m.dataDiskFreeBytes<t.diskWarnBytes,0,warning);
-  sustained('INODE_CRITICAL',m.dataDiskInodeFreePercent<t.inodeBlockPercent,0,block);
-  sustained('INODE_LOW',m.dataDiskInodeFreePercent<t.inodeWarnPercent,0,warning);
+  sustained('DISK_CRITICAL',disks.some(d=>d.freeBytes/d.totalBytes*100<t.diskBlockPercent||d.freeBytes<t.diskBlockBytes),0,block);
+  sustained('DISK_LOW',disks.some(d=>d.freeBytes/d.totalBytes*100<t.diskWarnPercent||d.freeBytes<t.diskWarnBytes),0,warning);
+  sustained('INODE_CRITICAL',disks.some(d=>d.inodeFreePercent<t.inodeBlockPercent),0,block);
+  sustained('INODE_LOW',disks.some(d=>d.inodeFreePercent<t.inodeWarnPercent),0,warning);
+  state.affectedMounts=Object.fromEntries(disks.filter(d=>d.freeBytes/d.totalBytes*100<t.diskWarnPercent||d.freeBytes<t.diskWarnBytes||d.inodeFreePercent<t.inodeWarnPercent)
+    .map(d=>[d.id,{diskCritical:d.freeBytes/d.totalBytes*100<t.diskBlockPercent||d.freeBytes<t.diskBlockBytes,inodeCritical:d.inodeFreePercent<t.inodeBlockPercent}]));
   sustained('DB_CONNECTIONS_CRITICAL',connections>=t.connectionBlockPercent,120000,block);
   sustained('DB_CONNECTIONS_HIGH',connections>=t.connectionWarnPercent,300000,warning);
   const probesOk=Object.values(clean.probes).every(Boolean);
@@ -60,8 +90,8 @@ export function evaluateSample(sample,previous={},thresholds={},policyVersion=1,
   sustained('BACKEND_UNREACHABLE',!probesOk,60000,block);
   if(state.probeFailures<3){const index=block.indexOf('BACKEND_UNREACHABLE');if(index>=0)block.splice(index,1)}
   if(!probesOk)warning.push('BACKEND_PROBE_FAILED');
-  const recovering=m.cpuUsedPercent<65&&memory>25&&disk>25&&m.dataDiskFreeBytes>20*1024**3
-    &&m.dataDiskInodeFreePercent>20&&connections<65&&probesOk;
+  const recovering=m.cpuUsedPercent<65&&memory>25&&disks.every(d=>d.freeBytes/d.totalBytes*100>25&&d.freeBytes>20*1024**3
+    &&d.inodeFreePercent>20)&&connections<65&&probesOk;
   if(recovering)state.recoverySince=continued?(previous.recoverySince??at):at;
   else state.recoverySince=null;
   const latched=previous.latchedReasons||[];
