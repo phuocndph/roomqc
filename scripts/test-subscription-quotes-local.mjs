@@ -1,19 +1,15 @@
 // Phase 2a previews on the running LOOPBACK stack only. No invoice, money,
 // gateway, external email or entitlement mutation by the API under test.
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import {execFileSync} from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 import { assertDatabaseDenied, boundedFetch, withDeadline } from './lib/customer-journey-checks.mjs';
+import { readLocalSupabaseStatus } from './lib/local-supabase-status.mjs';
 
-const raw = process.platform === 'win32'
-  ? execFileSync('cmd.exe', ['/d','/s','/c','npx --no-install supabase status --output json'],
-    { encoding:'utf8', stdio:['ignore','pipe','pipe'], timeout:30000 })
-  : execFileSync('npx', ['--no-install','supabase','status','--output','json'],
-    { encoding:'utf8', stdio:['ignore','pipe','pipe'], timeout:30000 });
-const local = JSON.parse(raw.slice(raw.indexOf('{')));
+const local = readLocalSupabaseStatus();
 const loopback = value => ['127.0.0.1','localhost','[::1]'].includes(new URL(value).hostname);
 assert.ok(loopback(local.API_URL) && loopback(local.DB_URL), 'Loopback API and DB only');
 const projectId = (await readFile(new URL('../supabase/config.toml',import.meta.url),'utf8'))

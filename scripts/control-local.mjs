@@ -23,6 +23,7 @@ function assertOwned(info){assert.equal(info.Config.Labels['roomqc.control-local
 function inspectService(service){
   // Does not depend on env files: prepare may have been interrupted before writing them.
   const id=docker(['ps','-a','--filter','label=com.docker.compose.project=roomqc-control-local',
+    '--filter','label=roomqc.control-local=v3',
     '--filter',`label=com.docker.compose.service=${service}`,'--format','{{.ID}}']).trim();if(!id)return null;
   assert.match(id,/^[a-f0-9]{12,64}$/,'More than one matching service requires operator review');
   const info=JSON.parse(docker(['inspect',id]))[0];assertOwned(info);return info;

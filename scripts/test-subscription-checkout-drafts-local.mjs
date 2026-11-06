@@ -1,17 +1,15 @@
 // Non-payable drafts only. No bank, provider key, email to Internet, payment
 // confirmation or entitlement activation. Loopback fixtures are removed by ID.
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import {execFileSync} from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 import { assertDatabaseDenied, boundedFetch, withDeadline } from './lib/customer-journey-checks.mjs';
+import { readLocalSupabaseStatus } from './lib/local-supabase-status.mjs';
 
-const raw = process.platform==='win32'
-  ?execFileSync('cmd.exe',['/d','/s','/c','npx --no-install supabase status --output json'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000})
-  :execFileSync('npx',['--no-install','supabase','status','--output','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000});
-const local = JSON.parse(raw.slice(raw.indexOf('{')));
+const local = readLocalSupabaseStatus();
 const loopback = url => ['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname);
 assert.ok(loopback(local.API_URL)&&loopback(local.DB_URL),'Loopback only');
 const projectId = (await readFile(new URL('../supabase/config.toml',import.meta.url),'utf8')).match(/^project_id\s*=\s*"([a-z0-9_-]+)"/m)?.[1];

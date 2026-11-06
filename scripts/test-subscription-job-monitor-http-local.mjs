@@ -1,18 +1,19 @@
 // Existing manifest-owned local fixtures only. Never invokes the status worker.
-// History writes use service_role inside ONE transaction that always rolls back.
+// History writes use the current atomic worker protocol inside ONE transaction
+// that always rolls back. The legacy begin/finish RPCs are intentionally
+// denied to service_role after the worker cutover and are tested as such below.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { readLocalSupabaseStatus } from './lib/local-supabase-status.mjs';
 
 assert.ok(process.env.ROOMQC_FIXTURE_MANIFEST, 'Existing A0 local manifest required');
 const manifest = JSON.parse(await readFile(process.env.ROOMQC_FIXTURE_MANIFEST, 'utf8'));
 assert.equal(manifest.project, 'ehjtoajnlnuvuiwkpmbp');
 assert.match(manifest.run, /^[a-f0-9]{8}$/);
-const raw = execFileSync('cmd.exe', ['/d', '/s', '/c', 'npx --no-install supabase status --output json'],
-  { cwd: new URL('../', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000 });
-const local = JSON.parse(raw.slice(raw.indexOf('{')));
+const local = readLocalSupabaseStatus();
 for (const value of [local.API_URL, local.DB_URL]) assert.ok(['127.0.0.1', 'localhost'].includes(new URL(value).hostname));
 const q = value => "'" + String(value).replaceAll("'", "''") + "'";
 const sql = statement => execFileSync('docker', ['exec', '-i', 'supabase_db_ehjtoajnlnuvuiwkpmbp',
@@ -55,25 +56,24 @@ try {
   }
   assert.equal(before.data.active, null, 'Do not run transactional fixture while a real job is active');
   const first = randomUUID(), second = randomUUID(), blocked = randomUUID();
-  const mixed = { ...summary, staff_status: 'failed', recovery_required: true, error_codes: ['STAFF_PRESENCE_FAILED'] };
-  const unknown = { ...summary, subscription_status: 'failed', staff_status: 'not_run', transition_outcome_unknown: true,
-    recovery_required: true, error_codes: ['JOB_EXECUTION_FAILED'] };
   const output = sql(`BEGIN; SET LOCAL statement_timeout='15s'; SET LOCAL lock_timeout='5s'; SET LOCAL ROLE service_role;
     DO $verify$ DECLARE r jsonb; BEGIN
-      r:=public.begin_subscription_status_run(${q(first)}); IF NOT (r->>'acquired')::boolean THEN RAISE EXCEPTION 'Expected admission'; END IF;
-      r:=public.finish_subscription_status_run(${q(first)},${q(JSON.stringify(mixed))}::jsonb);
-      IF r->>'status'<>'failed' OR NOT (r->>'recorded')::boolean THEN RAISE EXCEPTION 'Mixed summary mismatch'; END IF;
-      PERFORM public.begin_subscription_status_run(${q(second)});
-      r:=public.finish_subscription_status_run(${q(second)},${q(JSON.stringify(unknown))}::jsonb);
-      IF r->>'status'<>'interrupted' OR NOT (r->>'recorded')::boolean THEN RAISE EXCEPTION 'Unknown must block'; END IF;
-      r:=public.begin_subscription_status_run(${q(blocked)});
+      r:=public.begin_atomic_subscription_status_run(${q(first)},'{"kind":"cluster"}'::jsonb);
+      IF NOT (r->>'acquired')::boolean THEN RAISE EXCEPTION 'Expected atomic admission'; END IF;
+      r:=public.finish_atomic_subscription_status_run(${q(first)},false);
+      IF r->>'status'<>'failed' OR NOT (r->>'recorded')::boolean THEN RAISE EXCEPTION 'Incomplete atomic summary mismatch'; END IF;
+      r:=public.begin_atomic_subscription_status_run(${q(second)},'{"kind":"cluster"}'::jsonb);
+      IF NOT (r->>'acquired')::boolean THEN RAISE EXCEPTION 'Expected second atomic admission'; END IF;
+      r:=public.finish_atomic_subscription_status_run(${q(second)},true);
+      IF r->>'status'<>'interrupted' OR NOT (r->>'recorded')::boolean THEN RAISE EXCEPTION 'Unknown atomic outcome must block'; END IF;
+      r:=public.begin_atomic_subscription_status_run(${q(blocked)},'{"kind":"cluster"}'::jsonb);
       IF r->>'status'<>'busy' OR (r->>'acquired')::boolean THEN RAISE EXCEPTION 'Unexpected takeover'; END IF;
     END $verify$; RESET ROLE;
     SELECT set_config('request.jwt.claims',${q(JSON.stringify(actors.admin.claims))},true) IS NOT NULL; SET LOCAL ROLE authenticated;
     DO $verify$ DECLARE r jsonb; BEGIN r:=public.admin_subscription_job_monitor();
       IF r->'active'->>'id'<>${q(second)} OR r->'active'->>'status'<>'interrupted' OR r->'active'->'summary' IS NULL THEN RAISE EXCEPTION 'Monitor lost blocker'; END IF;
     END $verify$; SELECT 'history_transaction_passed'; ROLLBACK;`);
-  ok(output.includes('history_transaction_passed'), 'Full local schema begin/mixed finish/unknown finish/busy/monitor pass inside rollback-only transaction');
+  ok(output.includes('history_transaction_passed'), 'Full local schema atomic begin/incomplete finish/unknown finish/busy/monitor pass inside rollback-only transaction');
   assert.equal(sql(stateSQL), initialState);
   const after = await monitor(); assert.ifError(after.error);
   ok(JSON.stringify(after.data.runs) === JSON.stringify(before.data.runs) && after.data.last_success_at === before.data.last_success_at

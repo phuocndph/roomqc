@@ -70,6 +70,16 @@ test('negative observation fails on a channel loss during the window', async () 
   }, 'observe', 50, 5), /Realtime channel failed/);
 });
 
+test('a channel join is not a PostgreSQL ready acknowledgement; a CDC error cannot be hidden by a later success', () => {
+  const guard = new RealtimeGuard('fixture');
+  guard.status('SUBSCRIBED'); guard.assertHealthy();
+  assert.throws(() => guard.assertPostgresReady(), /PostgreSQL subscription is not ready/);
+  guard.postgresStatus('ok'); guard.assertPostgresReady();
+  guard.postgresStatus('error'); guard.postgresStatus('ok');
+  assert.throws(() => guard.assertPostgresReady(), /channel failed/);
+  guard.stop(); guard.postgresStatus('ok'); assert.throws(() => guard.assertPostgresReady());
+});
+
 test('waitUntil bounds a stalled predicate instead of waiting forever', async () => {
   await assert.rejects(waitUntil(() => new Promise(() => {}), 'stalled predicate', 25, 1), /Timed out: stalled predicate/);
 });

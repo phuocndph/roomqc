@@ -81,6 +81,13 @@ function isServiceRoleKey(value) {
 if (isServiceRoleKey(publishableKey)) {
   errors.push('VITE_SUPABASE_PUBLISHABLE_KEY must not be a service-role/secret key')
 }
+let publicKeyValid = /^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey)
+if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(publishableKey)) {
+  try { publicKeyValid = JSON.parse(Buffer.from(publishableKey.split('.')[1], 'base64url')).role === 'anon' } catch {}
+}
+if (publishableKey && !publicKeyValid) {
+  errors.push('VITE_SUPABASE_PUBLISHABLE_KEY must be one publishable key or anon JWT, not a configuration object')
+}
 
 const vapidPublicKey = (process.env.VITE_VAPID_PUBLIC_KEY || '').trim()
 if (vapidPublicKey && !/replace_with_/i.test(vapidPublicKey)) {

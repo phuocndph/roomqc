@@ -3,54 +3,74 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
+import { closeSync, openSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { lockSandbox, readSandbox, removeIfPresent, reserveSandbox, sandboxFile, saveSandbox } from './roomqc-sandbox-state.mjs';
+import { restoreArchiveWithExtensionMembers } from './roomqc-restore-extension-members.mjs';
+import {inventorySQL,inventory,compareBackupInventories} from './roomqc-backup-catalog.mjs';
+import {createPrivateBackupDirectory} from './roomqc-backup-envelope.mjs';
+import {assertSetupBackfillAccess} from '../server/control/setup-backfill-files.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const source = 'supabase_db_ehjtoajnlnuvuiwkpmbp';
+const arguments_ = process.argv.slice(2), options = new Map();
+let keep = false;
+for (let i = 0; i < arguments_.length; i++) {
+  const name = arguments_[i];
+  if (name === '--keep-sandbox') { assert.equal(keep, false); keep = true; continue; }
+  assert.ok(['--source-ssh', '--source-container', '--source-role'].includes(name) && !options.has(name), 'Unknown or duplicate backup argument');
+  assert.equal(typeof arguments_[i + 1], 'string', 'Backup argument requires a value');
+  options.set(name, arguments_[++i]);
+}
+const sourceSsh = options.get('--source-ssh');
+assert.equal(options.has('--source-container'), Boolean(sourceSsh), 'Remote backup requires both --source-ssh and --source-container');
+if (sourceSsh) assert.match(sourceSsh, /^[a-z_][a-z0-9_-]*@[a-zA-Z0-9][a-zA-Z0-9.-]*$/);
+const source = options.get('--source-container') || 'supabase_db_ehjtoajnlnuvuiwkpmbp';
+assert.match(source, /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/);
+// Self-hosted releases keep postgres non-superuser. Use an explicitly selected
+// operator identity for a complete dump; do not change source role privileges.
+const sourceRole = options.get('--source-role') || 'postgres';
+assert.ok(['postgres', 'supabase_admin'].includes(sourceRole), 'Unsupported source backup role');
 const run = randomUUID().replaceAll('-', '').slice(0, 12);
 const target = `roomqc-restore-${run}`;
 const backupDir = resolve(process.env.ROOMQC_BACKUP_ROOT || resolve(root, '../backups'), `roomqc-restore-${run}.local`);
 const label = 'roomqc.restore-verification=' + run;
-const keep = process.argv.includes('--keep-sandbox');
+const sourceDump = '/tmp/roomqc-restore-' + run + '.dump';
+let sourceDumpCreated = false;
 const q = value => "'" + String(value).replaceAll("'", "''") + "'";
-const docker = (args, input, timeout = 30000) => execFileSync('docker', args, {
+const localDocker = (args, input, timeout = 30000) => execFileSync('docker', args, {
   input, encoding: 'utf8', timeout, maxBuffer: 20_000_000, stdio: ['pipe', 'pipe', 'pipe'],
 });
+const sshArguments = args => ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+  '-o', 'ConnectTimeout=10', '-o', 'ServerAliveInterval=10', '-o', 'ServerAliveCountMax=3',
+  sourceSsh, 'docker ' + args.map(value => "'" + String(value).replaceAll("'", "'\\''") + "'").join(' ')];
+const remoteDocker = (args, input, timeout = 30000) => execFileSync('ssh', sshArguments(args), {
+  input, encoding: 'utf8', timeout, maxBuffer: 20_000_000, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
+});
+const docker = (args, input, timeout = 30000) => {
+  if (!sourceSsh || !args.some(value => value === source || value.startsWith(source + ':'))) {
+    return localDocker(args, input, timeout);
+  }
+  if (args[0] === 'cp') {
+    assert.equal(args[1], source + ':' + sourceDump);
+    assert.equal(resolve(args[2]), resolve(backupDir, 'database.dump'));
+    const descriptor = openSync(args[2], 'wx', 0o600);
+    try {
+      execFileSync('ssh', sshArguments(['exec', source, 'cat', sourceDump]), {
+        windowsHide: true, timeout: Math.max(timeout, 120000), stdio: ['ignore', descriptor, 'pipe'],
+      });
+    } finally { closeSync(descriptor); }
+    return '';
+  }
+  assert.ok(['inspect', 'exec'].includes(args[0]), 'Remote backup cannot manage source containers');
+  return remoteDocker(args, input, timeout);
+};
 const sql = (container, statement) => docker(['exec', '-i', container, 'psql', '-U',
-  container === source ? 'postgres' : 'supabase_admin', '-d', 'postgres',
+  container === source ? sourceRole : 'supabase_admin', '-d', 'postgres',
   '-X', '-qAt', '-v', 'ON_ERROR_STOP=1'], statement);
 // Include complete table rows, policies, constraints and privileged function
 // definitions, not just a sample count. No plaintext row data is printed.
-const inventorySQL = `
-SET LOCAL search_path='';
-SELECT jsonb_build_object('kind','table','name',n.nspname||'.'||c.relname,
-  'rls',c.relrowsecurity,'force_rls',c.relforcerowsecurity,'owner',pg_get_userbyid(c.relowner))::text
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE c.relkind IN ('r','p') AND n.nspname IN ('public','auth','private','storage','supabase_migrations','pgmq') ORDER BY n.nspname,c.relname;
-SELECT jsonb_build_object('kind','policy','table',schemaname||'.'||tablename,'name',policyname,
-  'roles',roles,'cmd',cmd,'qual',qual,'check',with_check)::text FROM pg_policies
-WHERE schemaname IN ('public','auth','private','storage') ORDER BY schemaname,tablename,policyname;
-SELECT jsonb_build_object('kind','constraint','table',n.nspname||'.'||c.relname,'name',k.conname,
-  'definition',pg_get_constraintdef(k.oid),'valid',k.convalidated)::text
-FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname IN ('public','auth','private','storage','pgmq') ORDER BY n.nspname,c.relname,k.conname;
-SELECT jsonb_build_object('kind','function','name',n.nspname||'.'||p.proname,
-  'args',pg_get_function_identity_arguments(p.oid),'owner',pg_get_userbyid(p.proowner),
-  'acl',(SELECT jsonb_agg(a::text ORDER BY a::text COLLATE "C") FROM unnest(p.proacl) a),
-  'definition_hash',md5(pg_get_functiondef(p.oid)))::text
-FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE p.prokind='f'
-  AND n.nspname IN ('public','auth','private') ORDER BY n.nspname,p.proname,pg_get_function_identity_arguments(p.oid);
-SELECT format('SELECT jsonb_build_object(''kind'',''data'',''name'',%L,''count'',count(*),''hash'',md5(coalesce(string_agg(row_text,E''\\n'' ORDER BY row_text COLLATE "C"),'''')))::text FROM (SELECT to_jsonb(t)::text AS row_text FROM %I.%I t) r;',
-  n.nspname||'.'||c.relname,n.nspname,c.relname)
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE c.relkind='r' AND n.nspname IN ('public','auth','private','storage','supabase_migrations','pgmq')
-ORDER BY n.nspname,c.relname;
-\\gexec
-`;
-const inventory = raw => raw.trim().split('\n').filter(line => line.startsWith('{')).map(line => JSON.parse(line));
 let created = false;
 let holder;
 let holderExit;
@@ -58,6 +78,8 @@ let snapshotAt;
 let release;
 let reserved = false;
 try {
+  await mkdir(dirname(backupDir), {recursive:true, mode:0o700});
+  await createPrivateBackupDirectory(backupDir);
   if (keep) {
     release = await lockSandbox();
     await reserveSandbox({ run, container: target, phase: 'backup' });
@@ -65,10 +87,22 @@ try {
   }
   const inspect = JSON.parse(docker(['inspect', source]))[0];
   assert.equal(inspect.Name, '/' + source);
-  const image = inspect.Image; // Exact cached database image, no pull/upgrade.
-  await mkdir(backupDir, { recursive: true });
-  holder = spawn('docker', ['exec', '-i', source, 'psql', '-U', 'postgres', '-d', 'postgres',
-    '-X', '-qAt', '-v', 'ON_ERROR_STOP=1'], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const image = inspect.Image; // Restore the exact source image, never upgrade it.
+  if (sourceSsh) {
+    try { localDocker(['image', 'inspect', image]); }
+    catch {
+      const metadata = JSON.parse(remoteDocker(['image', 'inspect', inspect.Config.Image]))[0];
+      assert.equal(metadata.Id, image);
+      const digest = metadata.RepoDigests?.find(value => /^[a-z0-9._:/-]+@sha256:[a-f0-9]{64}$/.test(value));
+      assert.ok(digest, 'An immutable source database image is required');
+      localDocker(['pull', digest], undefined, 600000);
+    }
+    assert.equal(JSON.parse(localDocker(['image', 'inspect', image]))[0].Id, image);
+  }
+  const snapshotArguments = ['exec', '-i', source, 'psql', '-U', sourceRole, '-d', 'postgres',
+    '-X', '-qAt', '-v', 'ON_ERROR_STOP=1'];
+  holder = spawn(sourceSsh ? 'ssh' : 'docker', sourceSsh ? sshArguments(snapshotArguments) : snapshotArguments,
+    { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
   let snapshotOutput = '', snapshotError = '';
   let resolveSnapshot, rejectSnapshot;
   const ready = new Promise((accept, reject) => { resolveSnapshot = accept; rejectSnapshot = reject; });
@@ -113,15 +147,16 @@ try {
     queueRestore += `SELECT pg_catalog.setval('pgmq.${sequence}',${Number(value.last)},${value.called});\n`;
   }
   queueRestore += 'RESET ROLE;\n';
-  await writeFile(resolve(backupDir, 'pgmq-queues.sql'), queueRestore);
-  docker(['exec', source, 'pg_dump', '-U', 'postgres', '-d', 'postgres', '-Fc',
-    '--snapshot=' + snapshot, '--lock-wait-timeout=5000', '-f', '/tmp/roomqc-restore-' + run + '.dump'], undefined, 90000);
+  await writeFile(resolve(backupDir, 'pgmq-queues.sql'), queueRestore, { mode: 0o600 });
+  sourceDumpCreated = true;
+  docker(['exec', source, 'pg_dump', '-U', sourceRole, '-d', 'postgres', '-Fc',
+    '--snapshot=' + snapshot, '--lock-wait-timeout=5000', '-f', sourceDump], undefined, 90000);
   holder.stdin.end('COMMIT;\n\\q\n'); await holderExit; holder = undefined;
-  const roles = docker(['exec', source, 'pg_dumpall', '-U', 'postgres', '--roles-only', '--no-role-passwords']);
+  const roles = docker(['exec', source, 'pg_dumpall', '-U', sourceRole, '--roles-only', '--no-role-passwords']);
   assert.ok(!/PASSWORD\s+'/i.test(roles), 'Source role passwords must not be exported');
-  await writeFile(resolve(backupDir, 'roles.sql'), roles);
-  await writeFile(resolve(backupDir, 'expected.json'), JSON.stringify(expected, null, 2));
-  docker(['cp', source + ':/tmp/roomqc-restore-' + run + '.dump', resolve(backupDir, 'database.dump')]);
+  await writeFile(resolve(backupDir, 'roles.sql'), roles, { mode: 0o600 });
+  await writeFile(resolve(backupDir, 'expected.json'), JSON.stringify(expected, null, 2), { mode: 0o600 });
+  docker(['cp', source + ':' + sourceDump, resolve(backupDir, 'database.dump')]);
   const sha256 = createHash('sha256').update(await readFile(resolve(backupDir, 'database.dump'))).digest('hex');
   await writeFile(resolve(backupDir, 'sha256.txt'), sha256 + '\n');
   const checksums = {};
@@ -142,7 +177,7 @@ try {
   const savedExpected = JSON.parse(await readFile(resolve(backupDir, 'expected.json'), 'utf8'));
   assert.deepEqual(savedExpected, expected);
   console.log('PASS consistent snapshot exported; all four saved backup artifacts verified by SHA256');
-  docker(['run', '-d', '--name', target, '--label', label, '--network', 'none', '--user', 'postgres',
+  docker(['run', '-d', '--name', target, '--label', label, '--network', 'none', '--memory', '1536m', '--user', 'postgres',
     '--entrypoint', 'sh', image, '-c',
     'initdb -D /tmp/roomqc-restore-data --username=supabase_admin --auth-local=trust --auth-host=scram-sha-256 --locale=en_US.UTF-8 >/tmp/initdb.log 2>&1 && exec postgres -D /tmp/roomqc-restore-data -c shared_preload_libraries=pg_cron,pg_net,supabase_vault -c cron.database_name=postgres -c cron.launch_active_jobs=off -c listen_addresses=* -c max_connections=100']);
   created = true;
@@ -157,12 +192,17 @@ try {
   sql(target, savedRoles.replace(/^CREATE ROLE supabase_admin;$/m, '-- bootstrap role already exists'));
   docker(['cp', resolve(backupDir, 'database.dump'), target + ':/tmp/roomqc-restore.dump']);
   const start = performance.now();
-  docker(['exec', target, 'pg_restore', '-U', 'supabase_admin', '-d', 'postgres',
-    '--exit-on-error', '--single-transaction', '/tmp/roomqc-restore.dump'], undefined, 120000);
+  const restore = await restoreArchiveWithExtensionMembers({ docker, target,
+    archive: '/tmp/roomqc-restore.dump', expected: savedExpected, directory: backupDir });
   sql(target, savedQueues);
   sql(target, 'ALTER DATABASE postgres OWNER TO postgres;');
+  sql(target, restore.defaultAclSql || `ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA pgmq REVOKE ALL PRIVILEGES ON TABLES FROM pg_monitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA pgmq REVOKE ALL PRIVILEGES ON SEQUENCES FROM pg_monitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgmq REVOKE ALL PRIVILEGES ON TABLES FROM pg_monitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgmq REVOKE ALL PRIVILEGES ON SEQUENCES FROM pg_monitor;`);
   const restored = inventory(sql(target, 'BEGIN READ ONLY; ' + inventorySQL + '\nCOMMIT;'));
-  if (JSON.stringify(restored) !== JSON.stringify(expected)) {
+  const catalogComparison = compareBackupInventories(expected, restored);
+  if (!catalogComparison.matches) {
     await writeFile(resolve(backupDir, 'restored.json'), JSON.stringify(restored, null, 2));
     const key = row => [row.kind, row.table || '', row.name, row.args || ''].join(':');
     const index = new Map(restored.map(row => [key(row), JSON.stringify(row)]));
@@ -173,21 +213,35 @@ try {
   const state = JSON.parse(docker(['inspect', target]))[0];
   assert.equal(state.HostConfig.NetworkMode, 'none');
   assert.deepEqual(state.NetworkSettings.Ports, {});
-  const evidence = { run, container: target, source, sourceImage: image, backupDir, sha256,
-    snapshotAt, verifiedAt: new Date().toISOString(), checksums,
+  const evidence = { run, container: target, source, sourceRole, sourceSsh: sourceSsh || null, sourceDatabaseWrites: false,
+    sourceImage: image, backupDir, sha256,
+    snapshotAt, verifiedAt: new Date().toISOString(), checksums, restore: (()=>{const value={...restore};delete value.defaultAclSql;return value})(),
     restoreSeconds: Math.round((performance.now() - start) / 100) / 10,
     tables: expected.filter(row => row.kind === 'table').length,
     dataTables: expected.filter(row => row.kind === 'data').length,
     policies: expected.filter(row => row.kind === 'policy').length,
     constraints: expected.filter(row => row.kind === 'constraint').length,
-    functions: expected.filter(row => row.kind === 'function').length, keep };
+    functions: expected.filter(row => row.kind === 'function').length,
+    schemas: expected.filter(row => row.kind === 'schema').length,
+    sequences: expected.filter(row => row.kind === 'sequence').length,
+    defaultAcls: expected.filter(row => row.kind === 'default_acl').length,
+    triggers: expected.filter(row => row.kind === 'trigger').length,
+    roles: expected.filter(row => row.kind === 'role').length,
+    reviewedDeparserDeltas: catalogComparison.reviewedDeparserDeltas,
+    roleMemberships: expected.filter(row => row.kind === 'role_membership').length, keep };
   await writeFile(resolve(backupDir, 'result.json'), JSON.stringify(evidence, null, 2));
   if (keep) {
     await saveSandbox({ ...evidence, phase: 'restored' });
   }
   console.log('PASS full logical restore matches source snapshot: ' + JSON.stringify(evidence));
 } catch (error) {
-  console.error('Restore rehearsal failed: ' + (error.stderr || error.message));
+  // On Windows, mode:0600 alone does not restrict inherited read access.
+  // Do not write diagnostics unless the private directory was established.
+  try {
+    await assertSetupBackfillAccess(backupDir, {directory:true});
+    await writeFile(resolve(backupDir, 'private-error.log'), String(error.stderr || error.stack || error), { mode: 0o600 });
+  } catch { /* Fail without leaving sensitive diagnostics in an open directory. */ }
+  console.error('Restore rehearsal failed; diagnostic details retained privately in backup directory.');
   process.exitCode = 1;
 } finally {
   try {
@@ -199,5 +253,9 @@ try {
       console.log('Only this generated restore container removed; host backup retained.');
     }
     if (reserved && process.exitCode && (await readSandbox())?.run === run) await removeIfPresent(sandboxFile);
+    if (sourceDumpCreated) {
+      assert.match(sourceDump, /^\/tmp\/roomqc-restore-[a-f0-9]{12}\.dump$/);
+      docker(['exec', source, 'rm', '-f', sourceDump]);
+    }
   } finally { if (release) await release(); }
 }

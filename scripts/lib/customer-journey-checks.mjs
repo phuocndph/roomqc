@@ -91,13 +91,24 @@ export async function observeFor(inspect, label, duration = 2000, interval = 100
 }
 
 export class RealtimeGuard {
-  constructor(label) { this.label = label; this.subscribed = false; this.failed = false; this.stopped = false; }
+  constructor(label) { this.label = label; this.subscribed = false; this.postgresReady = false; this.failed = false; this.stopped = false; this.lastStatus = null; this.statuses = []; }
   status(status) {
     if (this.stopped) return;
+    this.lastStatus = status;
+    if (this.statuses.length < 12) this.statuses.push(status);
     if (status === 'SUBSCRIBED') this.subscribed = true;
     else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) this.failed = true;
   }
   assertNotFailed() { assert.ok(!this.failed, `Realtime channel failed: ${this.label}`); }
+  postgresStatus(status) {
+    if (this.stopped) return;
+    if (status === 'ok') this.postgresReady = true;
+    else if (status === 'error') this.failed = true;
+  }
+  assertPostgresReady(connected = true) {
+    this.assertHealthy(connected);
+    assert.ok(this.postgresReady, `Realtime PostgreSQL subscription is not ready: ${this.label}`);
+  }
   assertHealthy(connected = true) {
     this.assertNotFailed();
     assert.ok(this.subscribed && connected && !this.stopped, `Realtime channel is not live: ${this.label}`);

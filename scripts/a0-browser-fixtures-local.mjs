@@ -7,12 +7,10 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 import { boundedFetch } from './lib/customer-journey-checks.mjs';
+import { readLocalSupabaseStatus } from './lib/local-supabase-status.mjs';
 
 const file=new URL('../artifacts/a0-browser-fixtures.local',import.meta.url);
-const raw=process.platform==='win32'
-  ?execFileSync('cmd.exe',['/d','/s','/c','npx --no-install supabase status --output json'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000})
-  :execFileSync('npx',['--no-install','supabase','status','--output','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000});
-const local=JSON.parse(raw.slice(raw.indexOf('{')));
+const local=readLocalSupabaseStatus();
 const loopback=url=>['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname);
 assert.ok(loopback(local.API_URL)&&loopback(local.DB_URL),'Only local Supabase');
 const project=(await readFile(new URL('../supabase/config.toml',import.meta.url),'utf8')).match(/^project_id\s*=\s*"([a-z0-9_-]+)"/m)?.[1];

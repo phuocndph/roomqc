@@ -37,10 +37,31 @@ else {
   if (!indexHtml.includes(supabaseOrigin)) errors.push('index.html does not contain the configured Supabase origin')
 }
 
-if (/replace_with_/i.test(bundle)) errors.push('The production bundle contains an environment placeholder')
+// The super-admin documentation viewer intentionally ships runbook examples,
+// including the literal `replace_with_` marker. Check executable/config output
+// only so an example in documentation cannot block an otherwise valid release.
+const executableBundle = files
+  .filter((file) => !/docs-loader-[^\\/]+\.js$/i.test(file))
+  .map((file) => readFileSync(file, 'utf8')).join('\n')
+if (/replace_with_/i.test(executableBundle)) errors.push('The production bundle contains an environment placeholder')
+// Validate tokens without logging their contents. A malformed build argument
+// can serialize a private backend object into an otherwise public variable.
+if (/@\{publishableKey=|jwtSecret\s*[=:]|databasePassword\s*=/i.test(executableBundle)) {
+  errors.push('The production bundle contains a serialized private configuration')
+}
+for (const token of executableBundle.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) || []) {
+  try {
+    if (JSON.parse(Buffer.from(token.split('.')[1], 'base64url')).role === 'service_role') {
+      errors.push('The production bundle contains a service-role JWT')
+      break
+    }
+  } catch {}
+}
 
 if (mode === 'vps') {
-  if (/(?:localhost|127\.0\.0\.1|\[::1\]):5432[12]\b/i.test(bundle)) {
+  // The documentation viewer intentionally contains historical local runbook
+  // examples. Only executable/config assets can affect a VPS client.
+  if (/(?:localhost|127\.0\.0\.1|\[::1\]):5432[12]\b/i.test(executableBundle)) {
     errors.push('VPS bundle contains a local Supabase URL')
   }
   if (/demoDataEnabled\s*:\s*(?:true|!0)/i.test(bundle)) {

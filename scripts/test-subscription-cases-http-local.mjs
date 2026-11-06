@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { readLocalSupabaseStatus } from './lib/local-supabase-status.mjs';
 
 const original = new URL('../', import.meta.url);
 const manifestFile = process.env.ROOMQC_FIXTURE_MANIFEST;
@@ -12,9 +13,7 @@ assert.ok(manifestFile, 'Set ROOMQC_FIXTURE_MANIFEST to the existing local A0 ma
 const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
 assert.equal(manifest.project, 'ehjtoajnlnuvuiwkpmbp');
 assert.match(manifest.run, /^[a-f0-9]{8}$/);
-const raw = execFileSync('cmd.exe', ['/d', '/s', '/c', 'npx --no-install supabase status --output json'],
-  { cwd: original, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000 });
-const local = JSON.parse(raw.slice(raw.indexOf('{')));
+const local = readLocalSupabaseStatus();
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(local.API_URL).hostname));
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(local.DB_URL).hostname));
 const container = 'supabase_db_ehjtoajnlnuvuiwkpmbp';

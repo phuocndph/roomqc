@@ -1,0 +1,37 @@
+// Reviewed FK shapes, not a count-only acceptance shortcut. Changes to any
+// endpoint, tuple order, action or deferral require an explicit review here.
+const shape=(source_table,constraint_name,parent_schema,parent_table,child_columns,parent_columns=['id'],delete_action='a',deferrable=false,initially_deferred=false,source_schema='private')=>
+  Object.freeze({source_schema,source_table,constraint_name,parent_schema,parent_table,
+    child_columns:Object.freeze(child_columns),parent_columns:Object.freeze(parent_columns),
+    delete_action,update_action:'a',deferrable,initially_deferred,uuid_columns:true});
+export const parentBoundaryForeignKeys=Object.freeze([
+  shape('booking_notification_attempts','booking_notification_attempts_target_id_fkey','private','booking_notification_targets',['target_id']),
+  shape('booking_notification_events','booking_notification_events_actor_id_command_id_fkey','private','booking_room_commands',['actor_id','command_id'],['actor_id','command_id']),
+  shape('booking_notification_outbox','booking_notification_outbox_event_id_fkey','private','booking_notification_events',['event_id']),
+  shape('booking_notification_receipts','booking_notification_receipts_event_id_fkey','private','booking_notification_events',['event_id']),
+  shape('booking_notification_targets','booking_notification_targets_event_id_fkey','private','booking_notification_events',['event_id']),
+  shape('hotel_room_setup','hotel_room_setup_confirmed_by_fkey','auth','users',['confirmed_by'],['id'],'n'),
+  shape('hotel_room_setup','hotel_room_setup_hotel_id_fkey','public','hotels',['hotel_id'],['id'],'c'),
+  shape('hotel_room_setup','hotel_room_setup_tenant_id_fkey','public','tenants',['tenant_id'],['id'],'c'),
+  shape('password_change_receipts','password_change_receipts_actor_id_fkey','auth','users',['actor_id'],['id'],'c'),
+  shape('subscription_checkout_drafts','subscription_checkout_drafts_created_by_fkey','auth','users',['created_by'],['id'],'n'),
+  shape('subscription_checkout_drafts','subscription_checkout_drafts_invoice_id_fkey','public','invoices',['invoice_id'],['id'],'c'),
+  shape('subscription_checkout_drafts','subscription_checkout_drafts_payment_id_fkey','public','payment_transactions',['payment_id'],['id'],'c'),
+  shape('subscription_checkout_drafts','subscription_checkout_drafts_quote_id_fkey','private','subscription_quotes',['quote_id'],['id'],'c'),
+  shape('subscription_checkout_drafts','subscription_checkout_drafts_tenant_id_fkey','public','tenants',['tenant_id'],['id'],'c'),
+  shape('subscription_lifecycle_batch_receipts','subscription_lifecycle_batch_receipts_run_id_fkey','private','subscription_status_job_runs',['run_id']),
+  shape('subscription_lifecycle_commands','subscription_lifecycle_commands_run_id_fkey','private','subscription_status_job_runs',['run_id']),
+  shape('subscription_lifecycle_notification_outbox','subscription_lifecycle_notification_outbox_command_id_fkey','private','subscription_lifecycle_commands',['command_id']),
+  shape('subscription_lifecycle_progress','subscription_lifecycle_progress_run_id_fkey','private','subscription_status_job_runs',['run_id']),
+  shape('subscription_quotes','subscription_quotes_created_by_fkey','auth','users',['created_by'],['id'],'n'),
+  shape('subscription_quotes','subscription_quotes_tenant_id_fkey','public','tenants',['tenant_id'],['id'],'c'),
+  shape('subscription_reconciliation_case_events','subscription_reconciliation_case_events_case_id_fkey','private','subscription_reconciliation_cases',['case_id']),
+  shape('subscription_status_job_recoveries','subscription_status_job_recoveries_run_id_fkey','private','subscription_status_job_runs',['run_id']),
+  shape('subscription_status_job_runs','subscription_status_job_runs_blocked_by_fkey','private','subscription_status_job_runs',['blocked_by']),
+  shape('workspace_provisioning','workspace_provisioning_hotel_id_fkey','public','hotels',['hotel_id']),
+  shape('workspace_provisioning','workspace_provisioning_owner_id_fkey','auth','users',['owner_id']),
+  shape('workspace_provisioning','workspace_provisioning_tenant_id_fkey','public','tenants',['tenant_id'],['id'],'c'),
+  shape('email_deliveries','email_deliveries_tenant_id_fkey','public','tenants',['tenant_id'],['id'],'c',false,false,'public'),
+  shape('guest_invoices','guest_invoice_checkout_source_fk','private','booking_room_commands',['checkout_actor_id','checkout_command_id'],['actor_id','command_id'],'a',true,true,'public'),
+  shape('invoices','invoices_subscription_quote_id_fkey','private','subscription_quotes',['subscription_quote_id'],['id'],'n',false,false,'public'),
+]);
