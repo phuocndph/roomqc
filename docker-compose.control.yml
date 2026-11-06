@@ -8,8 +8,16 @@ services:
     environment:
       ROOMQC_CONTROL_HOST: 0.0.0.0
       ROOMQC_CONTROL_PORT: 8091
+      ROOMQC_RESOURCE_ENVIRONMENT: ${ROOMQC_RESOURCE_ENVIRONMENT:-production}
+      ROOMQC_RESOURCE_BUDGET_FILE: /etc/roomqc/resource-budget.json
       # Host-side migration CLI reads its own credential; the API never receives it.
       ROOMQC_CONTROL_MIGRATION_DATABASE_URL: ""
+    volumes:
+      - type: bind
+        source: ${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed shared resource metadata required}
+        target: /etc/roomqc/resource-budget.json
+        read_only: true
+        bind: { create_host_path: false }
     ports:
       - "127.0.0.1:${ROOMQC_CONTROL_HOST_PORT:-8091}:8091"
     restart: unless-stopped

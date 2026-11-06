@@ -76,7 +76,11 @@ export default defineConfig(({ mode }) => {
   plugins: [
     react(), 
     roomQcHtmlSecurityPlugin(env.VITE_SUPABASE_URL, env.VITE_ROOMQC_CLUSTER_ORIGINS, nativeBuild ? env.VITE_ROOMQC_PUBLIC_WEB_URL : '', nativeBuild && env.VITE_ROOMQC_MOBILE_LOCAL === 'true'),
-    mcpPlugin(),
+    // The checked-in MCP entrypoint is product-owned and bundled separately
+    // for deployment. Lovable's sync plugin may overwrite it during a Docker
+    // build, so production images opt out explicitly while local generation
+    // remains unchanged.
+    env.ROOMQC_SKIP_MCP_SYNC === 'true' ? null : mcpPlugin(),
     mode === "development" && componentTagger(),
     VitePWA({
       disable: nativeBuild,
