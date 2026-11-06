@@ -1,263 +1,123 @@
-import { useState, useEffect, useRef } from 'react'
-import { UserWithRelations } from '@/types/database.types'
-import { UserAvatar } from '@/components/users/UserAvatar'
+import { useId, useState } from 'react'
+import type { UserWithRelations } from '@/types/database.types'
+import { useUserPermissionConfiguration } from '@/hooks/useUserPermissionConfiguration'
+import { MODULES, ACTIONS } from '@/hooks/useUserPermissions'
+import { canonicalGrants, type AdditionalGrant, type AuthorityConfiguration } from '@/lib/employee-authority'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ModuleToggle } from './ModuleToggle'
+import { AuthoritySaveNotice } from './AuthoritySaveNotice'
 import { HotelAssignmentSection } from './HotelAssignmentSection'
-import { useUserPermissionConfiguration } from '@/hooks/useUserPermissionConfiguration'
-import { MODULES, MODULE_ACTIONS, getModuleActions } from '@/hooks/useUserPermissions'
-import { Info, Save, Shield, Building2, AlertTriangle, Key } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
 
-interface UserPermissionPanelProps {
-  user: UserWithRelations | null
+type Authority = ReturnType<typeof useUserPermissionConfiguration>
+const grantKey = (g: { module: string; action: string }) => JSON.stringify([g.module, g.action])
+
+export function UserPermissionPanel({ user }: { user: UserWithRelations | null }) {
+  if (!user) return <p className="p-6 text-sm text-muted-foreground">Chọn nhân viên để xem và điều chỉnh quyền.</p>
+  return <EmployeeAuthorityPanel key={user.id} user={user} />
 }
 
-const USER_LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  tenant_owner: { label: 'Chủ sở hữu', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-  super_admin: { label: 'Super Admin', color: 'text-red-600', bgColor: 'bg-red-50' },
-  manager: { label: 'Quản lý', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-  staff: { label: 'Nhân viên', color: 'text-green-600', bgColor: 'bg-green-50' },
-  viewer: { label: 'Người xem', color: 'text-muted-foreground', bgColor: 'bg-muted' },
-}
-
-export function UserPermissionPanel({ user }: UserPermissionPanelProps) {
-  const { permissionsData, isLoading, saveConfiguration, isSaving } =
-    useUserPermissionConfiguration(user?.id)
-
-  const [localPermissions, setLocalPermissions] = useState<Record<string, boolean>>({})
-  const [localActions, setLocalActions] = useState<Record<string, Record<string, boolean>>>({})
-  const [hasActionChanges, setHasActionChanges] = useState(false)
-  const isDirtyRef = useRef(false)
-
-  // Initialize local state from fetched data - only when no unsaved changes
-  useEffect(() => {
-    if (permissionsData && !isDirtyRef.current) {
-      const initial: Record<string, boolean> = {}
-      const initialActions: Record<string, Record<string, boolean>> = {}
-      
-      Object.entries(permissionsData).forEach(([module, state]) => {
-        initial[module] = state.enabled
-        if (state.actions) {
-          initialActions[module] = { ...state.actions }
-        }
-      })
-      
-      setLocalPermissions(initial)
-      setLocalActions(initialActions)
-    }
-  }, [permissionsData])
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-full bg-muted/20">
-        <div className="text-center p-8">
-          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-            <Key className="h-8 w-8 text-muted-foreground/50" />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground">Chọn người dùng</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Chọn một người dùng từ danh sách bên trái để cấu hình quyền
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const handleToggle = (module: string, enabled: boolean) => {
-    setLocalPermissions((prev) => ({
-      ...prev,
-      [module]: enabled,
-    }))
-
-    // When enabling module, enable all applicable actions
-    if (enabled) {
-      const applicableActionCodes = MODULE_ACTIONS[module] || ['view', 'create', 'update', 'delete', 'export', 'approve']
-      const actionsObj: Record<string, boolean> = {}
-      applicableActionCodes.forEach(a => { actionsObj[a] = true })
-      setLocalActions((prev) => ({
-        ...prev,
-        [module]: actionsObj,
-      }))
-    } else {
-      const applicableActionCodes = MODULE_ACTIONS[module] || ['view', 'create', 'update', 'delete', 'export', 'approve']
-      const actionsObj: Record<string, boolean> = {}
-      applicableActionCodes.forEach(a => { actionsObj[a] = false })
-      setLocalActions((prev) => ({
-        ...prev,
-        [module]: actionsObj,
-      }))
-    }
-    setHasActionChanges(true)
-    isDirtyRef.current = true
-  }
-
-  const handleActionToggle = (module: string, action: string, enabled: boolean) => {
-    if (!user) return
-    
-    setLocalActions((prev) => ({
-      ...prev,
-      [module]: {
-        ...prev[module],
-        [action]: enabled,
-      },
-    }))
-    setHasActionChanges(true)
-    isDirtyRef.current = true
-  }
-
-  const handleSave = () => {
-    if (!user) return
-    
-    saveConfiguration({ 
-      userId: user.id, 
-      modules: localPermissions,
-      actions: localActions,
-    }, {
-      onSuccess: () => {
-        setHasActionChanges(false)
-        isDirtyRef.current = false
-      },
-    })
-  }
-
-  const hasModuleChanges = permissionsData 
-    ? Object.keys(localPermissions).some(
-        (module) => localPermissions[module] !== permissionsData[module]?.enabled
-      )
-    : false
-
-  const hasChanges = hasModuleChanges || hasActionChanges
-
-  // Check if user is owner/super admin (cannot be edited)
-  const isProtectedUser = user.user_level_code === 'tenant_owner' || user.user_level_code === 'super_admin'
-  const levelConfig = USER_LEVEL_CONFIG[user.user_level_code] || USER_LEVEL_CONFIG.viewer
-
-  // Count enabled modules
-  const enabledModulesCount = Object.values(localPermissions).filter(Boolean).length
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Compact User Header */}
-      <div className="p-4 border-b bg-background">
-        <div className="flex items-center gap-3">
-          <UserAvatar user={user} size="md" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold truncate">{user.full_name}</h2>
-              <span className={cn(
-                'text-[10px] font-medium px-1.5 py-0.5 rounded',
-                levelConfig.color, levelConfig.bgColor
-              )}>
-                {levelConfig.label}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          </div>
-          
-          {/* Quick Stats */}
-          <div className="flex items-center gap-3 text-center">
-            <div className="px-3 py-1.5 rounded-md bg-muted/50">
-              <p className="text-lg font-bold text-primary">{enabledModulesCount}</p>
-              <p className="text-[10px] text-muted-foreground">Modules</p>
-            </div>
-          </div>
-        </div>
-
-        {isProtectedUser && (
-          <div className="mt-3 flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-200">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
-            <p className="text-[11px] text-amber-700">
-              Không thể chỉnh sửa quyền cho {levelConfig.label}. Họ có toàn quyền truy cập.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Tabbed Content */}
-      <Tabs defaultValue="modules" className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-4 py-2 border-b bg-muted/30">
-          <TabsList className="h-8 bg-transparent p-0 gap-1">
-            <TabsTrigger 
-              value="modules" 
-              className="h-7 text-xs gap-1.5 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
-            >
-              <Shield className="h-3.5 w-3.5" />
-              Quyền Module
-            </TabsTrigger>
-            <TabsTrigger 
-              value="hotels" 
-              className="h-7 text-xs gap-1.5 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
-            >
-              <Building2 className="h-3.5 w-3.5" />
-              Khách sạn
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <ScrollArea className="flex-1">
-          <TabsContent value="modules" className="p-4 mt-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Info */}
-                <div className="flex items-start gap-2 p-2.5 rounded-md bg-blue-50 border border-blue-100">
-                  <Info className="h-3.5 w-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-[11px] text-blue-700">
-                    Bật module để cho phép truy cập. Click mũi tên để tùy chỉnh chi tiết từng quyền.
-                  </p>
-                </div>
-
-                {/* Module List */}
-                <div className="space-y-1.5">
-                  {MODULES.map((module) => (
-                    <ModuleToggle
-                      key={module.code}
-                      moduleName={module.name}
-                      enabled={localPermissions[module.code] || false}
-                      source={permissionsData?.[module.code]?.source || null}
-                      onChange={(enabled) => handleToggle(module.code, enabled)}
-                      disabled={isProtectedUser}
-                      actions={localActions[module.code]}
-                      onActionChange={(action, enabled) => handleActionToggle(module.code, action, enabled)}
-                      applicableActions={getModuleActions(module.code)}
-                    />
-                  ))}
-                </div>
-
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="hotels" className="p-4 mt-0">
-            <HotelAssignmentSection user={user} disabled={isProtectedUser} />
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
-
-      {/* Sticky Save Bar - always visible when there are changes */}
-      {hasChanges && !isProtectedUser && (
-        <div className="p-3 border-t border-amber-200 bg-amber-50">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full h-9 text-xs"
-            size="sm"
-          >
-            <Save className="h-3.5 w-3.5 mr-1.5" />
-            {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-          </Button>
-          <p className="text-[10px] text-amber-600 text-center mt-1">
-            Bạn có thay đổi chưa lưu
-          </p>
-        </div>
-      )}
+function EmployeeAuthorityPanel({ user }: { user: UserWithRelations }) {
+  const protectedTarget = user.is_super_admin || ['tenant_owner', 'super_admin'].includes(user.user_level_code)
+  const revision = JSON.stringify([user.tenant_id, user.hotel_id, user.user_level_code, user.updated_at,
+    user.status, user.deleted_at, user.account_locked, user.reports_to, user.roles?.map(r => r.role).sort()])
+  const authority = useUserPermissionConfiguration(user.id, !protectedTarget, revision)
+  return <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="space-y-1 border-b p-4">
+      <h2 className="font-semibold">{user.full_name}</h2>
+      <p className="break-all text-sm text-muted-foreground">{user.email}</p>
     </div>
-  )
+    {protectedTarget ? <p className="p-4 text-sm" role="status">Tài khoản chủ sở hữu hoặc quản trị hệ thống được quản lý theo vai trò. Không chỉnh quyền qua màn phân quyền nhân viên này.</p>
+      : <AuthorityEditor key={authority.scope} authority={authority} />}
+  </div>
+}
+
+function AuthorityEditor({ authority }: { authority: Authority }) {
+  const id = useId()
+  const [tab, setTab] = useState<'grants' | 'hotels'>('grants')
+  const { data } = authority
+  const recover = (kind: 'grants' | 'hotels') => { void authority.recover(kind).catch(() => { /* Hook displays a scoped safe notice. */ }) }
+  return <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+    <AuthoritySaveNotice notice={authority.notice} pendingCount={authority.pending[tab].length}
+      busy={authority.isSaving} onRecover={() => recover(tab)} />
+    {!authority.isReady && <p role="status" className="text-sm">Phiên hiện tại không đủ điều kiện quản lý nhân viên này. Vui lòng kiểm tra tài khoản và quyền quản lý.</p>}
+    {authority.isLoading && <div className="flex justify-center py-8"><LoadingSpinner /></div>}
+    {authority.isReady && !authority.isLoading && !data && <Button type="button" variant="outline" onClick={() => { void authority.refresh() }}>Tải lại cấu hình</Button>}
+    {data && <>
+      <div className="flex gap-2" role="tablist" aria-label="Phân quyền nhân viên">
+        <Button type="button" id={`${id}-grants-tab`} role="tab" aria-selected={tab === 'grants'} aria-controls={`${id}-grants-panel`}
+          variant={tab === 'grants' ? 'default' : 'outline'} onClick={() => setTab('grants')}>Quyền sử dụng</Button>
+        <Button type="button" id={`${id}-hotels-tab`} role="tab" aria-selected={tab === 'hotels'} aria-controls={`${id}-hotels-panel`}
+          variant={tab === 'hotels' ? 'default' : 'outline'} onClick={() => setTab('hotels')}>Khách sạn</Button>
+      </div>
+      <section id={`${id}-grants-panel`} role="tabpanel" aria-labelledby={`${id}-grants-tab`} hidden={tab !== 'grants'}>
+        <GrantEditor configuration={data} authority={authority} />
+      </section>
+      <section id={`${id}-hotels-panel`} role="tabpanel" aria-labelledby={`${id}-hotels-tab`} hidden={tab !== 'hotels'}>
+        <HotelAssignmentSection configuration={data} disabled={!authority.pendingReady || authority.pending.hotels.length > 0}
+          isSaving={authority.isSaving} onRefresh={() => { void authority.refresh() }}
+          onSave={(values, version) => authority.save('hotels', values, version)} />
+      </section>
+    </>}
+  </div>
+}
+
+function GrantEditor({ configuration, authority }: { configuration: AuthorityConfiguration; authority: Authority }) {
+  const [draft, setDraft] = useState<{ values: AdditionalGrant[]; original: string; version: string } | null>(null)
+  const values = draft?.values ?? configuration.grants, catalog = new Map(configuration.actions.map(a => [grantKey(a), a]))
+  const unknown = values.filter(g => !catalog.has(grantKey(g)))
+  const unheld = values.filter(g => g.enabled && catalog.has(grantKey(g)) && !catalog.get(grantKey(g))!.delegatable)
+  const stale = !!draft && draft.version !== configuration.versions.grants
+  const dirty = !!draft && JSON.stringify(draft.values) !== draft.original
+  const disabled = authority.isSaving || !authority.pendingReady || authority.pending.grants.length > 0 || stale
+  const change = (next: AdditionalGrant[]) => setDraft(previous => ({ values: canonicalGrants(next),
+    original: previous?.original ?? JSON.stringify(configuration.grants), version: previous?.version ?? configuration.versions.grants }))
+  const toggle = (module: string, action: string, enabled: boolean) => {
+    if (disabled || (enabled && !catalog.get(grantKey({ module, action }))?.delegatable)) return
+    const next = values.filter(g => g.module !== module || g.action !== action)
+    // Preserve existing explicit false rows; undoing a newly added grant returns to the original payload.
+    if (enabled || configuration.grants.some(g => g.module === module && g.action === action)) next.push({ module, action, enabled })
+    change(next)
+  }
+  const modules = [...new Set(configuration.actions.map(a => a.module))]
+  async function save() {
+    if (!draft || !dirty || disabled || unknown.length || unheld.length) return
+    try { await authority.save('grants', draft.values, draft.version); setDraft(null) } catch { /* Preserve the draft and its base revision. */ }
+  }
+  return <div className="space-y-3">
+    <p className="text-sm text-muted-foreground">Quyền đang có gồm quyền kế thừa từ vai trò và quyền bổ sung. Tắt quyền bổ sung không gỡ quyền của vai trò.</p>
+    {stale && <p role="status" className="rounded border p-3 text-sm">Cấu hình đã thay đổi ở nơi khác. Bản nháp được giữ để bạn xem lại; bỏ thay đổi và tải lại trước khi lưu.</p>}
+    {unheld.length > 0 && <p role="status" className="rounded border p-3 text-sm">Có quyền bổ sung hiện tại vượt phạm vi bạn được phép cấp. Nhờ người có thẩm quyền rà soát hoặc tắt các quyền này trước khi lưu.</p>}
+    {unknown.length > 0 && <div className="space-y-2 rounded border p-3 text-sm" role="status">
+      <p>Có cấu hình cũ không còn trong danh mục. Các cấu hình này được giữ nguyên; cần rà soát trước khi lưu.</p>
+      {unknown.map(g => <div key={grantKey(g)} className="flex flex-wrap items-center justify-between gap-2">
+        <span>{g.module} / {g.action}: {g.enabled ? 'Đã cấp bổ sung' : 'Không cấp bổ sung'}</span>
+        <Button type="button" size="sm" variant="outline" disabled={disabled}
+          onClick={() => change(values.filter(v => grantKey(v) !== grantKey(g)))}>Bỏ cấu hình cũ {g.module}/{g.action}</Button>
+      </div>)}
+    </div>}
+    {modules.map(module => {
+      const actions = configuration.actions.filter(a => a.module === module)
+      return <ModuleToggle key={module} moduleName={MODULES.find(m => m.code === module)?.name ?? module}
+        actions={Object.fromEntries(actions.map(a => [a.action, values.some(g => g.module === module && g.action === a.action && g.enabled)]))}
+        inherited={Object.fromEntries(actions.map(a => [a.action, a.inherited]))}
+        delegatable={Object.fromEntries(actions.map(a => [a.action, a.delegatable]))}
+        disabled={disabled} applicableActions={actions.map(a => ({ code: a.action, name: ACTIONS.find(v => v.code === a.action)?.name ?? a.action }))}
+        onActionChange={(action, enabled) => toggle(module, action, enabled)}
+        onChange={enabled => {
+          const next = values.filter(g => g.module !== module || !actions.some(a => a.action === g.action))
+          for (const action of actions) {
+            const value = enabled ? action.delegatable || values.some(g => g.module === module && g.action === action.action && g.enabled) : false
+            if (value || configuration.grants.some(g => g.module === module && g.action === action.action)) next.push({ module, action: action.action, enabled: value })
+          }
+          change(next)
+        }} />
+    })}
+    <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t bg-background py-3">
+      <Button type="button" variant="outline" disabled={authority.isSaving} onClick={() => { setDraft(null); void authority.refresh() }}>Bỏ thay đổi và tải lại</Button>
+      <Button type="button" disabled={!dirty || disabled || unknown.length > 0 || unheld.length > 0} onClick={() => { void save() }}>
+        {authority.isSaving ? 'Đang lưu…' : 'Lưu quyền bổ sung'}
+      </Button>
+    </div>
+  </div>
 }

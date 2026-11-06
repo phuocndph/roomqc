@@ -5,7 +5,8 @@
  * Quy tắc lọc:
  * - super_admin / owner / hotel_manager: thấy mọi section.
  * - department_manager: chỉ thấy section trùng `departments` của họ.
- * - staff: không vào /reports.
+ * - Khi có capability hiện hành: reports.view quyết định mọi hub trong module;
+ *   reports.export được kiểm riêng. Role chỉ là fallback cho consumer cũ.
  */
 
 import type { AppRole } from '@/types/database.types'
@@ -88,6 +89,9 @@ export const REPORTS_CATALOG: ReportDefinition[] = [
 export interface ReportAccessContext {
   role?: AppRole | null
   department?: DepartmentCode | string | null
+  /** Explicit effective capabilities take precedence over legacy role defaults. */
+  canViewReports?: boolean
+  canExportReports?: boolean
 }
 
 export function filterReportsForUser(
@@ -96,6 +100,7 @@ export function filterReportsForUser(
 ): ReportDefinition[] {
   const { role, department } = ctx
   if (!role) return []
+  if (ctx.canViewReports !== undefined) return ctx.canViewReports ? [...catalog] : []
 
   return catalog.filter((r) => {
     if (!r.roles.includes(role)) return false
@@ -128,6 +133,9 @@ export function canExportReport(
 ): boolean {
   const { role, department } = ctx
   if (!role) return false
+  if (ctx.canExportReports !== undefined) {
+    return ctx.canExportReports && filterReportsForUser([report], ctx).length > 0
+  }
   if (role === 'super_admin' || role === 'owner' || role === 'hotel_manager') return true
   if (role === 'department_manager') {
     if (!report.departments || !department) return false

@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SuperAdminLayout } from './SuperAdminLayout';
 
-vi.mock('@/hooks/useSuperAdminAuth', () => ({ useSuperAdminAuth: () => ({ user: { email: 'admin@example.invalid' }, isLoading: false, signOut: vi.fn() }) }));
+vi.mock('@/hooks/useSuperAdminAuth', () => ({ useSuperAdminAuth: () => ({ user: { email: 'admin@example.invalid' }, isLoading: false, isSuperAdmin: true, signOut: vi.fn() }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('./shared/NotificationBell', () => ({ NotificationBell: () => null }));
 vi.mock('./shared/ThemeToggle', () => ({ ThemeToggle: () => null }));

@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from 'sonner'
-import { triggerRoomCheckoutNotification, triggerRoomCheckinNotification } from '@/hooks/useNotificationTriggers'
-import { triggerWorkflow, WorkflowTriggerTypes } from '@/lib/triggerWorkflow'
+import { useRoomCommandExecutor } from './useRoomCommandExecutor'
+import { RoomCommandError } from '@/lib/room-transition-command'
 import type { RoomWithStats, RoomFilters } from '@/types/rooms.types'
 import { isAdminUser } from '@/lib/userAccess'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 
 export function useRooms(filters: RoomFilters = {}) {
   const { tenantId } = useUser()
@@ -50,26 +51,16 @@ export function useRooms(filters: RoomFilters = {}) {
   useEffect(() => {
     if (!tenantId) return
 
-    const channel = supabase
-      .channel(`room_items_${tenantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_items',
-          filter: `tenant_id=eq.${tenantId}`,
-        },
-        () => {
-          // Invalidate rooms query to refetch with updated stats
-          queryClient.invalidateQueries({ queryKey: ['rooms'] })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return subscribeSharedPostgresChanges(
+      `room_items_${tenantId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'room_items',
+        filter: `tenant_id=eq.${tenantId}`,
+      },
+      () => queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+    )
   }, [tenantId, queryClient])
 
   return query
@@ -290,10 +281,9 @@ export function useCreateRoom() {
 
 export function useUpdateRoom() {
   const queryClient = useQueryClient()
-  const { tenantId, user } = useUser()
   
   return useMutation({
-    mutationFn: async ({ id, data, previousStatus }: { 
+    mutationFn: async ({ id, data }: {
       id: string
       data: any
       previousStatus?: string 
@@ -314,46 +304,8 @@ export function useUpdateRoom() {
       
       if (error) throw error
       
-      // Trigger workflow for room status change
-      if (previousStatus && data.status !== previousStatus && tenantId) {
-        triggerWorkflow({
-          triggerType: WorkflowTriggerTypes.ROOM_STATUS_CHANGE,
-          eventData: {
-            room_id: id,
-            room_number: room.room_number,
-            old_status: previousStatus,
-            new_status: data.status,
-          },
-          tenantId,
-          hotelId: room.hotel_id,
-        }).catch(err => console.error('[triggerWorkflow] room_status_change error:', err))
-      }
-      
-      // Send notification when status changes to check_out
-      if (data.status === 'check_out' && previousStatus !== 'check_out' && tenantId && room.hotel_id) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId: room.hotel_id,
-          roomId: id,
-          roomNumber: room.room_number,
-          changedByUserId: user?.id,
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      // Send notification when status changes to check_in or occupied
-      if ((data.status === 'check_in' || data.status === 'occupied') && 
-          previousStatus !== 'check_in' && 
-          previousStatus !== 'occupied' && 
-          tenantId && room.hotel_id) {
-        triggerRoomCheckinNotification({
-          tenantId,
-          hotelId: room.hotel_id,
-          roomId: id,
-          roomNumber: room.room_number,
-          changedByUserId: user?.id,
-        }).catch(err => console.error('Failed to send check-in notification:', err))
-      }
-      
+      // Metadata updates cannot emit room-status events or check-in/out
+      // notifications: status was deliberately excluded from this mutation.
       return room
     },
     onSuccess: (_, variables) => {
@@ -418,7 +370,8 @@ export function useDeleteRoom() {
  */
 export function useMarkRoomReady() {
   const queryClient = useQueryClient()
-  const { tenantId, user } = useUser()
+  const execute = useRoomCommandExecutor()
+  const assertCurrent = () => { if (!execute.isCurrent()) throw new RoomCommandError('identity_changed', 'Phiên đã thay đổi. Vui lòng kiểm tra lại kết quả.') }
   
   return useMutation({
     mutationFn: async ({ 
@@ -429,78 +382,81 @@ export function useMarkRoomReady() {
       skipCheck?: boolean 
     }) => {
       // First verify room is in cleaning status
+      assertCurrent()
       const { data: room, error: checkError } = await supabase
         .from('rooms')
         .select('id, room_number, hotel_id, status')
         .eq('id', roomId)
         .single()
       
+      assertCurrent()
       if (checkError) throw checkError
       // State Machine v2: phòng "đang dọn" = vacant_dirty
-      if (room.status !== 'vacant_dirty' && room.status !== 'cleaning') {
+      if (!['vacant_dirty', 'cleaning', 'vacant_clean'].includes(room.status)) {
         throw new Error(`Phòng không ở trạng thái "Đang dọn" (hiện tại: ${room.status})`)
       }
       
       // F-FSM-01: gọi qua RPC để có audit log + validate transition (state machine v2).
-      const { error: transErr } = await supabase.rpc('transition_room_status', {
-        _room_id: roomId,
-        _to_status: 'vacant_clean',
-        _reason: 'Housekeeping hoàn tất dọn phòng',
-      })
-      if (transErr) throw new Error(transErr.message)
+      const transition = await execute({ roomId, toStatus: 'vacant_clean', reason: 'Housekeeping hoàn tất dọn phòng' })
 
-      // Lấy lại thông tin phòng sau khi chuyển trạng thái (cho workflow trigger).
-      const { data: updated, error: fetchErr } = await supabase
-        .from('rooms')
-        .select('*, room_number, hotel_id')
-        .eq('id', roomId)
-        .single()
-      if (fetchErr) throw fetchErr
+      // The room command is already committed. A failed read must not report
+      // that transition as failed or complete tasks from a stale replay.
+      let updated: typeof room | null = null, roomRefreshFailed = false
+      try {
+        const refreshed = await supabase.from('rooms').select('*, room_number, hotel_id').eq('id', roomId).single()
+        updated = refreshed.data; roomRefreshFailed = !!refreshed.error || !updated
+      } catch { roomRefreshFailed = true }
+      assertCurrent()
+      const roomStateChanged = !roomRefreshFailed && updated?.status !== 'vacant_clean'
+      if (roomRefreshFailed || roomStateChanged) return { room: updated, skipCheck, transition,
+        taskFailures: [] as string[], taskLookupFailed: false, roomRefreshFailed, roomStateChanged }
 
       // Auto-complete cleaning tasks: lấy danh sách rồi gọi transition_task_status từng cái.
-      const { data: openTasks } = await supabase
-        .from('housekeeping_tasks')
-        .select('id')
-        .eq('room_id', roomId)
-        .eq('task_type', 'cleaning')
-        .in('status', ['pending', 'in_progress'])
+      let openTasks: Array<{ id: string; status: string }> = [], taskLookupFailed = false
+      try {
+        const found = await supabase.from('housekeeping_tasks').select('id,status').eq('room_id', roomId)
+          .eq('task_type', 'cleaning').in('status', ['pending', 'in_progress'])
+        taskLookupFailed = !!found.error; openTasks = found.error ? [] : found.data ?? []
+      } catch { taskLookupFailed = true }
+      assertCurrent()
 
-      for (const t of openTasks ?? []) {
-        const { error: tErr } = await supabase.rpc('transition_task_status', {
-          _task_id: t.id,
-          _to_status: 'completed',
-          _note: 'Tự động hoàn tất khi phòng chuyển sang sạch',
-        })
-        if (tErr) console.error('[useMarkRoomReady] transition_task_status failed:', tErr.message)
+      const taskFailures: string[] = []
+      for (const t of openTasks) {
+        assertCurrent()
+        try {
+          if (t.status === 'pending') {
+            const { error } = await supabase.rpc('transition_task_status', { _task_id: t.id, _to_status: 'in_progress',
+              _reason: 'Bắt đầu đối soát công việc khi phòng đã sạch' })
+            assertCurrent()
+            if (error) { taskFailures.push(t.id); continue }
+          }
+          const { error } = await supabase.rpc('transition_task_status', { _task_id: t.id, _to_status: 'completed',
+            _reason: 'Tự động hoàn tất khi phòng chuyển sang sạch' })
+          assertCurrent()
+          if (error) taskFailures.push(t.id)
+        } catch { assertCurrent(); taskFailures.push(t.id) }
       }
       
-      // Trigger workflow for room status change
-      if (tenantId) {
-        triggerWorkflow({
-          triggerType: WorkflowTriggerTypes.ROOM_STATUS_CHANGE,
-          eventData: {
-            room_id: roomId,
-            room_number: updated.room_number,
-            old_status: 'vacant_dirty',
-            new_status: 'vacant_clean',
-          },
-          tenantId,
-          hotelId: updated.hotel_id,
-        }).catch(err => console.error('[triggerWorkflow] room_status_change error:', err))
-      }
-      
-      return { room: updated, skipCheck }
+      // The database source owns old/new/event identity. Browser labels do not
+      // mint a second event; durable dispatch is a separate server stage.
+      return { room: updated, skipCheck, transition, taskFailures, taskLookupFailed, roomRefreshFailed, roomStateChanged }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      if (!execute.isCurrent()) return
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['room', variables.roomId] })
       queryClient.invalidateQueries({ queryKey: ['room-stats'] })
       queryClient.invalidateQueries({ queryKey: ['floor-plan'] })
       queryClient.invalidateQueries({ queryKey: ['housekeeping-tasks'] })
       queryClient.invalidateQueries({ queryKey: ['my-tasks'] })
-      toast.success('Phòng đã sẵn sàng nhận khách')
+      if (data.roomRefreshFailed) toast.warning('Đã xác nhận lệnh đổi trạng thái; chưa tải lại được phòng. Vui lòng kiểm tra trước khi hoàn tất công việc.')
+      else if (data.roomStateChanged) toast.warning('Đã xác nhận lệnh trước; trạng thái phòng hiện đã thay đổi. Chưa tự hoàn tất công việc liên quan.')
+      else if (data.taskLookupFailed) toast.warning('Phòng đã sạch; chưa tải được công việc liên quan. Vui lòng kiểm tra tại Buồng phòng.')
+      else if (data.taskFailures.length) toast.warning(`Phòng đã sạch; còn ${data.taskFailures.length} công việc cần kiểm tra tại Buồng phòng.`)
+      else toast.success('Phòng đã sẵn sàng nhận khách')
     },
     onError: (error: Error) => {
+      if (!execute.isCurrent()) return
       toast.error(error.message)
     },
   })

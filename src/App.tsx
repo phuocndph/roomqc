@@ -199,6 +199,8 @@ const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"));
 // Super Admin
 const SuperAdminDashboard = lazyNamed(() => import("./pages/admin/SuperAdminDashboard"), "SuperAdminDashboard");
 const TenantsPage = lazyNamed(() => import("./pages/admin/TenantsPage"), "TenantsPage");
+const InfrastructurePage = lazyNamed(() => import("./pages/admin/InfrastructurePage"), "InfrastructurePage");
+const RegistrationsPage = lazyNamed(() => import("./pages/admin/RegistrationsPage"), "RegistrationsPage");
 const AnalyticsPage = lazyNamed(() => import("./pages/admin/AnalyticsPage"), "AnalyticsPage");
 const PromoCodesPage = lazyNamed(() => import("./pages/admin/PromoCodesPage"), "PromoCodesPage");
 const MarketingCampaignsPage = lazyNamed(() => import("./pages/admin/MarketingCampaignsPage"), "MarketingCampaignsPage");
@@ -253,6 +255,7 @@ const router = createBrowserRouter([
 
   // Public routes
   { path: "/auth/login", element: directoryEnabled && !runtimeConfig.workspace ? <Navigate to="/start?mode=login" replace /> : <Login />, errorElement: <RouteErrorBoundary /> },
+  { path: "/admin/login", element: runtimeConfig.workspace ? <Navigate to="/auth/login" replace /> : <Login operator />, errorElement: <RouteErrorBoundary /> },
   { path: "/auth/register", element: directoryEnabled && !runtimeConfig.workspace ? <Navigate to="/start" replace /> : <Register />, errorElement: <RouteErrorBoundary /> },
   { path: "/auth/forgot-password", element: <ForgotPassword />, errorElement: <RouteErrorBoundary /> },
   { path: "/auth/verify-email", element: <EmailVerification />, errorElement: <RouteErrorBoundary /> },
@@ -343,6 +346,8 @@ const router = createBrowserRouter([
       { index: true, element: <SuperAdminDashboard /> },
       { path: "dashboard", element: <Navigate to="/super-admin" replace /> },
       { path: "tenants", element: <TenantsPage /> },
+      { path: "infrastructure", element: <InfrastructurePage /> },
+      { path: "registrations", element: <RegistrationsPage /> },
       { path: "approval", element: <TenantApprovalPage /> },
       { path: "promo-codes", element: <PromoCodesPage /> },
       { path: "campaigns", element: <MarketingCampaignsPage /> },

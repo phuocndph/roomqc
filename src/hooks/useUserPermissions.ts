@@ -1,8 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
-import { toast } from '@/hooks/use-toast'
 import { useUser } from './useUser'
-import { getFriendlyError } from '@/lib/errorMessage'
 
 export interface UserPermission {
   id: string
@@ -135,61 +133,6 @@ export function useUserPermissionsWithSource(userId?: string) {
       return data as unknown as UserPermissionDetail[]
     },
     enabled: !!userId,
-  })
-}
-
-export function useUpdateUserPermissions() {
-  const queryClient = useQueryClient()
-  const { tenantId } = useUser()
-
-  return useMutation({
-    mutationFn: async ({
-      userId,
-      permissions,
-    }: {
-      userId: string
-      permissions: { module: string; action: string; enabled: boolean }[]
-    }) => {
-      if (!tenantId) throw new Error('No tenant')
-
-      // Delete all existing permissions for this user
-      await supabase.from('user_permissions' as any).delete().eq('user_id', userId)
-
-      // Insert new permissions
-      const permissionsToInsert = permissions.map((p) => ({
-        user_id: userId,
-        tenant_id: tenantId,
-        module: p.module,
-        action: p.action,
-        enabled: p.enabled,
-      }))
-
-      const { error } = await supabase.from('user_permissions' as any).insert(permissionsToInsert)
-
-      if (error) throw error
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['user-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-permissions-summary', variables.userId] })
-      
-      // FIX: Invalidate user-side queries for immediate permission refresh
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions'] })
-      queryClient.invalidateQueries({ queryKey: ['route-permission', variables.userId], exact: false })
-      queryClient.invalidateQueries({ queryKey: ['check-permission', variables.userId], exact: false })
-      
-      toast({
-        title: 'Thành công',
-        description: 'Đã cập nhật phân quyền người dùng',
-      })
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi',
-        description: getFriendlyError(error),
-      })
-    },
   })
 }
 

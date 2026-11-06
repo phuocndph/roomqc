@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { formatCurrency } from '@/lib/utils'
 import { computeDelta, type PeriodRangeWithPrevious } from '@/lib/reportPeriods'
-import { useRevenueReport } from '@/hooks/useRevenueReport'
+import { NoShowFinanceSummary } from './NoShowFinanceSummary'
 import { useFinancialReport } from '@/hooks/useReports'
 import { KpiScorecard, KpiScorecardStrip } from './KpiScorecard'
 
@@ -12,39 +12,36 @@ interface Props {
 /**
  * Strip 6 KPI cho Finance Hub.
  * - Doanh thu thuần • Đã thu • Còn nợ • Tổng chi phí • Lợi nhuận • Biên LN
- * - Mỗi tile so kỳ trước cùng độ dài.
+ * - Mọi tile dùng đúng hai khoảng ngày current/previous do người dùng chọn.
  */
 export function FinanceKpiStrip({ period }: Props) {
   const { current, previous } = period
-
-  // Revenue hook tự tính current + previous nếu period='custom'
-  const revQ = useRevenueReport('custom', { start: current.start, end: current.end })
 
   // Financial cần fetch riêng 2 lần (current + previous) để có delta
   const finCurQ = useFinancialReport({ start: current.start, end: current.end })
   const finPrevQ = useFinancialReport({ start: previous.start, end: previous.end })
 
-  const loading = revQ.isLoading || finCurQ.isLoading || finPrevQ.isLoading
+  const loading = finCurQ.isPending || finPrevQ.isPending
 
   const kpis = useMemo(() => {
-    const cur = revQ.data?.currentPeriod
-    const prev = revQ.data?.previousPeriod
-    const finCur = finCurQ.data?.summary
-    const finPrev = finPrevQ.data?.summary
+    const cur = finCurQ.data?.revenue_summary
+    const prev = finPrevQ.data?.revenue_summary
+    const finCur = finCurQ.data?.cost_summary
+    const finPrev = finPrevQ.data?.cost_summary
 
-    const netRevenue = cur?.netRevenue ?? 0
-    const netRevenuePrev = prev?.netRevenue ?? 0
-    const paid = cur?.paidRevenue ?? 0
-    const paidPrev = prev?.paidRevenue ?? 0
-    const pending = cur?.pendingRevenue ?? 0
-    const pendingPrev = prev?.pendingRevenue ?? 0
+    const netRevenue = cur?.recognized_revenue ?? 0
+    const netRevenuePrev = prev?.recognized_revenue ?? 0
+    const paid = cur?.paid_revenue ?? 0
+    const paidPrev = prev?.paid_revenue ?? 0
+    const pending = cur?.pending_revenue ?? 0
+    const pendingPrev = prev?.pending_revenue ?? 0
 
     const cost = finCur?.total_cost ?? 0
     const costPrev = finPrev?.total_cost ?? 0
-    const profit = netRevenue - cost
-    const profitPrev = netRevenuePrev - costPrev
-    const margin = netRevenue > 0 ? (profit / netRevenue) * 100 : 0
-    const marginPrev = netRevenuePrev > 0 ? (profitPrev / netRevenuePrev) * 100 : 0
+    const profit = finCurQ.data?.profit_summary.net_profit ?? 0
+    const profitPrev = finPrevQ.data?.profit_summary.net_profit ?? 0
+    const margin = finCurQ.data?.profit_summary.profit_margin ?? 0
+    const marginPrev = finPrevQ.data?.profit_summary.profit_margin ?? 0
 
     return {
       netRevenue: { value: netRevenue, delta: computeDelta(netRevenue, netRevenuePrev) },
@@ -54,19 +51,22 @@ export function FinanceKpiStrip({ period }: Props) {
       profit: { value: profit, delta: computeDelta(profit, profitPrev) },
       margin: { value: margin, delta: margin - marginPrev },
     }
-  }, [revQ.data, finCurQ.data, finPrevQ.data])
+  }, [finCurQ.data, finPrevQ.data])
 
-  return (
+  if (finCurQ.isError || finPrevQ.isError) return <p role="alert">Không tải được báo cáo tài chính. Vui lòng tải lại hoặc kiểm tra quyền xem.</p>
+  return (<div className="space-y-3">
     <KpiScorecardStrip>
       <KpiScorecard
-        label="Doanh thu thuần"
+        label="Doanh thu ghi nhận"
+        hint="Phòng sau hoa hồng + phí khách không đến"
         value={formatCurrency(kpis.netRevenue.value)}
         deltaPct={loading ? null : kpis.netRevenue.delta}
         goodDirection="up"
         loading={loading}
       />
       <KpiScorecard
-        label="Đã thu"
+        label="Đã thanh toán · lượt trả phòng"
+        hint="Theo kỳ trả phòng; tiền thực thu xem tại Dòng tiền"
         value={formatCurrency(kpis.paid.value)}
         deltaPct={loading ? null : kpis.paid.delta}
         goodDirection="up"
@@ -108,5 +108,6 @@ export function FinanceKpiStrip({ period }: Props) {
         }
       />
     </KpiScorecardStrip>
-  )
+    {finCurQ.data && <NoShowFinanceSummary report={{ noShow: finCurQ.data.no_show, recognitionTimezone: finCurQ.data.recognition_timezone }} />}
+  </div>)
 }

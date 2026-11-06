@@ -482,7 +482,7 @@ export const Sidebar = () => {
           <div className="flex items-center gap-1.5">
             <Badge variant="outline" className="text-xs px-1.5 py-0">
               {(() => {
-                const planMap: Record<string, string> = { basic: 'Cơ bản', standard: 'Tiêu chuẩn', premium: 'Cao cấp', trial: 'Dùng thử' }
+                const planMap: Record<string, string> = { basic: 'Cơ bản', standard: 'Tiêu chuẩn', premium: 'Cao cấp', trial: 'Dùng thử', free_trial: 'Dùng thử' }
                 return planMap[tenant?.subscription_plan || 'trial'] || tenant?.subscription_plan || 'Dùng thử'
               })()}
             </Badge>
@@ -490,10 +490,10 @@ export const Sidebar = () => {
               tenant?.subscription_status === 'active' ? 'bg-green-600' :
               tenant?.subscription_status === 'expired' ? 'bg-red-600' : 'bg-amber-600'
             }`} />
-            {tenant?.registered_rooms != null && (
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{tenant.registered_rooms} phòng</span>
-            )}
           </div>
+          {tenant?.registered_rooms != null && tenant.registered_rooms > 0 && <p className="text-xs text-muted-foreground">
+            {tenant.registered_rooms} phòng đăng ký
+          </p>}
           {(() => {
             if (!tenant?.subscription_end_date) return null
             const endDate = new Date(tenant.subscription_end_date)

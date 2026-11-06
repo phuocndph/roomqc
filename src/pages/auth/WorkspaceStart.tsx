@@ -59,6 +59,7 @@ export default function WorkspaceStart() {
           <Button className="w-full" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : login ? 'Tiếp tục đăng nhập' : 'Tiếp tục tạo tài khoản'}</Button>
         </fieldset>
         <a className="block text-center text-sm text-blue-700 underline" href={login ? '/start' : '/start?mode=login'}>{login ? 'Đăng ký doanh nghiệp mới' : 'Đã có doanh nghiệp? Đăng nhập'}</a>
+        <a className="block text-center text-sm text-slate-600 underline" href="/admin/login">Quản trị hệ thống RoomQC</a>
       </form></CardContent>
     </Card>
   </main>

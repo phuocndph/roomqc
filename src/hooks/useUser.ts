@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserWithRelations, AppRole } from '@/types/database.types'
 import { runtimeConfig } from '@/lib/runtime-config'
+import { AccountProfileError } from '@/lib/account-profile-error'
 
 export const useUser = () => {
   const { user: authUser } = useAuth()
@@ -29,10 +30,10 @@ export const useUser = () => {
       if (userError) throw userError
       const workspace = runtimeConfig.workspace?.workspace
       if (workspace?.tenantId && user?.tenant_id !== workspace.tenantId) {
-        throw new Error('Tài khoản không thuộc doanh nghiệp đang mở. Hãy đăng xuất và chọn đúng doanh nghiệp.')
+        throw new AccountProfileError('workspace_mismatch')
       }
       if (workspace && !workspace.tenantId && user?.tenant_id) {
-        throw new Error('Doanh nghiệp chưa hoàn tất xác nhận thiết lập. Hãy tải lại trang để kiểm tra kết quả.')
+        throw new AccountProfileError('workspace_unconfirmed')
       }
       if (!user) return null
 
@@ -58,7 +59,7 @@ export const useUser = () => {
     },
     enabled: !!authUser?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once if query fails
+    retry: (failures, failure) => !(failure instanceof AccountProfileError) && failures < 1,
     refetchOnWindowFocus: false, // Don't refetch on window focus
   })
 

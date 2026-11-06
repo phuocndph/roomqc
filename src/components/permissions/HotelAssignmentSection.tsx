@@ -1,230 +1,77 @@
-import { useState, useEffect } from 'react'
-import { UserWithRelations } from '@/types/database.types'
-import { useHotels } from '@/hooks/useHotels'
-import { useUserHotels, useAssignUserHotels, useUpdateUserHotelPermissions } from '@/hooks/useUserHotels'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { Building2, ChevronDown, Save, Settings2 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { defaultHotelGrant, HOTEL_FLAGS, type AuthorityConfiguration, type HotelGrant } from '@/lib/employee-authority'
 
-interface HotelAssignmentSectionProps {
-  user: UserWithRelations
-  disabled?: boolean
-}
+const flagLabels: Record<typeof HOTEL_FLAGS[number], string> = { can_create_managers: 'Tạo quản lý', can_create_staff: 'Tạo nhân viên',
+  can_view_reports: 'Xem báo cáo', can_export_data: 'Xuất dữ liệu', can_approve_requests: 'Duyệt yêu cầu' }
+const sorted = (rows: HotelGrant[]) => [...rows].sort((a, b) => a.hotel_id.localeCompare(b.hotel_id))
 
-export function HotelAssignmentSection({ user, disabled }: HotelAssignmentSectionProps) {
-  const { data: hotels, isLoading: hotelsLoading } = useHotels()
-  const { data: userHotels, isLoading: userHotelsLoading } = useUserHotels(user.id)
-  const assignHotels = useAssignUserHotels()
-  const updatePermissions = useUpdateUserHotelPermissions()
-  
-  const [selectedHotels, setSelectedHotels] = useState<string[]>([])
-  const [expandedHotel, setExpandedHotel] = useState<string | null>(null)
-  const [hotelPermissions, setHotelPermissions] = useState<Record<string, Record<string, boolean>>>({})
-  const [hasChanges, setHasChanges] = useState(false)
-  
-  // Initialize selected hotels from user data
-  useEffect(() => {
-    if (userHotels) {
-      const hotelIds = userHotels.map(uh => uh.hotel_id)
-      setSelectedHotels(hotelIds)
-      
-      // Initialize permissions
-      const perms: Record<string, Record<string, boolean>> = {}
-      userHotels.forEach(uh => {
-        perms[uh.hotel_id] = {
-          can_create_managers: uh.can_create_managers,
-          can_create_staff: uh.can_create_staff,
-          can_view_reports: uh.can_view_reports,
-          can_export_data: uh.can_export_data,
-          can_approve_requests: uh.can_approve_requests,
-        }
-      })
-      setHotelPermissions(perms)
-    }
-  }, [userHotels])
-  
-  const toggleHotel = (hotelId: string) => {
-    setSelectedHotels(prev => {
-      if (prev.includes(hotelId)) {
-        return prev.filter(id => id !== hotelId)
-      }
-      return [...prev, hotelId]
-    })
-    setHasChanges(true)
+export function HotelAssignmentSection({ configuration, disabled, isSaving, onSave, onRefresh }: {
+  configuration: AuthorityConfiguration; disabled?: boolean; isSaving: boolean;
+  onSave: (values: HotelGrant[], version: string) => Promise<unknown>; onRefresh: () => void
+}) {
+  const [draft, setDraft] = useState<{ values: HotelGrant[]; version: string; original: string } | null>(null)
+  const [expanded, setExpanded] = useState<string | null>(null), id = useId()
+  const values = draft?.values ?? configuration.hotels
+  const catalog = new Map(configuration.hotel_catalog.map(h => [h.id, h]))
+  const ids = [...new Set([...configuration.hotel_catalog.map(h => h.id), ...configuration.hotels.map(h => h.hotel_id),
+    ...(configuration.primary_hotel_id ? [configuration.primary_hotel_id] : [])])]
+  // The server validates both old and new memberships. An out-of-scope old row
+  // requires an authorized review; silently omitting it cannot make the save valid.
+  const blockedExisting = configuration.hotels.some(h => !catalog.get(h.hotel_id)?.assignable)
+  const unheld = values.some(h => HOTEL_FLAGS.some(flag => h[flag] && !catalog.get(h.hotel_id)?.allowed[flag]))
+  const primaryMissing = !!configuration.primary_hotel_id && !values.some(h => h.hotel_id === configuration.primary_hotel_id)
+  const stale = !!draft && draft.version !== configuration.versions.hotels
+  const dirty = !!draft && JSON.stringify(sorted(draft.values)) !== draft.original
+  const locked = disabled || isSaving || stale || blockedExisting
+  const change = (next: HotelGrant[]) => setDraft(previous => ({ values: sorted(next),
+    original: previous?.original ?? JSON.stringify(sorted(configuration.hotels)), version: previous?.version ?? configuration.versions.hotels }))
+  async function save() {
+    if (!draft || !dirty || locked || unheld || primaryMissing) return
+    try { await onSave(draft.values, draft.version); setDraft(null) } catch { /* Preserve all flags and the original version for review. */ }
   }
-  
-  const togglePermission = (hotelId: string, permission: string) => {
-    setHotelPermissions(prev => ({
-      ...prev,
-      [hotelId]: {
-        ...prev[hotelId],
-        [permission]: !prev[hotelId]?.[permission],
-      }
-    }))
-    setHasChanges(true)
-  }
-  
-  const handleSave = async () => {
-    // First save hotel assignments
-    await assignHotels.mutateAsync({
-      userId: user.id,
-      hotelIds: selectedHotels,
-    })
-    
-    // Then update permissions for each hotel
-    for (const hotelId of selectedHotels) {
-      if (hotelPermissions[hotelId]) {
-        await updatePermissions.mutateAsync({
-          userId: user.id,
-          hotelId,
-          permissions: hotelPermissions[hotelId],
-        })
-      }
-    }
-    
-    setHasChanges(false)
-  }
-  
-  const isLoading = hotelsLoading || userHotelsLoading
-  const isSaving = assignHotels.isPending || updatePermissions.isPending
-  
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Phân quyền Khách sạn
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center py-8">
-          <LoadingSpinner />
-        </CardContent>
-      </Card>
-    )
-  }
-  
-  const permissionLabels: Record<string, string> = {
-    can_view_reports: 'Xem báo cáo',
-    can_export_data: 'Xuất dữ liệu',
-    can_approve_requests: 'Duyệt yêu cầu',
-    can_create_staff: 'Tạo nhân viên',
-    can_create_managers: 'Tạo quản lý',
-  }
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
-          Phân quyền Khách sạn
-        </CardTitle>
-        <CardDescription>
-          Chọn khách sạn mà người dùng có thể truy cập và quản lý
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {hotels?.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Chưa có khách sạn nào
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {hotels?.map((hotel) => {
-              const isSelected = selectedHotels.includes(hotel.id)
-              const isExpanded = expandedHotel === hotel.id
-              
-              return (
-                <Collapsible
-                  key={hotel.id}
-                  open={isExpanded}
-                  onOpenChange={() => setExpandedHotel(isExpanded ? null : hotel.id)}
-                >
-                  <div 
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg border transition-colors
-                      ${isSelected ? 'bg-primary/5 border-primary/30' : 'bg-background border-border'}
-                      ${disabled ? 'opacity-50' : ''}
-                    `}
-                  >
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={() => toggleHotel(hotel.id)}
-                      disabled={disabled}
-                    />
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">{hotel.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {hotel.code}
-                        </Badge>
-                        {hotel.status !== 'active' && (
-                          <Badge variant="secondary" className="text-xs">
-                            {hotel.status}
-                          </Badge>
-                        )}
-                      </div>
-                      {hotel.city && (
-                        <p className="text-xs text-muted-foreground">{hotel.city}</p>
-                      )}
-                    </div>
-                    
-                    {isSelected && (
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" disabled={disabled}>
-                          <Settings2 className="h-4 w-4 mr-1" />
-                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </Button>
-                      </CollapsibleTrigger>
-                    )}
-                  </div>
-                  
-                  <CollapsibleContent className="mt-2 ml-8 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-sm font-medium mb-3">Quyền chi tiết tại khách sạn này:</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {Object.entries(permissionLabels).map(([key, label]) => (
-                        <div key={key} className="flex items-center justify-between">
-                          <Label htmlFor={`${hotel.id}-${key}`} className="text-sm">
-                            {label}
-                          </Label>
-                          <Switch
-                            id={`${hotel.id}-${key}`}
-                            checked={hotelPermissions[hotel.id]?.[key] ?? false}
-                            onCheckedChange={() => togglePermission(hotel.id, key)}
-                            disabled={disabled}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )
-            })}
+  return <div className="space-y-3">
+    <p className="text-sm text-muted-foreground">Chọn khách sạn nhân viên được phân công. Quyền tại từng khách sạn được lưu cùng một lần với danh sách phân công.</p>
+    {stale && <p role="status" className="rounded border p-3 text-sm">Phân công đã đổi ở nơi khác. Bỏ thay đổi và tải lại trước khi lưu.</p>}
+    {blockedExisting && <p role="status" className="rounded border p-3 text-sm">Có phân công hiện tại ở khách sạn ngừng hoạt động hoặc ngoài phạm vi bạn quản lý. Dữ liệu được giữ nguyên; cần người có thẩm quyền rà soát.</p>}
+    {unheld && !blockedExisting && <p role="status" className="rounded border p-3 text-sm">Có quyền tại khách sạn vượt phạm vi bạn được phép cấp. Tắt quyền đó hoặc nhờ người có thẩm quyền rà soát trước khi lưu.</p>}
+    {primaryMissing && <p role="status" className="text-sm">Cần giữ phân công tại khách sạn chính của nhân viên.</p>}
+    {!ids.length && <p className="py-4 text-sm text-muted-foreground">Chưa có khách sạn trong phạm vi phân công.</p>}
+    {ids.map(hotelId => {
+      const hotel = catalog.get(hotelId), grant = values.find(h => h.hotel_id === hotelId), primary = hotelId === configuration.primary_hotel_id
+      const label = hotel?.name ?? `Khách sạn cần rà soát (${hotelId.slice(0, 8)})`, open = expanded === hotelId
+      return <section key={hotelId} className="rounded-lg border bg-background">
+        <div className="flex items-center gap-3 p-3">
+          <Checkbox aria-label={`Phân công ${label}`} checked={!!grant} disabled={locked || !hotel?.assignable || (primary && !!grant)}
+            onCheckedChange={checked => {
+              if (locked || !hotel?.assignable || (primary && grant)) return
+              change(checked === true ? [...values, defaultHotelGrant(hotelId)] : values.filter(h => h.hotel_id !== hotelId))
+            }} />
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-sm font-semibold">{label}{primary ? ' · Khách sạn chính' : ''}</p>
+            <p className="text-xs text-muted-foreground">{hotel?.code ?? 'Không có trong danh mục hiện tại'}{hotel && !hotel.assignable ? ' · Cần rà soát phạm vi/trạng thái' : ''}</p>
           </div>
-        )}
-        
-        {/* Summary */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Đã chọn: <span className="font-medium text-foreground">{selectedHotels.length}</span> khách sạn
-          </p>
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving || disabled}
-            size="sm"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-          </Button>
+          {grant && <Button type="button" size="sm" variant="outline" aria-label={`Chi tiết quyền tại ${label}`} aria-expanded={open}
+            aria-controls={`${id}-${hotelId}`} onClick={() => setExpanded(open ? null : hotelId)}>Chi tiết</Button>}
         </div>
-      </CardContent>
-    </Card>
-  )
+        {grant && open && <div id={`${id}-${hotelId}`} className="grid grid-cols-1 gap-2 border-t p-3 sm:grid-cols-2">
+          {HOTEL_FLAGS.map(flag => <div key={flag} className="flex items-center justify-between gap-2 rounded border p-2">
+            <div><p className="text-sm">{flagLabels[flag]}</p>{!hotel?.allowed[flag] && <p className="text-xs text-muted-foreground">Bạn không thể cấp thêm quyền này</p>}</div>
+            <Switch aria-label={`${flagLabels[flag]} tại ${label}`} checked={grant[flag]} disabled={locked || (!hotel?.allowed[flag] && !grant[flag])}
+              onCheckedChange={checked => {
+                if (locked || (checked && !hotel?.allowed[flag])) return
+                change(values.map(h => h.hotel_id === hotelId ? { ...h, [flag]: checked } : h))
+              }} />
+          </div>)}
+        </div>}
+      </section>
+    })}
+    <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t bg-background py-3">
+      <p className="mr-auto text-sm text-muted-foreground">Đã chọn {values.length} khách sạn</p>
+      <Button type="button" variant="outline" disabled={isSaving} onClick={() => { setDraft(null); onRefresh() }}>Bỏ thay đổi và tải lại</Button>
+      <Button type="button" disabled={!dirty || locked || unheld || primaryMissing} onClick={() => { void save() }}>{isSaving ? 'Đang lưu…' : 'Lưu phân công khách sạn'}</Button>
+    </div>
+  </div>
 }

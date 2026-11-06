@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Building2, Users, Database, HardDrive } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { AdvicePolicyPanel } from './AdvicePolicyPanel';
 
 interface TenantDetailsDialogProps {
   tenant: any | null;
@@ -237,6 +238,7 @@ export function TenantDetailsDialog({
               </div>
             </>
           )}
+          <AdvicePolicyPanel tenantId={tenant.id} active={open} />
         </div>
       </DialogContent>
     </Dialog>

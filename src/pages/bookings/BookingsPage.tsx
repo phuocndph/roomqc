@@ -89,8 +89,6 @@ import {
 import { calculateServiceChargesFromConsumables } from '@/hooks/usePricingRules'
 import { fetchServiceChargeSummary, type ServiceChargeDetail } from '@/hooks/useBookingServiceCharges'
 import { MobileBookingsPage } from './MobileBookingsPage'
-import { triggerRoomCheckoutNotification } from '@/hooks/useNotificationTriggers'
-import { createInvoiceAfterCheckout } from '@/lib/invoiceHelpers'
 import { PrintReceiptDialog } from '@/components/invoices/PrintReceiptDialog'
 import { useOverdueCheckins } from '@/hooks/useOverdueCheckins'
 import { MarkNoShowDialog } from '@/components/bookings/MarkNoShowDialog'
@@ -106,6 +104,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreVertical, PhoneCall, CalendarClock, UserX } from 'lucide-react'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
+import type { RoomOperationResult } from '@/lib/room-operation-command'
+import { runBookingOperationFollowUps, bookingOperationDescription, bookingAdjustmentNotes } from '@/lib/booking-operation-followups'
 
 type BookingStatus = 'all' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show' | 'conflict' | 'overdue' | 'overdue_checkin'
 
@@ -219,6 +221,9 @@ export function BookingsPage() {
   // Track if checkout was restored from widget (to skip duplicate toast)
   const [restoredFromWidget, setRestoredFromWidget] = useState(false)
   const { toast } = useToast()
+  const operationView = JSON.stringify([selectedHotelId, isAllHotelsMode, actionBooking?.id])
+  const executeOperation = useRoomOperationExecutor(operationView)
+  useEffect(() => { setIsActionLoading(false) }, [operationView])
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   
@@ -617,62 +622,41 @@ export function BookingsPage() {
 
   // Perform check-in with optional adjusted charge
   const performCheckIn = async (booking: BookingWithRoom, finalEarlyCharge: number, adjustmentNote?: string) => {
+    if (isActionLoading) return
     setIsActionLoading(true)
     setShowCheckinConfirm(false)
-
     try {
-      // Use atomic RPC for check-in (updates booking + room in single transaction)
-      const { error } = await supabase.rpc('perform_checkin', {
-        p_booking_id: booking.id,
-        p_room_id: booking.room_id,
-        p_early_checkin_charge: finalEarlyCharge,
+      const { data, error } = await executeOperation('perform_checkin', {
+        p_booking_id: booking.id, p_room_id: booking.room_id, p_early_checkin_charge: finalEarlyCharge,
+        p_adjustment_notes: bookingAdjustmentNotes('checkin', adjustmentNote),
       })
-
-      if (error) {
-        if (error.message?.includes('ROOM_OCCUPIED')) {
-          const gName = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang có khách "${gName}". Vui lòng checkout trước.`)
-        }
-        if (error.message?.includes('INVALID_ROOM_STATUS')) {
-          const roomStatus = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang ở trạng thái "${roomStatus}", không thể check-in.`)
-        }
-        throw error
-      }
-
-      // Update adjustment note separately if provided
-      if (adjustmentNote) {
-        const existingNotes = (booking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-          : `[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', booking.id)
-      }
-
-      toast({
-        title: 'Check-in thành công',
-        description: finalEarlyCharge > 0
-          ? `Phụ thu check-in sớm: ${formatCurrency(finalEarlyCharge)}`
-          : undefined,
-      })
-
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-      queryClient.invalidateQueries({ queryKey: ['booking-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['today-checkins'] })
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi check-in',
-        description: getFriendlyError(error),
-      })
+      if (!executeOperation.isCurrent()) return
+      if (error) throw error
+      const tasks: Array<() => PromiseLike<unknown>> = []
+      const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+      if (!executeOperation.isCurrent()) return
+      toast({ title: data.replayed ? 'Đã xác nhận lần nhận phòng trước đó' : 'Check-in thành công',
+        description: bookingOperationDescription(followUps) ?? (finalEarlyCharge > 0 ? `Phụ thu check-in sớm: ${formatCurrency(finalEarlyCharge)}` : undefined) })
+      for (const key of ['all-bookings', 'rooms', 'booking-stats', 'today-checkins']) void queryClient.invalidateQueries({ queryKey: [key] })
+    } catch (error) {
+      if (!executeOperation.isCurrent()) return
+      toast({ variant: 'destructive', title: 'Lỗi check-in', description: roomOperationErrorMessage(error) })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
+      if (executeOperation.isCurrent()) { setIsActionLoading(false); setActionBooking(null) }
     }
+  }
+
+  const finishCheckout = async (data: RoomOperationResult) => {
+    if (!actionBooking || !executeOperation.isCurrent()) return
+    const tasks: Array<() => PromiseLike<unknown>> = []
+    const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+    if (!executeOperation.isCurrent()) return
+    setPrintReceiptBookingId(actionBooking.id)
+    setPrintReceiptSubtotal(Number(data.subtotal))
+    setPrintReceiptMeta({ guestName: actionBooking.guest_name || '', roomNumber: actionBooking.room?.room_number || '', hotelId: actionBooking.hotel_id })
+    setShowPrintReceiptDialog(true)
+    toast({ title: data.replayed ? 'Đã xác nhận lần trả phòng trước đó' : 'Check-out thành công', description: bookingOperationDescription(followUps, true) })
+    for (const key of ['all-bookings', 'rooms', 'booking-stats', 'today-checkouts']) void queryClient.invalidateQueries({ queryKey: [key] })
   }
 
   const computeAndOpenCheckoutSummary = async (
@@ -817,7 +801,7 @@ export function BookingsPage() {
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!actionBooking || !checkoutCostBreakdown) return
+    if (!actionBooking || !checkoutCostBreakdown || isActionLoading) return
 
     setIsActionLoading(true)
     setShowCheckoutSummary(false)
@@ -855,7 +839,7 @@ export function BookingsPage() {
 
       // Use RPC for atomic checkout with damage params
       // Pass p_check_out_date for overdue bookings to update atomically
-      const { error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: actionBooking.id,
         p_room_id: actionBooking.room_id,
         p_late_checkout_charge: adjustedLateCharge,
@@ -864,69 +848,30 @@ export function BookingsPage() {
         // VAT, phí dịch vụ và tổng tiền được server tính lại từ vat_rate/service_fee_rate của booking
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_new_amount_paid: null,
         p_check_out_date: overdueCheckoutDate,
       })
 
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      if (tenantId) {
-        createInvoiceAfterCheckout({ bookingId: actionBooking.id, tenantId, hotelId: actionBooking.hotel_id, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      }
-      setPrintReceiptBookingId(actionBooking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setPrintReceiptMeta({
-        guestName: (actionBooking as any).guest_name || '',
-        roomNumber: actionBooking.room?.room_number || '',
-        hotelId: actionBooking.hotel_id,
-      })
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if adjusted
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const existingNotes = (actionBooking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n${allNotes.join('\n')}`
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', actionBooking.id)
-      }
-
-      toast({ title: 'Check-out thành công' })
-      
-      // Send checkout notification realtime
-      if (tenantId && actionBooking.hotel_id) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId: actionBooking.hotel_id,
-          roomId: actionBooking.room_id,
-          roomNumber: actionBooking.room?.room_number || '',
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: 'Lỗi check-out',
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
-      setCheckoutCostBreakdown(null)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsActionLoading(false)
+        setActionBooking(null)
+        setCheckoutCostBreakdown(null)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 
@@ -938,7 +883,7 @@ export function BookingsPage() {
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!actionBooking || !checkoutCostBreakdown) return
+    if (!actionBooking || !checkoutCostBreakdown || isActionLoading) return
 
     setIsActionLoading(true)
     setShowCheckoutSummary(false)
@@ -976,7 +921,7 @@ export function BookingsPage() {
 
       // BookingPaymentDialog already updated amount_paid via update_booking_amount_paid RPC (ADD operation)
       // Pass null to perform_checkout to preserve the DB value and avoid overwriting partial payments
-      const { error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: actionBooking.id,
         p_room_id: actionBooking.room_id,
         p_late_checkout_charge: adjustedLateCharge,
@@ -985,69 +930,30 @@ export function BookingsPage() {
         // VAT, phí dịch vụ và tổng tiền được server tính lại từ rate gốc trong booking
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_new_amount_paid: null,
         p_check_out_date: overdueCheckoutDate,
       })
 
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      if (tenantId) {
-        createInvoiceAfterCheckout({ bookingId: actionBooking.id, tenantId, hotelId: actionBooking.hotel_id, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      }
-      setPrintReceiptBookingId(actionBooking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setPrintReceiptMeta({
-        guestName: (actionBooking as any).guest_name || '',
-        roomNumber: actionBooking.room?.room_number || '',
-        hotelId: actionBooking.hotel_id,
-      })
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if adjusted
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const existingNotes = (actionBooking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n${allNotes.join('\n')}`
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', actionBooking.id)
-      }
-
-      toast({ title: 'Đã thanh toán và check-out thành công' })
-      
-      // Send checkout notification realtime
-      if (tenantId && actionBooking.hotel_id) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId: actionBooking.hotel_id,
-          roomId: actionBooking.room_id,
-          roomNumber: actionBooking.room?.room_number || '',
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: 'Lỗi',
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
-      setCheckoutCostBreakdown(null)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsActionLoading(false)
+        setActionBooking(null)
+        setCheckoutCostBreakdown(null)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 
@@ -1967,6 +1873,7 @@ export function BookingsPage() {
           open={!!noShowBooking}
           onOpenChange={(o) => !o && setNoShowBooking(null)}
           bookingId={noShowBooking.id}
+          roomId={noShowBooking.room_id}
           guestName={noShowBooking.guest_name}
           roomNumber={noShowBooking.room?.room_number || ''}
           depositAmount={noShowBooking.deposit_amount || 0}

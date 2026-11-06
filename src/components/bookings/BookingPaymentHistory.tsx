@@ -4,18 +4,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { useBookingPayments } from '@/hooks/useBookingPayments'
 import { formatCurrency } from '@/lib/utils'
+import { useBookingNoShowResolution } from '@/hooks/useBookingNoShowResolution'
 
 interface BookingPaymentHistoryProps {
   bookingId: string
+  bookingStatus?: string
 }
 
 const methodLabel: Record<string, string> = {
   cash: 'Tiền mặt',
   bank_transfer: 'Chuyển khoản',
+  pending_refund: 'Cần hoàn tiền',
 }
 
-export function BookingPaymentHistory({ bookingId }: BookingPaymentHistoryProps) {
+export function BookingPaymentHistory({ bookingId, bookingStatus }: BookingPaymentHistoryProps) {
   const { data: payments, isLoading } = useBookingPayments(bookingId)
+  const resolution = useBookingNoShowResolution(bookingId, bookingStatus === 'no_show')
 
   if (isLoading) {
     return (
@@ -26,15 +30,18 @@ export function BookingPaymentHistory({ bookingId }: BookingPaymentHistoryProps)
     )
   }
 
-  if (!payments || payments.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground py-3 text-center">
-        Chưa có giao dịch nào
-      </p>
-    )
-  }
-
   return (
+    <div className="space-y-3">
+    {bookingStatus === 'no_show' && <div className="rounded-lg border border-slate-300 p-3 text-sm">
+      <p className="font-medium">Xử lý cọc khi khách không đến</p>
+      {resolution.isLoading ? <p>Đang kiểm tra quyết định xử lý cọc…</p>
+        : resolution.isError ? <p>Chưa đọc được quyết định xử lý cọc. Cần kiểm tra quyền và đối soát riêng.</p>
+        : resolution.data ? <p>{resolution.data.decision === 'retain'
+          ? `Cọc đã chuyển thành phí no-show: ${formatCurrency(resolution.data.retained_amount)}.`
+          : `Cọc cần hoàn: ${formatCurrency(resolution.data.refund_due_amount)}. Khách sạn cần thực hiện hoàn tiền và đối soát riêng.`}</p>
+        : <p>Chưa có quyết định xử lý cọc được đối soát cho dữ liệu này.</p>}
+    </div>}
+    {!payments?.length ? <p className="py-3 text-center text-xs text-muted-foreground">Chưa có giao dịch nào</p> :
     <div className="divide-y divide-border rounded-lg border">
       <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/40">
         <span className="col-span-3">Thời gian</span>
@@ -73,6 +80,7 @@ export function BookingPaymentHistory({ bookingId }: BookingPaymentHistoryProps)
           </div>
         )
       })}
+    </div>}
     </div>
   )
 }

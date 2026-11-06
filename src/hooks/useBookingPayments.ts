@@ -10,7 +10,7 @@ export interface BookingPayment {
   hotel_id: string;
   booking_id: string;
   amount: number;
-  payment_method: 'cash' | 'bank_transfer';
+  payment_method: 'cash' | 'bank_transfer' | 'pending_refund';
   payment_status: 'pending' | 'completed' | 'cancelled';
   transaction_reference: string | null;
   paid_at: string | null;

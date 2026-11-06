@@ -40,7 +40,7 @@ interface Props {
  */
 export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = '/rooms' }: Props) {
   const navigate = useNavigate()
-  const { mutateAsync, isPending } = useQuickRoomCheck()
+  const { mutateAsync, isPending, isCurrent } = useQuickRoomCheck(roomId)
   const { data: photoMode } = useHotelPhotoMode(hotelId ?? undefined)
   const { uploadImage, isUploading } = useImageUpload()
   const { tenantId } = useUser()
@@ -78,6 +78,7 @@ export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = 
     try {
       const startedAt = performance.now()
       await mutateAsync({ roomId, checkType, photos })
+      if (!isCurrent()) return
       // Metrics hook
       const elapsedMs = Math.round(performance.now() - startedAt)
       try {

@@ -10,6 +10,7 @@ export interface KpiScorecardProps {
   value: ReactNode
   /** Δ% so kỳ trước. Bỏ qua nếu không truyền. */
   deltaPct?: number | null
+  deltaUnit?: 'percent' | 'percentage-points'
   /**
    * Hướng "tốt" của KPI:
    * - 'up'   → tăng = tốt (xanh khi +Δ)
@@ -47,6 +48,7 @@ export function KpiScorecard({
   label,
   value,
   deltaPct,
+  deltaUnit = 'percent',
   goodDirection = 'up',
   hint,
   badge,
@@ -87,7 +89,7 @@ export function KpiScorecard({
         <div className={cn('flex items-center gap-1 text-xs', TONE_TEXT[tone])}>
           <Arrow className="h-3 w-3" />
           <span className="tabular-nums font-medium">
-            {Math.abs(deltaPct).toFixed(1)}%
+            {Math.abs(deltaPct).toFixed(1)}{deltaUnit === 'percentage-points' ? ' điểm %' : '%'}
           </span>
           <span className="text-muted-foreground font-normal">so kỳ trước</span>
         </div>

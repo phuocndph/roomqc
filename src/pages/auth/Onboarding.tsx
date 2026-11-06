@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUser } from '@/hooks/useUser'
@@ -21,6 +21,7 @@ import { controlRequest, workspacePath } from '@/lib/workspace'
 import { runtimeConfig } from '@/lib/runtime-config'
 import { useMyStaffInvitation } from '@/hooks/useMyStaffInvitation'
 import { ResumeStaffInvitation } from '@/components/auth/ResumeStaffInvitation'
+import { useWorkspaceSetupStatus } from '@/hooks/useWorkspaceSetupStatus'
 
 const onboardingSchema = z.object({
   tenantName: z.string().trim().refine(value => !value || value.length >= 2, 'Tên công ty phải có ít nhất 2 ký tự'),
@@ -36,7 +37,7 @@ type OnboardingFormData = z.infer<typeof onboardingSchema>
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const { user: profile, isLoading: profileLoading, error: profileError, refetch: refetchUser } = useUser()
   const invitation = useMyStaffInvitation(!profileLoading && (!profile || !!profileError))
   const { toast } = useToast()
@@ -44,6 +45,15 @@ export default function Onboarding() {
   const [completed, setCompleted] = useState(false)
   const submissionInFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
+  const identity=JSON.stringify([user?.id,session?.access_token,runtimeConfig.workspace?.workspace.id,
+    runtimeConfig.workspace?.workspace.routingVersion,runtimeConfig.workspace?.cluster.id,runtimeConfig.workspace?.cluster.url])
+  const currentIdentity=useRef(identity);currentIdentity.current=identity
+  const mounted=useRef(true)
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[])
+  const directorySetup=!!runtimeConfig.workspace&&!profileLoading&&!profileError&&!invitation.isLoading&&!invitation.isError
+    &&!invitation.data&&getAccountSetupState(profile)==='register'
+  const setup=useWorkspaceSetupStatus(directorySetup,user?.id,session?.access_token)
+  const canSetup=!runtimeConfig.workspace||directorySetup&&!setup.isLoading&&setup.data?.nextAction==='continue_setup'
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
@@ -59,7 +69,7 @@ export default function Onboarding() {
   })
 
   const onSubmit = async (data: OnboardingFormData) => {
-    if (submissionInFlight.current) return
+    if (submissionInFlight.current || !canSetup) return
     if (!user?.id) {
       setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
@@ -68,6 +78,13 @@ export default function Onboarding() {
     submissionInFlight.current = true
     setIsSubmitting(true)
     setError(null)
+    const workspace = runtimeConfig.workspace
+    const captured={id:workspace?.workspace.id,slug:workspace?.workspace.slug,version:workspace?.workspace.routingVersion,
+      cluster:workspace?.cluster.id,url:workspace?.cluster.url,token:session?.access_token}
+    const current=()=>mounted.current&&currentIdentity.current===identity
+      &&runtimeConfig.workspace?.workspace.id===captured.id&&runtimeConfig.workspace?.workspace.routingVersion===captured.version
+      &&runtimeConfig.workspace?.cluster.id===captured.cluster&&runtimeConfig.workspace?.cluster.url===captured.url
+      &&runtimeConfig.workspace?.workspace.slug===captured.slug
 
     try {
       // Reuse the main contact unless the owner explicitly supplies alternatives.
@@ -75,10 +92,15 @@ export default function Onboarding() {
       const hotelPhone = data.hotelPhone || data.tenantPhone
       const hotelEmail = data.hotelEmail || user.email || ''
       // Call complete_registration function
-      const workspace = runtimeConfig.workspace
       const response = workspace ? await (async () => {
+        const status=await setup.refresh()
+        if(!current())return {data:null,error:null}
+        if(status?.nextAction!=='continue_setup')throw new Error('setup_status_required')
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session) throw new Error('Vui lòng đăng nhập lại để tiếp tục thiết lập.')
+        if(!current())return {data:null,error:null}
+        if (!session || session.user?.id!==user.id || session.access_token!==captured.token) {
+          throw new Error('Vui lòng đăng nhập lại để tiếp tục thiết lập.')
+        }
         const result = await controlRequest(`/workspaces/${workspace.workspace.slug}/provision`, {
           method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` },
           body: JSON.stringify({fullName:user.user_metadata?.full_name || user.email?.split('@')[0],
@@ -98,6 +120,7 @@ export default function Onboarding() {
         p_hotel_email: hotelEmail,
         p_total_rooms: data.totalRooms,
       })
+      if(!current())return
       const { data: result, error } = response
 
       if (error) {
@@ -105,10 +128,15 @@ export default function Onboarding() {
       }
 
       // Handle result structure from function
-      const resultData = result as { success?: boolean; error?: string; detail?: string; tenant_id?: string; hotel_id?: string } | null
+      const resultData = result as { success?: boolean; pending?: boolean; error?: string; detail?: string; tenant_id?: string; hotel_id?: string } | null
       
       if (!resultData) {
         throw new Error('Không nhận được phản hồi từ máy chủ')
+      }
+
+      if(workspace&&resultData.success===false&&resultData.pending===true){
+        await setup.refresh()
+        return
       }
 
       if (!resultData.success) {
@@ -140,12 +168,14 @@ export default function Onboarding() {
       navigate('/auth/callback', { replace: true })
       
     } catch (error: unknown) {
-      console.error('Onboarding error:', error)
+      if(!current())return
+      console.error('ONBOARDING_FAILED')
       const errorMessage = getRegistrationErrorMessage(error)
       
       setError(errorMessage)
       setCompleted(false)
       submissionInFlight.current = false
+      if(runtimeConfig.workspace)void setup.refresh()
       
       toast({
         title: 'Lỗi thiết lập',
@@ -153,7 +183,8 @@ export default function Onboarding() {
         variant: 'destructive',
       })
     } finally {
-      setIsSubmitting(false)
+      submissionInFlight.current=false
+      if(mounted.current)setIsSubmitting(false)
     }
   }
 
@@ -182,6 +213,24 @@ export default function Onboarding() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {directorySetup&&(
+            <div className="mb-6 rounded-lg border p-4" aria-live="polite">
+              <p className="font-medium">{setup.isLoading?'Đang kiểm tra thiết lập đã lưu…':setup.error?'Cần kiểm tra kết quả':
+                setup.data?.nextAction==='continue_setup'?'Tiếp tục thiết lập khách sạn':setup.data?.step==='active'?'Khách sạn đã sẵn sàng':
+                setup.data?.nextAction==='contact_support'?'Cần RoomQC đối soát':'Đang xác nhận kết quả thiết lập'}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{setup.error||(setup.data?.nextAction==='contact_support'
+                ?'Giữ nguyên đăng ký này và cung cấp mã hỗ trợ cho RoomQC để kiểm tra kết quả.'
+                :setup.data?.nextAction==='wait'?'Hệ thống sẽ kiểm tra lại tiến độ. Vui lòng giữ nguyên đăng ký này.'
+                :'Thông tin đã gửi sẽ được kiểm tra để tránh tạo trùng khách sạn.')}</p>
+              {setup.data&&setup.data.nextAction!=='continue_setup'&&<p className="mt-2 break-all text-xs">Mã hỗ trợ: {setup.data.requestId}</p>}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(setup.data?.step==='active'||setup.data?.lastErrorCode==='DIRECTORY_ACTIVATION_PENDING')&&
+                  <Button type="button" onClick={()=>window.location.assign(workspacePath('/auth/callback'))}>Mở khách sạn</Button>}
+                {(!setup.data||setup.data.nextAction!=='continue_setup')&&
+                  <Button type="button" variant="outline" disabled={setup.isLoading||isSubmitting} onClick={()=>{void setup.refresh()}}>Kiểm tra lại kết quả</Button>}
+              </div>
+            </div>
+          )}
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -198,7 +247,7 @@ export default function Onboarding() {
 
           <Form {...form}>
             <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
-              <fieldset disabled={isSubmitting || completed} className="space-y-6">
+              <fieldset disabled={isSubmitting || completed || !canSetup} className="space-y-6">
               {/* Hotel Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">

@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { workspacePath } from '@/lib/workspace'
+import { getEmployeeEditEntry } from '@/lib/employee-edit-entry'
 import { useUsers, useCreateUser, useUpdateUser } from '@/hooks/useUsers'
 import { useUser } from '@/hooks/useUser'
 import { UserHierarchyView } from './UserHierarchyView'
@@ -23,6 +27,7 @@ interface UserManagementTabProps {
 export function UserManagementTab({ onManagePermissions, editUserId }: UserManagementTabProps) {
   const { users, isLoading } = useUsers()
   const { user: currentUser } = useUser()
+  const navigate = useNavigate()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
 
@@ -40,37 +45,42 @@ export function UserManagementTab({ onManagePermissions, editUserId }: UserManag
   const [editingUser, setEditingUser] = useState<UserWithRelations | null>(null)
   const [handledEditUserId, setHandledEditUserId] = useState<string | null>(null)
 
+  const handleOpenDialog = useCallback((user?: UserWithRelations, fromDeepLink = false) => {
+    if (user) {
+      const entry = getEmployeeEditEntry(user, currentUser)
+      if (entry.kind !== 'employee') {
+        setEditingUser(null)
+        setIsDialogOpen(false)
+        if (entry.kind === 'profile') navigate(workspacePath('/profile'), { replace: fromDeepLink })
+        else toast.info(entry.message)
+        return
+      }
+    }
+    setEditingUser(user ?? null)
+    setIsDialogOpen(true)
+  }, [currentUser, navigate])
+
   useEffect(() => {
-    if (!editUserId || !users || handledEditUserId === editUserId) return
+    if (!editUserId || !users || !currentUser || handledEditUserId === editUserId) return
     const userToEdit = users.find((user) => user.id === editUserId)
     if (userToEdit) {
-      setEditingUser(userToEdit)
-      setIsDialogOpen(true)
+      handleOpenDialog(userToEdit, true)
       setHandledEditUserId(editUserId)
     }
-  }, [editUserId, handledEditUserId, users])
+  }, [currentUser, editUserId, handledEditUserId, handleOpenDialog, users])
 
   const canAddUser = currentUser?.user_level_code === 'tenant_owner' || 
                      currentUser?.user_level_code === 'manager' ||
                      currentUser?.user_level_code === 'department_manager'
 
-  const handleOpenDialog = (user?: UserWithRelations) => {
-    if (user) {
-      setEditingUser(user)
-    } else {
-      setEditingUser(null)
-    }
-    setIsDialogOpen(true)
-  }
-
   const handleSubmit = async (data: UserFormData) => {
     if (editingUser) {
-      await updateUser.mutateAsync({ id: editingUser.id, data })
+      await updateUser.mutateAsync({ id: editingUser.id, data, expectedUpdatedAt: editingUser.updated_at })
     } else {
       await createUser.mutateAsync(data)
     }
-    setIsDialogOpen(false)
-    setEditingUser(null)
+    // UserFormDialog owns completion/close with its exact open-generation.
+    // A late save must not close another employee or a reopened invitation.
   }
 
   const filteredUsers = users?.filter((user) => {
@@ -159,8 +169,9 @@ export function UserManagementTab({ onManagePermissions, editUserId }: UserManag
       <UserFormDialog
         user={editingUser}
         open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={open => { setIsDialogOpen(open); if (!open) setEditingUser(null) }}
         onSubmit={handleSubmit}
+        submissionScope={createUser.scope}
       />
     </div>
   )

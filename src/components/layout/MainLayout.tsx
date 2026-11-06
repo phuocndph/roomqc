@@ -29,6 +29,8 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { setPrefetchContext } from '@/lib/route-data-prefetch'
+import { RoomCommandRecovery } from '@/components/rooms/RoomCommandRecovery'
+import { RoomOperationRecovery } from '@/components/rooms/RoomOperationRecovery'
 
 const MainLayoutContent = () => {
   const { isMobile } = useBreakpoint()
@@ -67,6 +69,8 @@ const MainLayoutContent = () => {
 
   const priorityBanner = (
     <>
+      <RoomCommandRecovery />
+      <RoomOperationRecovery />
       {(activeBanner === 'suspended' || activeBanner === 'grace_expired') && (
         <GracePeriodBanner onDismiss={() => dismissBanner(activeBanner)} />
       )}

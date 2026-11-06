@@ -3,6 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AccountSetupProfile } from '@/lib/account-setup'
 import AuthCallback from './AuthCallback'
+import { AccountProfileError } from '@/lib/account-profile-error'
 
 const state = vi.hoisted(() => ({
   authenticated: true,
@@ -118,6 +119,28 @@ describe('AuthCallback registration routing', () => {
     act(() => vi.advanceTimersByTime(10000))
     expect(router.state.location.pathname).toBe('/auth/callback')
     expect(screen.getByText('Chưa tải được thông tin tài khoản')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
+    expect(state.refetch).toHaveBeenCalledOnce()
+  })
+
+  it.each([false, true])('explains a workspace mismatch even if invitation lookup fails (%s)', invitationFailure => {
+    state.profile = null
+    state.profileError = new AccountProfileError('workspace_mismatch')
+    state.invitation.isError = invitationFailure
+    const router = openCallback()
+    act(() => vi.advanceTimersByTime(10000))
+    expect(router.state.location.pathname).toBe('/auth/callback')
+    expect(screen.getByText('Tài khoản không thuộc doanh nghiệp này')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chọn doanh nghiệp khác' })).toHaveAttribute('href', '/start?mode=login')
+    expect(screen.queryByRole('button', { name: 'Tải lại' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Vui lòng kiểm tra kết nối và thử tải lại để tiếp tục.')).not.toBeInTheDocument()
+  })
+
+  it('asks an unconfirmed workspace to reload its setup result', () => {
+    state.profile = null
+    state.profileError = new AccountProfileError('workspace_unconfirmed')
+    openCallback()
+    expect(screen.getByText('Doanh nghiệp chưa xác nhận thiết lập')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
     expect(state.refetch).toHaveBeenCalledOnce()
   })

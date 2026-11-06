@@ -25,7 +25,7 @@ export const OnboardingGuard = ({ children }: OnboardingGuardProps) => {
   }
 
   if (error) {
-    return <AccountSetupNotice onRetry={() => { void refetch() }} />
+    return <AccountSetupNotice error={error} onRetry={() => { void refetch() }} />
   }
 
   const setupState = getAccountSetupState(user)

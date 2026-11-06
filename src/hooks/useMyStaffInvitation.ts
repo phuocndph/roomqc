@@ -1,16 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/integrations/supabase/client'
+import { createRuntimeStaffInvitationClient, staffInvitationQueryKey, staffInvitationRuntimeScope } from '@/lib/staff-invitation-client'
+import { staffInvitationSession } from '@/lib/staff-invitation'
 
 export function useMyStaffInvitation(enabled: boolean) {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
+  let sessionId: string | undefined
+  try { sessionId = staffInvitationSession(session).sessionId } catch { /* query fails closed below */ }
+  const scope = staffInvitationRuntimeScope(), actorId = user?.id
+  const identity = JSON.stringify([actorId, sessionId, scope])
+  const latest = useRef(identity); latest.current = identity
+  const client = useMemo(() => createRuntimeStaffInvitationClient(scope), [scope])
   const query = useQuery({
-    queryKey: ['my-staff-invitation', user?.id], enabled: enabled && !!user,
+    queryKey: staffInvitationQueryKey(actorId, sessionId), enabled: enabled && !!user,
     retry: 1, staleTime: 0,
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('staff-invitations', { body: { action: 'mine' } })
-      if (error) throw new Error('Không thể kiểm tra lời mời tài khoản.')
-      return data.invitation as { id: string; name: string; passwordReady: boolean; expired: boolean; revoked?: boolean } | null
+    queryFn: async ({ signal }) => {
+      if (!actorId || !sessionId) throw new Error('Vui lòng đăng nhập lại để kiểm tra lời mời.')
+      return client.mine(actorId, { signal, sessionId, isCurrent: () => latest.current === identity && scope === staffInvitationRuntimeScope() })
     },
   })
   // React Query retains cached data when disabled. Once the profile exists,

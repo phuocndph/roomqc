@@ -12,22 +12,28 @@ function baseSnapshot(overrides: Partial<KpiSnapshot> = {}): KpiSnapshot {
     periodDays: 30,
     totalRooms: 20,
     netRevenue: 200_000_000,
+    roomNetRevenue: 200_000_000,
+    noShowFees: 0,
     grossRevenue: 220_000_000,
     extraRevenue: 20_000_000,
     totalCost: 120_000_000,
     costBreakdown: { purchase: 40_000_000, laundry: 50_000_000, maintenance: 30_000_000, labor: 0 },
     roomNightsSold: 420,
+    occupiedRoomDays: 420,
+    invalidCheckoutDates: 0,
     bookingsCount: 140,
     prevNetRevenue: 180_000_000,
     prevBookingsCount: 130,
     prevRoomNightsSold: 400,
+    prevOccupiedRoomDays: 400,
+    prevPeriodDays: 30,
     ...overrides,
   }
 }
 
 describe('computeDerivedKpis', () => {
   it('xử lý chia 0 không crash', () => {
-    const k = computeDerivedKpis(baseSnapshot({ totalRooms: 0, roomNightsSold: 0, netRevenue: 0 }))
+    const k = computeDerivedKpis(baseSnapshot({ totalRooms: 0, roomNightsSold: 0, netRevenue: 0, roomNetRevenue: 0 }))
     expect(k.occupancy).toBe(0)
     expect(k.revpar).toBe(0)
     expect(k.adr).toBe(0)
@@ -54,7 +60,7 @@ describe('runOperationsAdvisor', () => {
   })
 
   it('phát hiện lấp đầy thấp', () => {
-    const findings = runOperationsAdvisor(baseSnapshot({ roomNightsSold: 180 })) // 30%
+    const findings = runOperationsAdvisor(baseSnapshot({ roomNightsSold: 180, occupiedRoomDays: 180 })) // 30%
     expect(findings.find(f => f.id === 'low-occupancy')).toBeDefined()
   })
 

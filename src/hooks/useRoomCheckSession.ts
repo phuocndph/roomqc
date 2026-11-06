@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 
 export type RoomCheckType = 'daily' | 'periodic' | 'checkin' | 'checkout' | 'maintenance' | 'delivery' | 'replenish'
 
@@ -258,45 +259,38 @@ export function useAllRoomCheckSessions(tenantId?: string) {
     fetchSessions()
 
     // Subscribe to all sessions
-    const channel = supabase
-      .channel(`room-check-sessions-${tenantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_check_sessions',
-          filter: `tenant_id=eq.${tenantId}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const newSession = payload.new as any
-            setSessions(prev => ({
-              ...prev,
-              [newSession.room_id]: {
-                id: newSession.id,
-                room_id: newSession.room_id,
-                user_id: newSession.user_id,
-                user_name: newSession.user_name,
-                check_type: newSession.check_type as RoomCheckType,
-                started_at: newSession.started_at
-              }
-            }))
-          } else if (payload.eventType === 'DELETE') {
-            const oldSession = payload.old as any
-            setSessions(prev => {
-              const newSessions = { ...prev }
-              delete newSessions[oldSession.room_id]
-              return newSessions
-            })
-          }
+    return subscribeSharedPostgresChanges(
+      `room-check-sessions-${tenantId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'room_check_sessions',
+        filter: `tenant_id=eq.${tenantId}`,
+      },
+      (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const newSession = payload.new as any
+          setSessions(prev => ({
+            ...prev,
+            [newSession.room_id]: {
+              id: newSession.id,
+              room_id: newSession.room_id,
+              user_id: newSession.user_id,
+              user_name: newSession.user_name,
+              check_type: newSession.check_type as RoomCheckType,
+              started_at: newSession.started_at,
+            },
+          }))
+        } else if (payload.eventType === 'DELETE') {
+          const oldSession = payload.old as any
+          setSessions(prev => {
+            const next = { ...prev }
+            delete next[oldSession.room_id]
+            return next
+          })
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      },
+    )
   }, [tenantId])
 
   return sessions

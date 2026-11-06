@@ -1,27 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
-
-function mapUndoError(msg: string): string {
-  if (msg.includes('not_quick_check'))
-    return 'Chỉ huỷ được lần kiểm nhanh.'
-  if (msg.startsWith('undo_window_expired'))
-    return 'Đã quá 10 phút, không thể hoàn tác. Vui lòng tạo lần kiểm mới.'
-  if (msg.includes('newer_check_exists'))
-    return 'Phòng đã có lần kiểm mới hơn. Không thể hoàn tác.'
-  if (msg.includes('forbidden_role') || msg.includes('forbidden_tenant'))
-    return 'Bạn không có quyền hoàn tác lần kiểm này.'
-  if (msg.includes('check_not_found')) return 'Không tìm thấy bản kiểm.'
-  return msg
-}
+import { useRoomOperationExecutor } from './useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
 
 /**
  * Hoàn tác một quick check vừa gửi (cửa sổ 10 phút).
  * Soft delete: status → 'undone', không xoá row.
  */
-export function useUndoQuickRoomCheck() {
+export function useUndoQuickRoomCheck(scopeCheckId = '') {
   const qc = useQueryClient()
-  return useMutation({
+  const execute = useRoomOperationExecutor(scopeCheckId)
+  const mutation = useMutation({
+    onMutate: () => ({ current: execute.isCurrent }),
     mutationFn: async ({
       checkId,
       reason,
@@ -29,15 +19,15 @@ export function useUndoQuickRoomCheck() {
       checkId: string
       reason?: string
     }) => {
-      const { data, error } = await supabase.rpc('undo_quick_room_check', {
+      const { data } = await execute('undo_quick_room_check', {
         _check_id: checkId,
         _reason: reason ?? null,
       })
-      if (error) throw new Error(mapUndoError(error.message))
-      return data as { check_id: string; status: string; room_id: string }
+      return data as unknown as { check_id: string; status: string; room_id: string }
     },
-    onSuccess: (data) => {
-      toast.success('Đã hoàn tác lần kiểm.')
+    onSuccess: (data, _variables, scope) => {
+      if (!scope?.current()) return
+      toast.success('Đã hoàn tác lần kiểm.', { description: 'Trạng thái phòng không được hoàn nguyên bởi thao tác này.' })
       qc.invalidateQueries({ queryKey: ['rooms'] })
       qc.invalidateQueries({ queryKey: ['room', data.room_id] })
       qc.invalidateQueries({ queryKey: ['room-checks', data.room_id] })
@@ -45,6 +35,7 @@ export function useUndoQuickRoomCheck() {
       qc.invalidateQueries({ queryKey: ['room-last-check', data.room_id] })
       qc.invalidateQueries({ queryKey: ['housekeeping-tasks'] })
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error, _variables, scope) => { if (scope?.current()) toast.error(roomOperationErrorMessage(err)) },
   })
+  return Object.assign(mutation, { isCurrent: execute.isCurrent })
 }

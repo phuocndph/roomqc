@@ -47,7 +47,7 @@ export function ExportInsightsPdfButton({ insights, advice, fallbackFindings, ho
         ['Bien loi nhuan', `${k.profitMargin.toFixed(1)}%`],
         ['Doanh thu / phong / ngay (RevPAR)', formatCurrency(k.revpar)],
         ['Ty le lap day', `${k.occupancy.toFixed(1)}%`],
-        ['Gia phong TB (ADR)', formatCurrency(k.adr)],
+        ['Gia phong TB (ADR)', k.adrAvailable ? formatCurrency(k.adr) : 'Chua du du lieu hop le'],
         ['Chi phi / phong / ngay', formatCurrency(k.costPerRoomDay)],
         ['Doanh thu dich vu them', `${k.extraRevenueShare.toFixed(1)}%`],
       ]

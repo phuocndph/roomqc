@@ -154,7 +154,7 @@ function UndoButton({
   secondsLeft: number
   onDone: () => void
 }) {
-  const undo = useUndoQuickRoomCheck()
+  const undo = useUndoQuickRoomCheck(checkId)
   return (
     <button
       type="button"
@@ -162,6 +162,7 @@ function UndoButton({
       onClick={async () => {
         try {
           await undo.mutateAsync({ checkId, reason: 'undo from success screen' })
+          if (!undo.isCurrent()) return
           onDone()
         } catch {
           /* error toast đã hiển thị trong hook */

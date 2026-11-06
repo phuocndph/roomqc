@@ -18,31 +18,64 @@ export function EmailAuthForm({ mode }: { mode: EmailAuthMode }) {
   const [step, setStep] = useState<'email' | 'code' | 'password' | 'done'>(mode === 'recovery' ? 'email' : 'code')
   const [code, setCode] = useState(''), [password, setPassword] = useState(''), [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [cooldown, setCooldown] = useState(mode === 'signup' ? 60 : 0)
+  const [completion, setCompletion] = useState<'submitted' | 'previous'>('submitted')
+  const running = useRef<ReturnType<typeof createEmailAuthFlow> | null>(null)
   useEffect(() => {
     const instance = createEmailAuthFlow(); flow.current = instance
-    return () => { flow.current = null; void instance.dispose() }
-  }, [mode])
+    setEmail(params.get('email') || ''); setStep(mode === 'recovery' ? 'email' : 'code')
+    setCode(''); setPassword(''); setConfirmPassword(''); setError(''); setBusy(false)
+    setCooldown(mode === 'signup' ? 60 : 0); setCompletion('submitted')
+    return () => {
+      if (flow.current === instance) flow.current = null
+      if (running.current === instance) running.current = null
+      void instance.dispose().catch(() => {}) // Cleanup failure is not a success result.
+    }
+  }, [mode, params])
   useEffect(() => {
     if (!cooldown) return
     const timer = setTimeout(() => setCooldown(n => n - 1), 1000)
     return () => clearTimeout(timer)
   }, [cooldown])
-  const run = async (action: () => Promise<void>) => {
-    if (busy || !flow.current) return
+  const run = async (action: (instance: ReturnType<typeof createEmailAuthFlow>, current: () => boolean) => Promise<void>) => {
+    const instance = flow.current
+    if (!instance || running.current === instance) return
+    running.current = instance
+    const current = () => flow.current === instance
     setBusy(true); setError('')
-    try { await action() } catch (err) { setError(err instanceof Error ? err.message : 'Không thể xử lý. Vui lòng thử lại.') }
-    finally { setBusy(false) }
+    try { await action(instance, current) }
+    catch (err) { if (current()) setError(err instanceof Error ? err.message : 'Không thể xử lý. Vui lòng thử lại.') }
+    finally {
+      if (running.current === instance) running.current = null
+      if (current()) setBusy(false)
+    }
   }
-  const send = () => run(async () => {
-    await flow.current!.send(mode, email); setCode(''); setCooldown(60); setStep('code')
+  const done = (result: { completion: 'submitted' | 'previous' }) => {
+    setCompletion(result.completion); setPassword(''); setConfirmPassword(''); setStep('done')
+  }
+  const send = () => run(async (instance, current) => {
+    await instance.send(mode, email)
+    if (current()) { setCode(''); setCooldown(60); setStep('code') }
   })
-  const submit = () => run(async () => {
-    if (step === 'email') { await flow.current!.send(mode, email); setCooldown(60); setStep('code'); return }
-    if (step === 'code') { await flow.current!.verify(mode, email, code); setCode(''); setStep(mode === 'signup' ? 'done' : 'password'); return }
+  const check = () => run(async (instance, current) => {
+    const result = await instance.check(mode)
+    if (current()) done(result)
+  })
+  const submit = () => run(async (instance, current) => {
+    if (step === 'email') {
+      await instance.send(mode, email)
+      if (current()) { setCooldown(60); setStep('code') }
+      return
+    }
+    if (step === 'code') {
+      await instance.verify(mode, email, code)
+      if (current()) { setCode(''); setStep(mode === 'signup' ? 'done' : 'password') }
+      return
+    }
     if (step === 'password') {
       const validated = resetPasswordSchema.safeParse({ password, confirmPassword })
       if (!validated.success) throw new Error(validated.error.issues[0].message)
-      await flow.current!.finish(mode, password); setPassword(''); setConfirmPassword(''); setStep('done')
+      const result = await instance.finish(mode, password)
+      if (current()) done(result)
     }
   })
   return <Card className="w-full max-w-md">
@@ -50,7 +83,7 @@ export function EmailAuthForm({ mode }: { mode: EmailAuthMode }) {
       {step === 'email' ? 'Nhập email để nhận mã khôi phục tài khoản.' : step === 'code'
         ? mode === 'recovery' ? 'Nếu email đã đăng ký, bạn sẽ nhận được mã khôi phục. Kiểm tra cả thư rác.' : 'Nhập email và mã trong thư RoomQC. Mã chỉ dùng một lần và có thời hạn.'
         : step === 'password' ? 'Tự đặt mật khẩu để hoàn tất. Không chia sẻ mật khẩu với người khác.'
-        : mode === 'signup' ? 'Email đã được xác minh. Đăng nhập để tiếp tục thiết lập khách sạn.' : 'Bạn có thể đăng nhập bằng mật khẩu vừa đặt.'}
+        : mode === 'signup' ? 'Email đã được xác minh. Đăng nhập để tiếp tục thiết lập khách sạn.' : completion === 'previous' ? 'Đã xác nhận lần đặt mật khẩu trước. Hãy dùng mật khẩu của lần đó để đăng nhập.' : 'Bạn có thể đăng nhập bằng mật khẩu vừa đặt.'}
     </CardDescription></CardHeader>
     <CardContent className="space-y-4">
       {step !== 'done' && <form className="space-y-4" onSubmit={event => { event.preventDefault(); void submit() }}>
@@ -60,6 +93,10 @@ export function EmailAuthForm({ mode }: { mode: EmailAuthMode }) {
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={busy}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{step === 'email' ? 'Gửi mã khôi phục' : step === 'code' ? 'Xác minh mã' : 'Hoàn tất'}</Button>
       </form>}
+      {step === 'password' && <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">Nếu mất kết nối hoặc chưa nhận được lời mời sau khi gửi, hãy kiểm tra kết quả trước. Không cần nhập lại mật khẩu để kiểm tra.</p>
+        <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void check()}>Kiểm tra kết quả / tiếp tục lời mời</Button>
+      </div>}
       {step === 'code' && (mode === 'invite'
         ? <p className="text-sm text-muted-foreground">Chưa nhận được hoặc mã hết hạn? Nhờ quản lý gửi lại lời mời.</p>
         : <Button variant="outline" className="w-full" disabled={busy || cooldown > 0 || !email} onClick={send}>{cooldown > 0 ? `Gửi lại sau ${cooldown}s` : 'Gửi lại mã'}</Button>)}

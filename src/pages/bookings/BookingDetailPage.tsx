@@ -528,7 +528,7 @@ export function BookingDetailPage({ idProp, embedded, onClose }: BookingDetailPa
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Lịch sử giao dịch ({completedPayments.length})
             </div>
-            <BookingPaymentHistory bookingId={booking.id} />
+            <BookingPaymentHistory bookingId={booking.id} bookingStatus={booking.status} />
           </div>
 
           {/* Hóa đơn */}

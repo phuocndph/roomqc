@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
 import { DollarSign, TrendingDown, ShoppingCart, Wrench, Wind, AlertTriangle, Package, ChevronRight, BarChart3, FileText, Settings, Building2, Users, Receipt, TrendingUp, Clock } from 'lucide-react'
-import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses'
+import { useFinancialReport } from '@/hooks/useReports'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { useLowStockItems } from '@/hooks/useInventoryDashboard'
 import { useHotelContext } from '@/contexts/HotelContext'
@@ -26,10 +25,8 @@ interface MobileOwnerDashboardProps {
 export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange }: MobileOwnerDashboardProps) {
   const { user, tenantId } = useUser()
   const { isAllHotelsMode, selectedHotel } = useHotelContext()
-  const monthsDiff = Math.max(1, Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24 * 30)))
-  
-  const { data: expenses, isLoading: expensesLoading } = useMonthlyExpenses(monthsDiff)
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const financial = useFinancialReport(dateRange)
+  const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats()
   const { data: lowStockItems, isLoading: lowStockLoading } = useLowStockItems()
   const { data: bookingStats, isLoading: bookingStatsLoading } = useBookingStats()
 
@@ -60,20 +57,8 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
     return sum + Math.max(0, remaining)
   }, 0) || 0
 
-  const isLoading = expensesLoading || statsLoading || lowStockLoading || bookingStatsLoading || pendingLoading
-
-  const totals = useMemo(() => {
-    if (!expenses) return { purchase: 0, laundry: 0, maintenance: 0, total: 0 }
-    return expenses.reduce(
-      (acc, exp) => ({
-        purchase: acc.purchase + exp.purchase,
-        laundry: acc.laundry + exp.laundry,
-        maintenance: acc.maintenance + exp.maintenance,
-        total: acc.total + exp.purchase + exp.laundry + exp.maintenance,
-      }),
-      { purchase: 0, laundry: 0, maintenance: 0, total: 0 }
-    )
-  }, [expenses])
+  const isLoading = financial.isPending || statsLoading || lowStockLoading || bookingStatsLoading || pendingLoading
+  const totals = financial.data?.cost_summary
 
   const alerts = [
     {
@@ -187,18 +172,20 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
       </div>
 
       {/* Financial Overview */}
-      {isLoading ? (
+      {financial.isError || statsError ? (
+        <p role="alert">Không tải được tổng quan tài chính. Vui lòng tải lại hoặc kiểm tra quyền xem.</p>
+      ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-14" />
           ))}
         </div>
-      ) : (
+      ) : !totals || !stats ? <p role="status">Chưa có dữ liệu tổng quan tài chính.</p> : (
         <div className="border border-border rounded-none divide-y divide-border">
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Giá trị tồn kho</span>
+              <span className="text-xs text-muted-foreground">Tồn kho hiện tại</span>
             </div>
             <span className="text-sm font-semibold text-foreground">
               {formatCurrency(stats?.total_value || 0)}
@@ -207,10 +194,10 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-destructive" />
-              <span className="text-xs text-muted-foreground">Tổng chi phí</span>
+              <span className="text-xs text-muted-foreground">Chi phí trực tiếp trong kỳ</span>
             </div>
             <span className="text-sm font-semibold text-destructive">
-              {formatCurrency(totals.total)}
+              {formatCurrency(totals.total_cost)}
             </span>
           </div>
           <div className="flex items-center justify-between p-3">
@@ -219,7 +206,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
               <span className="text-xs text-muted-foreground">Mua sắm</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {formatCurrency(totals.purchase)}
+              {formatCurrency(totals.purchase_cost)}
             </span>
           </div>
           <div className="flex items-center justify-between p-3">
@@ -228,7 +215,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
               <span className="text-xs text-muted-foreground">Giặt là</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {formatCurrency(totals.laundry)}
+              {formatCurrency(totals.laundry_cost)}
             </span>
           </div>
           <div className="flex items-center justify-between p-3">
@@ -237,7 +224,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
               <span className="text-xs text-muted-foreground">Bảo trì</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {formatCurrency(totals.maintenance)}
+              {formatCurrency(totals.maintenance_cost)}
             </span>
           </div>
         </div>

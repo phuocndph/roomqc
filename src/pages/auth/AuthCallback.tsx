@@ -82,10 +82,10 @@ export default function AuthCallback() {
   }, [authUser, user, authLoading, isUserLoading, profileError, setupState, isPermissionsLoading, firstAccessibleRoute, forceFallback, navigate, nextPath, invitation.isLoading, invitation.isError, invitation.data])
 
   if (!authLoading && !isUserLoading && invitation.data) return <ResumeStaffInvitation invitation={invitation.data} />
-  if (invitation.isError) return <AccountSetupNotice onRetry={() => { void invitation.refetch() }} />
+  if (invitation.isError) return <AccountSetupNotice error={profileError} onRetry={() => { void invitation.refetch() }} />
 
   if (!authLoading && !isUserLoading && (profileError || setupState === 'assignment-required')) {
-    return <AccountSetupNotice assignmentRequired={!profileError && setupState === 'assignment-required'} onRetry={() => { void refetch() }} />
+    return <AccountSetupNotice error={profileError} assignmentRequired={!profileError && setupState === 'assignment-required'} onRetry={() => { void refetch() }} />
   }
 
   return (

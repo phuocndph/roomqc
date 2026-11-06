@@ -1,10 +1,13 @@
 import { MobileDetailHeader } from '@/components/layout/MobileDetailHeader'
 import { DollarSign, TrendingUp, TrendingDown, Clock, CheckCircle, CreditCard } from 'lucide-react'
-import { useRevenueReport } from '@/hooks/useRevenueReport'
+import { useRevenueReport, recognizedRevenue, recognizedRevenueGrowth } from '@/hooks/useRevenueReport'
+import { NoShowFinanceSummary } from './NoShowFinanceSummary'
 import { formatCurrency } from '@/lib/utils'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { useRevenueExport } from './useRevenueExport'
 
 const formatCompact = (value: number) => {
   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
@@ -15,7 +18,9 @@ const formatCompact = (value: number) => {
 const TYPE_LABELS: Record<string, string> = { daily: 'Theo ngày', hourly: 'Theo giờ', monthly: 'Theo tháng' }
 
 export const MobileRevenueReportPage = () => {
-  const { data: report, isLoading } = useRevenueReport()
+  const { data: report, isLoading, isError } = useRevenueReport()
+  const { exportExcel, exportPDF, canExport, isExporting } = useRevenueExport(JSON.stringify([report?.periodStart, report?.periodEnd, report?.recognitionTimezone]))
+  if (isError) return <p role="alert">Không tải được báo cáo. Vui lòng tải lại hoặc kiểm tra quyền xem.</p>
 
   if (isLoading) {
     return (
@@ -49,29 +54,35 @@ export const MobileRevenueReportPage = () => {
     )
   }
 
-  const growthPositive = report.revenueGrowth >= 0
+  const growth = recognizedRevenueGrowth(report)
+  const growthPositive = growth >= 0
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <MobileDetailHeader title="Báo cáo doanh thu" showBack />
 
       <div className="p-4 space-y-4">
+        <NoShowFinanceSummary report={report} />
+        <div className="flex gap-2">
+          <Button variant="outline" disabled={!canExport || isExporting} onClick={() => exportExcel(report, 'month')}>Xuất Excel</Button>
+          <Button variant="outline" disabled={!canExport || isExporting} onClick={() => exportPDF(report, 'month')}>Xuất PDF</Button>
+        </div>
         {/* Stats Summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="border rounded-lg p-3">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-green-600" />
-                <span className="text-xs text-muted-foreground">Tháng này</span>
+                <span className="text-xs text-muted-foreground">Ghi nhận tháng này</span>
               </div>
-              {report.revenueGrowth !== 0 && (
+              {growth !== 0 && (
                 <div className={cn('flex items-center gap-0.5 text-xs font-medium', growthPositive ? 'text-green-600' : 'text-red-600')}>
                   {growthPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {Math.abs(report.revenueGrowth).toFixed(1)}%
+                  {Math.abs(growth).toFixed(1)}%
                 </div>
               )}
             </div>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(report.currentPeriod.paidRevenue)}</p>
+            <p className="text-lg font-bold text-green-600">{formatCurrency(recognizedRevenue(report, 'currentPeriod'))}</p>
           </div>
 
           <div className="border rounded-lg p-3">
@@ -147,11 +158,11 @@ export const MobileRevenueReportPage = () => {
         )}
 
         {/* Revenue Trend */}
-        {report.monthlyTrends.length > 0 && (
+        {report.recognizedMonthlyTrends.length > 0 && (
           <div className="border rounded-lg p-3">
             <h3 className="text-sm font-medium mb-3">Xu hướng 6 tháng</h3>
             <ResponsiveContainer width="100%" height={140}>
-              <AreaChart data={report.monthlyTrends}>
+              <AreaChart data={report.recognizedMonthlyTrends}>
                 <defs>
                   <linearGradient id="mobileRevenueGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -177,8 +188,8 @@ export const MobileRevenueReportPage = () => {
           </div>
           <div className="divide-y">
             <div className="p-3 flex justify-between text-sm">
-              <span className="text-muted-foreground">Đã thu</span>
-              <span className="font-medium text-green-600">{formatCurrency(report.today.paidRevenue)}</span>
+              <span className="text-muted-foreground">Doanh thu ghi nhận</span>
+              <span className="font-medium text-green-600">{formatCurrency(recognizedRevenue(report, 'today'))}</span>
             </div>
             <div className="p-3 flex justify-between text-sm">
               <span className="text-muted-foreground">Chờ TT</span>

@@ -15,7 +15,7 @@ export function FinanceHubPage() {
   return (
     <ReportHubShell
       title="Báo cáo Tài chính"
-      question="Hôm nay thu bao nhiêu? Kênh nào mang khách về nhiều nhất? Tháng này lời hay lỗ?"
+      question="Doanh thu được ghi nhận thế nào? Tiền thực thu bao nhiêu? Khoản nào cần đối soát?"
       tabs={[
         {
           id: 'room-revenue',

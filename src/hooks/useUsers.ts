@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
-import { AppRole, User, UserWithRelations } from '@/types/database.types'
+import { useRef } from 'react'
+import { UserWithRelations } from '@/types/database.types'
 import { toast } from 'sonner'
 import { UserFormData } from '@/lib/validations/user.schemas'
-import { logUpdate, logDelete } from '@/lib/activityLogger'
-import { workspacePath } from '@/lib/workspace'
+import { logDelete } from '@/lib/activityLogger'
+import { useStaffInvitationAdmin } from './useStaffInvitationAdmin'
 import { useTenant } from './useTenant'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
@@ -44,153 +45,69 @@ export function useUsers() {
 }
 
 export function useCreateUser() {
-  const queryClient = useQueryClient()
-  const { tenant } = useTenant()
-
-  return useMutation({
-    mutationFn: async (data: UserFormData) => {
-      if (!tenant?.id) {
-        throw new Error('Tenant ID is required to create a user')
-      }
-
-      // Call edge function to create auth user + profile
-      const { data: result, error } = await supabase.functions.invoke('create-user', {
-        body: {
-          email: data.email,
-          fullName: data.fullName,
-          path: workspacePath('/auth/accept-invite'),
-          userLevelCode: data.userLevelCode,
-          hotelId: data.hotelId || null,
-          positionId: data.positionId || null,
-          reportsTo: data.reportsTo || null,
-          tenantId: tenant.id,
-        }
-      })
-
-      if (error) {
-        // Check if it's a quota exceeded error
-        if (error.message?.includes('Quota exceeded')) {
-          queryClient.invalidateQueries({ queryKey: ['check-quota'] })
-          queryClient.invalidateQueries({ queryKey: ['tenant-usage'] })
-        }
-        throw error
-      }
-
-      if (!result?.success) throw new Error(result?.error || 'Không thể gửi lời mời.')
-      return result.invitation
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
-      queryClient.invalidateQueries({ queryKey: ['staff-invitations'] })
-      queryClient.invalidateQueries({ queryKey: ['check-quota'] })
-      queryClient.invalidateQueries({ queryKey: ['tenant-usage'] })
-      toast.success('Đã gửi lời mời. Nhân viên sẽ tự đặt mật khẩu để tham gia.')
-    },
-    onError: (error: Error) => {
-      const errorMessage = error.message.toLowerCase()
-      
-      if (errorMessage.includes('quota exceeded') || errorMessage.includes('quota')) {
-        toast.error('Đã đạt giới hạn số lượng người dùng. Vui lòng nâng cấp gói dịch vụ để tiếp tục.')
-      } else if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
-        toast.error('Email này đã được sử dụng. Vui lòng chọn email khác.')
-      } else if (errorMessage.includes('permission') || errorMessage.includes('not allowed')) {
-        toast.error('Bạn không có quyền tạo người dùng với cấp bậc này.')
-      } else if (errorMessage.includes('hotel') || errorMessage.includes('hotel_id')) {
-        toast.error('Quản lý phải được gán cho một khách sạn. Vui lòng chọn khách sạn.')
-      } else if (errorMessage.includes('tenant not approved')) {
-        toast.error('Tài khoản doanh nghiệp chưa được duyệt. Vui lòng liên hệ quản trị viên.')
-      } else if (errorMessage.includes('primary owner exists')) {
-        toast.error('Chỉ có thể có một Chủ sở hữu chính cho mỗi doanh nghiệp.')
-      } else {
-        toast.error(`Không thể tạo người dùng: ${error.message}`)
-      }
-    },
+  const invitations = useStaffInvitationAdmin(false)
+  const mutation = useMutation({
+    mutationKey: ['create-staff-invitation', invitations.scope],
+    mutationFn: (data: UserFormData) => invitations.create({ ...data, email: data.email ?? '',
+      fullName: data.fullName ?? '', userLevelCode: data.userLevelCode ?? '' }),
+    retry: false,
   })
+  return { ...mutation, scope: invitations.scope }
 }
 
 export function useUpdateUser() {
   const queryClient = useQueryClient()
+  const { user: actor } = useUser()
+  // Retain a request ID after an ambiguous network failure. A second click with
+  // the same edit/version replays the server receipt, not a second audit/write.
+  const pending = useRef<{ key: string; requestId: string } | null>(null)
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UserFormData }) => {
-      const { data: oldData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      const roleMapping: Record<string, AppRole> = {
-        tenant_owner: 'owner',
-        manager: 'hotel_manager',
-        department_manager: 'department_manager',
-        staff: 'staff',
+    mutationFn: async ({ id, data, expectedUpdatedAt }: {
+      id: string; data: UserFormData; expectedUpdatedAt: string | null
+    }) => {
+      if (!actor?.id) throw new Error('Bạn cần đăng nhập lại trước khi cập nhật.')
+      const changes = {
+        full_name: data.fullName.trim(),
+        hotel_id: data.hotelId ?? null,
+        position_id: data.positionId ?? null,
+        reports_to: data.reportsTo ?? null,
       }
-
-      let department: string | null = null
-      if (data.positionId) {
-        const { data: position, error: positionError } = await supabase
-          .from('positions')
-          .select('department')
-          .eq('id', data.positionId)
-          .maybeSingle()
-
-        if (positionError) throw positionError
-        department = position?.department ?? null
-      }
-
-      const { data: user, error } = await supabase
-        .from('users')
-        .update({
-          full_name: data.fullName,
-          user_level_code: data.userLevelCode,
-          role: roleMapping[data.userLevelCode],
-          hotel_id: data.hotelId || null,
-          position_id: data.positionId || null,
-          department,
-        })
-        .eq('id', id)
-        .select()
-        .single()
-
+      const key = JSON.stringify([actor.id, actor.tenant_id, id, expectedUpdatedAt, changes])
+      if (pending.current?.key !== key) pending.current = { key, requestId: crypto.randomUUID() }
+      const { data: user, error } = await supabase.rpc('edit_employee_profile', {
+        p_target_id: id,
+        p_changes: changes,
+        p_expected_updated_at: expectedUpdatedAt,
+        p_request_id: pending.current.requestId,
+      })
       if (error) throw error
-
-      // Keep the app role in sync without requiring the optional local
-      // Edge Function runtime.
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .upsert({ user_id: id, role: roleMapping[data.userLevelCode] }, {
-          onConflict: 'user_id,role',
-        })
-
-      if (roleError) throw roleError
-
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', id)
-        .in('role', ['owner', 'hotel_manager', 'department_manager', 'staff'])
-        .neq('role', roleMapping[data.userLevelCode])
-
-      await logUpdate('user', user.id, user.full_name, oldData, data)
+      if (!user || typeof user !== 'object' || Array.isArray(user) || user.id !== id) {
+        throw new Error('Chưa xác minh được kết quả cập nhật. Vui lòng thử lại.')
+      }
+      if (pending.current?.key === key) pending.current = null
       return user
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
+      for (const key of ['users', 'user', 'user-hotels', 'managers-by-hotel', 'user-permissions']) {
+        queryClient.invalidateQueries({ queryKey: [key] })
+      }
       toast.success('Người dùng đã được cập nhật thành công')
     },
     onError: (error: Error) => {
-      const errorMessage = error.message.toLowerCase()
-      
-      if (errorMessage.includes('permission') || errorMessage.includes('not allowed') || errorMessage.includes('cannot manage')) {
-        toast.error('Bạn không có quyền cập nhật người dùng này.')
-      } else if (errorMessage.includes('owner') && errorMessage.includes('level')) {
-        toast.error('Không thể thay đổi cấp bậc của Chủ sở hữu chính.')
-      } else if (errorMessage.includes('hotel') || errorMessage.includes('hotel_id')) {
-        toast.error('Quản lý phải được gán cho một khách sạn.')
-      } else if (errorMessage.includes('subordinates') || errorMessage.includes('has subordinates')) {
-        toast.error('Không thể thay đổi cấp bậc vì người dùng này đang quản lý các tài khoản khác.')
+      if (error.message === 'EMPLOYEE_EDIT_STALE_VERSION') {
+        queryClient.invalidateQueries({ queryKey: ['users'] })
+        toast.error('Hồ sơ đã thay đổi. Hãy đóng và mở lại để tải dữ liệu mới trước khi sửa.')
+      } else if (error.message.includes('EMPLOYEE_EDIT_ACTIVE_')) {
+        toast.error('Phiên đăng nhập hoặc tài khoản không còn hiệu lực. Vui lòng đăng nhập lại.')
+      } else if (error.message.includes('NOT_ALLOWED')) {
+        toast.error('Bạn không có quyền cập nhật người dùng trong phạm vi này.')
+      } else if (error.message.includes('EMPLOYEE_EDIT_INVALID_')) {
+        toast.error('Thông tin nhân viên không hợp lệ. Hãy kiểm tra khách sạn, vị trí và người quản lý.')
+      } else if (error.message === 'EMPLOYEE_EDIT_REQUEST_CONFLICT') {
+        toast.error('Yêu cầu cập nhật bị xung đột. Hãy mở lại hồ sơ và thử lại.')
       } else {
-        toast.error(`Không thể cập nhật người dùng: ${error.message}`)
+        toast.error('Chưa cập nhật được hồ sơ. Bạn có thể thử lại; hệ thống sẽ kiểm tra kết quả trước khi ghi tiếp.')
       }
     },
   })

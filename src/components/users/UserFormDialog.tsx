@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
@@ -43,6 +43,7 @@ interface UserFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (data: UserFormData) => Promise<void>
+  submissionScope?: string
 }
 
 export function UserFormDialog({
@@ -50,6 +51,7 @@ export function UserFormDialog({
   open,
   onOpenChange,
   onSubmit,
+  submissionScope,
 }: UserFormDialogProps) {
   const { t } = useTranslation(['users', 'common'])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -57,6 +59,18 @@ export function UserFormDialog({
   const { data: hotels, isLoading: hotelsLoading } = useHotels({ status: 'active' })
   const { data: userLevels, isLoading: levelsLoading } = useAvailableUserLevels()
   const { user: currentUser } = useUser()
+  const hydratedIdentity = useRef<string | null>(null)
+  const submitIdentity = JSON.stringify([submissionScope ?? null, user?.id ?? 'new-invitation', currentUser?.id, currentUser?.tenant_id])
+  const liveSubmit = useRef({ identity: submitIdentity, open, mounted: true, generation: 0 })
+  if (liveSubmit.current.identity !== submitIdentity || liveSubmit.current.open !== open) liveSubmit.current.generation++
+  liveSubmit.current.identity = submitIdentity; liveSubmit.current.open = open
+  const submission = useRef<{ identity: string; token: symbol } | null>(null)
+  useEffect(() => {
+    const lifecycle = liveSubmit.current
+    lifecycle.mounted = true
+    return () => { lifecycle.mounted = false }
+  }, [])
+  useEffect(() => { setIsSubmitting(false) }, [submitIdentity, open])
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -107,27 +121,34 @@ export function UserFormDialog({
   }
 
   const availableUserLevels = getAvailableUserLevels()
+  // A read-only existing level is display data, not a new creation permission.
+  if (user && !availableUserLevels.some(level => level.code === user.user_level_code)) {
+    const storedLevel = userLevels?.find(level => level.code === user.user_level_code)
+    if (storedLevel) availableUserLevels.push(storedLevel)
+  }
 
-  // Reset form when dialog opens
+  // Hydrate once per open/selected identity. A background query refresh must
+  // not replace unsaved edits, and initial hydration must retain reportsTo.
   useEffect(() => {
-    if (open && !user) {
-      form.reset({
-        fullName: '',
-        email: '',
-        userLevelCode: 'staff',
-        hotelId: null,
-        positionId: null,
-        reportsTo: null,
-      })
+    if (!open) {
+      hydratedIdentity.current = null
+      return
     }
-  }, [open, user, form])
-
-  // Reset reportsTo when hotel changes
-  useEffect(() => {
-    if (selectedHotelId) {
-      form.setValue('reportsTo', null)
-    }
-  }, [selectedHotelId, form])
+    const identity = submitIdentity
+    if (hydratedIdentity.current === identity) return
+    hydratedIdentity.current = identity
+    form.reset(user ? {
+      fullName: user.full_name ?? '',
+      email: user.email ?? '',
+      userLevelCode: user.user_level_code as UserFormData['userLevelCode'],
+      hotelId: user.hotel_id,
+      positionId: user.position_id,
+      reportsTo: user.reports_to,
+    } : {
+      fullName: '', email: '', userLevelCode: 'staff',
+      hotelId: null, positionId: null, reportsTo: null,
+    })
+  }, [open, user, form, submitIdentity])
 
   // Check if hotel is required for both manager and staff
   const isHotelRequired = selectedLevel !== 'tenant_owner'
@@ -136,6 +157,7 @@ export function UserFormDialog({
   const isPositionRequired = selectedLevel !== 'tenant_owner'
 
   const handleFormSubmit = async (data: UserFormData) => {
+    if (!open || (submission.current?.identity === submitIdentity)) return
     // Validate hotel requirement
     if (isHotelRequired && !data.hotelId) {
       form.setError('hotelId', {
@@ -154,14 +176,21 @@ export function UserFormDialog({
       return
     }
 
+    const token = Symbol(), generation = liveSubmit.current.generation
+    submission.current = { identity: submitIdentity, token }
     setIsSubmitting(true)
     try {
       await onSubmit(data)
-      onOpenChange(false)
+      if (liveSubmit.current.mounted && liveSubmit.current.open && liveSubmit.current.identity === submitIdentity
+        && liveSubmit.current.generation === generation && submission.current?.token === token) onOpenChange(false)
     } catch (error) {
       console.error('Form submission error:', error)
     } finally {
-      setIsSubmitting(false)
+      if (submission.current?.token === token) {
+        submission.current = null
+        if (liveSubmit.current.mounted && liveSubmit.current.identity === submitIdentity
+          && liveSubmit.current.generation === generation) setIsSubmitting(false)
+      }
     }
   }
 
@@ -221,7 +250,7 @@ export function UserFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {currentUser && (
+          {currentUser && !user && (
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
@@ -280,7 +309,11 @@ export function UserFormDialog({
                   <FormItem>
                     <FormLabel>{t('users:fields.userLevel')} *</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        form.setValue('positionId', null, { shouldDirty: true })
+                        form.setValue('reportsTo', null, { shouldDirty: true })
+                      }}
                       value={field.value}
                       disabled={!!user}
                     >
@@ -319,7 +352,11 @@ export function UserFormDialog({
                       {t('users:fields.hotel')} {isHotelRequired && '*'}
                     </FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        form.setValue('positionId', null, { shouldDirty: true })
+                        form.setValue('reportsTo', null, { shouldDirty: true })
+                      }}
                       value={field.value || undefined}
                     >
                       <FormControl>

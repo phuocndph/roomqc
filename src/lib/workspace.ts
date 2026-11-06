@@ -1,5 +1,7 @@
 import { CapacitorHttp } from '@capacitor/core'
 import { isNativeApp, nativePublicOrigin } from './native/platform'
+import { isControlAdminReadPath, isControlAlertWritePath, isControlClusterWritePath, isControlRecheckWritePath } from './control-admin-routes'
+import { ControlHttpError } from './control-http-error'
 /** No Supabase/App imports here: this module runs before a cluster client exists. */
 export interface WorkspaceBootstrap {
   version: 1
@@ -71,7 +73,16 @@ export async function controlRequest(path: string, options: RequestInit = {}) {
   if (isNativeApp()) {
     // Explicit native transport for the control service. Keep the web CSRF
     // origin policy intact and never enable a blanket CORS wildcard.
-    if (!/^\/workspaces\/[a-z0-9-]+\/(bootstrap|provision)$/.test(path) && path !== '/signup-intents') throw new Error('Yêu cầu doanh nghiệp không hợp lệ.')
+    const adminRead = (options.method || 'GET') === 'GET' && isControlAdminReadPath(path)
+    const alertWrite = options.method === 'POST' && isControlAlertWritePath(path)
+    const clusterWrite = options.method === 'POST' && isControlClusterWritePath(path)
+    const recheckWrite = options.method === 'POST' && isControlRecheckWritePath(path)
+    const setupStatusRead = (options.method || 'GET') === 'GET' && /^\/workspaces\/[a-z][a-z0-9-]{2,47}\/setup-status$/.test(path)
+    if (!adminRead && !alertWrite && !clusterWrite && !recheckWrite && !setupStatusRead && !/^\/workspaces\/[a-z0-9-]+\/(bootstrap|provision)$/.test(path) && path !== '/signup-intents') throw new Error('Yêu cầu doanh nghiệp không hợp lệ.')
+    if (recheckWrite) {
+      const headers = new Headers(options.headers)
+      if (!/^Bearer .+/.test(headers.get('authorization') || '') || !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(headers.get('idempotency-key') || '')) throw new Error('Yêu cầu doanh nghiệp không hợp lệ.')
+    }
     const origin = nativePublicOrigin()
     if (options.signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     const response = await CapacitorHttp.request({
@@ -81,14 +92,14 @@ export async function controlRequest(path: string, options: RequestInit = {}) {
       connectTimeout: 15000, readTimeout: 30000, disableRedirects: true,
     })
     const body = response.data
-    if (response.status < 200 || response.status >= 300) throw new Error(`${body?.message || 'Không thể kết nối dịch vụ doanh nghiệp.'}${body?.requestId ? ` (Mã hỗ trợ: ${body.requestId})` : ''}`)
+    if (response.status < 200 || response.status >= 300) throw new ControlHttpError(response.status, body)
     return body
   }
   const response = await fetch(`/api/control${path}`, { ...options, cache: 'no-store',
-    credentials: 'same-origin', signal: options.signal || AbortSignal.timeout(30000),
+    credentials: 'same-origin', redirect: 'error', signal: options.signal || AbortSignal.timeout(30000),
     headers: { 'Content-Type': 'application/json', ...options.headers } })
   const body = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(`${body?.message || 'Không thể kết nối dịch vụ doanh nghiệp.'}${body?.requestId ? ` (Mã hỗ trợ: ${body.requestId})` : ''}`)
+  if (!response.ok) throw new ControlHttpError(response.status, body)
   return body
 }
 

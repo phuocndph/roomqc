@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -16,6 +16,8 @@ import {
   ClipboardCheck,
   BookOpen,
   Megaphone,
+  Server,
+  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,15 +31,21 @@ import { useBreakpoint } from '@/lib/breakpoints';
 export function SuperAdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { user, isLoading, signOut } = useSuperAdminAuth();
+  const { user, isLoading, isSuperAdmin, signOut } = useSuperAdminAuth();
+  const main = useRef<HTMLElement>(null);
   const { t } = useTranslation('superAdmin');
   const { isMobile } = useBreakpoint();
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
   }, [isMobile]);
+  useLayoutEffect(() => {
+    if (main.current) main.current.scrollTop = 0;
+  }, [location.pathname]);
 
   const navigation = [
     { name: t('navigation.overview'), href: '/super-admin', icon: LayoutDashboard },
+    { name: 'Hạ tầng', href: '/super-admin/infrastructure', icon: Server },
+    { name: 'Đăng ký mới', href: '/super-admin/registrations', icon: UserPlus },
     { name: t('navigation.tenants'), href: '/super-admin/tenants', icon: Users },
     { name: t('navigation.approval'), href: '/super-admin/approval', icon: ClipboardCheck },
     { name: t('navigation.promoCodes'), href: '/super-admin/promo-codes', icon: Tag },
@@ -52,6 +60,8 @@ export function SuperAdminLayout() {
 
   const navigationTitles: Record<string, string> = {
     '/super-admin': t('titles.overview'),
+    '/super-admin/infrastructure': 'Hạ tầng',
+    '/super-admin/registrations': 'Đăng ký mới',
     '/super-admin/tenants': t('titles.tenantManagement'),
     '/super-admin/approval': t('titles.approval'),
     '/super-admin/promo-codes': t('titles.promoCodes'),
@@ -81,7 +91,7 @@ export function SuperAdminLayout() {
               {navigation.map((item) => {
                 const isActive = item.href === '/super-admin' 
                   ? location.pathname === '/super-admin'
-                  : location.pathname.startsWith(item.href);
+                  : location.pathname === item.href || location.pathname.startsWith(item.href + '/');
                 return (
                   <Link
                     key={item.name}
@@ -140,6 +150,9 @@ export function SuperAdminLayout() {
     );
   }
 
+  // Do not mount child routes or dispatch their effects before the redirect.
+  if (!user || !isSuperAdmin) return <p role="status" className="p-6">Đang kiểm tra quyền truy cập…</p>;
+
   return (
     <Sheet open={isMobile && sidebarOpen} onOpenChange={setSidebarOpen}>
     <div className="flex h-screen overflow-hidden bg-background">
@@ -177,7 +190,7 @@ export function SuperAdminLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main ref={main} className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>

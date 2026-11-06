@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { workspacePath } from '@/lib/workspace'
+import { getEmployeeEditEntry } from '@/lib/employee-edit-entry'
 import { Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -33,6 +37,7 @@ interface Props {
 export function MobileUserListTab({ onManagePermissions, editUserId }: Props) {
   const { users, isLoading } = useUsers()
   const { user: currentUser } = useUser()
+  const navigate = useNavigate()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
 
@@ -42,15 +47,27 @@ export function MobileUserListTab({ onManagePermissions, editUserId }: Props) {
   const [formOpen, setFormOpen] = useState(false)
   const [handledEditUserId, setHandledEditUserId] = useState<string | null>(null)
 
+  const openEdit = useCallback((user: UserWithRelations, fromDeepLink = false) => {
+    const entry = getEmployeeEditEntry(user, currentUser)
+    if (entry.kind !== 'employee') {
+      setEditingUser(null)
+      setFormOpen(false)
+      if (entry.kind === 'profile') navigate(workspacePath('/profile'), { replace: fromDeepLink })
+      else toast.info(entry.message)
+      return
+    }
+    setEditingUser(user)
+    setFormOpen(true)
+  }, [currentUser, navigate])
+
   useEffect(() => {
-    if (!editUserId || !users || handledEditUserId === editUserId) return
+    if (!editUserId || !users || !currentUser || handledEditUserId === editUserId) return
     const userToEdit = users.find((user) => user.id === editUserId)
     if (userToEdit) {
-      setEditingUser(userToEdit)
-      setFormOpen(true)
+      openEdit(userToEdit, true)
       setHandledEditUserId(editUserId)
     }
-  }, [editUserId, handledEditUserId, users])
+  }, [currentUser, editUserId, handledEditUserId, openEdit, users])
 
   const canAddUser =
     currentUser?.user_level_code === 'tenant_owner' ||
@@ -94,17 +111,11 @@ export function MobileUserListTab({ onManagePermissions, editUserId }: Props) {
 
   const handleSubmit = async (data: UserFormData) => {
     if (editingUser) {
-      await updateUser.mutateAsync({ id: editingUser.id, data })
+      await updateUser.mutateAsync({ id: editingUser.id, data, expectedUpdatedAt: editingUser.updated_at })
     } else {
       await createUser.mutateAsync(data)
     }
-    setFormOpen(false)
-    setEditingUser(null)
-  }
-
-  const openEdit = (u: UserWithRelations) => {
-    setEditingUser(u)
-    setFormOpen(true)
+    // Only the dialog's captured open-generation may close after completion.
   }
 
   const openAdd = () => {
@@ -193,8 +204,9 @@ export function MobileUserListTab({ onManagePermissions, editUserId }: Props) {
       <UserFormDialog
         user={editingUser}
         open={formOpen}
-        onOpenChange={setFormOpen}
+        onOpenChange={open => { setFormOpen(open); if (!open) setEditingUser(null) }}
         onSubmit={handleSubmit}
+        submissionScope={createUser.scope}
       />
     </div>
   )

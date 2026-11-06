@@ -4,6 +4,8 @@ import { useUser } from './useUser'
 import { useToast } from '@/hooks/use-toast'
 import { useImageUpload } from './useImageUpload'
 import { triggerWorkflow } from '@/lib/triggerWorkflow'
+import { submitRoomTransition } from '@/lib/room-transition-client'
+import { toast as roomCommandToast } from 'sonner'
 import { 
   createMultipleNotifications, 
   sendMultiplePushNotifications,
@@ -22,13 +24,11 @@ async function safeTransitionRoomStatus(
   toStatus: RoomStatusV2,
   reason: string,
 ): Promise<void> {
-  const { error } = await supabase.rpc('transition_room_status', {
-    _room_id: roomId,
-    _to_status: toStatus,
-    _reason: reason,
-  })
-  if (error && !/INVALID_TRANSITION|ALREADY_IN_STATUS/i.test(error.message)) {
-    console.error('[useRoomChecks] transition_room_status failed:', error.message)
+  try { await submitRoomTransition({ roomId, toStatus, reason }) }
+  catch {
+    // The check record and room source are separate commands. Never describe
+    // an unconfirmed room update as a successfully completed transition.
+    roomCommandToast.warning('Biên bản kiểm tra đã lưu; trạng thái phòng cần được kiểm tra lại. Xem lệnh đang chờ nếu kết quả chưa xác nhận.')
   }
 }
 

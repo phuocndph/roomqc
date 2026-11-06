@@ -75,7 +75,7 @@ export function MobileRoomFormPage() {
         room_number: room.room_number || '',
         room_type: room.room_type || 'standard',
         floor: room.floor || 1,
-        area_sqm: room.area_sqm || undefined,
+        area_sqm: room.area_sqm ?? undefined,
         max_guests: room.max_guests || 2,
         base_price: room.base_price || 0,
         bed_type: room.bed_type || undefined,
@@ -94,7 +94,7 @@ export function MobileRoomFormPage() {
     if (currentStep === 1) {
       fieldsToValidate = ['room_number', 'room_type', 'floor']
     } else if (currentStep === 2) {
-      fieldsToValidate = ['max_guests', 'base_price']
+      fieldsToValidate = ['area_sqm', 'max_guests', 'base_price']
     }
     
     const isValid = await trigger(fieldsToValidate)
@@ -151,6 +151,7 @@ export function MobileRoomFormPage() {
           id: id!,
           data: {
             ...data,
+            area_sqm: data.area_sqm ?? null,
             updated_at: new Date().toISOString(),
           },
         })
@@ -158,6 +159,7 @@ export function MobileRoomFormPage() {
       } else {
         const newRoom = await createRoom.mutateAsync({
           ...data,
+          area_sqm: data.area_sqm ?? null,
           tenant_id: tenantId,
           hotel_id: selectedHotel.id,
           status: 'vacant_clean',
@@ -341,9 +343,16 @@ export function MobileRoomFormPage() {
                       id="area_sqm"
                       type="number" min={0}
                       step="0.01"
-                      {...register('area_sqm', { valueAsNumber: true })}
+                      {...register('area_sqm', {
+                        setValueAs: value => value === '' ? undefined : Number(value),
+                      })}
+                      aria-invalid={!!errors.area_sqm}
+                      aria-describedby={errors.area_sqm ? 'area_sqm-error' : undefined}
                       className="h-12 text-base"
                     />
+                    {errors.area_sqm && (
+                      <p id="area_sqm-error" role="alert" className="text-sm text-destructive">{errors.area_sqm.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -467,8 +476,8 @@ export function MobileRoomFormPage() {
           )}
         </form>
 
-        {/* Fixed Bottom Actions */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 safe-area-bottom">
+        {/* Keep form actions above MainLayout's 4rem navigation and safe area. */}
+        <div className="fixed bottom-[calc(4rem+var(--safe-area-bottom))] left-0 right-0 z-40 bg-background border-t p-4">
           <div className="flex gap-3">
             {currentStep > 1 ? (
               <Button 

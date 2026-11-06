@@ -2513,6 +2513,7 @@ export type Database = {
           created_by: string | null
           hotel_id: string | null
           id: string
+          legacy_review: boolean
           metric: string
           notes: string | null
           period_month: string
@@ -2525,6 +2526,7 @@ export type Database = {
           created_by?: string | null
           hotel_id?: string | null
           id?: string
+          legacy_review?: boolean
           metric: string
           notes?: string | null
           period_month: string
@@ -2537,6 +2539,7 @@ export type Database = {
           created_by?: string | null
           hotel_id?: string | null
           id?: string
+          legacy_review?: boolean
           metric?: string
           notes?: string | null
           period_month?: string
@@ -2594,6 +2597,9 @@ export type Database = {
           accountant_email: string | null
           amount_paid: number
           booking_id: string | null
+          checkout_actor_id: string | null
+          checkout_command_id: string | null
+          checkout_snapshot: Json | null
           check_in_date: string | null
           check_out_date: string | null
           company_name: string | null
@@ -2633,6 +2639,9 @@ export type Database = {
           accountant_email?: string | null
           amount_paid?: number
           booking_id?: string | null
+          checkout_actor_id?: string | null
+          checkout_command_id?: string | null
+          checkout_snapshot?: Json | null
           check_in_date?: string | null
           check_out_date?: string | null
           company_name?: string | null
@@ -2672,6 +2681,9 @@ export type Database = {
           accountant_email?: string | null
           amount_paid?: number
           booking_id?: string | null
+          checkout_actor_id?: string | null
+          checkout_command_id?: string | null
+          checkout_snapshot?: Json | null
           check_in_date?: string | null
           check_out_date?: string | null
           company_name?: string | null
@@ -8119,6 +8131,7 @@ export type Database = {
           actual_check_out: string | null
           amount_paid: number | null
           booking_group_id: string | null
+          booking_flag_room_status: string | null
           booking_hours: number | null
           booking_months: number | null
           booking_reference: string | null
@@ -8195,6 +8208,7 @@ export type Database = {
           actual_check_out?: string | null
           amount_paid?: number | null
           booking_group_id?: string | null
+          booking_flag_room_status?: string | null
           booking_hours?: number | null
           booking_months?: number | null
           booking_reference?: string | null
@@ -8271,6 +8285,7 @@ export type Database = {
           actual_check_out?: string | null
           amount_paid?: number | null
           booking_group_id?: string | null
+          booking_flag_room_status?: string | null
           booking_hours?: number | null
           booking_months?: number | null
           booking_reference?: string | null
@@ -12407,6 +12422,37 @@ export type Database = {
       }
     }
     Functions: {
+      get_report_targets: {
+        Args: { p_kind: string; p_period_month: string; p_hotel_id?: string }
+        Returns: Json
+      }
+      replace_report_targets: {
+        Args: { p_kind: string; p_period_month: string; p_values: Json; p_expected_revision: string;
+          p_command_id: string; p_hotel_id?: string; p_resolve_legacy?: boolean }
+        Returns: Json
+      }
+      get_report_target_command: {
+        Args: { p_command_id: string }
+        Returns: Json
+      }
+      cancel_report_target_command: {
+        Args: { p_kind: string; p_period_month: string; p_values: Json; p_expected_revision: string;
+          p_command_id: string; p_hotel_id?: string; p_resolve_legacy?: boolean }
+        Returns: Json
+      }
+      password_change_status: {
+        Args: { p_change_id?: string | null }
+        Returns: Json
+      }
+      edit_employee_profile: {
+        Args: {
+          p_target_id: string
+          p_changes: Json
+          p_expected_updated_at: string | null
+          p_request_id: string
+        }
+        Returns: Json
+      }
       create_subscription_checkout_draft: {
         Args: { p_quote_id: string; p_request_id: string }
         Returns: Json
@@ -13288,6 +13334,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_financial_report_scoped: {
+        Args: { p_start_date: string; p_end_date: string; p_hotel_id?: string; p_timezone?: string; p_for_export?: boolean }
+        Returns: Json
+      }
+      export_revenue_report: {
+        Args: { p_start_date: string; p_end_date: string; p_hotel_id?: string; p_timezone?: string }
+        Returns: Json
+      }
       get_floor_plan: { Args: { p_hotel_id: string }; Returns: Json }
       get_floor_plan_live: { Args: { p_hotel_id: string }; Returns: Json }
       get_hotel_performance_stats: {
@@ -13482,6 +13536,26 @@ export type Database = {
           p_hotel_id: string
           p_start_date: string
           p_tenant_id: string
+        }
+        Returns: Json
+      }
+      get_labor_cost_scoped: {
+        Args: {
+          p_start_date: string
+          p_end_date: string
+          p_hotel_id?: string
+          p_timezone?: string
+        }
+        Returns: Json
+      }
+      get_operations_report_scoped: {
+        Args: {
+          p_start_date: string
+          p_end_date: string
+          p_hotel_id?: string
+          p_previous_start_date?: string
+          p_previous_end_date?: string
+          p_timezone?: string
         }
         Returns: Json
       }
@@ -14201,6 +14275,25 @@ export type Database = {
         Returns: Json
       }
       mark_batches_compensation_needed: { Args: never; Returns: Json }
+      get_revenue_report: {
+        Args: {
+          p_hotel_id?: string
+          p_period?: string
+          p_custom_start?: string
+          p_custom_end?: string
+          p_today?: string
+          p_timezone?: string
+        }
+        Returns: Json
+      }
+      get_booking_no_show_resolution: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      resolve_booking_no_show: {
+        Args: { p_booking_id: string; p_refund_deposit?: boolean; p_reason?: string; p_command_id?: string }
+        Returns: Json
+      }
       mark_booking_no_show: {
         Args: {
           _booking_id: string
@@ -14212,6 +14305,7 @@ export type Database = {
           actual_check_out: string | null
           amount_paid: number | null
           booking_group_id: string | null
+          booking_flag_room_status: string | null
           booking_hours: number | null
           booking_months: number | null
           booking_reference: string | null
@@ -14337,7 +14431,9 @@ export type Database = {
       outbox_next_retry_at: { Args: { _retry_count: number }; Returns: string }
       perform_checkin: {
         Args: {
+          p_adjustment_notes?: string
           p_booking_id: string
+          p_command_id?: string
           p_early_checkin_charge?: number
           p_room_id: string
         }
@@ -14345,7 +14441,9 @@ export type Database = {
       }
       perform_checkout: {
         Args: {
+          p_adjustment_notes?: string
           p_booking_id: string
+          p_command_id?: string
           p_check_out_date?: string
           p_damage_charges?: number
           p_damage_items?: Json
@@ -14359,7 +14457,7 @@ export type Database = {
         Returns: Json
       }
       perform_group_checkout: {
-        Args: { p_checkouts: Json }
+        Args: { p_checkouts: Json; p_command_id?: string }
         Returns: Json
       }
       prepare_checkout_amounts: {
@@ -14381,6 +14479,7 @@ export type Database = {
       }
       perform_quick_room_check: {
         Args: {
+          _command_id?: string
           _check_type?: string
           _notes?: string
           _photos?: string[]
@@ -14834,7 +14933,7 @@ export type Database = {
         Returns: boolean
       }
       transfer_booking_room: {
-        Args: { p_booking_id: string; p_new_room_id: string; p_reason?: string }
+        Args: { p_booking_id: string; p_new_room_id: string; p_reason?: string; p_command_id?: string }
         Returns: Json
       }
       transition_adjustment_status: {
@@ -14873,6 +14972,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      transition_booking_flag: {
+        Args: { p_booking_id: string; p_to_status: string; p_reason?: string; p_amount_owed?: number; p_command_id?: string }
+        Returns: Json
+      }
       transition_booking_status: {
         Args: {
           _amount_owed?: number
@@ -14885,6 +14988,7 @@ export type Database = {
           actual_check_out: string | null
           amount_paid: number | null
           booking_group_id: string | null
+          booking_flag_room_status: string | null
           booking_hours: number | null
           booking_months: number | null
           booking_reference: string | null
@@ -14969,12 +15073,45 @@ export type Database = {
       }
       transition_room_status: {
         Args: {
+          _command_id?: string
           _dnd_until?: string
           _force?: boolean
           _oos_until?: string
           _reason?: string
           _room_id: string
           _to_status: string
+        }
+        Returns: Json
+      }
+      get_room_transition_result: {
+        Args: { p_command_id: string }
+        Returns: Json
+      }
+      get_room_check_command_result: {
+        Args: { p_command_id: string }
+        Returns: Json
+      }
+      cancel_room_check_command: {
+        Args: { p_command_id: string; p_operation: string; p_request: Json }
+        Returns: Json
+      }
+      cancel_booking_room_command: {
+        Args: { p_command_id: string; p_operation: string; p_request: Json }
+        Returns: Json
+      }
+      get_booking_room_command_result: {
+        Args: { p_command_id: string }
+        Returns: Json
+      }
+      cancel_room_transition_command: {
+        Args: {
+          _room_id: string
+          _to_status: string
+          _command_id: string
+          _reason?: string
+          _dnd_until?: string
+          _oos_until?: string
+          _force?: boolean
         }
         Returns: Json
       }
@@ -15027,7 +15164,7 @@ export type Database = {
         }
       }
       undo_quick_room_check: {
-        Args: { _check_id: string; _reason?: string }
+        Args: { _check_id: string; _reason?: string; _command_id?: string }
         Returns: Json
       }
       undo_room_delivery_confirmation: {

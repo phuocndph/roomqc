@@ -20,6 +20,16 @@ export function isServiceRoleKey(value: string): boolean {
   }
 }
 
+/** Accept a single public key, never a serialized configuration object. */
+export function isPublishableKey(value: string): boolean {
+  if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(value)) return true
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value)) return false
+  try {
+    const encoded = value.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(encoded + '='.repeat((4 - encoded.length % 4) % 4))).role === 'anon'
+  } catch { return false }
+}
+
 export const runtimeConfig = {
   supabaseUrl: rawSupabaseUrl,
   supabasePublishableKey: rawPublishableKey,
@@ -72,5 +82,8 @@ export function assertRuntimeConfig(): void {
 
   if (isServiceRoleKey(runtimeConfig.supabasePublishableKey)) {
     throw new Error('Không được đưa service_role/secret key vào frontend RoomQC.')
+  }
+  if (!isPublishableKey(runtimeConfig.supabasePublishableKey)) {
+    throw new Error('Khóa công khai Supabase không hợp lệ. Chỉ nhập một publishable key hoặc anon JWT.')
   }
 }

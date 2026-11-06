@@ -369,8 +369,8 @@ export default function GuestInvoicesPage() {
                         </DropdownMenuItem>
                       )}
                       {inv.status !== 'cancelled' && (
-                        <DropdownMenuItem onClick={() => handleCancel(inv.id)} className="text-red-600">
-                          <XCircle className="h-4 w-4 mr-2" /> Hủy hóa đơn
+                        <DropdownMenuItem disabled={!!inv.checkout_command_id} onClick={() => handleCancel(inv.id)} className="text-red-600">
+                          <XCircle className="h-4 w-4 mr-2" /> {inv.checkout_command_id ? 'Phiếu trả phòng đã chốt' : 'Hủy hóa đơn'}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

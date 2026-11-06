@@ -5,6 +5,8 @@ import { triggerRoomCheckoutNotification } from '@/hooks/useNotificationTriggers
 import { useUser } from '@/hooks/useUser'
 import type { RoomStatus } from '@/types/rooms.types'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { useRoomCommandExecutor } from './useRoomCommandExecutor'
+import { normalizeRoomCommandStatus, RoomCommandError } from '@/lib/room-transition-command'
 
 export function useBulkApplyStandards() {
   const queryClient = useQueryClient()
@@ -137,42 +139,49 @@ export function useBulkDeleteRooms() {
 export function useBulkUpdateRoomStatus() {
   const queryClient = useQueryClient()
   const { tenantId } = useUser()
+  const execute = useRoomCommandExecutor()
 
   return useMutation({
-    mutationFn: async ({ roomIds, status }: { roomIds: string[]; status: RoomStatus }) => {
+    mutationFn: async ({ roomIds: requestedIds, status }: { roomIds: string[]; status: RoomStatus }) => {
+      const roomIds = [...new Set(requestedIds)]
+      if (!roomIds.length) throw new Error('Vui lòng chọn ít nhất một phòng.')
       // State Machine v2: notification trigger khi chuyển sang vacant_dirty (sau checkout)
       // hoặc các status legacy 'check_out'/'cleaning' để backward compat.
-      const isCheckoutLike = status === 'vacant_dirty' || status === 'check_out' || status === 'cleaning'
+      const normalizedStatus = normalizeRoomCommandStatus(status)
+      const isCheckoutLike = normalizedStatus === 'vacant_dirty'
 
-      let roomsData: Array<{ id: string; room_number: string; hotel_id: string }> = []
+      let roomsData: Array<{ id: string; room_number: string; hotel_id: string }> = [], notificationLookupFailed = false
       if (isCheckoutLike) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('rooms')
           .select('id, room_number, hotel_id')
           .in('id', roomIds)
         roomsData = data || []
+        notificationLookupFailed = !!error
       }
 
       // State Machine v2: gọi RPC từng phòng để có audit log + kiểm transition.
       // Lỗi INVALID_TRANSITION/PERMISSION_DENIED được gom lại thay vì throw cả batch.
       const failures: Array<{ roomId: string; reason: string }> = []
+      const changedRooms = new Set<string>()
+      let confirmed = 0
       for (const id of roomIds) {
-        const { error } = await supabase.rpc('transition_room_status', {
-          _room_id: id,
-          _to_status: status as RoomStatus,
-          _reason: 'Cập nhật hàng loạt (bulk action)',
-        })
-        if (error) failures.push({ roomId: id, reason: error.message })
+        if (!execute.isCurrent()) break
+        try {
+          const result = await execute({ roomId: id, toStatus: normalizedStatus, reason: 'Cập nhật hàng loạt (bulk action)' })
+          confirmed++
+          if (result.status_changed && !result.replayed && roomsData.some(r => r.id === id && r.hotel_id === result.hotel_id)) changedRooms.add(id)
+        } catch (error) { failures.push({ roomId: id, reason: error instanceof Error ? error.message : 'Chưa xác nhận được kết quả.' }) }
       }
+      if (!execute.isCurrent()) throw new RoomCommandError('identity_changed', 'Phiên đã thay đổi. Vui lòng kiểm tra lại kết quả.')
       if (failures.length === roomIds.length) {
         throw new Error(failures[0]?.reason || 'Không cập nhật được trạng thái')
       }
-      if (failures.length > 0) {
-        console.warn('[useBulkRoomActions] Một số phòng không chuyển được:', failures)
-      }
-      return { count: roomIds.length, status, roomsData, isCheckoutLike }
+      return { count: confirmed, failedCount: failures.length, status: normalizedStatus,
+        roomsData: roomsData.filter(r => changedRooms.has(r.id)), isCheckoutLike, notificationLookupFailed }
     },
-    onSuccess: ({ count, status, roomsData, isCheckoutLike }) => {
+    onSuccess: ({ count, failedCount, status, roomsData, isCheckoutLike, notificationLookupFailed }) => {
+      if (!execute.isCurrent()) return
       // Send notification for each room transitioned to vacant_dirty (post-checkout)
       if (isCheckoutLike && tenantId) {
         roomsData.forEach(room => {
@@ -182,7 +191,7 @@ export function useBulkUpdateRoomStatus() {
               hotelId: room.hotel_id,
               roomId: room.id,
               roomNumber: room.room_number,
-            }).catch(err => console.error('Bulk checkout notification error:', err))
+            }).catch(() => console.warn('Chưa xác nhận được thông báo buồng phòng.'))
           }
         })
       }
@@ -214,11 +223,13 @@ export function useBulkUpdateRoomStatus() {
         check_out: 'Check-out',
       }
       toast({
-        title: 'Cập nhật thành công',
-        description: `Đã cập nhật ${count} phòng sang "${statusLabels[status] ?? status}"`,
+        title: failedCount || notificationLookupFailed ? 'Một số thông tin cần kiểm tra lại' : 'Cập nhật thành công',
+        description: `Đã xác nhận ${count} phòng ở trạng thái "${statusLabels[status] ?? status}"${failedCount ? `; ${failedCount} phòng chưa cập nhật hoặc chưa xác nhận được kết quả.` : ''}${notificationLookupFailed ? ' Chưa tải được thông tin để gửi thông báo buồng phòng.' : ''}`,
+        ...(failedCount ? { variant: 'destructive' as const } : {}),
       })
     },
     onError: (error: Error) => {
+      if (!execute.isCurrent()) return
       toast({
         title: 'Lỗi cập nhật',
         description: getFriendlyError(error),

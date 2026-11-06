@@ -11,7 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useAuth } from '@/contexts/AuthContext';
 import { loginSchema, LoginFormData } from '@/lib/validations/auth.schemas';
 import { storeCredential, clearLocalCredential } from '@/lib/credential-manager';
-import { workspacePath, workspaceNext } from '@/lib/workspace';
+import { workspacePath } from '@/lib/workspace';
+import { loginNextPath } from '@/lib/login-navigation';
 import { scopedStorageKey, runtimeConfig } from '@/lib/runtime-config';
 
 // Storage keys for remember me functionality
@@ -57,7 +58,7 @@ export const LoginForm = () => {
       }
       // Full-page navigation để iOS/Android nhận diện "successful login submit"
       // và prompt lưu mật khẩu vào iCloud Keychain / Google Password Manager
-      const next = workspaceNext(new URLSearchParams(window.location.search).get('next'));
+      const next = loginNextPath();
       window.location.assign(workspacePath('/auth/callback') + (next ? `?next=${encodeURIComponent(next)}` : ''));
     }
   };

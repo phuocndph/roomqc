@@ -1563,13 +1563,11 @@ const createDemoSupplementsAndDistribution = async (
       p_supplement_request_ids: [pendingRequest.id],
     } as any)
     assertSeedResult(orderError, 'Phiếu phân phối demo')
-    if (orderResult && typeof orderResult === 'object' && !Array.isArray(orderResult) && typeof orderResult.order_id === 'string') {
-      const { error: linkError } = await supabase
-        .from('distribution_orders')
-        .update({ supplement_request_id: pendingRequest.id })
-        .eq('id', orderResult.order_id)
-        .eq('tenant_id', tenantId)
-      assertSeedResult(linkError, 'Liên kết phiếu phân phối demo')
+    // Both directions of the supplement link are committed by the RPC. Demo
+    // code uses the same boundary and must not require broad client row writes.
+    if (!orderResult || typeof orderResult !== 'object' || Array.isArray(orderResult)
+      || orderResult.success !== true || typeof orderResult.order_id !== 'string') {
+      throw new SeedDataError('Phiếu phân phối demo', 'Không thể xác nhận kết quả tạo phiếu')
     }
   }
 }

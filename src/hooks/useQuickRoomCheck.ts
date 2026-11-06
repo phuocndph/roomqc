@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from '@/hooks/use-toast'
-import { mapDbError } from '@/lib/dbErrors'
-import { getFriendlyError } from '@/lib/errorMessage'
+import { useRoomOperationExecutor } from './useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
+import { ROOM_STATUS_META_V2 } from '@/lib/roomStatus'
 
-export type QuickCheckType = 'daily' | 'checkin' | 'checkout' | 'periodic' | 'maintenance'
+export type QuickCheckType = 'daily' | 'periodic'
 
 export interface LastRoomCheck {
   id: string
@@ -47,41 +48,25 @@ interface QuickCheckParams {
  * Hoàn tất nhanh "Phòng OK hoàn toàn" — gọi RPC perform_quick_room_check.
  * Audit log + tenant guard + photo evidence được xử lý server-side.
  */
-export function useQuickRoomCheck() {
+export function useQuickRoomCheck(scopeRoomId = '') {
   const qc = useQueryClient()
-  return useMutation({
+  const execute = useRoomOperationExecutor(scopeRoomId)
+  const mutation = useMutation({
+    onMutate: () => ({ current: execute.isCurrent }),
     mutationFn: async ({ roomId, checkType, notes, photos }: QuickCheckParams) => {
-      const { data, error } = await supabase.rpc('perform_quick_room_check', {
+      const { data } = await execute('perform_quick_room_check', {
         _room_id: roomId,
         _check_type: checkType,
         _notes: notes ?? null,
         _photos: photos && photos.length > 0 ? photos : [],
       })
-      if (error) {
-        const msg = error.message || ''
-        if (msg.includes('photo_required'))
-          throw new Error('Khách sạn yêu cầu chụp ảnh bằng chứng khi kiểm phòng.')
-        if (msg.includes('quick_path_disabled'))
-          throw new Error('Khách sạn đã tắt chế độ "Phòng OK hoàn toàn".')
-        if (msg.startsWith('quick_rate_limited') || msg.includes('quick_rate_limited:')) {
-          const m = msg.match(/quick_rate_limited:(\d+)/)
-          const min = m ? Number(m[1]) : 30
-          throw new Error(`Vừa có lần kiểm nhanh. Vui lòng đợi đủ ${min} phút giữa hai lần kiểm nhanh.`)
-        }
-        if (msg.includes('quick_path_not_allowed'))
-          throw new Error('Loại kiểm này không hỗ trợ chế độ nhanh. Hãy dùng kiểm chuẩn.')
-        if (msg.includes('forbidden_tenant'))
-          throw new Error('Bạn không có quyền kiểm phòng này.')
-        if (msg.includes('room_not_found'))
-          throw new Error('Không tìm thấy phòng.')
-        throw new Error(mapDbError(msg) || msg)
-      }
-      return data as { check_id: string; room_id: string; old_status: string; new_status: string }
+      return data as unknown as { check_id: string; room_id: string; old_status: string; new_status: string }
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _variables, scope) => {
+      if (!scope?.current()) return
       toast({
-        title: 'Đã xác nhận phòng OK',
-        description: `Phòng đã được ghi nhận sạch sẽ. Trạng thái: ${data.new_status}`,
+        title: 'Đã lưu lần kiểm nhanh',
+        description: `${data.old_status === data.new_status ? 'Trạng thái phòng giữ nguyên' : 'Trạng thái phòng'}: ${ROOM_STATUS_META_V2[data.new_status]?.label ?? data.new_status}`,
       })
       qc.invalidateQueries({ queryKey: ['rooms'] })
       qc.invalidateQueries({ queryKey: ['room', data.room_id] })
@@ -90,12 +75,14 @@ export function useQuickRoomCheck() {
       qc.invalidateQueries({ queryKey: ['last-room-check', data.room_id] })
       qc.invalidateQueries({ queryKey: ['housekeeping-tasks'] })
     },
-    onError: (err: Error) => {
+    onError: (err: Error, _variables, scope) => {
+      if (!scope?.current()) return
       toast({
         title: 'Không thể xác nhận nhanh',
-        description: getFriendlyError(err),
+        description: roomOperationErrorMessage(err),
         variant: 'destructive',
       })
     },
   })
+  return Object.assign(mutation, { isCurrent: execute.isCurrent })
 }

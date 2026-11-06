@@ -54,11 +54,14 @@ import {
   BookingCostBreakdown,
   DamageChargeItem,
 } from '@/lib/bookingCalculations'
-import { triggerRoomCheckoutNotification, triggerRoomCheckinNotification, triggerNewBookingNotification } from '@/hooks/useNotificationTriggers'
+import { triggerNewBookingNotification } from '@/hooks/useNotificationTriggers'
 import type { RoomBooking } from '@/hooks/useRoomBooking'
-import { createInvoiceAfterCheckout } from '@/lib/invoiceHelpers'
 import { PrintReceiptDialog } from '@/components/invoices/PrintReceiptDialog'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
+import type { RoomOperationResult } from '@/lib/room-operation-command'
+import { runBookingOperationFollowUps, bookingOperationDescription, bookingAdjustmentNotes } from '@/lib/booking-operation-followups'
 
 // Time options for check-in/check-out
 const TIME_OPTIONS = [
@@ -91,10 +94,13 @@ export function RoomBookingDialog({
   const { t } = useTranslation(['rooms', 'common'])
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const operationView = JSON.stringify([open, booking?.id, roomId])
+  const executeOperation = useRoomOperationExecutor(operationView)
   
   const isEdit = !!booking
   
   const [isSubmitting, setIsSubmitting] = useState(false)
+  useEffect(() => { setIsSubmitting(false) }, [operationView])
   const [showCheckoutSummary, setShowCheckoutSummary] = useState(false)
   const [showCheckinConfirm, setShowCheckinConfirm] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
@@ -490,73 +496,58 @@ export function RoomBookingDialog({
   }
 
   const performCheckIn = async (finalEarlyCharge: number, adjustmentNote?: string) => {
-    if (!booking) return
+    if (!booking || isSubmitting) return
     
     setIsSubmitting(true)
     setShowCheckinConfirm(false)
     
     try {
       // Use atomic RPC for check-in (updates booking + room in single transaction)
-      const { data, error } = await supabase.rpc('perform_checkin', {
+      const { data, error } = await executeOperation('perform_checkin', {
         p_booking_id: booking.id,
         p_room_id: roomId,
         p_early_checkin_charge: finalEarlyCharge,
+        p_adjustment_notes: bookingAdjustmentNotes('checkin', adjustmentNote),
       })
 
-      if (error) {
-        // Handle specific RPC errors
-        if (error.message?.includes('ROOM_OCCUPIED')) {
-          const guestName = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang có khách "${guestName}". Vui lòng checkout trước.`)
-        }
-        if (error.message?.includes('INVALID_ROOM_STATUS')) {
-          const status = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang ở trạng thái "${status}", không thể check-in.`)
-        }
-        throw error
-      }
-      
-      // Update adjustment note separately if provided
-      if (adjustmentNote) {
-        const existingNotes = notes || ''
-        const updateNotes = existingNotes 
-          ? `${existingNotes}\n[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-          : `[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', booking.id)
-      }
-      
-      // Send check-in notification
-      if (tenantId && hotelId) {
-        triggerRoomCheckinNotification({
-          tenantId,
-          hotelId,
-          roomId,
-          roomNumber,
-          guestName: guestName || undefined,
-        }).catch(err => console.error('Failed to send check-in notification:', err))
-      }
+      if (!executeOperation.isCurrent()) return
+      if (error) throw error
+      const tasks: Array<() => PromiseLike<unknown>> = []
+      const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+      if (!executeOperation.isCurrent()) return
       
       toast({
-        title: t('booking.checkInSuccess'),
-        description: finalEarlyCharge > 0 
+        title: data.replayed ? 'Đã xác nhận lần nhận phòng trước đó' : t('booking.checkInSuccess'),
+        description: bookingOperationDescription(followUps) ?? (finalEarlyCharge > 0
           ? `Phụ thu check-in sớm: ${formatCurrency(finalEarlyCharge)}`
-          : undefined,
+          : undefined),
       })
       
       invalidateQueries()
       onOpenChange(false)
     } catch (error: any) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: t('booking.checkInError'),
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsSubmitting(false)
+      if (executeOperation.isCurrent()) setIsSubmitting(false)
     }
+  }
+
+  const finishCheckout = async (data: RoomOperationResult) => {
+    if (!booking || !executeOperation.isCurrent()) return
+    const tasks: Array<() => PromiseLike<unknown>> = []
+    const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+    if (!executeOperation.isCurrent()) return
+    setPrintReceiptBookingId(booking.id)
+    setPrintReceiptSubtotal(Number(data.subtotal))
+    setShowPrintReceiptDialog(true)
+    toast({ title: data.replayed ? 'Đã xác nhận lần trả phòng trước đó' : t('booking.checkOutSuccess'), description: bookingOperationDescription(followUps, true) })
+    invalidateQueries()
+    onOpenChange(false)
   }
   
   const handleCheckOutClick = async () => {
@@ -635,7 +626,7 @@ export function RoomBookingDialog({
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!booking) return
+    if (!booking || isSubmitting) return
     
     setIsSubmitting(true)
     setShowCheckoutSummary(false)
@@ -670,7 +661,7 @@ export function RoomBookingDialog({
 
       // Use RPC for atomic checkout operation with damage params
       // Pass current amount_paid so RPC can calculate correct payment_status
-      const { data, error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: booking.id,
         p_room_id: roomId,
         p_late_checkout_charge: adjustedLateCharge,
@@ -679,61 +670,28 @@ export function RoomBookingDialog({
         // VAT/phí dịch vụ/tổng tiền: server tự tính lại từ rate gốc của booking
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_check_out_date: overdueCheckoutDate,
         p_new_amount_paid: null,
       })
       
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      createInvoiceAfterCheckout({ bookingId: booking.id, tenantId, hotelId, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      setPrintReceiptBookingId(booking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if there was an adjustment
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const updateNotes = notes 
-          ? `${notes}\n${allNotes.join('\n')}` 
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', booking.id)
-      }
-      
-      // Send checkout notification to staff
-      if (tenantId && hotelId) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId,
-          roomId,
-          roomNumber,
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      toast({
-        title: t('booking.checkOutSuccess'),
-      })
-      
-      invalidateQueries()
-      onOpenChange(false)
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: t('booking.checkOutError'),
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsSubmitting(false)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsSubmitting(false)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 
@@ -745,7 +703,7 @@ export function RoomBookingDialog({
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!booking) return
+    if (!booking || isSubmitting) return
     
     setIsSubmitting(true)
     setShowCheckoutSummary(false)
@@ -780,7 +738,7 @@ export function RoomBookingDialog({
 
       // BookingPaymentDialog already updated amount_paid via update_booking_amount_paid RPC (ADD operation)
       // Pass null to preserve the DB value and avoid overwriting partial payments
-      const { data, error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: booking.id,
         p_room_id: roomId,
         p_late_checkout_charge: adjustedLateCharge,
@@ -789,61 +747,28 @@ export function RoomBookingDialog({
         // VAT/phí dịch vụ/tổng tiền: server tự tính lại
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_new_amount_paid: null,
         p_check_out_date: overdueCheckoutDate,
       })
       
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      createInvoiceAfterCheckout({ bookingId: booking.id, tenantId, hotelId, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      setPrintReceiptBookingId(booking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if there was an adjustment
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const updateNotes = notes 
-          ? `${notes}\n${allNotes.join('\n')}` 
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', booking.id)
-      }
-      
-      // Send checkout notification to staff
-      if (tenantId && hotelId) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId,
-          roomId,
-          roomNumber,
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      toast({
-        title: 'Đã thanh toán và check-out thành công',
-      })
-      
-      invalidateQueries()
-      onOpenChange(false)
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: 'Lỗi',
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsSubmitting(false)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsSubmitting(false)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 

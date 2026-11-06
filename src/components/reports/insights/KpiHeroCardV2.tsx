@@ -10,6 +10,7 @@ interface Props {
   pop?: number
   /** % delta so cùng kỳ năm trước */
   yoy?: number
+  deltaUnit?: 'percent' | 'percentage-points'
   /** % hoàn thành mục tiêu (100 = đạt) */
   targetPct?: number
   /** Hiển thị tooltip mục tiêu raw */
@@ -20,7 +21,7 @@ interface Props {
   inverse?: boolean
 }
 
-function DeltaPill({ value, inverse, label }: { value: number; inverse?: boolean; label: string }) {
+function DeltaPill({ value, inverse, label, unit }: { value: number; inverse?: boolean; label: string; unit: 'percent' | 'percentage-points' }) {
   const show = isFinite(value) && Math.abs(value) > 0.5
   if (!show) {
     return (
@@ -37,7 +38,7 @@ function DeltaPill({ value, inverse, label }: { value: number; inverse?: boolean
     <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-medium', color)}>
       <Arrow className="h-2.5 w-2.5" />
       {label} {value > 0 ? '+' : ''}
-      {value.toFixed(1)}%
+      {value.toFixed(1)}{unit === 'percentage-points' ? ' điểm %' : '%'}
     </span>
   )
 }
@@ -47,6 +48,7 @@ export function KpiHeroCardV2({
   value,
   pop,
   yoy,
+  deltaUnit = 'percent',
   targetPct,
   targetLabel,
   benchmark,
@@ -70,8 +72,8 @@ export function KpiHeroCardV2({
       </div>
       <p className="text-xl font-bold tabular-nums leading-tight">{value}</p>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        {typeof pop === 'number' && <DeltaPill value={pop} inverse={inverse} label="Kỳ trước" />}
-        {typeof yoy === 'number' && <DeltaPill value={yoy} inverse={inverse} label="YoY" />}
+        {typeof pop === 'number' && <DeltaPill value={pop} inverse={inverse} label="Kỳ trước" unit={deltaUnit} />}
+        {typeof yoy === 'number' && <DeltaPill value={yoy} inverse={inverse} label="YoY" unit={deltaUnit} />}
       </div>
       {typeof targetPct === 'number' && (
         <div className="flex items-center justify-between text-[10px]">

@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useRevenueReport } from '@/hooks/useRevenueReport'
-import { useBookingStats } from '@/hooks/useBookingStats'
+import { useRevenueReport, recognizedRevenue, recognizedRevenueGrowth } from '@/hooks/useRevenueReport'
 import { TrendingUp, TrendingDown, DollarSign, CreditCard, Clock, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
@@ -35,8 +34,9 @@ const formatCompact = (value: number) => {
 }
 
 export function OwnerProfitOverview() {
-  const { data: report, isLoading } = useRevenueReport()
-  const { data: bookingStats } = useBookingStats()
+  const { data: report, isLoading, error } = useRevenueReport()
+
+  if (error) return <p role="alert">Không tải được doanh thu. Vui lòng tải lại hoặc kiểm tra quyền xem.</p>
 
   if (isLoading) {
     return (
@@ -60,21 +60,21 @@ export function OwnerProfitOverview() {
 
   const stats = [
     {
-      label: 'Doanh thu tháng này',
-      value: report.currentPeriod.paidRevenue,
+      label: 'Doanh thu ghi nhận tháng này',
+      value: recognizedRevenue(report, 'currentPeriod'),
       icon: DollarSign,
       color: 'text-green-700 dark:text-green-500',
       bgColor: 'border border-l-4 border-l-green-600 bg-background',
     },
     {
-      label: 'Chờ thanh toán',
+      label: 'Còn nợ · lượt trả phòng',
       value: report.currentPeriod.pendingRevenue,
       icon: Clock,
       color: 'text-amber-700 dark:text-amber-500',
       bgColor: 'border border-l-4 border-l-amber-600 bg-background',
     },
     {
-      label: 'Số đặt phòng',
+      label: 'Số lượt trả phòng',
       value: report.currentPeriod.bookingsCount,
       icon: CreditCard,
       color: 'text-blue-700 dark:text-blue-500',
@@ -82,7 +82,7 @@ export function OwnerProfitOverview() {
       isCurrency: false,
     },
     {
-      label: 'Trung bình / đặt phòng',
+      label: 'Giá trị gộp / lượt trả phòng',
       value: report.currentPeriod.averageBookingValue,
       icon: Wallet,
       color: 'text-slate-700 dark:text-slate-300',
@@ -90,14 +90,15 @@ export function OwnerProfitOverview() {
     },
   ]
 
-  const growthPositive = report.revenueGrowth >= 0
+  const growth = recognizedRevenueGrowth(report)
+  const growthPositive = growth >= 0
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-medium flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-green-600" />
-          Doanh thu đặt phòng
+          Doanh thu ghi nhận
         </CardTitle>
         <div className="flex items-center gap-2">
           <div className={cn(
@@ -109,7 +110,7 @@ export function OwnerProfitOverview() {
             ) : (
               <TrendingDown className="h-3 w-3" />
             )}
-            {Math.abs(report.revenueGrowth).toFixed(1)}%
+            {Math.abs(growth).toFixed(1)}%
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link to="/reports/finance?tab=room-revenue">Chi tiết</Link>
@@ -117,6 +118,7 @@ export function OwnerProfitOverview() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">Phòng sau hoa hồng + phí khách không đến; không phải dòng tiền thực thu trong kỳ.</p>
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map((stat) => (
@@ -138,9 +140,9 @@ export function OwnerProfitOverview() {
         </div>
 
         {/* Revenue Trend Chart */}
-        {report.monthlyTrends.some(month => month.revenue > 0) ? <div className="h-48">
+        {report.recognizedMonthlyTrends.some(month => month.revenue > 0) ? <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={report.monthlyTrends}>
+            <AreaChart data={report.recognizedMonthlyTrends}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -179,8 +181,8 @@ export function OwnerProfitOverview() {
 
         {/* Comparison */}
         <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-3">
-          <span>Tháng trước: {formatCurrency(report.previousPeriod.paidRevenue)}</span>
-          <span>Hôm nay: {formatCurrency(bookingStats?.todayRevenue || 0)}</span>
+          <span>Tháng trước: {formatCurrency(recognizedRevenue(report, 'previousPeriod'))}</span>
+          <span>Ghi nhận hôm nay: {formatCurrency(recognizedRevenue(report, 'today'))}</span>
         </div>
       </CardContent>
     </Card>
