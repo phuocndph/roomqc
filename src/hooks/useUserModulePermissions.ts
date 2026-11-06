@@ -1,6 +1,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
+import { liveAuthorityQueryOptions } from '@/lib/live-authority-query'
 
 export interface PermissionSummary {
   module: string
@@ -25,11 +26,8 @@ export const USER_MODULE_PERMISSIONS_KEY = 'user-module-permissions'
  * this does not flash the fail-closed loading skeleton.
  */
 export const userModulePermissionsQueryOptions = {
-  staleTime: 0,
+  ...liveAuthorityQueryOptions,
   gcTime: 10 * 60 * 1000,
-  refetchOnMount: 'always' as const,
-  refetchOnWindowFocus: 'always' as const,
-  refetchOnReconnect: 'always' as const,
 }
 
 export function useUserModulePermissions() {
