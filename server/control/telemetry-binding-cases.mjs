@@ -1,9 +1,10 @@
+import {fixtureAdminExecute} from './support-authority-fixtures.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import pg from 'pg';
-import {migrateDirectory,importInitialRegistry} from './migrate.mjs';
+import {migrateDirectory,importInitialRegistry,migrationManifest} from './migrate.mjs';
 import {fixtureConfig,fixtureTarget,seedOperationalCluster} from './test-fixtures.mjs';
-import {HealthStore} from './telemetry.mjs';
+import {SyntheticHealthStore as HealthStore,syntheticHealthEvidence} from './health-test-fixtures.mjs';
 import {ControlStore} from './store.mjs';
 import {clusterCommand,publicCluster} from './admin.mjs';
 import {telemetryTargetFingerprint} from './telemetry-source.mjs';
@@ -48,7 +49,7 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
       const unapproved=publicCluster(await api.admin.cluster('cluster-a'),api.config);
       assert.equal(unapproved.health.status,'unknown');assert.ok(unapproved.health.reasonCodes.includes('METRICS_TARGET_CONFIGURATION_CHANGED'));
       await assert.rejects(()=>api.reserve({slug:'binding-new',email:'new@example.invalid',displayName:'New fixture'},randomUUID()),{code:'NO_CAPACITY'});
-      const command=bind(target),receipts=await Promise.all(Array.from({length:5},()=>api.admin.execute(actor,command,randomUUID())));
+      const command=bind(target),receipts=await Promise.all(Array.from({length:5},()=>fixtureAdminExecute(api.admin,actor,command,randomUUID())));
       assert.equal(new Set(receipts.map(r=>r.commandId)).size,1);assert.equal(receipts[0].targetVersion,2);
       const after=await state(pool),c=after.clusters[0],h=after.cluster_health_current[0],p=after.cluster_policies[0];
       assert.equal(Number(c.telemetry_target_version),2);assert.deepEqual(c.telemetry_target_definition,target);
@@ -77,7 +78,7 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
         assert.deepEqual(await state(pool),before);
       }
       const multiple={...target,dataMounts:[...target.dataMounts,{id:'storage',mountpoint:'/fixture/storage',device:'/dev/sdb1',fstype:'xfs'}]};
-      api.config.inventory.get('cluster-a').telemetryTarget=multiple;await api.admin.execute(actor,bind(multiple),randomUUID());
+      api.config.inventory.get('cluster-a').telemetryTarget=multiple;await fixtureAdminExecute(api.admin,actor,bind(multiple),randomUUID());
       const missing=sample(target,Date.now()+20);missing.targetFingerprint=telemetryTargetFingerprint(multiple);
       await assert.rejects(()=>writer.record('cluster-a',missing),{code:'TELEMETRY_TARGET_MISMATCH'});
       assert.ok((await writer.record('cluster-a',sample(multiple,Date.now()+30))).reasonCodes.includes('METRICS_WARMING'));
@@ -91,37 +92,37 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
         BEGIN RAISE EXCEPTION 'Isolated binding audit failure'; END $$;
         CREATE TRIGGER reject_binding_audit BEFORE INSERT ON roomqc_control.cluster_events FOR EACH ROW EXECUTE FUNCTION roomqc_control.reject_binding_audit()`);
       const before=await state(pool),command=bind(target);
-      await assert.rejects(()=>api.admin.execute(actor,command,randomUUID()),{code:'P0001'});assert.deepEqual(await state(pool),before);
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,command,randomUUID()),{code:'P0001'});assert.deepEqual(await state(pool),before);
       await pool.query('DROP TRIGGER reject_binding_audit ON roomqc_control.cluster_events');
-      assert.equal((await api.admin.execute(actor,command,randomUUID())).targetVersion,2);
+      assert.equal((await fixtureAdminExecute(api.admin,actor,command,randomUUID())).targetVersion,2);
     }finally{await metrics.end();await api.close()}
   });
   dbtest('target binding: authority, expected version and exact inventory are required; rejected commands leave no receipt',async()=>{
     const {pool,api,metrics}=await fixture('binding_authority');
     try{
       const original=fixtureTarget('cluster-a'),target={...original,dbConnectionBudget:101},before=await state(pool);
-      await assert.rejects(()=>api.admin.execute({...actor,clusterId:'client-chosen'},bind(original),randomUUID()),{code:'ADMIN_PERMISSION_REQUIRED'});
-      await assert.rejects(()=>api.admin.execute(actor,bind(target),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,{...actor,clusterId:'client-chosen'},bind(original),randomUUID()),{code:'ADMIN_PERMISSION_REQUIRED'});
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,bind(target),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
       api.config.inventory.get('cluster-a').telemetryTarget=target;
-      await assert.rejects(()=>api.admin.execute(actor,bind(target,2),randomUUID()),{code:'VERSION_CONFLICT'});
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,bind(target,2),randomUUID()),{code:'VERSION_CONFLICT'});
       for(const field of ['clusterId','hostId','environment']){
         const invalid={...target,[field]:field==='environment'?'staging':'other-target'};
         if(field==='environment')invalid.measurementScope='linux-host';
         api.config.inventory.get('cluster-a').telemetryTarget=invalid;
-        await assert.rejects(()=>api.admin.execute(actor,bind(invalid),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
+        await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,bind(invalid),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
       }
       const entry=api.config.inventory.get('cluster-a');entry.hostId='different-host';entry.telemetryTarget={...target,hostId:entry.hostId};
-      await assert.rejects(()=>api.admin.execute(actor,bind(entry.telemetryTarget),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,bind(entry.telemetryTarget),randomUUID()),{code:'TELEMETRY_TARGET_NOT_APPROVED'});
       entry.hostId='cluster-a';
       assert.deepEqual(await state(pool),before);
-      api.config.inventory.get('cluster-a').telemetryTarget=target;const command=bind(target);await api.admin.execute(actor,command,randomUUID());
-      await assert.rejects(()=>api.admin.execute(actor,bind(target,2,command.key),randomUUID()),{code:'IDEMPOTENCY_CONFLICT'});
+      api.config.inventory.get('cluster-a').telemetryTarget=target;const command=bind(target);await fixtureAdminExecute(api.admin,actor,command,randomUUID());
+      await assert.rejects(()=>fixtureAdminExecute(api.admin,actor,bind(target,2,command.key),randomUUID()),{code:'IDEMPOTENCY_CONFLICT'});
     }finally{await metrics.end();await api.close()}
   });
   dbtest('target binding: metrics cannot change identity or call privileged trigger; same-target approval cannot forge its DB timestamp or version',async()=>{
     const {pool,api,metrics,writer}=await fixture('binding_privileges');
     try{
-      assert.equal((await writer.readiness()).schemaVersion,'0006-telemetry-target-binding.sql');
+      assert.equal((await writer.readiness()).schemaVersion,(await migrationManifest()).at(-1).version);
       for(const sql of ["UPDATE roomqc_control.clusters SET telemetry_target_fingerprint=repeat('d',64)",
         'UPDATE roomqc_control.clusters SET telemetry_target_definition=telemetry_target_definition',
         'UPDATE roomqc_control.clusters SET telemetry_target_bound_at=now(),telemetry_target_version=100',
@@ -135,7 +136,7 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
       const before=(await pool.query('SELECT * FROM roomqc_control.clusters')).rows[0];
       await api.pool.query("UPDATE roomqc_control.clusters SET telemetry_target_bound_at=now()-interval '1 year',telemetry_target_version=100");
       const preserved=(await pool.query('SELECT * FROM roomqc_control.clusters')).rows[0];assert.deepEqual(preserved,before);
-      await api.admin.execute(actor,bind(fixtureTarget('cluster-a')),randomUUID());
+      await fixtureAdminExecute(api.admin,actor,bind(fixtureTarget('cluster-a')),randomUUID());
       const same=(await pool.query('SELECT * FROM roomqc_control.clusters')).rows[0];
       assert.equal(same.telemetry_target_bound_at.getTime(),before.telemetry_target_bound_at.getTime());assert.equal(same.telemetry_target_version,before.telemetry_target_version);
       assert.equal((await api.admin.cluster('cluster-a')).metric_status,'healthy');
@@ -147,8 +148,8 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
     const {pool,api,metrics,writer}=await fixture('binding_return');
     try{
       const original=fixtureTarget('cluster-a'),other={...original,dbConnectionBudget:101},old=sample(original,Date.now());
-      api.config.inventory.get('cluster-a').telemetryTarget=other;await api.admin.execute(actor,bind(other),randomUUID());
-      api.config.inventory.get('cluster-a').telemetryTarget=original;await api.admin.execute(actor,bind(original,2),randomUUID());
+      api.config.inventory.get('cluster-a').telemetryTarget=other;await fixtureAdminExecute(api.admin,actor,bind(other),randomUUID());
+      api.config.inventory.get('cluster-a').telemetryTarget=original;await fixtureAdminExecute(api.admin,actor,bind(original,2),randomUUID());
       await assert.rejects(()=>writer.record('cluster-a',old),{code:'TELEMETRY_SAMPLE_BEFORE_BINDING'});
       const at=Date.now()+20,result=await writer.record('cluster-a',sample(original,at));assert.ok(result.reasonCodes.includes('METRICS_WARMING'));
       const state=(await pool.query('SELECT evaluator_state FROM roomqc_control.cluster_health_current')).rows[0].evaluator_state;
@@ -161,13 +162,14 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
     let collected,release;
     const started=new Promise(resolve=>{collected=resolve}),hold=new Promise(resolve=>{release=resolve});
     const original=fixtureTarget('cluster-a'),next={...original,dbConnectionBudget:101};
-    const first=new HealthWorker({store:writer,targets:[original],probe:async()=>sample(original).probes,
+    const probe=async target=>({probes:sample(target).probes,evidence:await syntheticHealthEvidence(metrics)});
+    const first=new HealthWorker({store:writer,targets:[original],probe,
       sourceFor:()=>({collect:async()=>{collected();await hold;return sample(original,Date.now()+10)}})});
-    const second=new HealthWorker({store:new HealthStore(metrics),targets:[next],probe:async()=>sample(next).probes,
+    const second=new HealthWorker({store:new HealthStore(metrics),targets:[next],probe,
       sourceFor:()=>({collect:async()=>sample(next,Date.now()+20)})});
     try{
       const pending=first.tick();await started;
-      api.config.inventory.get('cluster-a').telemetryTarget=next;await api.admin.execute(actor,bind(next),randomUUID());
+      api.config.inventory.get('cluster-a').telemetryTarget=next;await fixtureAdminExecute(api.admin,actor,bind(next),randomUUID());
       release();await Promise.all([pending,second.tick()]);
       assert.equal(first.status().lastErrorCode,'TELEMETRY_TARGET_MISMATCH');assert.equal(first.status().targetsSucceeded,0);
       assert.equal(second.status().targetsSucceeded,1);
@@ -191,7 +193,7 @@ export function registerTelemetryBindingCases({dbtest,database,password,cluster}
   dbtest('worker stale sweep persists despite a hung source; metrics credential outage closes readiness and recovers without opening admission',async()=>{
     const name='binding_worker_outage',{pool,api,metrics,writer}=await fixture(name);
     const worker=new HealthWorker({store:writer,targets:[fixtureTarget('cluster-a')],targetTimeoutMs:50,
-      probe:async()=>sample(fixtureTarget('cluster-a')).probes,sourceFor:()=>({collect:()=>new Promise(()=>{})})});
+      probe:async target=>({probes:sample(target).probes,evidence:await syntheticHealthEvidence(metrics)}),sourceFor:()=>({collect:()=>new Promise(()=>{})})});
     try{
       await pool.query("UPDATE roomqc_control.cluster_health_current SET observed_at=now()-interval '121 seconds',valid_until=now()-interval '1 second'");
       await worker.tick();assert.equal(worker.status().sweepSucceeded,true);assert.equal(worker.status().lastErrorCode,'HEALTH_TARGET_TIMEOUT');

@@ -12,11 +12,17 @@ function evaluate(at,previous={},metrics={},probes={},version=1){return evaluate
 function walk(start,end,previous={},metrics={},probes={},version=1){let result;for(let at=start;at<=end;at+=30000){
   result=evaluate(at,previous,metrics,probes,version);previous=JSON.parse(JSON.stringify(result.state));
 }return result}
-function readyRow(){return {status:'active',credential_configured:true,validation_state:'valid',release_id:'release-v3',schema_manifest_hash:'a'.repeat(64),
+function readyRow(){return {status:'active',release_authority_current:true,credential_configured:true,validation_state:'valid',release_id:'release-v3',schema_manifest_hash:'a'.repeat(64),
+  host_id:'cluster-a',host_status:'active',
   release_compatible:true,frontend_ready:true,frontend_current:true,manual_closed:false,operator_reopen_required:false,policy_version:1,
   health_valid_until:new Date(base+120000).toISOString(),health_observed_at:new Date(base).toISOString(),metric_status:'healthy',
-  telemetry_target_fingerprint:'c'.repeat(64),telemetry_inventory_matches:true,
-  evaluator_state:{policyVersion:1,sampleSchemaVersion:2,targetFingerprint:'c'.repeat(64),blockedReasons:[]},backup_completed_at:new Date(base).toISOString(),backup_restore_test_at:new Date(base).toISOString(),
+  telemetry_target_fingerprint:'c'.repeat(64),telemetry_target_version:1,telemetry_inventory_matches:true,
+  credential_ref:'cluster-a',probe_credential_ref:'cluster-a',probe_state:'ready',probe_revision:1,probe_binding_hash:'e'.repeat(64),probe_expected_binding_hash:'e'.repeat(64),
+  probe_auth_expires_at:new Date(base+3600000).toISOString(),probe_expires_at:new Date(base+86400000).toISOString(),
+  release_authority:{authority_state:'active',authority_key_revoked:false,approval_id:'10000000-0000-4000-8000-000000000001',authority_epoch:1,envelope_digest:'f'.repeat(64)},
+  evaluator_state:{policyVersion:1,sampleSchemaVersion:2,targetFingerprint:'c'.repeat(64),blockedReasons:[],probeEvidence:{version:2,
+    releaseApproval:{approvalId:'10000000-0000-4000-8000-000000000001',epoch:1,envelopeDigest:'f'.repeat(64)},
+    bindingHash:'e'.repeat(64),credentialRevision:1,policyVersion:1,targetFingerprint:'c'.repeat(64),targetVersion:1,checkedAt:new Date(base).toISOString()}},backup_completed_at:new Date(base).toISOString(),backup_restore_test_at:new Date(base).toISOString(),
   backup_manifest_hash:'b'.repeat(64),allocated_count:4,tenant_limit:5,source_generation:3}}
 function multi(at=0,disks=[{id:'database',freeBytes:100*gib,totalBytes:200*gib,inodeFreePercent:80},
   {id:'storage',freeBytes:60*gib,totalBytes:120*gib,inodeFreePercent:80}],extra={}){
@@ -138,7 +144,7 @@ test('database connection saturation and probe failures require their own sustai
 
 test('admission fails closed for every required gate and opening cannot ignore metrics, backup or capacity',()=>{
   const row=readyRow(),decision=admissionDecision(row,{now:base});assert.equal(decision.decision,'open');assert.equal(decision.healthGeneration,3);
-  const conditions=[['status','draining','CLUSTER_DRAINING'],['status','offline','CLUSTER_OFFLINE'],['credential_configured',false,'CREDENTIAL_MISSING'],
+  const conditions=[['status','draining','CLUSTER_DRAINING'],['status','offline','CLUSTER_OFFLINE'],['host_id',null,'HOST_UNLINKED'],['host_status',null,'HOST_UNLINKED'],['host_status','maintenance','HOST_MAINTENANCE'],['host_status','retired','HOST_RETIRED'],['credential_configured',false,'CREDENTIAL_MISSING'],
     ['telemetry_target_fingerprint',null,'METRICS_TARGET_UNCONFIGURED'],['telemetry_inventory_matches',false,'METRICS_TARGET_CONFIGURATION_CHANGED'],
     ['evaluator_state',{sampleSchemaVersion:2,targetFingerprint:'d'.repeat(64)},'METRICS_TARGET_CHANGED'],
     ['release_compatible',false,'RELEASE_UNVERIFIED'],['frontend_current',false,'FRONTEND_NOT_READY'],['manual_closed',true,'MANUAL_CLOSED'],

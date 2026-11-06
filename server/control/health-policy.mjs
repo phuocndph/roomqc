@@ -1,4 +1,5 @@
 import {ControlError} from './errors.mjs';
+import {healthProofReasons} from './health-evidence.mjs';
 
 export const defaultThresholds=Object.freeze({cpuBlockPercent:85,cpuWarnPercent:70,memoryBlockPercent:15,memoryWarnPercent:25,
   diskBlockPercent:15,diskWarnPercent:25,diskBlockBytes:10*1024**3,diskWarnBytes:20*1024**3,
@@ -104,8 +105,12 @@ export function evaluateSample(sample,previous={},thresholds={},policyVersion=1,
     reasonCodes:[...new Set([...state.blockedReasons,...warning])]};
 }
 
-export function admissionDecision(row,{now=Date.now(),ignoreManual=false,ignoreReopen=false,ignoreCapacity=false}={}){
-  const reasons=[];
+export function admissionDecision(row,{now=Number(row.directory_now_ms??Date.now()),ignoreManual=false,ignoreReopen=false,ignoreCapacity=false}={}){
+  const reasons=[...healthProofReasons(row,now)];
+  if(row.release_authority_current!==true)reasons.push('RELEASE_APPROVAL_NOT_CURRENT');
+  if(row.host_id===null||row.host_status===null)reasons.push('HOST_UNLINKED');
+  if(row.host_status==='maintenance')reasons.push('HOST_MAINTENANCE');
+  if(row.host_status==='retired')reasons.push('HOST_RETIRED');
   if(row.status!=='active')reasons.push(row.status==='draining'?'CLUSTER_DRAINING':'CLUSTER_OFFLINE');
   if(!row.credential_configured)reasons.push('CREDENTIAL_MISSING');
   if(row.validation_state!=='valid'||!row.release_id||!row.schema_manifest_hash||row.release_compatible!==true)reasons.push('RELEASE_UNVERIFIED');

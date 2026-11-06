@@ -2,6 +2,9 @@ import {randomUUID} from 'node:crypto';
 import {ControlError} from './errors.mjs';
 import {normalizeSample,evaluateSample} from './health-policy.mjs';
 import {validateTelemetryTarget,telemetryTargetFingerprint} from './telemetry-source.mjs';
+import {normalizeHealthProof,assertHealthProof,healthProofProjection} from './health-evidence.mjs';
+import {assertHealthReleaseAuthority,sameReleaseApproval} from './release-authority.mjs';
+import {syncHealthAlerts} from './alerts.mjs';
 
 const changed=(previous,next)=>previous?.metric_status!==next.status||JSON.stringify(previous?.reason_codes??[])!==JSON.stringify(next.reasonCodes);
 const eventView=row=>row?{status:row.metric_status,observedAt:row.observed_at,generation:Number(row.source_generation),reasonCodes:row.reason_codes}:null;
@@ -27,9 +30,10 @@ export class HealthStore {
   }
   async assertTarget(input){
     const target=validateTelemetryTarget(input),fingerprint=telemetryTargetFingerprint(target);
-    const result=await this.pool.query('SELECT telemetry_target_fingerprint FROM roomqc_control.clusters WHERE id=$1',[target.clusterId]);
+    const result=await this.pool.query(`SELECT c.telemetry_target_fingerprint,c.telemetry_target_version,p.row_version AS policy_version
+      FROM roomqc_control.clusters c JOIN roomqc_control.cluster_policies p ON p.cluster_id=c.id WHERE c.id=$1`,[target.clusterId]);
     if(result.rows[0]?.telemetry_target_fingerprint!==fingerprint)throw new ControlError(409,'TELEMETRY_TARGET_MISMATCH','Nguồn đo không khớp cấu hình đang được duyệt.');
-    return {fingerprint};
+    return {fingerprint,targetVersion:Number(result.rows[0].telemetry_target_version),policyVersion:Number(result.rows[0].policy_version)};
   }
   async readiness(){
     const {rows}=await this.pool.query(`SELECT r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication OR r.rolbypassrls
@@ -37,7 +41,10 @@ export class HealthStore {
       OR has_schema_privilege(current_user,'roomqc_control','CREATE')
       OR has_table_privilege(current_user,'roomqc_control.workspaces','SELECT,INSERT,UPDATE,DELETE')
       OR has_table_privilege(current_user,'roomqc_control.clusters','INSERT,UPDATE,DELETE')
-      OR has_table_privilege(current_user,'roomqc_control.schema_migrations','INSERT,UPDATE,DELETE') AS excessive
+      OR has_table_privilege(current_user,'roomqc_control.schema_migrations','INSERT,UPDATE,DELETE')
+      OR has_column_privilege(current_user,'roomqc_control.probe_credentials','envelope','SELECT')
+      OR has_column_privilege(current_user,'roomqc_control.probe_credentials','auth_user_id','SELECT')
+      OR has_column_privilege(current_user,'roomqc_control.probe_credentials','auth_session_id','SELECT') AS excessive
       FROM pg_roles r WHERE r.rolname=current_user`);
     if(rows[0]?.excessive!==false)throw new ControlError(503,'METRICS_RUNTIME_PRIVILEGES','Worker cần tài khoản database giám sát riêng.');
     const {verifyHistory,migrationManifest}=await import('./migrate.mjs');
@@ -49,10 +56,16 @@ export class HealthStore {
     if(!/^[a-z][a-z0-9-]{1,39}$/.test(clusterId))throw new ControlError(400,'INVALID_CLUSTER','Mã cụm không hợp lệ.');
     const now=this.clock(),clean=normalizeSample(sample,now);
     return this.transaction(async client=>{
+      normalizeSample(clean,this.clock());
       const policy=(await client.query('SELECT thresholds,row_version FROM roomqc_control.cluster_policies WHERE cluster_id=$1',[clusterId])).rows[0];
       if(!policy)throw new ControlError(404,'CLUSTER_NOT_FOUND','Không tìm thấy cụm.');
-      const target=(await client.query(`SELECT telemetry_target_fingerprint,telemetry_target_definition,
-        $2::timestamptz>=telemetry_target_bound_at AS sample_after_binding FROM roomqc_control.clusters WHERE id=$1`,[clusterId,clean.observedAt])).rows[0];
+      const target=(await client.query(`SELECT c.api_url,c.credential_ref,c.inventory_ref,c.release_id,c.schema_manifest_hash,c.validation_state,
+        c.telemetry_target_fingerprint,c.telemetry_target_definition,c.telemetry_target_version,
+        q.credential_ref AS probe_credential_ref,q.binding_hash AS probe_binding_hash,q.revision AS probe_revision,q.state AS probe_state,
+        q.auth_expires_at AS probe_auth_expires_at,q.probe_expires_at,
+        extract(epoch FROM clock_timestamp())*1000 AS now_ms,
+        $2::timestamptz>=c.telemetry_target_bound_at AS sample_after_binding FROM roomqc_control.clusters c
+        LEFT JOIN roomqc_control.probe_credentials q ON q.cluster_id=c.id WHERE c.id=$1`,[clusterId,clean.observedAt])).rows[0];
       if(clean.schemaVersion!==2||!target?.telemetry_target_fingerprint||clean.targetFingerprint!==target.telemetry_target_fingerprint){
         throw new ControlError(409,'TELEMETRY_TARGET_MISMATCH','Số đo không thuộc nguồn đang được duyệt.');
       }
@@ -63,12 +76,23 @@ export class HealthStore {
         throw new ControlError(409,'TELEMETRY_TARGET_MISMATCH','Số đo không khớp phạm vi, ổ dữ liệu hoặc budget đã duyệt.');
       }
       if(target.sample_after_binding!==true)throw new ControlError(409,'TELEMETRY_SAMPLE_BEFORE_BINDING','Cần số đo mới sau khi duyệt nguồn.');
+      const proof=normalizeHealthProof(sample.probeEvidence),projection=healthProofProjection(proof);
+      assertHealthProof(proof,target,{clusterId,targetFingerprint:target.telemetry_target_fingerprint,
+        targetVersion:target.telemetry_target_version,policyVersion:policy.row_version,now:Number(target.now_ms)});
+      await assertHealthReleaseAuthority(client,proof.releaseApproval,proof.binding,definition);
       const previous=(await client.query('SELECT * FROM roomqc_control.cluster_health_current WHERE cluster_id=$1',[clusterId])).rows[0];
       if(previous&&Date.parse(clean.observedAt)<=previous.observed_at.getTime()){
         return {accepted:false,reason:'SAMPLE_NOT_NEWER',generation:Number(previous.source_generation)};
       }
-      const result=evaluateSample(clean,previous?.evaluator_state??{},policy.thresholds,Number(policy.row_version),now);
-      const state={...result.state,probes:result.probes,...(result.dataDisks?{schemaVersion:2,dataDisks:result.dataDisks,requiredMountIds:result.requiredMountIds}:{})};
+      const prior=previous?.evaluator_state??{},oldProof=prior.probeEvidence;
+      const sameProof=sameReleaseApproval(oldProof?.releaseApproval,projection.releaseApproval)
+        &&oldProof?.bindingHash===projection.bindingHash&&oldProof?.credentialRevision===projection.credentialRevision
+        &&oldProof?.targetVersion===projection.targetVersion&&oldProof?.policyVersion===projection.policyVersion;
+      // A new credential/binding starts new warmup and recovery windows, but
+      // must not erase a previously latched critical resource fault.
+      const priorState=sameProof?prior:{latchedReasons:prior.latchedReasons??[]};
+      const result=evaluateSample(clean,priorState,policy.thresholds,Number(policy.row_version),now);
+      const state={...result.state,probeEvidence:projection,probes:result.probes,...(result.dataDisks?{schemaVersion:2,dataDisks:result.dataDisks,requiredMountIds:result.requiredMountIds}:{})};
       const saved=(await client.query(`INSERT INTO roomqc_control.cluster_health_current(cluster_id,source_generation,observed_at,
         received_at,valid_until,metric_status,normalized_values,reason_codes,evaluator_state)
         VALUES($1,nextval('roomqc_control.health_generation_seq'),$2,now(),$2::timestamptz+interval '120 seconds',$3,$4::jsonb,$5,$6::jsonb)
@@ -79,6 +103,7 @@ export class HealthStore {
       if(result.state.blockedReasons.length)await client.query('UPDATE roomqc_control.cluster_policies SET operator_reopen_required=true WHERE cluster_id=$1',[clusterId]);
       if(changed(previous,result))await client.query(`INSERT INTO roomqc_control.cluster_events(cluster_id,type,before_state,after_state,source,request_id)
         VALUES($1,'health_changed',$2::jsonb,$3::jsonb,'collector',$4)`,[clusterId,JSON.stringify(eventView(previous)),JSON.stringify(eventView(saved)),requestId]);
+      await syncHealthAlerts(client,clusterId,{reasonCodes:result.reasonCodes,sourceGeneration:saved.source_generation},requestId);
       return {accepted:true,generation:Number(saved.source_generation),status:result.status,reasonCodes:result.reasonCodes,observedAt:clean.observedAt};
     });
   }
@@ -93,6 +118,7 @@ export class HealthStore {
         await client.query('UPDATE roomqc_control.cluster_policies SET operator_reopen_required=true WHERE cluster_id=$1',[previous.cluster_id]);
         await client.query(`INSERT INTO roomqc_control.cluster_events(cluster_id,type,before_state,after_state,source,request_id)
           VALUES($1,'metrics_stale',$2::jsonb,$3::jsonb,'collector',$4)`,[previous.cluster_id,JSON.stringify(eventView(previous)),JSON.stringify(eventView(saved)),requestId]);
+        await syncHealthAlerts(client,previous.cluster_id,{reasonCodes:codes,sourceGeneration:saved.source_generation},requestId);
       }
       return {expiredCount:stale.length};
     });

@@ -1,7 +1,21 @@
 import {ControlError} from './errors.mjs';
 import {normalizeAddress} from './safe-http.mjs';
 import {validateTelemetryTarget} from './telemetry-source.mjs';
+import {isAbsolute} from 'node:path';
 const idPattern=/^[a-z][a-z0-9-]{1,63}$/;
+function preflight(value){
+  if(value===undefined)return undefined;
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['capturedAt','deploymentAllowed','diskFreePercent','dockerServerVersion'].includes(key))
+    ||typeof value.capturedAt!=='string'||!Number.isFinite(Date.parse(value.capturedAt))||typeof value.deploymentAllowed!=='boolean'
+    ||!Number.isFinite(value.diskFreePercent)||value.diskFreePercent<0||value.diskFreePercent>100
+    ||(value.dockerServerVersion!==undefined&&(typeof value.dockerServerVersion!=='string'||value.dockerServerVersion.length>80)))throw new Error('Invalid host preflight');
+  return {capturedAt:new Date(value.capturedAt).toISOString(),deploymentAllowed:value.deploymentAllowed,
+    diskFreePercent:value.diskFreePercent,dockerServerVersion:value.dockerServerVersion??null};
+}
+export function hostPreflightReady(value,now=Date.now()){
+  const captured=Date.parse(value?.capturedAt);
+  return value?.deploymentAllowed===true&&Number.isFinite(captured)&&captured<=now+5*60*1000&&now-captured<=24*60*60*1000;
+}
 export function registryConfiguration(env,clusters,allowLocal){
   const credentials=new Map(clusters.map(c=>[c.credentialRef||c.id,{ref:c.credentialRef||c.id,publishableKey:c.publishableKey,serviceKey:c.serviceKey,vapidPublicKey:c.vapidPublicKey}]));
   const entries=JSON.parse(env.ROOMQC_CONTROL_CREDENTIALS||'[]'),seen=new Set();
@@ -27,6 +41,8 @@ export function registryConfiguration(env,clusters,allowLocal){
     }
     if(!item.url||!Array.isArray(item.approvedAddresses??[])||(item.approvedAddresses??[]).length>64)throw new Error('Inventory endpoint is incomplete');
     for(const address of item.approvedAddresses??[])normalizeAddress(address);
+    const hostPreflight=preflight(item.preflight);
+    if(item.tenantSummaryCredentialFile!==undefined&&(typeof item.tenantSummaryCredentialFile!=='string'||!isAbsolute(item.tenantSummaryCredentialFile)))throw new Error('Summary credential must be an absolute private file');
     let telemetryTarget;
     if(item.telemetryTarget!==undefined){
       telemetryTarget=validateTelemetryTarget(item.telemetryTarget);
@@ -34,7 +50,7 @@ export function registryConfiguration(env,clusters,allowLocal){
         throw new Error('Telemetry inventory must match its approved cluster, host and environment');
       }
     }
-    inventory.set(item.id,{...item,...(telemetryTarget?{telemetryTarget}: {})});
+    inventory.set(item.id,{...item,...(hostPreflight?{preflight:hostPreflight}: {}),...(telemetryTarget?{telemetryTarget}: {})});
   }
   return {credentials,inventory};
 }

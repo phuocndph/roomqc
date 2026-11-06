@@ -1,10 +1,18 @@
-import { createHmac, randomUUID } from 'node:crypto';
+import { createHmac, createHash, randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { migrateDirectory, importInitialRegistry, migrationManifest, verifyHistory } from './migrate.mjs';
 import { ControlError,uuidPattern } from './errors.mjs';
 import {AdminDirectory,clusterSelect,withCredential} from './admin.mjs';
 import {admissionDecision} from './health-policy.mjs';
 import {resolveCredential,registryConfiguration} from './registry.mjs';
+import {releaseValidationContext} from './release-validation.mjs';
+import {ReleaseApprovalStore,assertReleaseAuthority} from './release-authority.mjs';
+import {AlertCommands} from './alert-commands.mjs';
+import {assertControlResources} from './resource-runtime.mjs';
+import {SetupDispatchStore} from './setup-dispatch.mjs';
+import {WorkspaceRecheckStore} from './setup-recheck.mjs';
+import {assertLiveSupportAuthority} from './support-authority.mjs';
+import {currentSupportIntent} from './support-intents.mjs';
 export {ControlError,uuidPattern} from './errors.mjs';
 
 export function bindingMatches(workspace,binding) {
@@ -27,6 +35,7 @@ export function validateSlug(value) {
 
 export class ControlStore {
   constructor(config) {
+    assertControlResources(config);
     // Programmatic test/CLI callers use the same registry resolver as loadConfig.
     if(!config.credentials||!config.inventory)Object.assign(config,registryConfiguration({},config.clusters,!config.production&&config.allowLocal!==false));
     this.config = config;
@@ -35,14 +44,32 @@ export class ControlStore {
       idle_in_transaction_session_timeout:10000,application_name:'roomqc-control' });
     this.pool.on('error', () => console.error('Control database idle connection failed'));
     this.admin=new AdminDirectory(this);
+    this.alerts=new AlertCommands(this);
+    this.setup=new SetupDispatchStore(this);
+    this.rechecks=new WorkspaceRecheckStore(this);
   }
   hashEmail(email) { return createHmac('sha256', this.config.emailKey).update(email.trim().toLowerCase()).digest('hex'); }
+  async authorizeRelease(row){
+    return new ReleaseApprovalStore(this.pool).transaction(async client=>{
+      const current=(await client.query('SELECT c.*,floor(extract(epoch FROM clock_timestamp())*1000) AS now_ms FROM roomqc_control.clusters c WHERE id=$1',[row.id])).rows[0];
+      if(!current)throw new ControlError(404,'CLUSTER_NOT_FOUND','Không tìm thấy cụm.');
+      const context=releaseValidationContext(this.config,current,{now:Number(current.now_ms)});
+      await assertReleaseAuthority(client,context.approval);return context;
+    });
+  }
   async migrate() {
     const result=await migrateDirectory(this.pool);
     await importInitialRegistry(this.pool,this.config.clusters);
     return result;
   }
   async readiness() {
+    if(this.config.resourceBudget){
+      const budget=this.config.resourceBudget.databases.find(d=>d.kind==='directory');
+      const actual=(await this.pool.query(`SELECT current_setting('max_connections')::integer AS maximum,
+        current_setting('superuser_reserved_connections')::integer+coalesce(current_setting('reserved_connections',true),'0')::integer AS reserved`)).rows[0];
+      if(budget.maxConnections>actual.maximum||budget.reservedConnections<actual.reserved)
+        throw new ControlError(503,'RESOURCE_DATABASE_MISMATCH','Ngân sách không khớp giới hạn kết nối database thực tế.');
+    }
     this.manifest ??= migrationManifest();
     const manifest=await this.manifest;
     if(await verifyHistory(this.pool,manifest)!==manifest.length) throw new ControlError(503,'CONTROL_SCHEMA_PENDING','Database điều phối chưa hoàn tất nâng cấp.');
@@ -50,9 +77,10 @@ export class ControlStore {
       WHERE to_regclass('roomqc_control.'||name) IS NOT NULL`,[[
       'hosts','clusters','workspaces','attempts','support_actions','cluster_policies','cluster_health_current',
       'cluster_admission_current','control_commands','cluster_events','provisioning_jobs','signup_affinities',
-      'signup_affinity_conflicts','alerts','backup_runs',
+      'signup_affinity_conflicts','alerts','backup_runs','probe_credentials','release_approvals','release_authority','release_commands','release_key_revocations',
+      'alert_events','alert_outbox','alert_delivery_attempts','setup_dispatches',
     ]]);
-    if(shape.rows[0].present!==15)throw new ControlError(503,'CONTROL_SCHEMA_INCOMPLETE','Cấu trúc database điều phối chưa đầy đủ.');
+    if(shape.rows[0].present!==24)throw new ControlError(503,'CONTROL_SCHEMA_INCOMPLETE','Cấu trúc database điều phối chưa đầy đủ.');
     const {rows}=await this.pool.query(`SELECT id,api_url,inventory_ref,credential_ref FROM roomqc_control.clusters WHERE id=ANY($1::text[])`,[this.config.clusters.map(c=>c.id)]);
     if(this.config.clusters.some(c=>!rows.some(r=>r.id===c.id&&r.api_url===c.url))) {
       throw new ControlError(503,'CONTROL_REGISTRY_MISMATCH','Cấu hình cụm chưa được đồng bộ.');
@@ -136,7 +164,9 @@ export class ControlStore {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(727001)');
       const current=(await client.query('SELECT * FROM roomqc_control.workspaces WHERE id=$1 FOR UPDATE',[workspace.id])).rows[0];
-      if(current?.status==='reserved'){
+      if((await client.query('SELECT 1 FROM roomqc_control.setup_dispatches WHERE workspace_id=$1 LIMIT 1',[workspace.id])).rowCount)
+        throw new ControlError(409,'SETUP_DISPATCH_REQUIRED','Đăng ký phải tiếp tục qua giao thức cấp phát hiện hành.');
+      if(['reserved','provisioning','active'].includes(current?.status)){
         const cluster=await this.admin.cluster(current.cluster_id,client),gate=admissionDecision(cluster,{ignoreCapacity:true});
         if(gate.decision!=='open')throw new ControlError(503,'PROVISIONING_WAIT','Cụm đang tạm ngừng thiết lập mới. Đăng ký được giữ nguyên; vui lòng thử lại sau.');
       }
@@ -169,11 +199,52 @@ export class ControlStore {
     if (['suspended','migrating'].includes(row.status)) throw new ControlError(503, 'WORKSPACE_UNAVAILABLE', 'Doanh nghiệp đang tạm ngưng hoặc bảo trì.');
     return row;
   }
-  async activate(workspace, binding, requestId, supportActionId=null) {
-    if(!bindingMatches(workspace,binding)) throw new ControlError(409,'BINDING_CONFLICT','Receipt không khớp đăng ký; cần đối soát kỹ thuật.');
+  async setupStatusSnapshot(workspace,user) {
+    const {rows}=await this.pool.query(`SELECT w.*,clock_timestamp() AS checked_at,
+      CASE WHEN j.id IS NULL THEN NULL ELSE jsonb_build_object('id',j.id,'state',j.state,
+        'routingVersion',j.expected_routing_version,'nextAttemptAt',j.next_attempt_at,'leaseUntil',j.lease_until,
+        'closureVerified',j.closure_verified) END AS setup_job
+      FROM roomqc_control.workspaces w LEFT JOIN LATERAL (
+        SELECT j.id,j.state,j.expected_routing_version,j.next_attempt_at,j.lease_until,
+          COALESCE(j.state='waiting_owner' AND d.terminal_state='closed' AND d.workspace_id=w.id
+            AND d.cluster_id=w.cluster_id AND d.owner_id=w.owner_id AND d.routing_version=w.routing_version
+            AND j.expected_routing_version=d.routing_version,false) AS closure_verified
+        FROM roomqc_control.provisioning_jobs j LEFT JOIN roomqc_control.setup_dispatches d ON d.id=j.dispatch_id
+        WHERE j.workspace_id=w.id ORDER BY j.created_at DESC,j.id DESC LIMIT 1
+      ) j ON true WHERE w.id=$1 AND w.cluster_id=$2 AND w.routing_version=$3 AND w.email_hash=$4
+        AND (w.owner_id IS NULL OR w.owner_id=$5) AND w.status IN ('reserved','provisioning','active')
+        AND (w.status<>'reserved' OR w.expires_at IS NULL OR w.expires_at>clock_timestamp())`,
+      [workspace.id,workspace.cluster_id,workspace.routing_version,this.hashEmail(user.email),user.id]);
+    if(!rows[0])throw new ControlError(409,'SETUP_STATUS_CHANGED','Đăng ký vừa thay đổi hoặc hết hạn. Vui lòng mở lại trang đăng ký.');
+    return {...workspace,...rows[0]};
+  }
+  async activate(workspace, binding, requestId, supportActionId=null, supportAuthority=null) {
+    // Support must use the durable coordinator and its checked-out client.
+    // Retain this entry point for owner/bootstrap only; never nest pool leases.
+    if(supportActionId)throw new ControlError(503,'SUPPORT_INTENT_REQUIRED','Cần đối soát bằng mã lệnh hỗ trợ bền vững.');
     const client=await this.pool.connect();
-    try {
+    try{
       await client.query('BEGIN');
+      const result=await this.activateInTransaction(client,workspace,binding,requestId);
+      await client.query('COMMIT');return result;
+    }catch(error){await client.query('ROLLBACK').catch(()=>{});throw error}finally{client.release()}
+  }
+  async activateInTransaction(client,workspace,binding,requestId,supportActionId=null,supportAuthority=null) {
+    if(!bindingMatches(workspace,binding)) throw new ControlError(409,'BINDING_CONFLICT','Receipt không khớp đăng ký; cần đối soát kỹ thuật.');
+    if(supportActionId){
+      const intent=currentSupportIntent(client);
+      if(!intent||intent.context.kind!=='support'||intent.context.target!==workspace.id
+        ||intent.context.actorId!==supportAuthority?.actor?.id?.toLowerCase()
+        ||intent.context.authorityClusterId!==supportAuthority?.actor?.clusterId)
+        throw new ControlError(503,'SUPPORT_INTENT_REQUIRED','Chưa xác nhận được mã lệnh hỗ trợ.');
+      await assertLiveSupportAuthority(supportAuthority.actor,supportAuthority.authorize);
+    }
+      // An adopted workspace must settle its actual dispatch and job together.
+      // Legacy bootstrap/support must not activate it through a weaker path.
+      await client.query('SELECT id FROM roomqc_control.workspaces WHERE id=$1 FOR UPDATE',[workspace.id]);
+      if(supportActionId)await assertLiveSupportAuthority(supportAuthority.actor,supportAuthority.authorize);
+      if((await client.query('SELECT 1 FROM roomqc_control.setup_dispatches WHERE workspace_id=$1 LIMIT 1',[workspace.id])).rowCount)
+        throw new ControlError(409,'SETUP_DISPATCH_RECOVERY_REQUIRED','Cần đối soát dispatch trước khi mở khách sạn.');
       const { rows } = await client.query(`UPDATE roomqc_control.workspaces SET tenant_id=$2,hotel_id=$3,owner_id=$4,
         status='active',expires_at=NULL,last_error_code=NULL,updated_at=now() WHERE id=$1 AND status IN ('reserved','provisioning','active')
         AND (status<>'reserved' OR expires_at IS NULL OR expires_at>now())
@@ -185,20 +256,19 @@ export class ControlStore {
       await client.query('INSERT INTO roomqc_control.attempts(request_id,workspace_id,outcome) VALUES($1,$2,$3)',[requestId,workspace.id,'active']);
       if(supportActionId) {
         const audit=await client.query(`UPDATE roomqc_control.support_actions SET outcome='reconciled',
-          after_state=$2::jsonb,finished_at=now() WHERE id=$1 AND workspace_id=$3 AND outcome='started'`,
+            after_state=$2::jsonb,error_code=NULL,finished_at=now() WHERE id=$1 AND workspace_id=$3 AND outcome IN ('started','failed')`,
         [supportActionId,JSON.stringify(supportSnapshot(rows[0])),workspace.id]);
         if(audit.rowCount!==1) throw new ControlError(409,'SUPPORT_AUDIT_CONFLICT','Không thể ghi nhật ký hỗ trợ.');
       }
-      await client.query('COMMIT');
       return { ...workspace, ...rows[0] };
-    } catch(error) {await client.query('ROLLBACK');throw error} finally {client.release()}
   }
   async recordFailure(workspaceId,requestId,code) {
     // Late failures must not overwrite an already active binding. Retain the
     // attempt even if a concurrent successful request cleared the error state.
     await this.pool.query(`WITH changed AS (
-      UPDATE roomqc_control.workspaces SET last_error_code=$3,updated_at=now()
-      WHERE id=$1 AND status IN ('reserved','provisioning') RETURNING id
+      UPDATE roomqc_control.workspaces w SET last_error_code=$3,updated_at=now()
+      WHERE w.id=$1 AND w.status IN ('reserved','provisioning')
+        AND NOT EXISTS(SELECT 1 FROM roomqc_control.setup_dispatches d WHERE d.workspace_id=w.id) RETURNING w.id
     ) INSERT INTO roomqc_control.attempts(request_id,workspace_id,outcome) VALUES($2,$1,$3)`,[workspaceId,requestId,code]);
   }
   async supportFind(query) {
@@ -221,12 +291,33 @@ export class ControlStore {
       WHERE workspace_id=$1 ORDER BY created_at DESC,id DESC LIMIT 20`,[workspaceId]);
     return {attempts:attempts.rows,actions:actions.rows};
   }
-  async startSupportAction(workspace,actor,reason,requestId) {
-    const id=randomUUID();
-    await this.pool.query(`INSERT INTO roomqc_control.support_actions
-      (id,request_id,workspace_id,actor_id,authority_cluster_id,reason,before_state) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb)`,
-    [id,requestId,workspace.id,actor.id,actor.clusterId,reason,JSON.stringify(supportSnapshot(workspace))]);
-    return id;
+  async supportCommandAction(actor,workspaceId,key,client=this.pool) {
+    const {rows}=await client.query(`SELECT * FROM roomqc_control.support_actions WHERE actor_id=$1 AND authority_cluster_id=$2
+      AND workspace_id=$3 AND command_key=$4 LIMIT 2`,[actor.id,actor.clusterId,workspaceId,key]);
+    if(rows.length>1)throw new ControlError(409,'SUPPORT_RESULT_UNAVAILABLE','Có lịch sử hỗ trợ cần đối soát. Giữ nguyên mã lệnh.');
+    return rows[0]??null;
+  }
+  async startSupportAction(workspace,actor,reason,requestId,command) {
+    if(!command||!uuidPattern.test(command.key??'')||!(/^[a-f0-9]{64}$/).test(command.payloadHash??''))
+      throw new ControlError(400,'SUPPORT_COMMAND_KEY_REQUIRED','Cần mã lệnh hỗ trợ cố định.');
+    const client=await this.pool.connect();
+    try{
+      await client.query('BEGIN');
+      // All legacy callers serialize action creation on the actual workspace.
+      // Release this lease before acquiring the coordinator's command fence.
+      await client.query("SET LOCAL lock_timeout='5s';SET LOCAL statement_timeout='5s'");
+      await client.query('SELECT id FROM roomqc_control.workspaces WHERE id=$1 FOR UPDATE',[workspace.id]);
+      const previous=await this.supportCommandAction(actor,workspace.id,command.key,client);
+      if(previous){
+        if(previous.payload_hash!==command.payloadHash)throw new ControlError(409,'IDEMPOTENCY_CONFLICT','Mã lệnh đã dùng cho nội dung khác.');
+        await client.query('COMMIT');return previous.id;
+      }
+      const id=randomUUID();
+      await client.query(`INSERT INTO roomqc_control.support_actions
+      (id,request_id,workspace_id,actor_id,authority_cluster_id,reason,before_state,command_key,payload_hash) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)`,
+      [id,requestId,workspace.id,actor.id,actor.clusterId,reason,JSON.stringify(supportSnapshot(workspace)),command.key,command.payloadHash]);
+      await client.query('COMMIT');return id;
+    }catch(error){await client.query('ROLLBACK').catch(()=>{});throw error}finally{client.release()}
   }
   async failSupportAction(id,code) {
     await this.pool.query(`UPDATE roomqc_control.support_actions SET outcome='failed',error_code=$2,finished_at=now()

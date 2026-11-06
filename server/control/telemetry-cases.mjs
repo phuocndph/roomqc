@@ -1,7 +1,8 @@
+import {fixtureAdminExecute} from './support-authority-fixtures.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import pg from 'pg';
-import {HealthStore} from './telemetry.mjs';
+import {SyntheticHealthStore as HealthStore} from './health-test-fixtures.mjs';
 import {migrateDirectory,importInitialRegistry} from './migrate.mjs';
 import {fixtureConfig,seedOperationalCluster,fixtureTarget} from './test-fixtures.mjs';
 import {telemetryTargetFingerprint} from './telemetry-source.mjs';
@@ -36,7 +37,7 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
       assert.equal(snapshot.evaluator_state.warming,false);assert.deepEqual(snapshot.evaluator_state.probes,sample(now).probes);
       await assert.rejects(()=>metricsPool.query('UPDATE roomqc_control.cluster_policies SET operator_reopen_required=false'),{code:'42501'});
       await assert.rejects(()=>metricsPool.query('UPDATE roomqc_control.cluster_policies SET manual_closed=false'),{code:'42501'});
-      const result=await api.admin.execute({id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'open_admission',expectedVersion:1,
+      const result=await fixtureAdminExecute(api.admin,{id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'open_admission',expectedVersion:1,
         reason:'Verified metrics recovered in isolated test',payload:{}},randomUUID(),'cluster-a'),randomUUID());
       assert.equal(result.result.admission.decision,'open');
     }finally{await metricsPool.end();await api.close()}
@@ -105,7 +106,7 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
         clock=now-300000+i*30000;if(i===5)writer=new HealthStore(metricsPool,{clock:()=>clock});await writer.record('cluster-a',v2(clock));
       }
       // Warmup latches operator approval; healthy metrics must never clear it.
-      await api.admin.execute({id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'open_admission',expectedVersion:1,
+      await fixtureAdminExecute(api.admin,{id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'open_admission',expectedVersion:1,
         reason:'Approve warm metrics in isolated multi-mount test',payload:{}},randomUUID(),'cluster-a'),randomUUID());
       const active=await api.reserve({slug:'existing-health-client',email:'existing@example.invalid',displayName:'Existing fixture'},randomUUID());
       await pool.query("UPDATE roomqc_control.workspaces SET status='active',tenant_id=$2,hotel_id=$3,owner_id=$4 WHERE id=$1",[active.id,randomUUID(),randomUUID(),randomUUID()]);
@@ -136,7 +137,7 @@ export function registerTelemetryCases({dbtest,database,password,cluster}){
       assert.deepEqual((await pool.query('SELECT * FROM roomqc_control.cluster_health_current')).rows[0],before);
       await assert.rejects(()=>writer.record('cluster-a',{...v2(clock),targetFingerprint:'d'.repeat(64)}),{code:'TELEMETRY_TARGET_MISMATCH'});
       const target={...fixtureTarget('cluster-a'),dbConnectionBudget:101};api.config.inventory.get('cluster-a').telemetryTarget=target;
-      await api.admin.execute({id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'bind_telemetry_target',expectedVersion:1,
+      await fixtureAdminExecute(api.admin,{id:randomUUID(),clusterId:'cluster-a'},clusterCommand({operation:'bind_telemetry_target',expectedVersion:1,
         reason:'Approve changed isolated telemetry target',payload:{targetFingerprint:telemetryTargetFingerprint(target)}},randomUUID(),'cluster-a'),randomUUID());
       clock=Date.now()+10;
       const next={...v2(clock),targetFingerprint:telemetryTargetFingerprint(target)};next.metrics.dbConnectionBudget=101;

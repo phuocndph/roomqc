@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {healthConfiguration,loadHealthConfiguration,validateHealthSecretAccess} from './workers/health-config.mjs';
 import {startHealthRuntime,createHealthPool} from './workers/health-runtime.mjs';
 import {fixtureTarget} from './test-fixtures.mjs';
+import {syntheticWorkerProbe} from './health-test-fixtures.mjs';
 
 function raw(){return {schemaVersion:1,instanceId:'health-fixture',targets:[{target:fixtureTarget('cluster-a'),
   prometheus:{url:'http://127.0.0.1:9090',approvedAddresses:['127.0.0.1']}}],
@@ -55,7 +56,7 @@ test('health worker validates Unix secret access and --help cannot start a DB or
   for(const info of [{uid:1000,gid:1000,mode:0o644},{uid:0,gid:0,mode:0o600},{uid:1000,gid:1,mode:0o640},
     {uid:1000,gid:1000,mode:0o660}])assert.throws(()=>validateHealthSecretAccess(info),{code:'INVALID_HEALTH_CONFIG'});
   const output=execFileSync(process.execPath,['server/control/workers/health-runtime.mjs','--help'],{encoding:'utf8'});
-  assert.match(output,/No service probes configured until M06/);
+  assert.match(output,/Without managed probes readiness remains closed/);assert.match(output,/schemaVersion 2/);
 });
 test('metrics pool has bounded connections, SQL, lock and acquire deadlines without a DB connection at construction',async()=>{
   const pool=createHealthPool(config());
@@ -74,7 +75,7 @@ test('health worker compose is opt-in, non-root, private, bounded and has no API
   for(const key of ['ports','privileged','network_mode','pid','env_file'])assert.equal(worker[key],undefined);
   assert.equal(JSON.stringify(worker.volumes).includes('docker.sock'),false);assert.equal(worker.volumes[0].read_only,true);
   assert.ok(worker.mem_limit&&worker.cpus&&worker.pids_limit&&worker.logging.options['max-size']);
-  assert.deepEqual(Object.keys(worker.environment).sort(),['NODE_ENV','ROOMQC_HEALTH_CONFIG_FILE','ROOMQC_HEALTH_DATABASE_URL_FILE']);
+  assert.deepEqual(Object.keys(worker.environment).sort(),['NODE_ENV','ROOMQC_HEALTH_CONFIG_FILE','ROOMQC_HEALTH_DATABASE_URL_FILE','ROOMQC_RESOURCE_BUDGET_FILE','ROOMQC_RESOURCE_ENVIRONMENT']);
   assert.deepEqual(worker.secrets,['metrics-dsn']);
   for(const network of Object.values(compose.networks))assert.equal(network.external,true);
   const dockerfile=await readFile(new URL('./Dockerfile',import.meta.url),'utf8');
@@ -101,7 +102,7 @@ test('loopback readiness becomes true after a verified collection cycle, then sh
   let closed=0;
   const store={readiness:async()=>{},expireStale:async()=>{},assertTarget:async()=>{},record:async()=>({accepted:true})};
   const runtime=await startHealthRuntime(config(),{store,pool:{end:async()=>closed++},port:0,autoStart:false,
-    probe:async()=>({auth:false,rest:false,storage:false,realtime:false,functions:false}),sourceFor:()=>({collect:async()=>({})})});
+    probe:async target=>syntheticWorkerProbe(target),sourceFor:()=>({collect:async()=>({})})});
   const base='http://127.0.0.1:'+runtime.server.address().port;
   await runtime.worker.tick();assert.equal((await fetch(base+'/readyz')).status,200);
   assert.equal((await runtime.shutdown()).timedOut,false);await runtime.shutdown();assert.equal(closed,1);

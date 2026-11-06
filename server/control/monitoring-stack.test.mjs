@@ -124,10 +124,27 @@ test('owned real monitoring stack: host-volume mapping, private exporters, least
       const sample=await source.collect(target,probes);
       assert.deepEqual(sample.probes,probes);assert.equal(sample.measurementScope,target.measurementScope);
       assert.ok(Math.abs(sample.metrics.cpuUsedPercent-expectedCpu)<=5,'CPU differs from independent OS observation by more than five percentage points');
-      const mem=Object.fromEntries(helper("awk '/^MemTotal:|^MemAvailable:/ {print $1, $2}' /host/proc/meminfo")
+      const readMemory=()=>Object.fromEntries(helper("awk '/^MemTotal:|^MemAvailable:/ {print $1, $2}' /host/proc/meminfo")
         .trim().split('\n').map(line=>{const [key,kib]=line.split(/\s+/);return [key,Number(kib)*1024]}));
-      assert.equal(sample.metrics.memoryTotalBytes,mem['MemTotal:']);
-      assert.ok(Math.abs(sample.metrics.memoryAvailableBytes-mem['MemAvailable:'])<mem['MemTotal:']*0.05);
+      // Other owned tests can release GBs of VM memory between an exporter scrape
+      // and a later OS read. Observe a window containing a new complete scrape;
+      // compare to its independent OS range, keeping the original 5% tolerance.
+      const memoryWindowStart=Date.now(),memoryObservations=[];
+      const memorySample=await waitFor(async()=>{
+        memoryObservations.push(readMemory());
+        const value=await source.collect(target,probes);
+        memoryObservations.push(readMemory());
+        return Date.parse(value.observedAt)>=memoryWindowStart?value:false;
+      },20000);
+      const mem=memoryObservations.at(-1),memoryAvailable=memoryObservations.map(v=>v['MemAvailable:']);
+      const minimum=Math.min(...memoryAvailable),maximum=Math.max(...memoryAvailable),tolerance=mem['MemTotal:']*0.05;
+      t.diagnostic(JSON.stringify({event:'monitoring_memory_window',observedAt:memorySample.observedAt,
+        windowStart:new Date(memoryWindowStart).toISOString(),windowEnd:new Date().toISOString(),
+        samples:memoryObservations.length,exporter:memorySample.metrics.memoryAvailableBytes,minimum,maximum,tolerancePercentOfTotal:5}));
+      assert.ok(memoryObservations.every(v=>v['MemTotal:']===mem['MemTotal:']));
+      assert.equal(memorySample.metrics.memoryTotalBytes,mem['MemTotal:']);
+      assert.ok(memorySample.metrics.memoryAvailableBytes>=minimum-tolerance&&memorySample.metrics.memoryAvailableBytes<=maximum+tolerance,
+        'Memory differs from the independent OS observation window by more than five percent of total RAM');
       const node=project+'-node-exporter-1';
       const fs=docker(['exec',node,'/bin/sh','-c',"stat -f -c '%S %b %a %c %d' "+posix.join('/host',mounts[0].mountpoint)])
         .trim().split(/\s+/).map(Number);
@@ -138,8 +155,9 @@ test('owned real monitoring stack: host-volume mapping, private exporters, least
       assert.ok(Math.abs(sample.metrics.dbConnectionsUsed-(connections-1))<=1);
       t.diagnostic(JSON.stringify({event:'monitoring_fixture_comparison',scope:sample.measurementScope,
         cpuPercent:{exporter:sample.metrics.cpuUsedPercent,os:expectedCpu,tolerancePoints:5},
-        memoryBytes:{exporterTotal:sample.metrics.memoryTotalBytes,osTotal:mem['MemTotal:'],
-          exporterAvailable:sample.metrics.memoryAvailableBytes,osAvailable:mem['MemAvailable:'],tolerancePercentOfTotal:5},
+        memoryBytes:{exporterTotal:memorySample.metrics.memoryTotalBytes,osTotal:mem['MemTotal:'],
+          exporterAvailable:memorySample.metrics.memoryAvailableBytes,osAvailable:mem['MemAvailable:'],
+          osMinimum:minimum,osMaximum:maximum,tolerancePercentOfTotal:5},
         filesystem:{id:sample.dataDisks[0].id,exporterTotal:sample.dataDisks[0].totalBytes,osTotal:fs[0]*fs[1],
           exporterAvailable:sample.dataDisks[0].freeBytes,osAvailable:fs[0]*fs[2],toleranceBytes:128*1024**2},
         connections:{exporter:sample.metrics.dbConnectionsUsed,osExcludingObserver:connections-1,tolerance:1},

@@ -8,7 +8,7 @@ import { createControlServer } from './app.mjs';
 
 function configuration() {
   return {NODE_ENV:'test',ROOMQC_CONTROL_ALLOW_LOCAL:'true',ROOMQC_CONTROL_SIGNUP_ENABLED:'true',ROOMQC_CONTROL_DATABASE_URL:'postgresql://test@localhost/test',
-    ROOMQC_CONTROL_EMAIL_HASH_KEY:'test-key-'.repeat(6),ROOMQC_PUBLIC_URL:'http://localhost:8082',
+    ROOMQC_CONTROL_EMAIL_HASH_KEY:'test-key-'.repeat(6),ROOMQC_PUBLIC_URL:'http://localhost:8082',ROOMQC_CONTROL_SETUP_DISPATCH_ENABLED:'true',
     ROOMQC_CONTROL_CLUSTERS:JSON.stringify([{id:'cluster-a',url:'http://127.0.0.1:54321',publishableKey:'public',serviceKey:'server-secret',vapidPublicKey:'public-vapid',maxWorkspaces:10}])};
 }
 
@@ -17,6 +17,8 @@ test('registry validates origins, public keys, cluster IDs, production TLS and s
   assert.equal(loadConfig({...env,ROOMQC_CONTROL_SIGNUP_ENABLED:undefined}).signupEnabled,false);
   assert.equal(loadConfig(env).supportClusterId,null);
   assert.equal(loadConfig(env).port,8091);
+  assert.equal(loadConfig(env).setupDispatchEnabled,true);
+  assert.equal(loadConfig({...env,ROOMQC_CONTROL_SETUP_DISPATCH_ENABLED:undefined}).setupDispatchEnabled,false);
   assert.equal(loadConfig(env).poolMax,5);
   assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_POOL_MAX:'20',ROOMQC_CONTROL_POOL_BUDGET:'20'}));
   assert.throws(()=>loadConfig({...env,ROOMQC_CONTROL_SHUTDOWN_TIMEOUT_MS:'0'}));
@@ -47,13 +49,17 @@ test('slug validation rejects ambiguous, reserved and non-ASCII slugs',()=>{
   for(const slug of ['app','admin','api','ABC','an--thuy','abc-','a','an_thuy','ánthuy','../abc','a/bc']) assert.throws(()=>validateSlug(slug));
 });
 
-test('gateway uses the selected cluster, validates Auth remotely, and never sends server credentials on user requests',async()=>{
+test('gateway uses a live registration actor on the selected cluster and never sends server credentials on user requests',async()=>{
   const config=loadConfig(configuration());
   const calls=[];
-  const gateway=new ClusterGateway(config,async(url,init)=>{calls.push({url,init});return new Response(JSON.stringify({id:'user',email:'owner@example.com',email_confirmed_at:'2026-10-15'}),{status:200})});
+  const actor={id:'10000000-0000-4000-8000-000000000001',session_id:'10000000-0000-4000-8000-000000000002',
+    email:'owner@example.com',email_confirmed_at:'2026-10-15'};
+  const gateway=new ClusterGateway(config,async(url,init)=>{calls.push({url,init});return Response.json(actor)});
   const workspace={cluster_id:'cluster-a',api_url:'http://127.0.0.1:54321'};
-  await gateway.user(workspace,'user-token');
-  assert.equal(calls[0].url,'http://127.0.0.1:54321/auth/v1/user');
+  assert.deepEqual(await gateway.user(workspace,'user-token'),actor);
+  assert.equal(calls[0].url,'http://127.0.0.1:54321/rest/v1/rpc/registration_actor');
+  assert.equal(calls[0].init.method,'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body),{});
   assert.equal(calls[0].init.headers.Authorization,'Bearer user-token');
   assert.equal(calls[0].init.headers.apikey,'public');
   await gateway.binding({...workspace,id:'workspace'});
@@ -63,6 +69,24 @@ test('gateway uses the selected cluster, validates Auth remotely, and never send
   config.clusters[0].internalUrl='http://host.docker.internal:54321';
   await gateway.binding({...workspace,id:'workspace'});
   assert.ok(calls.at(-1).url.startsWith('http://host.docker.internal:54321/'));
+  await gateway.provision({...workspace,id:'workspace',slug:'anthuy'},actor,{registrationSessionId:'forged',workspaceSlug:'forged'});
+  const body=JSON.parse(calls.at(-1).init.body);
+  assert.equal(body.p_fields.registrationSessionId,actor.session_id);
+  assert.equal(body.p_fields.workspaceSlug,'anthuy');
+  await assert.rejects(()=>gateway.provision(workspace,{id:actor.id},{}),e=>e.status===401);
+});
+
+test('registration gateway fails closed for invalid actor payload and preserves real authorization denials',async()=>{
+  const config=loadConfig(configuration()),workspace={cluster_id:'cluster-a',api_url:'http://127.0.0.1:54321'};
+  for(const value of [null,{}, {id:'bad',email:'x@y',email_confirmed_at:'yes'}, {id:'10000000-0000-4000-8000-000000000001',
+    session_id:'bad',email:'x@y',email_confirmed_at:'yes'}]){
+    const gateway=new ClusterGateway(config,async()=>Response.json(value));
+    await assert.rejects(()=>gateway.user(workspace,'token'),e=>e.status===503&&e.code==='REGISTRATION_ACTOR_INVALID');
+  }
+  for(const status of [401,403,500]){
+    const gateway=new ClusterGateway(config,async()=>Response.json({error:'private diagnostic'},{status}));
+    await assert.rejects(()=>gateway.user(workspace,'token'),e=>e.status===(status===500?503:status)&&!e.message.includes('private diagnostic'));
+  }
 });
 
 test('HTTP boundary rejects origin spoofing, unauthenticated provisioning and strips privileged body fields',async()=>{
@@ -70,9 +94,11 @@ test('HTTP boundary rejects origin spoofing, unauthenticated provisioning and st
   const workspace={id:'workspace',slug:'anthuy',display_name:'An Thuy',email_hash:'owner',cluster_id:'cluster-a',api_url:'http://127.0.0.1:54321',status:'reserved'};
   let received;
   const store={pool:{query:async()=>{}},workspace:async()=>workspace,hashEmail:email=>email==='owner@example.com'?'owner':'other',
-    reserve:async()=>workspace,activate:async()=>workspace,beginProvision:async()=>workspace,audit:async()=>{}};
+    reserve:async()=>workspace,activate:async()=>workspace,audit:async()=>{},setup:{
+      begin:async(w,u,fields)=>({workspace:w,dispatch:{},started:true,fields}),
+      settle:async()=>({state:'committed',workspace:{tenant_id:'tenant',hotel_id:'hotel'}})}};
   const gateway={binding:async()=>null,user:async(w,token)=>{if(token!=='valid')throw Object.assign(new Error('auth'),{status:401});return{id:'owner-id',email:'owner@example.com'}},
-    provision:async(w,user,fields)=>{received=fields;return{success:true,tenant_id:'tenant',hotel_id:'hotel',owner_id:user.id}}};
+    provisionSetupDispatch:async(w,user,attempt)=>{received=attempt.fields;return{success:true,tenant_id:'tenant',hotel_id:'hotel',owner_id:user.id}}};
   const server=createControlServer({config,store,gateway}); server.listen(0,'127.0.0.1'); await once(server,'listening');
   const base=`http://127.0.0.1:${server.address().port}/api/control`;
   const post=(path,body,headers={})=>fetch(`${base}${path}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/json',...headers},body:JSON.stringify(body)});
@@ -87,7 +113,7 @@ test('HTTP boundary rejects origin spoofing, unauthenticated provisioning and st
     assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
     assert.equal(received.tenantName,'An Thuy');assert.equal(received.p_owner_id,undefined);assert.equal(received.role,undefined);
     received=undefined;
-    store.beginProvision=async()=>{throw new Error('Directory write unavailable')};
+    store.setup.begin=async()=>{throw new Error('Directory write unavailable')};
     assert.equal((await post('/workspaces/anthuy/provision',{}, {Authorization:'Bearer valid'})).status,503);
     assert.equal(received,undefined,'Remote provisioning must not start before the durable reservation gate');
     const text=await (await fetch(`${base}/workspaces/anthuy/bootstrap`)).text();

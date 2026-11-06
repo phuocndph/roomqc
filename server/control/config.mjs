@@ -1,6 +1,33 @@
 import {registryConfiguration} from './registry.mjs';
+import {loadReleaseValidationCatalog} from './release-validation.mjs';
+import {resourceMode,loadRuntimeResourceContext,assertControlResources} from './resource-runtime.mjs';
+import {boundedHealthFile,healthDatabaseUrl} from './workers/health-config.mjs';
+import {readHostInventoryDocument} from './host-inventory.mjs';
+
+export async function loadRuntimeConfig(env=process.env){
+  let runtimeEnv=env;
+  if(env.ROOMQC_CONTROL_INVENTORY_FILE!==undefined){
+    const invalid=()=>Object.assign(new Error('CONTROL_INVENTORY_FILE_INVALID'),{code:'CONTROL_INVENTORY_FILE_INVALID'});
+    if(env.ROOMQC_CONTROL_INVENTORY!==undefined||env.ROOMQC_CONTROL_CREDENTIALS!==undefined||!env.ROOMQC_CONTROL_INVENTORY_FILE)throw invalid();
+    let document;
+    try{document=await readHostInventoryDocument(env.ROOMQC_CONTROL_INVENTORY_FILE)}catch{throw invalid()}
+    if(!document||document.version!==1||!Array.isArray(document.inventory)||!Array.isArray(document.credentials))throw invalid();
+    runtimeEnv={...runtimeEnv,ROOMQC_CONTROL_INVENTORY:JSON.stringify(document.inventory),ROOMQC_CONTROL_CREDENTIALS:JSON.stringify(document.credentials)};
+  }
+  if(runtimeEnv.ROOMQC_CONTROL_DATABASE_URL_FILE===undefined)return loadConfig(runtimeEnv);
+  const invalid=()=>Object.assign(new Error('CONTROL_DATABASE_SECRET_INVALID'),{code:'CONTROL_DATABASE_SECRET_INVALID'});
+  if(runtimeEnv.ROOMQC_CONTROL_DATABASE_URL||!runtimeEnv.ROOMQC_CONTROL_DATABASE_URL_FILE
+    ||runtimeEnv.NODE_TLS_REJECT_UNAUTHORIZED!==undefined&&runtimeEnv.NODE_TLS_REJECT_UNAUTHORIZED!=='1')throw invalid();
+  let databaseUrl;
+  try{
+    databaseUrl=(await boundedHealthFile(runtimeEnv.ROOMQC_CONTROL_DATABASE_URL_FILE,8192,{sensitive:true})).trim();
+    const {production}=resourceMode(runtimeEnv);
+    healthDatabaseUrl(databaseUrl,{production,allowLocal:!production&&env.ROOMQC_CONTROL_ALLOW_LOCAL==='true'});
+  }catch{throw invalid()}
+  return loadConfig({...runtimeEnv,ROOMQC_CONTROL_DATABASE_URL:databaseUrl});
+}
 export function loadConfig(env = process.env) {
-  const production = env.NODE_ENV === 'production';
+  const {production} = resourceMode(env);
   const allowLocal = !production && env.ROOMQC_CONTROL_ALLOW_LOCAL === 'true';
   const publicOrigin = new URL(env.ROOMQC_PUBLIC_URL || 'http://localhost:8082').origin;
   if (production && !publicOrigin.startsWith('https://')) throw new Error('Production requires HTTPS');
@@ -43,14 +70,26 @@ export function loadConfig(env = process.env) {
     return value;
   };
   const poolMax=boundedInteger('ROOMQC_CONTROL_POOL_MAX',5,1,30);
-  const poolBudget=boundedInteger('ROOMQC_CONTROL_POOL_BUDGET',20,2,100);
+  const poolBudget=boundedInteger('ROOMQC_CONTROL_POOL_BUDGET',20,2,1000000);
   if(poolMax>=poolBudget)throw new Error('Control pool must leave capacity for migrations, workers and monitoring');
+  const apiInstances=boundedInteger('ROOMQC_CONTROL_API_INSTANCES',1,1,1024);
+  const resourceContext=loadRuntimeResourceContext(env,{kind:'directory',legacyFile:env.ROOMQC_CONTROL_RESOURCE_BUDGET_FILE});
+  const resources=resourceContext?.budget??null;
+  assertControlResources({production,resourceContext,resourceBudget:resources,poolMax,poolBudget,apiInstances});
   const registry=registryConfiguration(env,clusters,allowLocal);
-  return { production, allowLocal, publicOrigin, emailKey, databaseUrl, migrationDatabaseUrl, clusters, supportClusterId,poolMax,poolBudget,...registry,
+  const releaseValidation=loadReleaseValidationCatalog(env.ROOMQC_CONTROL_RELEASE_VALIDATION_FILE,{
+    trustFile:env.ROOMQC_CONTROL_RELEASE_TRUST_FILE,
+    maximumValidityMs:env.ROOMQC_CONTROL_RELEASE_APPROVAL_MAX_VALIDITY_MS===undefined?undefined:Number(env.ROOMQC_CONTROL_RELEASE_APPROVAL_MAX_VALIDITY_MS),
+    requireMigrationReceipt:production||env.ROOMQC_CONTROL_REQUIRE_MIGRATION_RECEIPT==='true'});
+  return { production, allowLocal, publicOrigin, emailKey, databaseUrl, migrationDatabaseUrl, clusters, supportClusterId,poolMax,poolBudget,apiInstances,resourceContext,resourceBudget:resources,...registry,releaseValidation,
+    requestBudget:{maxActive:boundedInteger('ROOMQC_CONTROL_MAX_ACTIVE_REQUESTS',16,1,256),
+      maxQueued:boundedInteger('ROOMQC_CONTROL_MAX_QUEUED_REQUESTS',32,0,1024),
+      queueTimeoutMs:boundedInteger('ROOMQC_CONTROL_QUEUE_TIMEOUT_MS',1000,1,10000)},
     shutdownTimeoutMs:boundedInteger('ROOMQC_CONTROL_SHUTDOWN_TIMEOUT_MS',25000,100,60000),
     reservationMinutes:boundedInteger('ROOMQC_CONTROL_RESERVATION_MINUTES',1440,15,10080),
     signupHourLimit:boundedInteger('ROOMQC_CONTROL_SIGNUP_HOUR_LIMIT',100,1,10000),
     emailDayLimit:boundedInteger('ROOMQC_CONTROL_EMAIL_DAY_LIMIT',3,1,20),
     signupEnabled: env.ROOMQC_CONTROL_SIGNUP_ENABLED === 'true',
+    setupDispatchEnabled: env.ROOMQC_CONTROL_SETUP_DISPATCH_ENABLED === 'true',
     host: env.ROOMQC_CONTROL_HOST || '127.0.0.1', port: boundedInteger('ROOMQC_CONTROL_PORT',8091,1,65535) };
 }

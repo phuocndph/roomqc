@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {ControlError} from '../errors.mjs';
 import {validateTelemetryTarget} from '../telemetry-source.mjs';
+import {normalizeHealthProof} from '../health-evidence.mjs';
 
 const failureCode=error=>error instanceof ControlError?error.code:'HEALTH_DEPENDENCY_FAILED';
 async function bounded(run,signal){
@@ -50,10 +51,12 @@ export class HealthWorker {
         while(cursor<this.targets.length&&!this.controller.signal.aborted){
           const target=this.targets[cursor++],signal=AbortSignal.any([this.controller.signal,AbortSignal.timeout(this.targetTimeoutMs)]);
           try{
-            await this.store.assertTarget(target);
+            const context=await this.store.assertTarget(target);
             const sample=await bounded(async()=>{
-              const probes=await bounded(()=>this.probe(target,signal),signal);
-              return this.sourceFor(target).collect(target,probes,signal);
+              const result=await bounded(()=>this.probe(target,signal,context),signal);
+              const evidence=normalizeHealthProof(result?.evidence);
+              const measured=await this.sourceFor(target).collect(target,result.probes,signal);
+              return {...measured,probeEvidence:evidence};
             },signal);
             signal.throwIfAborted();
             const result=await this.store.record(target.clusterId,sample,randomUUID());

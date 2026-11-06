@@ -87,6 +87,7 @@ export function createClusterFetch(config,{lookup=dnsLookup,maxResponseBytes=102
         response.on('end',()=>{
           const body=Buffer.concat(chunks);
           resolve({ok:response.statusCode>=200&&response.statusCode<300,status:response.statusCode,
+            arrayBuffer:async()=>body.buffer.slice(body.byteOffset,body.byteOffset+body.byteLength),
             json:async()=>JSON.parse(body.toString('utf8'))});
         });
       });

@@ -5,6 +5,9 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY server/control/*.mjs server/control/schema.sql ./
 COPY server/control/migrations ./migrations
 COPY server/control/workers ./workers
+# business-migrate.mjs resolves the same repository-relative location in this
+# flat runtime layout. Ship the immutable application chain with the CLI.
+COPY supabase/migrations /supabase/migrations
 USER node
 ENV NODE_ENV=production ROOMQC_CONTROL_HOST=0.0.0.0 ROOMQC_CONTROL_PORT=8091
 EXPOSE 8091
