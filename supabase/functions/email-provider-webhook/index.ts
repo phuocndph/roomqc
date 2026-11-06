@@ -24,8 +24,9 @@ Deno.serve(async req => {
     const event = JSON.parse(body)
     const supported = ['email.delivered', 'email.delivery_delayed', 'email.bounced', 'email.complained', 'email.failed', 'email.suppressed']
     if (!supported.includes(event.type)) return json({ ignored: true })
-    if (typeof event.data?.email_id !== 'string') return json({ error: 'Invalid event' }, {}, 400)
+    if (typeof event.data?.email_id !== 'string' || !event.data.email_id) return json({ error: 'Invalid event' }, {}, 400)
     const { data, error } = await adminClient().rpc('record_email_provider_event', { p_event_id: req.headers.get('svix-id'), p_provider_id: event.data.email_id, p_type: event.type })
+    if (error?.code === 'PT409') return json({ error: 'Provider event identity conflict' }, {}, 409)
     if (error || !data) return json({ error: 'Delivery is not recorded yet; retry later' }, {}, 503)
     return json({ success: true })
   } catch { return json({ error: 'Invalid event' }, {}, 400) }
