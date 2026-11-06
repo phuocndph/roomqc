@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "environment": "staging",
+  "budgetFile": "/etc/roomqc/resource-budget.json",
+  "budgetSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "projects": [
+    {
+      "id": "roomqc-control",
+      "files": ["/etc/roomqc/native-release.compose.yml"],
+      "envFiles": ["/etc/roomqc/compose-interpolation.env"],
+      "profiles": [],
+      "services": [
+        {
+          "name": "control-api",
+          "adapter": "control-api",
+          "databaseId": "directory-reviewed",
+          "image": "registry.example.invalid/roomqc/control@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ]
+}

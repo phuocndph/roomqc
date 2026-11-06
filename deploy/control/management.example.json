@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "deploymentId": "control-main",
+  "environment": "staging",
+  "listenPort": 18082,
+  "images": {
+    "directory": "postgres:16-alpine@sha256:b7587f3cb74f4f4b2a4f9d67f052edbf95eb93f4fec7c5ada3792546caaf7383",
+    "control": "roomqc/control@sha256:REPLACE_WITH_VERIFIED_DIGEST",
+    "frontend": "roomqc/web@sha256:REPLACE_WITH_VERIFIED_DIGEST"
+  },
+  "resources": {
+    "directory": {"memoryBytes":536870912,"cpus":1,"sharedBuffersBytes":67108864,"shmBytes":67108864},
+    "control": {"memoryBytes":268435456,"cpus":0.5},
+    "frontend": {"memoryBytes":134217728,"cpus":0.5}
+  },
+  "networks": {
+    "directory":"roomqc-control-main-directory","egress":"roomqc-control-main-egress",
+    "web":"roomqc-control-main-web","metrics":"roomqc-control-main-metrics"
+  },
+  "volumes": {"data":"roomqc-control-main-data","private":"roomqc-control-main-private","ca":"roomqc-control-main-ca"},
+  "files": {
+    "budget":"/opt/RoomQC/management/control-main/private/budget.json",
+    "apiEnvironment":"/opt/RoomQC/management/control-main/private/api.env",
+    "apiDsn":"/opt/RoomQC/management/control-main/private/runtime/rq_control_main_api_1.dsn",
+    "postgresConfig":"/opt/RoomQC/management/control-main/metadata/postgresql.conf",
+    "hbaConfig":"/opt/RoomQC/management/control-main/metadata/pg_hba.conf",
+    "webConfig":"/opt/RoomQC/management/control-main/metadata/nginx.conf"
+  },
+  "apiRelease": {
+    "catalogFile":"/opt/RoomQC/management/control-main/private/release-catalog.json",
+    "trustFile":"/opt/RoomQC/management/control-main/private/release-trust.json",
+    "maximumValidityMs":86400000
+  },
+  "workers": {
+    "health": {
+      "configFile":"/opt/RoomQC/management/control-main/private/health.json",
+      "dsnFile":"/opt/RoomQC/management/control-main/private/runtime/rq_control_main_health_1.dsn",
+      "resources":{"memoryBytes":268435456,"cpus":0.5},
+      "managed": {
+        "configFile":"/opt/RoomQC/management/control-main/private/probes.json",
+        "dsnFile":"/opt/RoomQC/management/control-main/private/runtime/rq_control_main_probe_1.dsn",
+        "keyringFile":"/opt/RoomQC/management/control-main/private/probe-keyring.json",
+        "trustFile":"/opt/RoomQC/management/control-main/private/release-trust.json",
+        "maximumValidityMs":86400000
+      }
+    },
+    "setup": {
+      "configFile":"/opt/RoomQC/management/control-main/private/setup.json",
+      "dsnFile":"/opt/RoomQC/management/control-main/private/runtime/rq_control_main_setup_1.dsn",
+      "trustFile":"/opt/RoomQC/management/control-main/private/release-trust.json",
+      "credentialsDirectory":"/opt/RoomQC/management/control-main/private/setup-credentials",
+      "resources":{"memoryBytes":268435456,"cpus":0.5}
+    },
+    "alert": {
+      "configFile":"/opt/RoomQC/management/control-main/private/alerts.json",
+      "dsnFile":"/opt/RoomQC/management/control-main/private/runtime/rq_control_main_alerts_1.dsn",
+      "endpointFile":"/opt/RoomQC/management/control-main/private/alert.endpoint",
+      "tokenFile":"/opt/RoomQC/management/control-main/private/alert.token",
+      "resources":{"memoryBytes":268435456,"cpus":0.5}
+    }
+  }
+}

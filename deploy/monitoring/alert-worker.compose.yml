@@ -1,0 +1,34 @@
+{
+  "name":"${ROOMQC_ALERT_PROJECT:?owned alert worker project required}",
+  "services":{
+    "alert-worker":{
+      "profiles":["alert-worker"],
+      "image":"${ROOMQC_ALERT_IMAGE:?reviewed immutable worker image required}",
+      "command":["node","workers/alert-runtime.mjs"],
+      "user":"1000:1000","read_only":true,"cap_drop":["ALL"],"security_opt":["no-new-privileges:true"],
+      "init":true,"restart":"unless-stopped","stop_grace_period":"25s",
+      "environment":{"NODE_ENV":"production","ROOMQC_RESOURCE_ENVIRONMENT":"${ROOMQC_RESOURCE_ENVIRONMENT:-production}",
+        "ROOMQC_RESOURCE_BUDGET_FILE":"/etc/roomqc/resource-budget.json","ROOMQC_ALERT_CONFIG_FILE":"/etc/roomqc/alerts.json",
+        "ROOMQC_ALERT_DATABASE_URL_FILE":"/run/secrets/alert-dsn","ROOMQC_ALERT_ENDPOINT_FILE":"/run/secrets/alert-endpoint",
+        "ROOMQC_ALERT_TOKEN_FILE":"/run/secrets/alert-token"},
+      "volumes":[
+        {"type":"bind","source":"${ROOMQC_ALERT_CONFIG_FILE:?reviewed alert metadata required}","target":"/etc/roomqc/alerts.json","read_only":true,"bind":{"create_host_path":false}},
+        {"type":"bind","source":"${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed shared resource metadata required}","target":"/etc/roomqc/resource-budget.json","read_only":true,"bind":{"create_host_path":false}}
+      ],
+      "secrets":["alert-dsn","alert-endpoint","alert-token"],
+      "tmpfs":["/tmp:rw,nosuid,noexec,size=8m"],"networks":["directory","egress"],
+      "mem_limit":"256m","cpus":"0.5","pids_limit":64,
+      "labels":{"roomqc.alert-stack":"${ROOMQC_ALERT_PROJECT:?owned alert worker project required}"},
+      "logging":{"driver":"json-file","options":{"max-size":"10m","max-file":"3"}},
+      "healthcheck":{"test":["CMD","node","-e","fetch('http://127.0.0.1:8094/readyz',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
+        "interval":"30s","timeout":"3s","retries":3,"start_period":"30s"}
+    }
+  },
+  "secrets":{
+    "alert-dsn":{"file":"${ROOMQC_ALERT_DATABASE_URL_FILE:?dedicated restricted alert DSN file required}"},
+    "alert-endpoint":{"file":"${ROOMQC_ALERT_ENDPOINT_FILE:?approved off-host receiver file required}"},
+    "alert-token":{"file":"${ROOMQC_ALERT_TOKEN_FILE:?private receiver authentication file required}"}
+  },
+  "networks":{"directory":{"external":true,"name":"${ROOMQC_ALERT_DIRECTORY_NETWORK:?approved directory network required}"},
+    "egress":{"external":true,"name":"${ROOMQC_ALERT_EGRESS_NETWORK:?approved outbound network required}"}}
+}

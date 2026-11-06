@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "environment": "staging",
+  "business": {
+    "dsnFile": "/etc/roomqc/private/summary-business.dsn",
+    "expected": {
+      "systemIdentifier": "REPLACE_FROM_REVIEWED_BUSINESS_IDENTITY",
+      "databaseOid": "REPLACE_FROM_REVIEWED_BUSINESS_IDENTITY",
+      "databaseName": "postgres",
+      "role": "REPLACE_WITH_DEDICATED_SUMMARY_ISSUER_LOGIN"
+    }
+  },
+  "directory": {
+    "dsnFile": "/etc/roomqc/private/summary-directory.dsn",
+    "expected": {
+      "systemIdentifier": "REPLACE_FROM_REVIEWED_DIRECTORY_IDENTITY",
+      "databaseOid": "REPLACE_FROM_REVIEWED_DIRECTORY_IDENTITY",
+      "databaseName": "REPLACE_WITH_DIRECTORY_DATABASE_NAME",
+      "role": "REPLACE_WITH_DEDICATED_DIRECTORY_OBSERVER_LOGIN"
+    }
+  },
+  "resourceBudgetFile": "/etc/roomqc/private/resource-budget.json",
+  "resourceBudgetSha256": "REPLACE_WITH_REVIEWED_BUDGET_SHA256",
+  "businessDatabaseId": "REPLACE_WITH_BUDGET_DATABASE_ID",
+  "consumerId": "summary-credential-rotation",
+  "replicas": 1,
+  "releaseTrustFile": "/etc/roomqc/private/release-trust.json",
+  "target": {
+    "cluster": {
+      "id": "REPLACE_WITH_CLUSTER_ID",
+      "hostId": "REPLACE_WITH_HOST_ID",
+      "inventoryRef": "REPLACE_WITH_INVENTORY_REFERENCE",
+      "credentialRef": "REPLACE_WITH_CREDENTIAL_REFERENCE",
+      "url": "REPLACE_WITH_APPROVED_PUBLIC_HTTPS_ORIGIN",
+      "internalUrl": null,
+      "approvedAddresses": []
+    },
+    "expected": {
+      "clusterId": "REPLACE_WITH_CLUSTER_ID",
+      "releaseId": "REPLACE_WITH_APPROVED_RELEASE_ID",
+      "artifactDigest": "REPLACE_WITH_APPROVED_BACKEND_DIGEST",
+      "frontendArtifactDigest": "REPLACE_WITH_APPROVED_FRONTEND_DIGEST",
+      "migrationSetHash": "REPLACE_WITH_APPROVED_MIGRATION_HASH",
+      "schemaManifestHash": "REPLACE_WITH_APPROVED_SCHEMA_HASH"
+    },
+    "approval": "REPLACE_WITH_SIGNED_RELEASE_APPROVAL_OBJECT"
+  },
+  "publisher": {
+    "signer": {
+      "algorithm": "HS256",
+      "fingerprint": "REPLACE_WITH_REVIEWED_SIGNER_FINGERPRINT",
+      "keyFile": "/etc/roomqc/private/summary-signer.key",
+      "keyId": null
+    },
+    "publishableKeyFile": "/etc/roomqc/private/publishable.key",
+    "outputFile": "/run/roomqc/summary/summary.json"
+  }
+}

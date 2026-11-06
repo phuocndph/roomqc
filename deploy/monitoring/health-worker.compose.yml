@@ -14,11 +14,15 @@
       "stop_grace_period": "25s",
       "environment": {
         "NODE_ENV": "production",
+        "ROOMQC_RESOURCE_ENVIRONMENT": "${ROOMQC_RESOURCE_ENVIRONMENT:-production}",
+        "ROOMQC_RESOURCE_BUDGET_FILE": "/etc/roomqc/resource-budget.json",
         "ROOMQC_HEALTH_CONFIG_FILE": "/etc/roomqc/health.json",
         "ROOMQC_HEALTH_DATABASE_URL_FILE": "/run/secrets/metrics-dsn"
       },
       "volumes": [{"type": "bind", "source": "${ROOMQC_HEALTH_CONFIG_FILE:?approved worker metadata required}",
-        "target": "/etc/roomqc/health.json", "read_only": true, "bind": {"create_host_path": false}}],
+        "target": "/etc/roomqc/health.json", "read_only": true, "bind": {"create_host_path": false}},
+        {"type":"bind","source":"${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed shared resource metadata required}",
+          "target":"/etc/roomqc/resource-budget.json","read_only":true,"bind":{"create_host_path":false}}],
       "secrets": ["metrics-dsn"],
       "tmpfs": ["/tmp:rw,nosuid,noexec,size=8m"],
       "networks": ["directory", "metrics"],

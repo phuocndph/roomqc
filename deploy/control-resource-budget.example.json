@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "environment": "example",
+  "databases": [
+    {
+      "id": "directory-example",
+      "kind": "directory",
+      "maxConnections": 100,
+      "reservedConnections": 5,
+      "consumers": [
+        {"id":"control-api","replicas":1,"pools":[{"id":"main","max":5}],"fixedConnectionsPerReplica":0},
+        {"id":"provisioning-worker","replicas":0,"pools":[{"id":"main","max":2}],"fixedConnectionsPerReplica":0},
+        {"id":"health-worker","replicas":1,"pools":[{"id":"main","max":2}],"fixedConnectionsPerReplica":0},
+        {"id":"alert-worker","replicas":1,"pools":[{"id":"main","max":1}],"fixedConnectionsPerReplica":0},
+        {"id":"probe-catalog","replicas":1,"pools":[{"id":"catalog","max":1}],"fixedConnectionsPerReplica":0},
+        {"id":"db-exporter","replicas":1,"pools":[],"fixedConnectionsPerReplica":1},
+        {"id":"migration","replicas":1,"pools":[],"fixedConnectionsPerReplica":1},
+        {"id":"backup","replicas":1,"pools":[],"fixedConnectionsPerReplica":1},
+        {"id":"deployment-executor","replicas":0,"pools":[{"id":"main","max":1}],"fixedConnectionsPerReplica":0},
+        {"id":"host-observer","replicas":0,"pools":[{"id":"main","max":1}],"fixedConnectionsPerReplica":0}
+      ]
+    },
+    {
+      "id": "business-example",
+      "kind": "business",
+      "maxConnections": 100,
+      "reservedConnections": 10,
+      "consumers": [
+        {"id":"auth","replicas":1,"pools":[{"id":"main","max":5}],"fixedConnectionsPerReplica":0},
+        {"id":"rest","replicas":1,"pools":[{"id":"main","max":10}],"fixedConnectionsPerReplica":0},
+        {"id":"realtime","replicas":1,"pools":[{"id":"main","max":5}],"fixedConnectionsPerReplica":1},
+        {"id":"storage","replicas":1,"pools":[{"id":"main","max":5}],"fixedConnectionsPerReplica":0},
+        {"id":"functions","replicas":0,"pools":[],"fixedConnectionsPerReplica":0},
+        {"id":"inapp-notifications","replicas":1,"pools":[{"id":"main","max":1}],"fixedConnectionsPerReplica":0},
+        {"id":"external-notifications","replicas":1,"pools":[{"id":"main","max":2}],"fixedConnectionsPerReplica":0},
+        {"id":"reports","replicas":0,"pools":[],"fixedConnectionsPerReplica":0},
+        {"id":"db-exporter","replicas":1,"pools":[],"fixedConnectionsPerReplica":1},
+        {"id":"migration","replicas":1,"pools":[],"fixedConnectionsPerReplica":1},
+        {"id":"backup","replicas":1,"pools":[],"fixedConnectionsPerReplica":1}
+      ]
+    }
+  ]
+}

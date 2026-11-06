@@ -1,0 +1,8 @@
+# Merge after the reviewed upstream Supabase Compose file.
+# Use the immutable image ID/digest from scripts/build-auth.mjs, never a stock tag.
+services:
+  auth:
+    image: ${ROOMQC_AUTH_IMAGE:?Build and verify the RoomQC Auth image first}
+    environment:
+      GOTRUE_SECURITY_UPDATE_PASSWORD_REQUIRE_CURRENT_PASSWORD: "true"
+      GOTRUE_AUDIT_LOG_DISABLE_POSTGRES: "false"

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "environment": "production",
+  "directory": {
+    "dsnFile": "/run/secrets/setup-backfill-writer-dsn",
+    "expected": {
+      "systemIdentifier": "0",
+      "databaseOid": "0",
+      "databaseName": "replace-with-reviewed-directory",
+      "role": "replace-with-dedicated-writer-login"
+    }
+  },
+  "releaseTrustFile": "/run/roomqc/setup-release-trust.json",
+  "batchTrustFile": "/run/roomqc/backfill-approver-public-trust.json",
+  "resourceBudgetFile": "/run/roomqc/reviewed-resource-budget.json",
+  "targets": [
+    {
+      "cluster": {
+        "id": "cluster-a",
+        "url": "https://replace-with-reviewed-backend.invalid",
+        "internalUrl": null,
+        "inventoryRef": "cluster-a",
+        "credentialRef": "setup-recovery-a",
+        "hostId": "replace-with-reviewed-host",
+        "approvedAddresses": []
+      },
+      "approval": null,
+      "credentialFile": "/run/secrets/setup-recovery-a.json"
+    }
+  ]
+}

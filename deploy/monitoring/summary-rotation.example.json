@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "instanceId": "summary-rotation-a",
+  "installerConfigFile": "/etc/roomqc/private/summary-installer.json",
+  "journalDirectory": "/var/lib/roomqc/summary-rotation-journal",
+  "ttlSeconds": 300,
+  "overlapSeconds": 20,
+  "rotateBeforeSeconds": 120,
+  "intervalMs": 10000
+}
+

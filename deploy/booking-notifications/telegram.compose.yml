@@ -1,0 +1,10 @@
+{
+  "services": {
+    "booking-external-worker": {"secrets": [
+      {"source": "booking-telegram-token", "target": "booking-telegram-token", "uid": "1000", "gid": "1000", "mode": 256}
+    ]}
+  },
+  "secrets": {
+    "booking-telegram-token": {"file": "${ROOMQC_BOOKING_TELEGRAM_TOKEN_FILE:?private Telegram token file required}"}
+  }
+}

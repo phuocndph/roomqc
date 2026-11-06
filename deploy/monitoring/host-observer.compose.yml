@@ -1,0 +1,68 @@
+name: ${ROOMQC_HOST_OBSERVER_PROJECT:?owned observer project required}
+services:
+  host-observer:
+    image: ${ROOMQC_HOST_OBSERVER_IMAGE:?verified immutable observer image required}
+    pull_policy: never
+    user: '1000:1000'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 35s
+    environment:
+      NODE_ENV: production
+      ROOMQC_RESOURCE_ENVIRONMENT: ${ROOMQC_RESOURCE_ENVIRONMENT:-production}
+      ROOMQC_RESOURCE_BUDGET_FILE: /etc/roomqc/resource-budget.json
+      ROOMQC_HOST_OBSERVER_INSTANCES: ${ROOMQC_HOST_OBSERVER_INSTANCES:-1}
+      NODE_EXTRA_CA_CERTS: /etc/roomqc/directory-ca.pem
+    volumes:
+      - type: bind
+        source: ${ROOMQC_HOST_OBSERVER_TARGETS_FILE:?approved targets required}
+        target: /etc/roomqc/hosts.json
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed resource budget required}
+        target: /etc/roomqc/resource-budget.json
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${ROOMQC_HOST_OBSERVER_KNOWN_HOSTS_FILE:?verified SSH host keys required}
+        target: /home/node/.ssh/known_hosts
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${ROOMQC_HOST_OBSERVER_CA_FILE:?trusted directory CA required}
+        target: /etc/roomqc/directory-ca.pem
+        read_only: true
+        bind: {create_host_path: false}
+    secrets: [observer-dsn, observer-key]
+    tmpfs: ['/run/roomqc:rw,nosuid,noexec,size=1m,uid=1000,gid=1000,mode=0700']
+    networks: [directory, ssh-egress]
+    mem_limit: 256m
+    cpus: '0.5'
+    pids_limit: 64
+    labels:
+      roomqc.host-observer: ${ROOMQC_HOST_OBSERVER_PROJECT:?owned observer project required}
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+    healthcheck:
+      test: [CMD, node, --input-type=module, -e, "import {readFile} from 'node:fs/promises';import {hostObserverStatusReady} from './server/control/workers/host-observer-status.mjs';try{process.exit(hostObserverStatusReady(JSON.parse(await readFile('/run/roomqc/observer-status.json','utf8')))?0:1)}catch{process.exit(1)}"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+secrets:
+  observer-dsn:
+    file: ${ROOMQC_HOST_OBSERVER_DATABASE_URL_FILE:?least privilege observer DSN required}
+  observer-key:
+    file: ${ROOMQC_HOST_OBSERVER_SSH_KEY_FILE:?dedicated SSH identity required}
+networks:
+  directory:
+    external: true
+    name: ${ROOMQC_HOST_OBSERVER_DIRECTORY_NETWORK:?approved directory network required}
+  ssh-egress:
+    labels:
+      roomqc.host-observer: ${ROOMQC_HOST_OBSERVER_PROJECT:?owned observer project required}

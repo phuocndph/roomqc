@@ -1,0 +1,18 @@
+{
+  "schemaVersion":1,
+  "instanceId":"setup-worker-example",
+  "poolMax":2,
+  "concurrency":2,
+  "intervalMs":1000,
+  "requestTimeoutMs":6000,
+  "leaseMs":60000,
+  "retryBaseMs":1000,
+  "shutdownTimeoutMs":10000,
+  "targets":[{
+    "cluster":{"id":"cluster-a","url":"https://cluster-a.roomqc.invalid","internalUrl":null,
+      "inventoryRef":"cluster-a","credentialRef":"cluster-a","hostId":"host-a","approvedAddresses":[]},
+    "approval":null,
+    "credentialFile":"/run/roomqc/setup/cluster-a.json"
+  }],
+  "connectionBudget":{"maxConnections":100,"otherAllocatedConnections":12,"instances":1,"reservedConnections":5}
+}

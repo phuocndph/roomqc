@@ -1,0 +1,48 @@
+# Separate operator service. Never attach this key/config volume to the API.
+# Use directory LOGIN prepare/apply/verify, then the generated per-replica overlay.
+services:
+  deployment-executor:
+    image: ${ROOMQC_EXECUTOR_IMAGE:?pin the built executor image by digest}
+    user: "1000:1000"
+    init: true
+    restart: unless-stopped
+    command: ["run", "--spec-directory", "/run/roomqc-executor/specs"]
+    environment:
+      NODE_ENV: production
+      ROOMQC_RESOURCE_ENVIRONMENT: ${ROOMQC_RESOURCE_ENVIRONMENT:-staging}
+      ROOMQC_RESOURCE_BUDGET_FILE: /etc/roomqc/resource-budget.json
+      ROOMQC_DEPLOYMENT_EXECUTOR_INSTANCES: ${ROOMQC_DEPLOYMENT_EXECUTOR_INSTANCES:-1}
+      ROOMQC_DEPLOYMENT_EXECUTOR_ORDINAL: ${ROOMQC_DEPLOYMENT_EXECUTOR_ORDINAL:-1}
+      ROOMQC_DEPLOYMENT_LOGIN_PLAN_FILE: /etc/roomqc/deployment-login-plan.json
+      ROOMQC_DEPLOY_DATABASE_URL_FILE: /run/roomqc-executor/directory-url
+    volumes:
+      - type: bind
+        source: ${ROOMQC_EXECUTOR_CONFIG_DIR:?absolute private operator directory}
+        target: /run/roomqc-executor
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed shared resource metadata required}
+        target: /etc/roomqc/resource-budget.json
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${ROOMQC_DEPLOYMENT_LOGIN_PLAN_FILE:?prepared directory LOGIN plan required}
+        target: /etc/roomqc/deployment-login-plan.json
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${ROOMQC_EXECUTOR_KNOWN_HOSTS:?verified SSH known_hosts file}
+        target: /home/node/.ssh/known_hosts
+        read_only: true
+        bind: { create_host_path: false }
+    read_only: true
+    tmpfs: [/tmp:rw,noexec,nosuid,size=64m]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    stop_grace_period: 120s
+# No Docker socket: only docker compose config runs here. Remote Docker commands
+# are sent through pinned, verified SSH targets from immutable private specs.

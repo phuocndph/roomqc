@@ -1,0 +1,38 @@
+{
+  "name": "${ROOMQC_BOOKING_PROJECT:?owned booking worker project required}",
+  "services": {
+    "booking-external-worker": {
+      "profiles": ["booking-external"],
+      "image": "${ROOMQC_BOOKING_IMAGE:?reviewed immutable worker image required}",
+      "command": ["node", "workers/booking-external-runtime.mjs", "--config-file", "/etc/roomqc/booking-external.json"],
+      "user": "1000:1000",
+      "read_only": true,
+      "cap_drop": ["ALL"],
+      "security_opt": ["no-new-privileges:true"],
+      "init": true,
+      "restart": "unless-stopped",
+      "stop_grace_period": "25s",
+      "environment": {"NODE_ENV": "production", "ROOMQC_RESOURCE_ENVIRONMENT":"${ROOMQC_RESOURCE_ENVIRONMENT:-production}",
+        "ROOMQC_RESOURCE_BUDGET_FILE":"/etc/roomqc/resource-budget.json", "ROOMQC_RESOURCE_DATABASE_ID":"${ROOMQC_RESOURCE_DATABASE_ID:?exact business budget database id required}"},
+      "volumes": [{"type": "bind", "source": "${ROOMQC_BOOKING_CONFIG_FILE:?approved worker metadata required}",
+        "target": "/etc/roomqc/booking-external.json", "read_only": true, "bind": {"create_host_path": false}},
+        {"type":"bind","source":"${ROOMQC_RESOURCE_BUDGET_FILE:?reviewed shared resource metadata required}",
+          "target":"/etc/roomqc/resource-budget.json","read_only":true,"bind":{"create_host_path":false}}],
+      "secrets": [{"source": "booking-dsn", "target": "booking-dsn", "uid": "1000", "gid": "1000", "mode": 256}],
+      "tmpfs": ["/tmp:rw,nosuid,noexec,size=8m"],
+      "networks": ["backend", "egress"],
+      "mem_limit": "192m", "cpus": "0.5", "pids_limit": 64,
+      "labels": {"roomqc.booking-stack": "${ROOMQC_BOOKING_PROJECT:?owned booking worker project required}"},
+      "logging": {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}},
+      "healthcheck": {"test": ["CMD", "node", "-e", "fetch('http://127.0.0.1:8094/readyz',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
+        "interval": "30s", "timeout": "3s", "retries": 3, "start_period": "30s"}
+    }
+  },
+  "secrets": {
+    "booking-dsn": {"file": "${ROOMQC_BOOKING_DATABASE_URL_FILE:?dedicated restricted worker DSN required}"}
+  },
+  "networks": {
+    "backend": {"external": true, "name": "${ROOMQC_BOOKING_BACKEND_NETWORK:?approved backend network required}"},
+    "egress": {"external": true, "name": "${ROOMQC_BOOKING_EGRESS_NETWORK:?approved outbound network required}"}
+  }
+}

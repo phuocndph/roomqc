@@ -1,0 +1,17 @@
+# Merge after the pinned upstream Supabase Compose file.
+# All function sources/dependencies are in the reviewed immutable image.
+services:
+  functions:
+    image: ${ROOMQC_FUNCTIONS_IMAGE:?Build and verify the RoomQC functions image first}
+    volumes: !reset []
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=32m
+    environment:
+      VERIFY_JWT: "true"
+    command:
+      - start
+      - --user-worker-request-idle-timeout
+      - "150000"
+      - --main-service
+      - /home/deno/functions/main.eszip

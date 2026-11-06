@@ -1,0 +1,10 @@
+services:
+  setup-worker:
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/roomqc-directory-ca/ca.crt
+    volumes:
+      - {type: volume, source: directory-ca, target: /run/roomqc-directory-ca, read_only: true}
+volumes:
+  directory-ca:
+    external: true
+    name: ${ROOMQC_DIRECTORY_CA_VOLUME:?public directory CA volume required}
