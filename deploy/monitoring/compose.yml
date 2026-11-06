@@ -1,0 +1,108 @@
+{
+  "name": "${ROOMQC_MONITOR_PROJECT:?project required}",
+  "services": {
+    "prometheus": {
+      "image": "prom/prometheus:v3.2.1@sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62",
+      "user": "65534:65534",
+      "read_only": true,
+      "cap_drop": ["ALL"],
+      "security_opt": ["no-new-privileges:true"],
+      "restart": "unless-stopped",
+      "labels": {"roomqc.monitor-stack": "${ROOMQC_MONITOR_PROJECT:?project required}"},
+      "command": [
+        "--config.file=/etc/prometheus/roomqc.yml",
+        "--storage.tsdb.path=/prometheus",
+        "--storage.tsdb.retention.time=15d",
+        "--storage.tsdb.retention.size=512MB",
+        "--query.timeout=3s",
+        "--query.max-concurrency=8",
+        "--web.listen-address=:9090"
+      ],
+      "volumes": [
+        "${ROOMQC_MONITOR_CONFIG_DIR:?configuration required}/prometheus.yml:/etc/prometheus/roomqc.yml:ro",
+        "prometheus-data:/prometheus"
+      ],
+      "tmpfs": ["/tmp:rw,nosuid,noexec,size=16m"],
+      "networks": ["metrics"],
+      "mem_limit": "512m",
+      "cpus": "0.75",
+      "pids_limit": 128,
+      "logging": {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}}
+    },
+    "node-exporter": {
+      "image": "prom/node-exporter:v1.9.1@sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a",
+      "user": "65534:65534",
+      "read_only": true,
+      "cap_drop": ["ALL"],
+      "security_opt": ["no-new-privileges:true"],
+      "restart": "unless-stopped",
+      "labels": {"roomqc.monitor-stack": "${ROOMQC_MONITOR_PROJECT:?project required}"},
+      "command": [
+        "--path.rootfs=/host",
+        "--path.procfs=/host/proc",
+        "--path.sysfs=/host/sys",
+        "--collector.disable-defaults",
+        "--collector.cpu",
+        "--collector.meminfo",
+        "--collector.filesystem",
+        "--collector.filesystem.mount-points-include=${ROOMQC_MONITOR_MOUNT_INCLUDE:?approved mount regex required}",
+        "--web.disable-exporter-metrics",
+        "--web.listen-address=:9100"
+      ],
+      "volumes": [{"type": "bind", "source": "/", "target": "/host", "read_only": true, "bind": {"create_host_path": false}}],
+      "tmpfs": ["/tmp:rw,nosuid,noexec,size=8m", "/host/run:ro,nosuid,noexec,size=1m,mode=000"],
+      "networks": ["metrics"],
+      "mem_limit": "128m",
+      "cpus": "0.25",
+      "pids_limit": 64,
+      "logging": {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}}
+    },
+    "postgres-exporter": {
+      "image": "prometheuscommunity/postgres-exporter:v0.17.1@sha256:38606faa38c54787525fb0ff2fd6b41b4cfb75d455c1df294927c5f611699b17",
+      "user": "65534:65534",
+      "read_only": true,
+      "cap_drop": ["ALL"],
+      "security_opt": ["no-new-privileges:true"],
+      "restart": "unless-stopped",
+      "labels": {"roomqc.monitor-stack": "${ROOMQC_MONITOR_PROJECT:?project required}"},
+      "environment": {
+        "DATA_SOURCE_URI_FILE": "/run/secrets/postgres-uri",
+        "DATA_SOURCE_USER_FILE": "/run/secrets/postgres-user",
+        "DATA_SOURCE_PASS_FILE": "/run/secrets/postgres-password"
+      },
+      "command": [
+        "--disable-default-metrics",
+        "--disable-settings-metrics",
+        "--extend.query-path=/etc/roomqc/queries.yml",
+        "--no-collector.database", "--no-collector.database_wraparound",
+        "--no-collector.locks", "--no-collector.long_running_transactions",
+        "--no-collector.postmaster", "--no-collector.process_idle",
+        "--no-collector.replication", "--no-collector.replication_slot", "--no-collector.roles",
+        "--no-collector.stat_activity_autovacuum", "--no-collector.stat_bgwriter",
+        "--no-collector.stat_checkpointer", "--no-collector.stat_database", "--no-collector.stat_statements",
+        "--no-collector.stat_user_tables", "--no-collector.stat_wal_receiver",
+        "--no-collector.statio_user_indexes", "--no-collector.statio_user_tables",
+        "--no-collector.wal", "--no-collector.xlog_location",
+        "--web.listen-address=:9187"
+      ],
+      "volumes": ["./queries.yml:/etc/roomqc/queries.yml:ro", "${ROOMQC_MONITOR_TLS_DIR:?TLS directory required}:/etc/roomqc/tls:ro"],
+      "secrets": ["postgres-uri", "postgres-user", "postgres-password"],
+      "tmpfs": ["/tmp:rw,nosuid,noexec,size=8m"],
+      "networks": ["metrics", "backend"],
+      "mem_limit": "128m",
+      "cpus": "0.25",
+      "pids_limit": 64,
+      "logging": {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}}
+    }
+  },
+  "secrets": {
+    "postgres-uri": {"file": "${ROOMQC_MONITOR_SECRET_DIR:?secrets required}/postgres-uri"},
+    "postgres-user": {"file": "${ROOMQC_MONITOR_SECRET_DIR:?secrets required}/postgres-user"},
+    "postgres-password": {"file": "${ROOMQC_MONITOR_SECRET_DIR:?secrets required}/postgres-password"}
+  },
+  "volumes": {"prometheus-data": {"labels": {"roomqc.monitor-stack": "${ROOMQC_MONITOR_PROJECT:?project required}"}}},
+  "networks": {
+    "metrics": {"internal": true, "labels": {"roomqc.monitor-stack": "${ROOMQC_MONITOR_PROJECT:?project required}"}},
+    "backend": {"external": true, "name": "${ROOMQC_MONITOR_BACKEND_NETWORK:?approved backend network required}"}
+  }
+}

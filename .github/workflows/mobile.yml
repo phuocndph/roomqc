@@ -1,0 +1,65 @@
+name: Mobile internal builds
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VITE_ROOMQC_PUBLIC_WEB_URL: ${{ vars.ROOMQC_PUBLIC_WEB_URL }}
+  VITE_SUPABASE_URL: ${{ vars.ROOMQC_SUPABASE_URL }}
+  VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ROOMQC_SUPABASE_PUBLISHABLE_KEY }}
+  VITE_ROOMQC_CLUSTER_ORIGINS: ${{ vars.ROOMQC_CLUSTER_ORIGINS }}
+  VITE_ROOMQC_DIRECTORY_ENABLED: ${{ vars.ROOMQC_DIRECTORY_ENABLED }}
+  VITE_ENABLE_DEMO_DATA: 'false'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:mobile
+      - run: npm run mobile:build
+      - run: npm run mobile:sync
+      - run: npm run mobile:verify:release
+      - run: npm run mobile:apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roomqc-android-internal-debug
+          path: artifacts/mobile/roomqc-debug.apk
+          retention-days: 14
+  ios-simulator:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run mobile:build
+      - run: npm run mobile:sync
+      - run: npm run mobile:verify:release
+      - name: Compile unsigned iOS simulator app
+        run: >-
+          xcodebuild -project ios/App/App.xcodeproj -scheme App
+          -configuration Debug -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath artifacts/ios CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roomqc-ios-simulator-unsigned
+          path: artifacts/ios/Build/Products/Debug-iphonesimulator/App.app
+          retention-days: 14

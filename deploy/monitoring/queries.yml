@@ -1,0 +1,9 @@
+roomqc_connections:
+  query: "SELECT count(*)::double precision AS used, pg_has_role(current_user, 'pg_read_all_stats', 'USAGE')::integer::double precision AS monitor_permission FROM pg_stat_activity WHERE backend_type = 'client backend'"
+  metrics:
+    - used:
+        usage: GAUGE
+        description: "Actual client backends, including the exporter; use only when monitor_permission is 1."
+    - monitor_permission:
+        usage: GAUGE
+        description: "Whether this exporter login has the required current statistics permission."

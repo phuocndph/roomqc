@@ -10,7 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-mobile/
+artifacts/mobile/
+artifacts/ios/
 *.local
+.local/
 *.timestamp-*.mjs
 
 # Local and VPS credentials; only the example files are safe to commit.
@@ -18,6 +22,9 @@ dist-ssr
 .env.*
 !.env.example
 !.env.vps.example
+!.env.control.example
+!.env.mobile.example
+!.env.email.example
 
 # Supabase CLI runtime state contains generated local JWTs and secret keys.
 supabase/.temp/
