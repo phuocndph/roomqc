@@ -1,6 +1,7 @@
 // Edge Function: tbltkbtt-submit
-// Mục đích: Quét hàng đợi guest_stay_registrations (pending/failed) và gửi lên hệ thống
-// Khai báo lưu trú của Bộ Công an theo cấu hình từng khách sạn (hotels.tbltkbtt_config).
+// Mục đích: Quét hàng đợi guest_stay_registrations (pending/failed) và gửi lên hệ thống.
+// Credentials are read only through the service-role worker RPC; ordinary hotel reads
+// never receive the account/token fields.
 //
 // Cấu hình mỗi hotel (jsonb hotels.tbltkbtt_config):
 // {
@@ -161,18 +162,25 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Preload guests & hotels
+  // Preload guests & private worker credentials
   const guestIds = [...new Set(regs.map((r: any) => r.guest_id))];
   const hotelIds = [...new Set(regs.map((r: any) => r.hotel_id))];
 
-  const [{ data: guests }, { data: hotels }] = await Promise.all([
+  const [{ data: guests }, { data: hotels, error: hotelConfigError }] = await Promise.all([
     supabase.from("guests").select("*").in("id", guestIds),
-    supabase.from("hotels").select("id, tbltkbtt_config").in("id", hotelIds),
+    supabase.rpc("get_tbltkbtt_worker_config", { p_hotel_ids: hotelIds }),
   ]);
+
+  if (hotelConfigError) {
+    console.error("[tbltkbtt-submit] private config fetch error", hotelConfigError);
+    return new Response(JSON.stringify({ error: "PRIVATE_CONFIG_UNAVAILABLE" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const guestMap = new Map<string, any>((guests ?? []).map((g: any) => [g.id, g]));
   const hotelMap = new Map<string, HotelCfg>(
-    (hotels ?? []).map((h: any) => [h.id, h as HotelCfg]),
+    (hotels ?? []).map((h: any) => [h.hotel_id, { id: h.hotel_id, tbltkbtt_config: h.tbltkbtt_config } as HotelCfg]),
   );
 
   const result = { processed: 0, submitted: 0, failed: 0, skipped: 0 };
