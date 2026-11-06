@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { toast } from '@/hooks/use-toast'
 import { DEPARTMENTS, GROUP_TYPES, NOTIFICATION_TYPES } from './AddTelegramGroupDialog'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 interface AutoLinkGroupDialogProps {
   open: boolean
@@ -127,7 +128,7 @@ export function AutoLinkGroupDialog({
     if (step !== 'waiting' || !pendingLinkId) return
 
     const channel = supabase
-      .channel('pending-group-completion')
+      .channel(instanceChannelName('pending-group-completion'))
       .on(
         'postgres_changes',
         {

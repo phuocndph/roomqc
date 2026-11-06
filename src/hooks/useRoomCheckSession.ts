@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export type RoomCheckType = 'daily' | 'periodic' | 'checkin' | 'checkout' | 'maintenance' | 'delivery' | 'replenish'
 
@@ -68,7 +69,7 @@ export function useRoomCheckSession(roomId: string | undefined) {
     // Subscribe to realtime updates — filter by tenant_id (Postgres realtime
     // supports a single filter); narrow to this room in the handler.
     const channel = supabase
-      .channel(`room-check-session-${tenantId}-${roomId}`)
+      .channel(instanceChannelName(`room-check-session-${tenantId}-${roomId}`))
       .on(
         'postgres_changes',
         {
@@ -259,7 +260,7 @@ export function useAllRoomCheckSessions(tenantId?: string) {
 
     // Subscribe to all sessions
     const channel = supabase
-      .channel(`room-check-sessions-${tenantId}`)
+      .channel(instanceChannelName(`room-check-sessions-${tenantId}`))
       .on(
         'postgres_changes',
         {

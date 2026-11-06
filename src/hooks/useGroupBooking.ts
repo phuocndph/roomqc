@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface GroupBookingRoom {
   id: string
@@ -136,7 +137,7 @@ export function useGroupBooking(bookingGroupId: string | null) {
     if (!bookingGroupId) return
 
     const channel = supabase
-      .channel(`group-booking-${bookingGroupId}`)
+      .channel(instanceChannelName(`group-booking-${bookingGroupId}`))
       .on(
         'postgres_changes',
         {

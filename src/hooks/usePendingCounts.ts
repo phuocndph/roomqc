@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { isStaff } from '@/lib/userAccess'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface PendingCounts {
   supplements: number
@@ -30,7 +31,7 @@ export function usePendingCounts() {
   useEffect(() => {
     if (!tenantId || !user?.id) return
     const channel = supabase
-      .channel(`pending-counts-chat-${user.id}`)
+      .channel(instanceChannelName(`pending-counts-chat-${user.id}`))
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenantId}` },

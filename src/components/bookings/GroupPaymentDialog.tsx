@@ -36,6 +36,7 @@ import {
 import { useGroupBooking, GroupBookingRoom } from '@/hooks/useGroupBooking'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/integrations/supabase/client'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface RoomCostForPayment {
   bookingId: string
@@ -102,7 +103,7 @@ export function GroupPaymentDialog({
     if (step !== 'qr' || !createdPaymentId) return
 
     const channel = supabase
-      .channel(`group-payment-${createdPaymentId}`)
+      .channel(instanceChannelName(`group-payment-${createdPaymentId}`))
       .on(
         'postgres_changes',
         {

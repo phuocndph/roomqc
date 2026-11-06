@@ -32,6 +32,7 @@ import { AddRoomsDialog } from './AddRoomsDialog';
 import { GracePeriodAlert } from './GracePeriodAlert';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   active: { label: 'Đang hoạt động', variant: 'default' },
@@ -57,7 +58,7 @@ export function SubscriptionOverview() {
     if (!subscription?.id) return;
 
     const channel = supabase
-      .channel(`subscription-overview-${subscription.id}`)
+      .channel(instanceChannelName(`subscription-overview-${subscription.id}`))
       .on(
         'postgres_changes',
         {

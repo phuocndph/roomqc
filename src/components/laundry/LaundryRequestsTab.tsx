@@ -37,6 +37,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useUser } from '@/hooks/useUser'
 import { AddToLaundryBatchDialog } from './AddToLaundryBatchDialog'
 import { SendLaundryBatchDialog } from './SendLaundryBatchDialog'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Chờ xử lý', color: 'text-amber-600', icon: Clock },
@@ -102,7 +103,7 @@ export function LaundryRequestsTab() {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`laundry-requests-${tenantId}`)
+        .channel(instanceChannelName(`laundry-requests-${tenantId}`))
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'laundry_requests', filter: `tenant_id=eq.${tenantId}` },
           () => {

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from './useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useQueryClient } from '@tanstack/react-query'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface InventoryHubBadges {
   reorderPending: number
@@ -29,7 +30,7 @@ export function useInventoryHubBadges() {
   useEffect(() => {
     if (!tenantId) return
     const ch = supabase
-      .channel(`inv-hub-badges-${tenantId}`)
+      .channel(instanceChannelName(`inv-hub-badges-${tenantId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reorder_suggestions', filter: `tenant_id=eq.${tenantId}` },

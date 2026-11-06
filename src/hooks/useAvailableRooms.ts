@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useTenant } from '@/hooks/useTenant'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface AvailableRoom {
   id: string
@@ -43,7 +44,7 @@ export function useAvailableRooms(checkInDate?: Date, checkOutDate?: Date) {
   useEffect(() => {
     if (!tenantId) return
     const channel = supabase
-      .channel(`available-rooms-${tenantId}`)
+      .channel(instanceChannelName(`available-rooms-${tenantId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `tenant_id=eq.${tenantId}` },
         () => { queryClient.invalidateQueries({ queryKey: ['available-rooms'] }) })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'room_bookings', filter: `tenant_id=eq.${tenantId}` },

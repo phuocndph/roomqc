@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useUser } from './useUser'
 import { sendTelegramNotification, createInAppNotification, sendPushNotification } from './useNotificationTriggers'
 import type { CheckoutInspectionRequest, CheckoutInspectionRequestWithDetails } from '@/types/checkout-inspection.types'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function useCheckoutInspection(bookingId: string | undefined) {
   const queryClient = useQueryClient()
@@ -46,7 +47,7 @@ export function useCheckoutInspection(bookingId: string | undefined) {
     if (!bookingId) return
     
     const channel = supabase
-      .channel(`checkout-inspection-${bookingId}`)
+      .channel(instanceChannelName(`checkout-inspection-${bookingId}`))
       .on(
         'postgres_changes',
         {
@@ -299,7 +300,7 @@ export function usePendingInspections(roomId: string | undefined) {
     if (!roomId || !user?.id) return
     
     const channel = supabase
-      .channel(`pending-inspection-${roomId}-${user.id}`)
+      .channel(instanceChannelName(`pending-inspection-${roomId}-${user.id}`))
       .on(
         'postgres_changes',
         {
@@ -593,7 +594,7 @@ export function useRoomHasPendingInspection(roomId: string | undefined) {
     if (!roomId) return
     
     const channel = supabase
-      .channel(`room-inspection-check-${roomId}`)
+      .channel(instanceChannelName(`room-inspection-check-${roomId}`))
       .on(
         'postgres_changes',
         {

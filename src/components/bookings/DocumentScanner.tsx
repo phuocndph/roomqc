@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { useUser } from '@/hooks/useUser'
 import { WebcamCaptureDialog } from './WebcamCaptureDialog'
 import { QRScannerDialog } from './QRScannerDialog'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface ScannedDocumentData {
   full_name: string
@@ -173,7 +174,7 @@ export function DocumentScanner({ onScanComplete }: DocumentScannerProps) {
     if (!mobileSessionId || status !== 'waiting_mobile') return
 
     const channel = supabase
-      .channel(`scan-session-${mobileSessionId}`)
+      .channel(instanceChannelName(`scan-session-${mobileSessionId}`))
       .on(
         'postgres_changes',
         {

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface OpsSummary {
   maintenancePending: number       // pending + in_progress
@@ -73,7 +74,7 @@ export function useHousekeepingOpsSummary(hotelId?: string | null) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const ch = supabase
-      .channel(`hk-ops-${hotelId}`)
+      .channel(instanceChannelName(`hk-ops-${hotelId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_requests', filter: `hotel_id=eq.${hotelId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-ops-summary', tenantId, hotelId] }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lost_found_items', filter: `hotel_id=eq.${hotelId}` }, () =>

@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { useUser } from '@/hooks/useUser';
 import { getFriendlyError } from '@/lib/errorMessage';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function BillingHistory() {
   const { data: transactions, isLoading: loadingTransactions, refetch: refetchTransactions } = usePaymentTransactions();
@@ -78,7 +79,7 @@ export function BillingHistory() {
   // Realtime subscription for payment updates
   useEffect(() => {
     const channel = supabase
-      .channel('billing-history-realtime')
+      .channel(instanceChannelName('billing-history-realtime'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'payment_transactions' },

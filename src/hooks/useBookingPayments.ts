@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface BookingPayment {
   id: string;
@@ -70,7 +71,7 @@ export function usePaymentById(paymentId?: string) {
     if (!paymentId) return;
 
     const channel = supabase
-      .channel(`booking-payment-${paymentId}`)
+      .channel(instanceChannelName(`booking-payment-${paymentId}`))
       .on(
         'postgres_changes',
         {
@@ -126,7 +127,7 @@ export function useBookingPayments(bookingId?: string) {
     if (!bookingId) return;
 
     const channel = supabase
-      .channel(`booking-payments-${bookingId}`)
+      .channel(instanceChannelName(`booking-payments-${bookingId}`))
       .on(
         'postgres_changes',
         {

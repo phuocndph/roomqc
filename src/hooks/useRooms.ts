@@ -8,6 +8,7 @@ import { triggerRoomCheckoutNotification, triggerRoomCheckinNotification } from 
 import { triggerWorkflow, WorkflowTriggerTypes } from '@/lib/triggerWorkflow'
 import type { RoomWithStats, RoomFilters } from '@/types/rooms.types'
 import { isAdminUser } from '@/lib/userAccess'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function useRooms(filters: RoomFilters = {}) {
   const { tenantId } = useUser()
@@ -51,7 +52,7 @@ export function useRooms(filters: RoomFilters = {}) {
     if (!tenantId) return
 
     const channel = supabase
-      .channel(`room_items_${tenantId}`)
+      .channel(instanceChannelName(`room_items_${tenantId}`))
       .on(
         'postgres_changes',
         {

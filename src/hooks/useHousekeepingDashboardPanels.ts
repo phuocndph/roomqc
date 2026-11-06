@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 /* -------------------- Check-out hôm nay -------------------- */
 export interface CheckoutTodayItem {
@@ -58,7 +59,7 @@ export function useCheckoutToday(hotelId?: string | null) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const ch = supabase
-      .channel(`hk-checkout-${hotelId}`)
+      .channel(instanceChannelName(`hk-checkout-${hotelId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'room_bookings', filter: `hotel_id=eq.${hotelId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-checkout-today', tenantId, hotelId] }),
       )
@@ -116,7 +117,7 @@ export function useCleaningProgressToday(hotelId?: string | null) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const ch = supabase
-      .channel(`hk-cleaning-${hotelId}`)
+      .channel(instanceChannelName(`hk-cleaning-${hotelId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'housekeeping_tasks', filter: `hotel_id=eq.${hotelId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-cleaning-progress', tenantId, hotelId] }),
       )
@@ -173,7 +174,7 @@ export function useStaffPerformanceToday(hotelId?: string | null) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const ch = supabase
-      .channel(`hk-staff-perf-${hotelId}`)
+      .channel(instanceChannelName(`hk-staff-perf-${hotelId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'housekeeping_tasks', filter: `hotel_id=eq.${hotelId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-staff-perf', tenantId, hotelId] }),
       )

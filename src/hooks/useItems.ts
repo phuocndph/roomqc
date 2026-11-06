@@ -6,6 +6,7 @@ import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from './use-toast'
 import type { ItemWithCategory, ItemFilters } from '@/types/items.types'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function useItems(
   filters: ItemFilters = {},
@@ -21,7 +22,7 @@ export function useItems(
     if (!tenantId) return
     
     const channel = supabase
-      .channel(`items-${tenantId}`)
+      .channel(instanceChannelName(`items-${tenantId}`))
       .on(
         'postgres_changes',
         {

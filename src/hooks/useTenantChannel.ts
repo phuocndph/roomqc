@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type PostgresChangeEvent = '*' | 'INSERT' | 'UPDATE' | 'DELETE'
 
@@ -56,7 +57,7 @@ export function useTenantChannel(
     const subscribe = () => {
       if (channelRef.current || !isActive) return
 
-      const channel = supabase.channel(channelName)
+      const channel = supabase.channel(instanceChannelName(channelName))
 
       for (const sub of subsRef.current) {
         const useTenantFilter = sub.autoTenantFilter !== false

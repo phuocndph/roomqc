@@ -5,6 +5,7 @@ import { useUser } from '@/hooks/useUser';
 import { useTenantSubscription } from '@/hooks/useSubscription';
 import { isTenantOwner, isManager, isStaff } from '@/lib/userAccess';
 import type { Announcement, AnnouncementPlacement } from '@/types/announcement.types';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 function audienceMatches(
   audience: Announcement['audience'],
@@ -36,7 +37,7 @@ export function useActiveAnnouncements(placement?: AnnouncementPlacement) {
   // Realtime invalidation
   useEffect(() => {
     const ch = supabase
-      .channel('announcements-runtime')
+      .channel(instanceChannelName('announcements-runtime'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'announcements' },

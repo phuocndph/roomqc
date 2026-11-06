@@ -47,6 +47,7 @@ import type { Json } from '@/integrations/supabase/types'
 import { GroupCheckoutRoomCard } from './group-checkout/GroupCheckoutRoomCard'
 import { GroupCheckoutSummary } from './group-checkout/GroupCheckoutSummary'
 import { GroupCheckoutStickyFooter } from './group-checkout/GroupCheckoutStickyFooter'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface GroupCheckoutDialogProps {
   open: boolean
@@ -282,7 +283,7 @@ export function GroupCheckoutDialog({
     const roomIds = groupData.bookings.map(b => b.room_id)
     
     const channel = supabase
-      .channel(`group-inspections-realtime-${bookingGroupId}`)
+      .channel(instanceChannelName(`group-inspections-realtime-${bookingGroupId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_inspection_requests', filter: `booking_id=in.(${bookingIds.join(',')})` }, () => {
         refetchInspections()
         queryClient.invalidateQueries({ queryKey: ['group-inspections', bookingGroupId] })
@@ -290,7 +291,7 @@ export function GroupCheckoutDialog({
       .subscribe()
     
     const roomChecksChannel = supabase
-      .channel(`group-roomchecks-realtime-${bookingGroupId}`)
+      .channel(instanceChannelName(`group-roomchecks-realtime-${bookingGroupId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'room_checks', filter: `room_id=in.(${roomIds.join(',')})` }, () => refetchInspections())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_checks', filter: `room_id=in.(${roomIds.join(',')})` }, () => refetchInspections())
       .subscribe()

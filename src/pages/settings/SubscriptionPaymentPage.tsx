@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft, CheckCircle, XCircle, Clock, AlertTriangle, History
 import { formatVNCurrency } from '@/lib/pricing';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 export default function SubscriptionPaymentPage() {
   const {
     invoiceId
@@ -53,7 +54,7 @@ export default function SubscriptionPaymentPage() {
   // Realtime subscription for instant updates
   useEffect(() => {
     if (!payment?.id) return;
-    const channel = supabase.channel(`payment-status-${payment.id}`).on('postgres_changes', {
+    const channel = supabase.channel(instanceChannelName(`payment-status-${payment.id}`)).on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
       table: 'payment_transactions',
