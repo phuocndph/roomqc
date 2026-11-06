@@ -78,6 +78,19 @@ Triggers:               180     (information_schema.triggers)
 
 ## Bắt đầu từ đâu?
 
+- Quản lý khách đăng ký SaaS → [kế hoạch vòng đời khách hàng](./08-ops/customer-lifecycle-management-audit-plan-2026-10-17.md),
+  [kết quả Đợt 1 local](./08-ops/customer-lifecycle-phase1-local-validation-2026-10-17.md)
+  và [runbook hỗ trợ cấp phát](./08-ops/customer-provisioning-triage-runbook.md).
+
+- Sau đợt đối soát thuê bao → [báo cáo hiện trạng và kế hoạch tiếp theo](./08-ops/roomqc-next-delivery-plan-2026-10-17.md)
+- A0 thực hiện → [baseline trình duyệt, quyền lịch sử đối soát và việc còn lại](./08-ops/a0-browser-baseline-2026-10-17.md)
+  (baseline browser E2E, job monitor, hồ sơ đối soát, console và cổng phát hành).
+
+- Email tài khoản, lời mời nhân viên và thông báo → [kế hoạch triển khai email](./08-ops/email-system-plan.md).
+  Vận hành local/Resend/VPS → [runbook email](./08-ops/email-runbook.md); [kết quả kiểm thử](./08-ops/email-validation-2026-10-16.md).
+
+- Mobile Android/iOS → [hướng dẫn build, phạm vi và kiểm thử](../mobile/README.md).
+
 - Mô hình SaaS do RoomQC quản lý → [kế hoạch tổng thể](./08-ops/managed-saas-roadmap.md)
   và [giai đoạn 1](./08-ops/managed-saas-phase-1.md).
 
