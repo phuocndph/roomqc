@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { useUser } from './useUser'
+import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { MODULES, MODULE_ACTIONS } from './useUserPermissions'
 
 export interface ModulePermissionState {
@@ -126,11 +127,8 @@ export function useUserPermissionConfiguration(userId?: string) {
       queryClient.invalidateQueries({ queryKey: ['user-permissions', variables.userId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions-summary', variables.userId] })
       
-      // FIX: Invalidate user-side queries for immediate permission refresh
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions'] }) // Also invalidate without userId
-      queryClient.invalidateQueries({ queryKey: ['route-permission', variables.userId], exact: false })
-      queryClient.invalidateQueries({ queryKey: ['check-permission', variables.userId], exact: false })
+      // Refresh the effective permission summary that drives navigation.
+      invalidateEffectivePermissions(queryClient, variables.userId)
     },
   })
 
@@ -208,11 +206,8 @@ export function useUserPermissionConfiguration(userId?: string) {
       queryClient.invalidateQueries({ queryKey: ['user-permissions', variables.userId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions-summary', variables.userId] })
       
-      // FIX: Invalidate user-side queries for immediate permission refresh
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions'] })
-      queryClient.invalidateQueries({ queryKey: ['route-permission', variables.userId], exact: false })
-      queryClient.invalidateQueries({ queryKey: ['check-permission', variables.userId], exact: false })
+      // Refresh the effective permission summary that drives navigation.
+      invalidateEffectivePermissions(queryClient, variables.userId)
       
       toast.success('Đã cập nhật cấu hình quyền')
     },
@@ -257,11 +252,8 @@ export function useUserPermissionConfiguration(userId?: string) {
       queryClient.invalidateQueries({ queryKey: ['user-permissions', variables.userId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions-summary', variables.userId] })
       
-      // FIX: Invalidate user-side queries for immediate permission refresh
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions'] })
-      queryClient.invalidateQueries({ queryKey: ['route-permission', variables.userId], exact: false })
-      queryClient.invalidateQueries({ queryKey: ['check-permission', variables.userId], exact: false })
+      // Refresh the effective permission summary that drives navigation.
+      invalidateEffectivePermissions(queryClient, variables.userId)
       
       toast.success('Đã cập nhật quyền thành công')
     },

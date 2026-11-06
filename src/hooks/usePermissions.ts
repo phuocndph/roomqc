@@ -7,6 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
 import { toast } from '@/hooks/use-toast'
@@ -226,6 +227,8 @@ export const useAssignPermissionsToRole = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions', variables.roleId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions'] })
+      // Role grants change every holder's effective permissions.
+      invalidateEffectivePermissions(queryClient)
       toast({
         title: 'Thành công',
         description: 'Quyền hạn đã được cập nhật',
@@ -272,6 +275,8 @@ export const useAddPermissionToRole = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions', variables.roleId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions'] })
+      // Role grants change every holder's effective permissions.
+      invalidateEffectivePermissions(queryClient)
       toast({
         title: 'Thành công',
         description: 'Quyền đã được thêm',
@@ -310,6 +315,8 @@ export const useRemovePermissionFromRole = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions', variables.roleId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions'] })
+      // Role grants change every holder's effective permissions.
+      invalidateEffectivePermissions(queryClient)
       toast({
         title: 'Thành công',
         description: 'Quyền đã được xóa',

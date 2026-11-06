@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { supabase } from '@/integrations/supabase/client'
 import { AppRole, User, UserWithRelations } from '@/types/database.types'
 import { toast } from 'sonner'
@@ -173,8 +174,10 @@ export function useUpdateUser() {
       await logUpdate('user', user.id, user.full_name, oldData, data)
       return user
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      // A level change alters role-derived permissions for that user.
+      invalidateEffectivePermissions(queryClient, variables.id)
       toast.success('Người dùng đã được cập nhật thành công')
     },
     onError: (error: Error) => {

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from '@/hooks/use-toast'
 import { useUser } from './useUser'
+import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { getFriendlyError } from '@/lib/errorMessage'
 
 export interface UserPermission {
@@ -172,11 +173,8 @@ export function useUpdateUserPermissions() {
       queryClient.invalidateQueries({ queryKey: ['user-permissions', variables.userId] })
       queryClient.invalidateQueries({ queryKey: ['user-permissions-summary', variables.userId] })
       
-      // FIX: Invalidate user-side queries for immediate permission refresh
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions', variables.userId] })
-      queryClient.invalidateQueries({ queryKey: ['user-module-permissions'] })
-      queryClient.invalidateQueries({ queryKey: ['route-permission', variables.userId], exact: false })
-      queryClient.invalidateQueries({ queryKey: ['check-permission', variables.userId], exact: false })
+      // Refresh the effective permission summary that drives navigation.
+      invalidateEffectivePermissions(queryClient, variables.userId)
       
       toast({
         title: 'Thành công',
