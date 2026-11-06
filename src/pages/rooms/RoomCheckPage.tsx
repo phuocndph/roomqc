@@ -121,6 +121,7 @@ export function RoomCheckPage() {
   
   // Flag để tránh gọi startInspection nhiều lần
   const hasAutoStartedInspection = useRef(false)
+  const sessionInitRoomRef = useRef<string | null>(null)
   
   // Stable inspection ID để tránh race condition khi submit
   const [stableInspectionId, setStableInspectionId] = useState<string | undefined>(
@@ -346,10 +347,16 @@ export function RoomCheckPage() {
     navigate,
   ])
   
-  // Create check session on mount
+  // Create check session on mount — once per room. `createSession` is a new
+  // function on every render, so without this guard the effect re-ran before
+  // the created session was observed, the second insert hit the room_id unique
+  // key (409) and the user was told someone else was checking their own room
+  // and sent back to /rooms (W1, 2026-11-06).
   useEffect(() => {
     const initSession = async () => {
       if (room && user && !existingSession && !isLoading && !isSessionLoading) {
+        if (sessionInitRoomRef.current === room.id) return
+        sessionInitRoomRef.current = room.id
         const checkType = prefilledType || 'daily'
         const result = await createSession(
           room.id,
@@ -1094,7 +1101,17 @@ export function RoomCheckPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => navigateBack(navigate, '/rooms')}>Quay lại</AlertDialogCancel>
-            <AlertDialogAction onClick={handleTakeOver}>Tiếp quản</AlertDialogAction>
+            {/* Keep the dialog open while the takeover runs: letting the action
+                auto-close fired onOpenChange(false) -> navigate('/rooms') and
+                threw a successful takeover away (W1, 2026-11-06). */}
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault()
+                void handleTakeOver()
+              }}
+            >
+              Tiếp quản
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

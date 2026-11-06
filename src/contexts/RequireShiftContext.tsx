@@ -15,6 +15,8 @@ import type { AppRole } from '@/types/database.types'
  */
 export interface RequireShiftContextValue {
   isOnShift: boolean
+  /** True while the actor's shift status has not been read yet. */
+  isShiftStatusLoading: boolean
   requiresShift: boolean
   guard: (action: () => void) => void
   /** Mở dialog mà không có action cụ thể (ví dụ block route mount). */
@@ -27,7 +29,7 @@ const GATED_ROLES: AppRole[] = ['staff', 'department_manager']
 
 export function RequireShiftProvider({ children }: { children: ReactNode }) {
   const { user } = useUser()
-  const { data: myStatus } = useMyStaffStatus()
+  const { data: myStatus, isLoading: myStatusLoading } = useMyStaffStatus()
   const [pendingAction, setPendingAction] = useState<null | (() => void)>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -38,6 +40,9 @@ export function RequireShiftProvider({ children }: { children: ReactNode }) {
   }, [user])
 
   const isOnShift = isCurrentlyOnShift(myStatus ?? null)
+  // Until the first staff_status read completes, "not on shift" is unknown,
+  // not false. Route gates must wait instead of bouncing a deep link.
+  const isShiftStatusLoading = requiresShift && myStatusLoading
 
   const guard = useCallback(
     (action: () => void) => {
@@ -71,8 +76,8 @@ export function RequireShiftProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<RequireShiftContextValue>(
-    () => ({ isOnShift, requiresShift, guard, openDialog }),
-    [isOnShift, requiresShift, guard, openDialog]
+    () => ({ isOnShift, isShiftStatusLoading, requiresShift, guard, openDialog }),
+    [isOnShift, isShiftStatusLoading, requiresShift, guard, openDialog]
   )
 
   return (
@@ -94,6 +99,7 @@ export function useRequireShift(): RequireShiftContextValue {
     // hoặc legacy route): coi như không cần gác để không gãy UX.
     return {
       isOnShift: true,
+      isShiftStatusLoading: false,
       requiresShift: false,
       guard: (fn) => fn(),
       openDialog: () => {},
