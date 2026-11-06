@@ -1,5 +1,11 @@
 # RoomQC — health worker và duyệt nguồn đo
 
+**Điểm nhận hiện hành 28/10:** [shared resource startup](roomqc-control-shared-resource-runtime-local-2026-10-28.md)
+bắt buộc file ngân sách chung cho staging/production; health và probe tính pool riêng,
+budget con phải khớp profile. [Managed probes](roomqc-t06-managed-runtime-local-2026-10-22.md)
+đã có source/proof local. Nội dung ghi ngày19/10, runtime0005 và thiếu M06 bên dưới
+là checkpoint lịch sử, không đại diện source hiện tại; không tự dùng để rollout.
+
 Ngày 19/10/2026. Phạm vi M05/T06, đi cùng [run sheet P2](roomqc-p2-monitoring-delivery-plan-2026-10-19.md).
 Đã có worker/config/entrypoint và kiểm thử riêng; **chưa bật monitoring thường trực**.
 Entrypoint hiện không có adapter năm service probe M06: trả `HEALTH_PROBES_UNCONFIGURED`,

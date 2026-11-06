@@ -1,5 +1,102 @@
 # RoomQC — nghiệm thu, triển khai và khôi phục VPS/signup
 
+**Điểm nhận việc mới nhất — EC05 partial, không thay toàn bộ roadmap:**
+[Policy/SDK diagnostic](roomqc-m06-password-policy-diagnostic-local-2026-10-21.md)
+có 33 controls/18 đạt/15 fail trên candidate 700/538, terminal exit 1/cleaned 11.
+Server completion/live-state/forced caller/fault/races nhận tiếp tại
+[plan mục 15.7](roomqc-vps-signup-preparation-plan-2026-10-21.md#157-phiếu-ec05-hiện-hành--hoàn-tất-server-sau-policysdk-diagnostic).
+Control 203/203 và client tests không thay full A/B/Auth/E2E. Giữ các handoff
+bên dưới làm lịch sử; tám đợt/27 gói/25 bước/70 case, 122 releaseAcceptance và
+gate L/S/P/U/B không đổi. Bản cập nhật kế hoạch này không deploy serving/VPS/provider.
+
+**Nhận tiếp:** [employee fix full A/B local đã đạt](roomqc-m06-employee-atomic-fix-local-2026-10-21.md)
+→ [caller inventory ban đầu](roomqc-m06-employee-caller-inventory-local-2026-10-21.md), phiếu 15.2.4.
+Candidate 682/537: A/B exit 0/cleaned, 280/1.764/20 + employee 30/4, final recovery;
+control 194/194. Reviewer/full matrix/E2E và đủ tám đợt vẫn mở; gate không đổi.
+
+**Điểm hiện hành — toàn bộ VPS + signup, Plan + nghiệm thu:**
+[kế hoạch chi tiết](roomqc-vps-signup-preparation-plan-2026-10-21.md) và
+[quy trình nghiệm thu](roomqc-vps-signup-acceptance-protocol-2026-10-21.md).
+**A/B thành công gần nhất, source cũ:** [bản sửa account/session năm bảng — A/B local](roomqc-m06-business-actor-fix-local-2026-10-21.md).
+Source **668 files/535 migrations**, fingerprint trước A/sau A/B không đổi.
+A f1381bbb5dbe / B e2ab861d76b4 đều **exit 0**, cleaned 18 objects/run.
+Mỗi run: **1.764/1.764 account/session**, **280/280 hotel scope**, **20/20 races**.
+588 negative failures baseline đã đạt; 1.176 before/restored positives giữ nguyên.
+Tập identity/expected không đổi; actual Auth/logout/recovery và no-effect assertions.
+Race chỉ owner POST/năm bảng, profile lock/session deletion/hai thứ tự lock;
+không suy thành mọi role/action/workflow hoặc hủy in-flight GET.
+Full control DB **189/189**, 0 skip; 12 focused là subset. 364 policy có trước
+không đổi/xóa, thêm đúng 5 restrictive actor policies và 5 statement triggers.
+Advisors 605 (17 no-policy/8 FK/445 unused/135 permissive); không drop index theo count.
+Tiếp caller/capability/workflow/RPC/Edge/other-table matrix, 17-target/policy/FK →
+issuer/trust/atomic timed health và toàn bộ các đợt VPS/signup còn lại.
+Hai rebuild tuần tự không thay simultaneous A/B hoặc Linux/E2E/load/pilot.
+Chưa đóng R4/T03/T08/122 releaseAcceptance hoặc gate L/S/P/U/B; reviewer còn pending.
+
+**Các handoff bên dưới là lịch sử; không thay điểm hiện hành đầu trang.**
+
+**Điểm nhận việc mới nhất:** [phiếu triển khai 16 mục / 8 đợt / đủ T01–T25](roomqc-vps-signup-launch-checklist-2026-10-21.md).
+**Lát vừa khép local:** [lifecycle service + recovery sản phẩm](roomqc-m06-lifecycle-local-2026-10-21.md).
+Source **647 files/531 migrations**, SHA256 0f14369a…; control **154/154**,
+Vitest riêng **27/27**. A **41f2b3011bc6** / B **9b6a13ced16e** exit 0/cleaned
+16 objects/run, fingerprints/eszip khớp. Mỗi run 89 recorded checks/82 nhãn,
+105 transitions/thông báo in-app và bốn bảng tài chính có hàng thật không đổi.
+Fixture grace đã sửa; không nhận lại như lỗi chưa xử lý. Nhận tiếp
+**provider queue/webhook → 17-target/policy/FK → issuer/trust/atomic health/pipeline**,
+rồi signup/UI/Linux/offsite/E2E/tải/pilot. R4-a tổng/R4/T08 chưa khép; chưa mở gate.
+Lượt tiếp tục này sửa harness và kiểm sandbox riêng, không sửa product/migration,
+deploy runtime, gửi email thật hoặc mở signup/billing. Hai rebuild tuần tự không
+thay hai backend đồng thời. Giữ nguyên 27 gói/25 bước/70 case nghiệm thu.
+
+**Phiếu thiết kế trước snapshot lifecycle — 21/10:**
+[mục 24: đầu việc, hợp đồng, phiếu nhận và tiêu chí bàn giao](roomqc-vps-signup-deployment-plan-2026-10-20.md#dispatch-2026-10-21),
+[checklist triển khai chi tiết 24.7–24.12](roomqc-vps-signup-deployment-plan-2026-10-20.md#execution-checklist-2026-10-21),
+[sổ 27 gói/25 bước/70 case](../../../artifacts/roomqc-vps-signup-delivery-ledger-2026-10-21.json).
+Lát nhận tiếp: service lifecycle/provider/17 targets → policy/FK → issuer/trust →
+atomic health/pipeline. Email-admin đã có local proof, giữ hồi quy, không làm lại
+như lỗi chưa sửa. Toàn bộ signup/UI/VPS/offsite/E2E/tải/pilot vẫn giữ scope.
+Lượt cập nhật kế hoạch này chỉ sửa tài liệu/artifact và kiểm cấu trúc tài liệu;
+không chạy lại suite sản phẩm, thay runtime/DNS/provider hay mở signup/billing.
+
+**Mốc implementation trước lifecycle:** [email-admin — local proof có phạm vi](roomqc-m06-email-admin-local-2026-10-21.md).
+Scoped backend **643 files/531 migrations**, SHA256
+4334aef4f09c6f867346f8e4ca7c4a8a2408efdcf410f6536989b97538d7c493;
+full control **152/152**, Vitest riêng **7/7**. A dbbf929824ec / B 36a0835d1dc3
+exit 0/cleaned, identity khớp; 114 named checks/7 race mỗi run, advisors cả hai 640.
+Đây là bằng chứng đã lưu, không suite vừa chạy lại khi lập plan. Không đóng
+R4-a tổng/R4/T08 hoặc gate release; hai rebuild tuần tự không thay A/B đồng thời.
+[Handoff 29](roomqc-vps-signup-execution-plan-2026-10-19.md#email-admin-handoff).
+
+**Baseline trước email-admin:** [live actor tại chín lệnh ghi — local proof](roomqc-m06-mutation-local-2026-10-20.md).
+Source 640 files/530 migrations, control 148/148; A 6eade27a974f / B f2025aa52f13
+exit 0/cleaned, canonical hashes/images khớp, advisors cả hai 640. Mỗi run có
+162 matrix denials/29-table snapshots/15 race và recovery positive/replay.
+Scope này local_verified; R4-a tổng/R4/T08 còn mở. Tiếp service/provider/17-target
+disposition → policy/FK → pipeline theo [phiếu hiện hành](roomqc-vps-signup-deployment-plan-2026-10-20.md#pre-implementation-current).
+Không deploy hoặc nâng gate; 637/529 phía dưới là baseline lịch sử trước mutation proof.
+
+**Proof trước mutation slice:** [email-ready/profile RLS local](roomqc-m06-email-ready-local-2026-10-20.md):
+637 files/529 migrations, control 144/144, fresh A/B 95d9560fba65/91373e6a5871
+exit 0/cleaned; advisors cả hai 645. 20 fresh email events/18 invalid/23 positive
+queues và HTTP profile scope đã có proof. **Không đóng A/D/T08 hoặc gate tổng thể
+từ lát này; giữ 70 case.** Hai builds tuần tự không thay G01/G02 đồng thời,
+browser E2E, Linux/provider/offsite hoặc pilot.
+[Kế hoạch nhận việc mục 21–22](roomqc-vps-signup-deployment-plan-2026-10-20.md#launch-runbook).
+
+**Snapshot lịch sử Auth xóa mềm 633/527 ngày 20/10:** [Auth xóa mềm local](roomqc-m06-auth-soft-delete-local-2026-10-20.md)
+qua A 0d7e8d8f07ca / B 850b5d52cc1d, 527 migrations, 210 API/44 SQL actor
+denials mỗi lượt; control 142/142, registration regression 94 HTTP/39 SQL,
+build và cleanup đạt. High đã local_verified, **không đóng A09/D02/T08 tổng thể**
+hoặc case release nào chỉ từ lát này. B advisors 646 còn review; A không chạy
+advisors. Hai builds tuần tự vẫn không thay G01/G02, Linux/E2E/pilot và 70 case.
+
+**Snapshot trước Auth xóa mềm:** [registration local report/artifact](roomqc-m06-registration-local-2026-10-20.md)
+A 4317f0ce9c62 / B 0fe112b0e675: 526 migrations, 94 HTTP/Auth checks + 39 SQL
+denials/lượt, two actual lock races, exit 0/cleaned; control 142/142, focused 7/7
+là subset. Có proof cho một phần D02/A09 nhưng **không đóng case tổng thể**:
+R4-AUTH-SOFT-DELETE High ở room setup/quote đã tái hiện và cần sửa. 70 case A–G,
+gate L/S/P/U/B giữ nguyên; hai builds tuần tự không thay G01/G02 hoặc browser E2E.
+
 Ngày 19/10/2026. Đây là tiêu chí kiểm tra **chưa chạy** cho phần sẽ triển khai.
 Không tính các ô trong tài liệu là pass. Các bằng chứng local đã có ngày 15–19/10
 được giữ trong báo cáo riêng, không thay cho acceptance của release mới.
@@ -21,6 +118,29 @@ Mỗi kết quả lưu: case ID, commit/image/digest, schema versions, môi trư
 fixture/run IDs, thời gian bắt đầu/kết thúc, expected/actual, pass/fail/not-run và
 artifact đã redaction. Với race phải chứng minh có chồng lấn/tranh khóa thực sự;
 với mất response phải chứng minh server đã commit trước khi chặn phản hồi.
+
+R3 local lifecycle mới có [báo cáo](roomqc-m06-session-local-2026-10-19.md) và
+[ADR](../adr/roomqc-probe-credential-lifecycle.md): directory encrypted store/
+grants/race/rotation/fencing/restart, Auth thật và mất phản hồi sau HTTP 200.
+Không thay full backend/Snapshot runtime/production key recovery; A06/A07/B02/C01
+chỉ được bổ sung evidence theo phạm vi, chưa đóng acceptance release tổng thể.
+Ma trận vẫn giữ 70 case; không quy đổi số unit/integration tests thành 70 case.
+
+R4 ngày 20/10 có [report/artifact local](roomqc-m06-access-local-2026-10-20.md):
+525 migrations qua A dd45e76bae82 / B 0e3ec605323b; mỗi lượt 176 API checks và
+20 SQL session denials; full control 128/128, focused 27/27, build+verify local
+đạt. Direct-write distribution có proof, advisors/reachability/legacy workflow
+vẫn mở. Hai fresh builds tuần tự không thay G01/G02 đồng thời; không đóng 70
+case, A06/A09/B02/C01 hoặc gate release chỉ từ kết quả này.
+
+Caller audit tiếp theo ngày 20/10:
+[báo cáo và ledger](roomqc-m06-callers-local-2026-10-20.md) ghi A 55a4b60c80b1 /
+B 0dbf25756725 exit 0/cleaned, 525 migrations; control 139/139, audit+graph
+14/14 là subset. 149 triggers/25 candidate paths là discovery, không đóng
+reachability. Guard đăng ký legacy/service/gateway, trigger email, checkout/
+admin/session còn phải có proof; không nâng A09/D02/C01 hoặc bất kỳ case nào
+từ graph/source review. Hai sequential builds không thay G01/G02; đủ 70 case
+vẫn cần expected/actual đúng môi trường, không cộng số test qua các lượt.
 
 ## 2. Ma trận kiểm tra
 
@@ -53,6 +173,24 @@ với mất response phải chứng minh server đã commit trước khi chặn 
 | B07 | Metric chạm/ngay dưới ngưỡng, dao động liên tục | Đúng khoảng thời gian duy trì, không đóng/mở liên tục do một spike |
 | B08 | Cùng lỗi lặp, acknowledge, lỗi hết | Một alert mở, ack không tự resolve/gỡ gate; lỗi hết tạo resolution có audit |
 | B09 | Cả host control/monitor mất kết nối | Probe ngoài host phát hiện và thông báo tới đích thử được cấp phép |
+
+Chi tiết B02/C01 và A06 trên M06: healthy/fault/recovery đủ năm service không
+thay negative-permission/session. Denied Realtime topic phải có phản hồi protocol
+xác định cùng positive control; timeout không là pass. Lazy publication init
+và Janitor partition maintenance phải được kiểm chứng theo release đã pin:
+maintenance hợp lệ không làm drift giả; ACL/policy/structure/publication sai
+vẫn bị reject. Hai initialized builds/hash khớp chỉ là bằng chứng fixture,
+không tự đóng acceptance release hoặc thay artifact production tin cậy.
+
+Implementation R2 ngày 19/10: hai full vendor builds `1d2e7d793b84`/
+`7bbeec983dbf`, 523 migrations, exit 0, cùng initialized hash v2. Janitor thật,
+năm fault/recovery, denial protocol và revoke/re-login đều đạt; full suite current
+tree 111/111, 0 fail/skip. [Báo cáo](roomqc-m06-partition-local-2026-10-19.md)
+giới hạn proof local/controlled drill; scheduled soak staging chưa có. R1/R2
+không còn là lỗi đang mở, nhưng coordinated credential refresh/rotation,
+advisors triage toàn bộ, trusted artifact/installer và gateway/runtime còn thiếu.
+Vì vậy **không đóng A06/B02/C01 tổng thể hoặc nâng gate** từ proof một phần.
+Trình tự sửa và nghiệm thu ở [R2–R7](roomqc-vps-signup-execution-plan-2026-10-19.md#1932-phiếu-nhận-việc-ngay-từ-hiện-trạng--không-cần-khóa-external).
 
 ### C — registry, admission và phân bổ
 
@@ -146,6 +284,10 @@ Các ngưỡng dưới đây dùng để đặt mục tiêu staging; phải ghi 
 - Pilot 7 ngày: mục tiêu đề xuất ≥99,5% khả dụng API quan trọng, không sự cố mất/rò
   dữ liệu/cấp phát trùng; báo riêng lỗi provider/email và thao tác người dùng.
 - Freshness: metric thường đến trong 60s; stale >120s đóng admission, UI thể hiện rõ.
+- B09/F09: mục tiêu đề xuất phát hiện mất host ≤180s và nhận thông báo ≤300s,
+  đều tính từ mốc fault UTC; ghi riêng thời gian người trực ack và phục hồi.
+  Phải duyệt cấu hình trước drill; provider accepted không thay received. Đây
+  chưa phải SLA hoặc kết quả đã đạt; không thay ngưỡng admission stale >120s.
 - Không có pool exhaustion kéo dài, filesystem chạm ngưỡng critical hoặc worker hết
   lease liên tục ở profile được đề nghị cho pilot.
 

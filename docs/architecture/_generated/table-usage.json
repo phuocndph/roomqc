@@ -19,7 +19,6 @@
     "files": [
       "src\\components\\settings\\RoomCheckSettingsHistory.tsx",
       "src\\hooks\\super-admin\\usePlatformSettings.ts",
-      "src\\hooks\\super-admin\\useTenants.ts",
       "src\\hooks\\useStaffActivity.ts",
       "src\\lib\\activityLogger.ts",
       "src\\lib\\seedDemoData.ts"
@@ -38,6 +37,7 @@
   {
     "table": "announcement_dismissals",
     "ops": [
+      "delete",
       "insert",
       "select"
     ],
@@ -71,11 +71,9 @@
   },
   {
     "table": "avatars",
-    "ops": [
-      "update"
-    ],
+    "ops": [],
     "files": [
-      "src\\components\\settings\\MobileUserProfilePage.tsx"
+      "src\\lib\\self-profile.ts"
     ]
   },
   {
@@ -136,6 +134,7 @@
       "src\\hooks\\useBookingPayments.ts",
       "src\\hooks\\useBookingStats.ts",
       "src\\hooks\\useCashFlowReport.ts",
+      "src\\lib\\seedDemoData.ts",
       "src\\lib\\shiftHandoverPdf.ts",
       "src\\pages\\reports\\hub\\DailyReportPage.tsx"
     ]
@@ -151,8 +150,7 @@
     "files": [
       "src\\hooks\\useBookingServiceCharges.ts",
       "src\\hooks\\useBookingSheetDetails.ts",
-      "src\\hooks\\useReceptionRoomDetail.ts",
-      "src\\lib\\invoiceHelpers.ts"
+      "src\\hooks\\useReceptionRoomDetail.ts"
     ]
   },
   {
@@ -177,7 +175,6 @@
       "src\\hooks\\useBookingSheetDetails.ts",
       "src\\hooks\\useChargeableConsumptions.ts",
       "src\\hooks\\useReceptionRoomDetail.ts",
-      "src\\lib\\invoiceHelpers.ts",
       "src\\pages\\reception\\PendingChargesPage.tsx"
     ]
   },
@@ -207,20 +204,24 @@
   {
     "table": "conversation_members",
     "ops": [
+      "insert",
       "select"
     ],
     "files": [
       "src\\components\\chat\\ChatNotificationListener.tsx",
-      "src\\hooks\\useChat.ts"
+      "src\\hooks\\useChat.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
     "table": "conversations",
     "ops": [
+      "insert",
       "select"
     ],
     "files": [
-      "src\\components\\chat\\ChatNotificationListener.tsx"
+      "src\\components\\chat\\ChatNotificationListener.tsx",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -258,11 +259,9 @@
   {
     "table": "distribution_orders",
     "ops": [
-      "select",
-      "update"
+      "select"
     ],
     "files": [
-      "src\\hooks\\useCreateDistributionFromSupplement.ts",
       "src\\hooks\\useHousekeepingOpsSummary.ts",
       "src\\hooks\\useInventoryHubBadges.ts",
       "src\\hooks\\usePendingCounts.ts",
@@ -290,17 +289,6 @@
     ]
   },
   {
-    "table": "financial_targets",
-    "ops": [
-      "delete",
-      "select",
-      "upsert"
-    ],
-    "files": [
-      "src\\hooks\\useFinancialTargets.ts"
-    ]
-  },
-  {
     "table": "guest_invoices",
     "ops": [
       "insert",
@@ -311,7 +299,8 @@
       "src\\components\\invoices\\PrintReceiptDialog.tsx",
       "src\\components\\invoices\\VatRequestForm.tsx",
       "src\\hooks\\useGuestInvoices.ts",
-      "src\\lib\\invoiceHelpers.ts"
+      "src\\lib\\invoiceHelpers.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -322,10 +311,12 @@
       "update"
     ],
     "files": [
+      "src\\components\\rooms\\RoomBookingDialog.tsx",
       "src\\hooks\\useBookingSheetDetails.ts",
       "src\\hooks\\useGuests.ts",
       "src\\hooks\\useGuestsV2.ts",
-      "src\\hooks\\useReceptionRoomDetail.ts"
+      "src\\hooks\\useReceptionRoomDetail.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -354,12 +345,15 @@
   {
     "table": "hotel_settings",
     "ops": [
+      "insert",
       "select",
+      "update",
       "upsert"
     ],
     "files": [
       "src\\components\\settings\\PricingRulesForm.tsx",
-      "src\\hooks\\useHotelPricingRules.ts"
+      "src\\hooks\\useHotelPricingRules.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -373,7 +367,6 @@
     "files": [
       "src\\components\\invoices\\PrintReceiptDialog.tsx",
       "src\\components\\settings\\workflows\\actions\\TelegramNotificationAction.tsx",
-      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
       "src\\hooks\\useFloorMapCellSizeRemote.ts",
       "src\\hooks\\useHotelPhotoMode.ts",
       "src\\hooks\\useHotelQcMode.ts",
@@ -408,6 +401,7 @@
       "src\\hooks\\useRoomsNeedingActionToday.ts",
       "src\\hooks\\useUnifiedTasks.ts",
       "src\\lib\\mcp\\tools\\list-housekeeping-tasks.ts",
+      "src\\lib\\seedDemoData.ts",
       "src\\pages\\housekeeping\\TasksPendingReviewPage.tsx",
       "src\\pages\\rooms\\RoomCheckPage.tsx"
     ]
@@ -455,13 +449,10 @@
   {
     "table": "invoices",
     "ops": [
-      "insert",
       "select"
     ],
     "files": [
-      "src\\components\\payment\\BankTransferPaymentDialog.tsx",
       "src\\hooks\\super-admin\\useTenantBilling.ts",
-      "src\\hooks\\super-admin\\useTenants.ts",
       "src\\hooks\\useSubscription.ts"
     ]
   },
@@ -548,10 +539,13 @@
   {
     "table": "laundry_batch_items",
     "ops": [
+      "insert",
+      "select",
       "update"
     ],
     "files": [
-      "src\\hooks\\useLaundryBatches.ts"
+      "src\\hooks\\useLaundryBatches.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -570,7 +564,6 @@
       "src\\hooks\\useLaundryCompensation.ts",
       "src\\hooks\\useLaundryRequests.ts",
       "src\\hooks\\useOverviewAlerts.ts",
-      "src\\hooks\\useOverviewKpiStrip.ts",
       "src\\hooks\\useReports.ts",
       "src\\lib\\seedDemoData.ts"
     ]
@@ -644,9 +637,9 @@
       "src\\components\\dashboard\\MobileDashboard.tsx",
       "src\\hooks\\useCashFlowReport.ts",
       "src\\hooks\\useHousekeepingOpsSummary.ts",
+      "src\\hooks\\useMaintenanceDashboard.ts",
       "src\\hooks\\useMaintenanceRequests.ts",
       "src\\hooks\\useOverviewAlerts.ts",
-      "src\\hooks\\useOverviewKpiStrip.ts",
       "src\\hooks\\usePendingCounts.ts",
       "src\\hooks\\useReceptionRoomDetail.ts",
       "src\\hooks\\useRecurringIssues.ts",
@@ -678,21 +671,12 @@
   {
     "table": "messages",
     "ops": [
+      "insert",
       "select"
     ],
     "files": [
-      "src\\hooks\\useChat.ts"
-    ]
-  },
-  {
-    "table": "monthly_targets",
-    "ops": [
-      "select",
-      "upsert"
-    ],
-    "files": [
-      "src\\hooks\\useFixedExpenses.ts",
-      "src\\pages\\settings\\FixedCostsSettingsPage.tsx"
+      "src\\hooks\\useChat.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -709,7 +693,8 @@
   {
     "table": "notifications",
     "ops": [
-      "insert"
+      "insert",
+      "select"
     ],
     "files": [
       "src\\hooks\\useLaundryBatches.ts",
@@ -719,8 +704,7 @@
   {
     "table": "payment_anomalies",
     "ops": [
-      "select",
-      "update"
+      "select"
     ],
     "files": [
       "src\\pages\\finance\\ReconciliationPage.tsx"
@@ -729,11 +713,9 @@
   {
     "table": "payment_transactions",
     "ops": [
-      "insert",
       "select"
     ],
     "files": [
-      "src\\components\\payment\\BankTransferPaymentDialog.tsx",
       "src\\hooks\\super-admin\\useTenantBilling.ts",
       "src\\hooks\\usePendingPayments.ts",
       "src\\hooks\\useSubscription.ts",
@@ -776,11 +758,9 @@
     "table": "platform_settings",
     "ops": [
       "select",
-      "update",
-      "upsert"
+      "update"
     ],
     "files": [
-      "src\\components\\super-admin\\settings\\EmailSettings.tsx",
       "src\\hooks\\super-admin\\usePlatformSettings.ts"
     ]
   },
@@ -937,7 +917,6 @@
     ],
     "files": [
       "src\\components\\bookings\\ExtendBookingDialog.tsx",
-      "src\\components\\bookings\\GroupCheckoutDialog.tsx",
       "src\\components\\dashboard\\owner\\MobileOwnerDashboard.tsx",
       "src\\components\\dashboard\\owner\\OwnerRevenueOverview.tsx",
       "src\\components\\rooms\\CustomerUsedDialog.tsx",
@@ -946,6 +925,7 @@
       "src\\hooks\\useAvailableRooms.ts",
       "src\\hooks\\useBookingConflicts.ts",
       "src\\hooks\\useBookingIssues.ts",
+      "src\\hooks\\useBookingList.ts",
       "src\\hooks\\useBookingServiceCharges.ts",
       "src\\hooks\\useBookingSheetDetails.ts",
       "src\\hooks\\useBookingStats.ts",
@@ -957,18 +937,16 @@
       "src\\hooks\\useGuests.ts",
       "src\\hooks\\useHousekeepingDashboardPanels.ts",
       "src\\hooks\\useHousekeepingKpi.ts",
-      "src\\hooks\\useOperationsInsights.ts",
       "src\\hooks\\useOverviewAlerts.ts",
-      "src\\hooks\\useOverviewKpiStrip.ts",
       "src\\hooks\\useReceptionRoomDetail.ts",
       "src\\hooks\\useRevenueReport.ts",
       "src\\hooks\\useRoomAvailabilityWindow.ts",
       "src\\hooks\\useRoomBooking.ts",
       "src\\hooks\\useRoomPerformance.ts",
       "src\\hooks\\useRoomsNeedingActionToday.ts",
-      "src\\lib\\invoiceHelpers.ts",
       "src\\lib\\mcp\\tools\\list-bookings.ts",
       "src\\lib\\route-data-prefetch.ts",
+      "src\\lib\\seedDemoData.ts",
       "src\\pages\\bookings\\BookingDetailPage.tsx",
       "src\\pages\\bookings\\BookingsPage.tsx",
       "src\\pages\\reports\\hub\\DailyReportPage.tsx"
@@ -1049,7 +1027,8 @@
     ],
     "files": [
       "src\\components\\settings\\PricingRulesForm.tsx",
-      "src\\hooks\\usePricingRules.ts"
+      "src\\hooks\\usePricingRules.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -1102,13 +1081,14 @@
       "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
       "src\\components\\rooms\\MobileRoomFormPage.tsx",
       "src\\components\\rooms\\RoomBookingDialog.tsx",
+      "src\\components\\rooms\\RoomCommandRecovery.tsx",
+      "src\\components\\rooms\\RoomOperationRecovery.tsx",
       "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
       "src\\hooks\\useAvailableRooms.ts",
       "src\\hooks\\useBookingStats.ts",
       "src\\hooks\\useBulkCreateRooms.ts",
       "src\\hooks\\useBulkRoomActions.ts",
       "src\\hooks\\useCheckoutInspection.ts",
-      "src\\hooks\\useOverviewKpiStrip.ts",
       "src\\hooks\\useReceptionRoomDetail.ts",
       "src\\hooks\\useRoomChecks.ts",
       "src\\hooks\\useRoomSubscriptionLimit.ts",
@@ -1206,7 +1186,6 @@
       "update"
     ],
     "files": [
-      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
       "src\\hooks\\super-admin\\usePricingManagement.ts",
       "src\\hooks\\useSubscription.ts"
     ]
@@ -1232,7 +1211,8 @@
       "src\\hooks\\useCreateDistributionFromSupplements.ts",
       "src\\hooks\\usePendingCounts.ts",
       "src\\hooks\\useRoomChecks.ts",
-      "src\\hooks\\useSupplementRequests.ts"
+      "src\\hooks\\useSupplementRequests.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -1274,15 +1254,12 @@
   {
     "table": "tenants",
     "ops": [
-      "delete",
       "select",
       "update"
     ],
     "files": [
       "src\\components\\settings\\UsageModeSelector.tsx",
-      "src\\components\\settings\\subscription\\AddRoomsDialog.tsx",
       "src\\components\\super-admin\\shared\\NotificationBell.tsx",
-      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
       "src\\hooks\\super-admin\\usePricingManagement.ts",
       "src\\hooks\\super-admin\\useTenants.ts",
       "src\\hooks\\useBulkCreateRooms.ts",
@@ -1299,10 +1276,7 @@
   {
     "table": "user_hotels",
     "ops": [
-      "delete",
-      "insert",
-      "select",
-      "update"
+      "select"
     ],
     "files": [
       "src\\contexts\\HotelContext.tsx",
@@ -1350,12 +1324,10 @@
       "src\\components\\chat\\ChatNotificationListener.tsx",
       "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
       "src\\components\\inventory\\adjustments\\InvestigationDialog.tsx",
-      "src\\components\\settings\\MobileUserProfilePage.tsx",
       "src\\hooks\\useBookingConsumables.ts",
       "src\\hooks\\useChat.ts",
       "src\\hooks\\useHotels.ts",
       "src\\hooks\\useOnShiftStaffListAll.ts",
-      "src\\hooks\\useProfile.ts",
       "src\\hooks\\useRoomAuditLog.ts",
       "src\\hooks\\useStaffStatus.ts",
       "src\\hooks\\useStockAdjustments.ts",
@@ -1363,9 +1335,10 @@
       "src\\hooks\\useUsers.ts",
       "src\\lib\\activityLogger.ts",
       "src\\lib\\mcp\\supabase.ts",
+      "src\\lib\\room-transition-client.ts",
       "src\\lib\\seedDemoData.ts",
+      "src\\lib\\self-profile.ts",
       "src\\pages\\admin\\PaymentSettingsPage.tsx",
-      "src\\pages\\auth\\ChangePasswordPage.tsx",
       "src\\pages\\settings\\SystemTestPage.tsx",
       "src\\utils\\notificationRecipients.ts"
     ]
@@ -1398,11 +1371,13 @@
     "table": "warehouse_stock",
     "ops": [
       "delete",
+      "insert",
       "select"
     ],
     "files": [
       "src\\hooks\\useWarehouseStock.ts",
-      "src\\hooks\\useWarehouses.ts"
+      "src\\hooks\\useWarehouses.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -1415,7 +1390,8 @@
     ],
     "files": [
       "src\\components\\dashboard\\owner\\SetupChecklist.tsx",
-      "src\\hooks\\useWarehouses.ts"
+      "src\\hooks\\useWarehouses.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {

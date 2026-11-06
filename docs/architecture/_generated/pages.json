@@ -12,6 +12,42 @@
     "lines": 6
   },
   {
+    "file": "src\\pages\\admin\\ControlAlertsPage.test.tsx",
+    "module": "admin",
+    "name": "ControlAlertsPage.test",
+    "lines": 138
+  },
+  {
+    "file": "src\\pages\\admin\\ControlClusterCommandsPage.test.tsx",
+    "module": "admin",
+    "name": "ControlClusterCommandsPage.test",
+    "lines": 96
+  },
+  {
+    "file": "src\\pages\\admin\\ControlConsoles.test.tsx",
+    "module": "admin",
+    "name": "ControlConsoles.test",
+    "lines": 316
+  },
+  {
+    "file": "src\\pages\\admin\\ControlDeploymentQueue.test.tsx",
+    "module": "admin",
+    "name": "ControlDeploymentQueue.test",
+    "lines": 82
+  },
+  {
+    "file": "src\\pages\\admin\\ControlWorkspaceRecheckPage.test.tsx",
+    "module": "admin",
+    "name": "ControlWorkspaceRecheckPage.test",
+    "lines": 64
+  },
+  {
+    "file": "src\\pages\\admin\\InfrastructurePage.tsx",
+    "module": "admin",
+    "name": "InfrastructurePage",
+    "lines": 145
+  },
+  {
     "file": "src\\pages\\admin\\MarketingCampaignsPage.tsx",
     "module": "admin",
     "name": "MarketingCampaignsPage",
@@ -42,6 +78,12 @@
     "lines": 6
   },
   {
+    "file": "src\\pages\\admin\\RegistrationsPage.tsx",
+    "module": "admin",
+    "name": "RegistrationsPage",
+    "lines": 101
+  },
+  {
     "file": "src\\pages\\admin\\RenewalRemindersPage.tsx",
     "module": "admin",
     "name": "RenewalRemindersPage",
@@ -51,7 +93,7 @@
     "file": "src\\pages\\admin\\SuperAdminDashboard.tsx",
     "module": "admin",
     "name": "SuperAdminDashboard",
-    "lines": 6
+    "lines": 7
   },
   {
     "file": "src\\pages\\admin\\SuperAdminSettingsPage.tsx",
@@ -72,16 +114,34 @@
     "lines": 6
   },
   {
+    "file": "src\\pages\\auth\\AuthCallback.test.tsx",
+    "module": "auth",
+    "name": "AuthCallback.test",
+    "lines": 156
+  },
+  {
     "file": "src\\pages\\auth\\AuthCallback.tsx",
     "module": "auth",
     "name": "AuthCallback",
-    "lines": 102
+    "lines": 118
+  },
+  {
+    "file": "src\\pages\\auth\\ChangePasswordPage.test.tsx",
+    "module": "auth",
+    "name": "ChangePasswordPage.test",
+    "lines": 82
   },
   {
     "file": "src\\pages\\auth\\ChangePasswordPage.tsx",
     "module": "auth",
     "name": "ChangePasswordPage",
-    "lines": 219
+    "lines": 124
+  },
+  {
+    "file": "src\\pages\\auth\\EmailVerification.tsx",
+    "module": "auth",
+    "name": "EmailVerification",
+    "lines": 6
   },
   {
     "file": "src\\pages\\auth\\ForgotPassword.tsx",
@@ -93,55 +153,73 @@
     "file": "src\\pages\\auth\\Login.tsx",
     "module": "auth",
     "name": "Login",
-    "lines": 97
+    "lines": 102
   },
   {
     "file": "src\\pages\\auth\\OAuthConsent.tsx",
     "module": "auth",
     "name": "OAuthConsent",
-    "lines": 123
+    "lines": 124
+  },
+  {
+    "file": "src\\pages\\auth\\Onboarding.test.tsx",
+    "module": "auth",
+    "name": "Onboarding.test",
+    "lines": 220
   },
   {
     "file": "src\\pages\\auth\\Onboarding.tsx",
     "module": "auth",
     "name": "Onboarding",
-    "lines": 325
+    "lines": 367
   },
   {
     "file": "src\\pages\\auth\\Register.tsx",
     "module": "auth",
     "name": "Register",
-    "lines": 32
+    "lines": 41
+  },
+  {
+    "file": "src\\pages\\auth\\WorkspaceStart.tsx",
+    "module": "auth",
+    "name": "WorkspaceStart",
+    "lines": 67
   },
   {
     "file": "src\\pages\\bookings\\BookingDetailPage.tsx",
     "module": "bookings",
     "name": "BookingDetailPage",
-    "lines": 610
+    "lines": 611
   },
   {
     "file": "src\\pages\\bookings\\BookingsPage.tsx",
     "module": "bookings",
     "name": "BookingsPage",
-    "lines": 2169
+    "lines": 2108
+  },
+  {
+    "file": "src\\pages\\bookings\\MobileBookingsPage.test.tsx",
+    "module": "bookings",
+    "name": "MobileBookingsPage.test",
+    "lines": 45
   },
   {
     "file": "src\\pages\\bookings\\MobileBookingsPage.tsx",
     "module": "bookings",
     "name": "MobileBookingsPage",
-    "lines": 343
+    "lines": 444
   },
   {
     "file": "src\\pages\\ChatPage.tsx",
     "module": "_root",
     "name": "ChatPage",
-    "lines": 984
+    "lines": 985
   },
   {
     "file": "src\\pages\\Dashboard.tsx",
     "module": "_root",
     "name": "Dashboard",
-    "lines": 196
+    "lines": 238
   },
   {
     "file": "src\\pages\\docs\\components\\DocsSearch.tsx",
@@ -204,22 +282,34 @@
     "lines": 55
   },
   {
+    "file": "src\\pages\\finance\\ReconciliationPage.test.tsx",
+    "module": "finance",
+    "name": "ReconciliationPage.test",
+    "lines": 49
+  },
+  {
     "file": "src\\pages\\finance\\ReconciliationPage.tsx",
     "module": "finance",
     "name": "ReconciliationPage",
-    "lines": 274
+    "lines": 196
   },
   {
     "file": "src\\pages\\guests\\GuestDetailPage.tsx",
     "module": "guests",
     "name": "GuestDetailPage",
-    "lines": 294
+    "lines": 296
+  },
+  {
+    "file": "src\\pages\\guests\\GuestsPage.test.tsx",
+    "module": "guests",
+    "name": "GuestsPage.test",
+    "lines": 99
   },
   {
     "file": "src\\pages\\guests\\GuestsPage.tsx",
     "module": "guests",
     "name": "GuestsPage",
-    "lines": 163
+    "lines": 255
   },
   {
     "file": "src\\pages\\HelpPage.tsx",
@@ -231,7 +321,7 @@
     "file": "src\\pages\\hotels\\HotelPerformancePage.tsx",
     "module": "hotels",
     "name": "HotelPerformancePage",
-    "lines": 575
+    "lines": 583
   },
   {
     "file": "src\\pages\\hotels\\HotelsPage.tsx",
@@ -243,7 +333,7 @@
     "file": "src\\pages\\housekeeping\\HousekeepingDashboardPage.tsx",
     "module": "housekeeping",
     "name": "HousekeepingDashboardPage",
-    "lines": 81
+    "lines": 62
   },
   {
     "file": "src\\pages\\housekeeping\\IssuesReviewPage.tsx",
@@ -279,31 +369,31 @@
     "file": "src\\pages\\inventory\\AdjustmentDetailPage.tsx",
     "module": "inventory",
     "name": "AdjustmentDetailPage",
-    "lines": 649
+    "lines": 650
   },
   {
     "file": "src\\pages\\inventory\\AdjustmentListPage.tsx",
     "module": "inventory",
     "name": "AdjustmentListPage",
-    "lines": 319
+    "lines": 321
   },
   {
     "file": "src\\pages\\inventory\\CheckAdjustmentPage.tsx",
     "module": "inventory",
     "name": "CheckAdjustmentPage",
-    "lines": 628
+    "lines": 629
   },
   {
     "file": "src\\pages\\inventory\\CreateAdjustmentPage.tsx",
     "module": "inventory",
     "name": "CreateAdjustmentPage",
-    "lines": 499
+    "lines": 500
   },
   {
     "file": "src\\pages\\inventory\\CreateFromSupplementsPage.tsx",
     "module": "inventory",
     "name": "CreateFromSupplementsPage",
-    "lines": 374
+    "lines": 375
   },
   {
     "file": "src\\pages\\inventory\\DeadStockPage.tsx",
@@ -315,7 +405,7 @@
     "file": "src\\pages\\inventory\\DistributionOrderDetailPage.tsx",
     "module": "inventory",
     "name": "DistributionOrderDetailPage",
-    "lines": 241
+    "lines": 242
   },
   {
     "file": "src\\pages\\inventory\\DistributionOrdersPage.tsx",
@@ -327,7 +417,7 @@
     "file": "src\\pages\\inventory\\InboundPage.tsx",
     "module": "inventory",
     "name": "InboundPage",
-    "lines": 355
+    "lines": 356
   },
   {
     "file": "src\\pages\\inventory\\InventoryAnalyticsPage.tsx",
@@ -339,13 +429,19 @@
     "file": "src\\pages\\inventory\\InventoryDashboardPage.tsx",
     "module": "inventory",
     "name": "InventoryDashboardPage",
-    "lines": 573
+    "lines": 412
+  },
+  {
+    "file": "src\\pages\\inventory\\OutboundPage.test.tsx",
+    "module": "inventory",
+    "name": "OutboundPage.test",
+    "lines": 70
   },
   {
     "file": "src\\pages\\inventory\\OutboundPage.tsx",
     "module": "inventory",
     "name": "OutboundPage",
-    "lines": 306
+    "lines": 305
   },
   {
     "file": "src\\pages\\inventory\\ReorderSuggestionsPage.tsx",
@@ -357,43 +453,49 @@
     "file": "src\\pages\\inventory\\TransactionListPage.tsx",
     "module": "inventory",
     "name": "TransactionListPage",
-    "lines": 453
+    "lines": 462
   },
   {
     "file": "src\\pages\\inventory\\TransferPage.tsx",
     "module": "inventory",
     "name": "TransferPage",
-    "lines": 330
+    "lines": 331
+  },
+  {
+    "file": "src\\pages\\invoices\\GuestInvoicesPage.test.tsx",
+    "module": "invoices",
+    "name": "GuestInvoicesPage.test",
+    "lines": 88
   },
   {
     "file": "src\\pages\\invoices\\GuestInvoicesPage.tsx",
     "module": "invoices",
     "name": "GuestInvoicesPage",
-    "lines": 509
+    "lines": 519
   },
   {
     "file": "src\\pages\\items\\CategoriesPage.tsx",
     "module": "items",
     "name": "CategoriesPage",
-    "lines": 453
+    "lines": 396
   },
   {
     "file": "src\\pages\\items\\ItemDetailPage.tsx",
     "module": "items",
     "name": "ItemDetailPage",
-    "lines": 449
+    "lines": 512
   },
   {
     "file": "src\\pages\\items\\ItemFormPage.tsx",
     "module": "items",
     "name": "ItemFormPage",
-    "lines": 663
+    "lines": 665
   },
   {
     "file": "src\\pages\\items\\ItemsPage.tsx",
     "module": "items",
     "name": "ItemsPage",
-    "lines": 141
+    "lines": 142
   },
   {
     "file": "src\\pages\\LandingPage.tsx",
@@ -405,19 +507,19 @@
     "file": "src\\pages\\laundry\\BatchDetailPage.tsx",
     "module": "laundry",
     "name": "BatchDetailPage",
-    "lines": 738
+    "lines": 731
   },
   {
     "file": "src\\pages\\laundry\\CreateBatchPage.tsx",
     "module": "laundry",
     "name": "CreateBatchPage",
-    "lines": 159
+    "lines": 160
   },
   {
     "file": "src\\pages\\laundry\\LaundryBatchesPage.tsx",
     "module": "laundry",
     "name": "LaundryBatchesPage",
-    "lines": 320
+    "lines": 310
   },
   {
     "file": "src\\pages\\laundry\\LaundryCompensationPage.tsx",
@@ -429,7 +531,7 @@
     "file": "src\\pages\\laundry\\LaundryDashboardPage.tsx",
     "module": "laundry",
     "name": "LaundryDashboardPage",
-    "lines": 149
+    "lines": 247
   },
   {
     "file": "src\\pages\\laundry\\NewLinenBatchPage.tsx",
@@ -438,22 +540,28 @@
     "lines": 146
   },
   {
+    "file": "src\\pages\\laundry\\ReceiveBatchPage.test.tsx",
+    "module": "laundry",
+    "name": "ReceiveBatchPage.test",
+    "lines": 116
+  },
+  {
     "file": "src\\pages\\laundry\\ReceiveBatchPage.tsx",
     "module": "laundry",
     "name": "ReceiveBatchPage",
-    "lines": 504
+    "lines": 613
   },
   {
     "file": "src\\pages\\laundry\\VendorDetailPage.tsx",
     "module": "laundry",
     "name": "VendorDetailPage",
-    "lines": 351
+    "lines": 352
   },
   {
     "file": "src\\pages\\laundry\\VendorFormPage.tsx",
     "module": "laundry",
     "name": "VendorFormPage",
-    "lines": 253
+    "lines": 254
   },
   {
     "file": "src\\pages\\laundry\\VendorListPage.tsx",
@@ -477,49 +585,67 @@
     "file": "src\\pages\\maintenance\\MaintenanceDashboard.tsx",
     "module": "maintenance",
     "name": "MaintenanceDashboard",
-    "lines": 183
+    "lines": 194
   },
   {
     "file": "src\\pages\\maintenance\\MaintenanceRequestDetail.tsx",
     "module": "maintenance",
     "name": "MaintenanceRequestDetail",
-    "lines": 534
+    "lines": 645
+  },
+  {
+    "file": "src\\pages\\maintenance\\MaintenanceRequestForm.test.tsx",
+    "module": "maintenance",
+    "name": "MaintenanceRequestForm.test",
+    "lines": 67
   },
   {
     "file": "src\\pages\\maintenance\\MaintenanceRequestForm.tsx",
     "module": "maintenance",
     "name": "MaintenanceRequestForm",
-    "lines": 382
+    "lines": 417
+  },
+  {
+    "file": "src\\pages\\maintenance\\MaintenanceRequestList.test.tsx",
+    "module": "maintenance",
+    "name": "MaintenanceRequestList.test",
+    "lines": 98
   },
   {
     "file": "src\\pages\\maintenance\\MaintenanceRequestList.tsx",
     "module": "maintenance",
     "name": "MaintenanceRequestList",
-    "lines": 135
+    "lines": 170
+  },
+  {
+    "file": "src\\pages\\maintenance\\RecurringIssuesPage.test.tsx",
+    "module": "maintenance",
+    "name": "RecurringIssuesPage.test",
+    "lines": 160
   },
   {
     "file": "src\\pages\\maintenance\\RecurringIssuesPage.tsx",
     "module": "maintenance",
     "name": "RecurringIssuesPage",
-    "lines": 118
+    "lines": 296
   },
   {
     "file": "src\\pages\\mobile\\MobileNotificationSettingsPage.tsx",
     "module": "mobile",
     "name": "MobileNotificationSettingsPage",
-    "lines": 410
+    "lines": 416
   },
   {
     "file": "src\\pages\\mobile\\MorePage.tsx",
     "module": "mobile",
     "name": "MorePage",
-    "lines": 201
+    "lines": 200
   },
   {
     "file": "src\\pages\\MyTasksPage.tsx",
     "module": "_root",
     "name": "MyTasksPage",
-    "lines": 85
+    "lines": 86
   },
   {
     "file": "src\\pages\\NotFound.tsx",
@@ -543,7 +669,7 @@
     "file": "src\\pages\\payment\\PaymentQRPage.tsx",
     "module": "payment",
     "name": "PaymentQRPage",
-    "lines": 424
+    "lines": 425
   },
   {
     "file": "src\\pages\\profile\\ProfilePage.tsx",
@@ -561,7 +687,7 @@
     "file": "src\\pages\\purchase-orders\\PODetailPage.tsx",
     "module": "purchase-orders",
     "name": "PODetailPage",
-    "lines": 184
+    "lines": 219
   },
   {
     "file": "src\\pages\\purchase-orders\\POFormPage.tsx",
@@ -573,7 +699,7 @@
     "file": "src\\pages\\purchase-orders\\POListPage.tsx",
     "module": "purchase-orders",
     "name": "POListPage",
-    "lines": 153
+    "lines": 296
   },
   {
     "file": "src\\pages\\reception\\PendingChargesPage.tsx",
@@ -591,25 +717,25 @@
     "file": "src\\pages\\reports\\components\\OperationsInsightsTab.tsx",
     "module": "reports\\components",
     "name": "OperationsInsightsTab",
-    "lines": 256
+    "lines": 283
   },
   {
     "file": "src\\pages\\reports\\DamagesReportPage.tsx",
     "module": "reports",
     "name": "DamagesReportPage",
-    "lines": 401
+    "lines": 402
   },
   {
     "file": "src\\pages\\reports\\FinancialReportPage.tsx",
     "module": "reports",
     "name": "FinancialReportPage",
-    "lines": 334
+    "lines": 320
   },
   {
     "file": "src\\pages\\reports\\hub\\DailyReportPage.tsx",
     "module": "reports\\hub",
     "name": "DailyReportPage",
-    "lines": 476
+    "lines": 479
   },
   {
     "file": "src\\pages\\reports\\hub\\FinanceHubPage.tsx",
@@ -639,7 +765,7 @@
     "file": "src\\pages\\reports\\hub\\OverviewHubPage.tsx",
     "module": "reports\\hub",
     "name": "OverviewHubPage",
-    "lines": 134
+    "lines": 137
   },
   {
     "file": "src\\pages\\reports\\hub\\ReportHubShell.tsx",
@@ -651,37 +777,37 @@
     "file": "src\\pages\\reports\\InventoryReportPage.tsx",
     "module": "reports",
     "name": "InventoryReportPage",
-    "lines": 185
+    "lines": 186
   },
   {
     "file": "src\\pages\\reports\\LaundryReportPage.tsx",
     "module": "reports",
     "name": "LaundryReportPage",
-    "lines": 341
+    "lines": 342
   },
   {
     "file": "src\\pages\\reports\\MaintenanceReportPage.tsx",
     "module": "reports",
     "name": "MaintenanceReportPage",
-    "lines": 449
+    "lines": 450
   },
   {
     "file": "src\\pages\\reports\\OperationsReportPage.tsx",
     "module": "reports",
     "name": "OperationsReportPage",
-    "lines": 401
+    "lines": 402
   },
   {
     "file": "src\\pages\\reports\\OutboundReportPage.tsx",
     "module": "reports",
     "name": "OutboundReportPage",
-    "lines": 503
+    "lines": 504
   },
   {
     "file": "src\\pages\\reports\\RevenueReportPage.tsx",
     "module": "reports",
     "name": "RevenueReportPage",
-    "lines": 281
+    "lines": 295
   },
   {
     "file": "src\\pages\\reports\\RoomRevenueReportPage.tsx",
@@ -693,13 +819,13 @@
     "file": "src\\pages\\reports\\RoomsReportPage.tsx",
     "module": "reports",
     "name": "RoomsReportPage",
-    "lines": 1161
+    "lines": 1162
   },
   {
     "file": "src\\pages\\reports\\StockAuditReportPage.tsx",
     "module": "reports",
     "name": "StockAuditReportPage",
-    "lines": 537
+    "lines": 538
   },
   {
     "file": "src\\pages\\rooms\\__tests__\\roomCheckRouter.test.ts",
@@ -711,7 +837,7 @@
     "file": "src\\pages\\rooms\\LeanInspectionPage.tsx",
     "module": "rooms",
     "name": "LeanInspectionPage",
-    "lines": 743
+    "lines": 744
   },
   {
     "file": "src\\pages\\rooms\\LeanReviewPage.tsx",
@@ -723,19 +849,19 @@
     "file": "src\\pages\\rooms\\LeanSuccessPage.tsx",
     "module": "rooms",
     "name": "LeanSuccessPage",
-    "lines": 177
+    "lines": 178
   },
   {
     "file": "src\\pages\\rooms\\RoomCheckOverviewPage.tsx",
     "module": "rooms",
     "name": "RoomCheckOverviewPage",
-    "lines": 374
+    "lines": 373
   },
   {
     "file": "src\\pages\\rooms\\RoomCheckPage.tsx",
     "module": "rooms",
     "name": "RoomCheckPage",
-    "lines": 1632
+    "lines": 1633
   },
   {
     "file": "src\\pages\\rooms\\RoomCheckRouter.tsx",
@@ -753,13 +879,19 @@
     "file": "src\\pages\\rooms\\RoomDetailPage.tsx",
     "module": "rooms",
     "name": "RoomDetailPage",
-    "lines": 249
+    "lines": 304
+  },
+  {
+    "file": "src\\pages\\rooms\\RoomFormPage.test.tsx",
+    "module": "rooms",
+    "name": "RoomFormPage.test",
+    "lines": 140
   },
   {
     "file": "src\\pages\\rooms\\RoomFormPage.tsx",
     "module": "rooms",
     "name": "RoomFormPage",
-    "lines": 432
+    "lines": 442
   },
   {
     "file": "src\\pages\\rooms\\RoomReplenishLeanPage.tsx",
@@ -771,13 +903,13 @@
     "file": "src\\pages\\rooms\\RoomsPage.tsx",
     "module": "rooms",
     "name": "RoomsPage",
-    "lines": 246
+    "lines": 282
   },
   {
     "file": "src\\pages\\rooms\\RoomStandardsPage.tsx",
     "module": "rooms",
     "name": "RoomStandardsPage",
-    "lines": 291
+    "lines": 292
   },
   {
     "file": "src\\pages\\scan\\ScanDocumentPage.tsx",
@@ -786,10 +918,16 @@
     "lines": 173
   },
   {
+    "file": "src\\pages\\settings\\AISettingsPage.test.tsx",
+    "module": "settings",
+    "name": "AISettingsPage.test",
+    "lines": 136
+  },
+  {
     "file": "src\\pages\\settings\\AISettingsPage.tsx",
     "module": "settings",
     "name": "AISettingsPage",
-    "lines": 286
+    "lines": 207
   },
   {
     "file": "src\\pages\\settings\\AuditLogPage.tsx",
@@ -807,25 +945,25 @@
     "file": "src\\pages\\settings\\CategoryManagementPage.tsx",
     "module": "settings",
     "name": "CategoryManagementPage",
-    "lines": 79
+    "lines": 91
   },
   {
     "file": "src\\pages\\settings\\ChangePasswordPage.tsx",
     "module": "settings",
     "name": "ChangePasswordPage",
-    "lines": 241
+    "lines": 221
   },
   {
     "file": "src\\pages\\settings\\FixedCostsSettingsPage.tsx",
     "module": "settings",
     "name": "FixedCostsSettingsPage",
-    "lines": 284
+    "lines": 198
   },
   {
     "file": "src\\pages\\settings\\GeneralSettingsPage.tsx",
     "module": "settings",
     "name": "GeneralSettingsPage",
-    "lines": 388
+    "lines": 390
   },
   {
     "file": "src\\pages\\settings\\HotelPolicyPage.tsx",
@@ -843,13 +981,13 @@
     "file": "src\\pages\\settings\\NotificationSettingsPage.tsx",
     "module": "settings",
     "name": "NotificationSettingsPage",
-    "lines": 556
+    "lines": 565
   },
   {
     "file": "src\\pages\\settings\\PricingDailyPage.tsx",
     "module": "settings",
     "name": "PricingDailyPage",
-    "lines": 868
+    "lines": 869
   },
   {
     "file": "src\\pages\\settings\\PricingHubPage.tsx",
@@ -867,13 +1005,13 @@
     "file": "src\\pages\\settings\\PricingV2Page.tsx",
     "module": "settings",
     "name": "PricingV2Page",
-    "lines": 161
+    "lines": 162
   },
   {
     "file": "src\\pages\\settings\\PushDevicesPage.tsx",
     "module": "settings",
     "name": "PushDevicesPage",
-    "lines": 348
+    "lines": 349
   },
   {
     "file": "src\\pages\\settings\\RoomCheckSettingsPage.tsx",
@@ -906,10 +1044,16 @@
     "lines": 84
   },
   {
+    "file": "src\\pages\\settings\\SubscriptionPaymentPage.test.tsx",
+    "module": "settings",
+    "name": "SubscriptionPaymentPage.test",
+    "lines": 52
+  },
+  {
     "file": "src\\pages\\settings\\SubscriptionPaymentPage.tsx",
     "module": "settings",
     "name": "SubscriptionPaymentPage",
-    "lines": 277
+    "lines": 295
   },
   {
     "file": "src\\pages\\settings\\SystemTestPage.tsx",
@@ -942,16 +1086,34 @@
     "lines": 143
   },
   {
+    "file": "src\\pages\\setup\\RoomSetupPage.test.tsx",
+    "module": "setup",
+    "name": "RoomSetupPage.test",
+    "lines": 120
+  },
+  {
+    "file": "src\\pages\\setup\\RoomSetupPage.tsx",
+    "module": "setup",
+    "name": "RoomSetupPage",
+    "lines": 128
+  },
+  {
     "file": "src\\pages\\staff\\ShiftHandoverPage.tsx",
     "module": "staff",
     "name": "ShiftHandoverPage",
     "lines": 101
   },
   {
+    "file": "src\\pages\\staff\\StaffManagementPage.test.tsx",
+    "module": "staff",
+    "name": "StaffManagementPage.test",
+    "lines": 62
+  },
+  {
     "file": "src\\pages\\staff\\StaffManagementPage.tsx",
     "module": "staff",
     "name": "StaffManagementPage",
-    "lines": 140
+    "lines": 147
   },
   {
     "file": "src\\pages\\supplements\\SupplementsPage.tsx",
@@ -969,7 +1131,7 @@
     "file": "src\\pages\\users\\UsersPage.tsx",
     "module": "users",
     "name": "UsersPage",
-    "lines": 83
+    "lines": 86
   },
   {
     "file": "src\\pages\\vendors\\VendorComparisonPage.tsx",
@@ -987,7 +1149,7 @@
     "file": "src\\pages\\vendors\\VendorFormPage.tsx",
     "module": "vendors",
     "name": "VendorFormPage",
-    "lines": 308
+    "lines": 309
   },
   {
     "file": "src\\pages\\vendors\\VendorListPage.tsx",

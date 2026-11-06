@@ -1,5 +1,84 @@
 # RoomQC P2 — run sheet triển khai giám sát và cảnh báo
 
+**Điểm nhận việc mới nhất — EC05 partial, không thay toàn bộ roadmap:**
+[Policy/SDK diagnostic](roomqc-m06-password-policy-diagnostic-local-2026-10-21.md)
+có 33 controls/18 đạt/15 fail trên candidate 700/538, terminal exit 1/cleaned 11.
+Server completion/live-state/forced caller/fault/races nhận tiếp tại
+[plan mục 15.7](roomqc-vps-signup-preparation-plan-2026-10-21.md#157-phiếu-ec05-hiện-hành--hoàn-tất-server-sau-policysdk-diagnostic).
+Control 203/203 và client tests không thay full A/B/Auth/E2E. Giữ các handoff
+bên dưới làm lịch sử; tám đợt/27 gói/25 bước/70 case, 122 releaseAcceptance và
+gate L/S/P/U/B không đổi. Bản cập nhật kế hoạch này không deploy serving/VPS/provider.
+
+**Nhận tiếp:** [employee fix full A/B local đã đạt](roomqc-m06-employee-atomic-fix-local-2026-10-21.md)
+→ [caller inventory ban đầu](roomqc-m06-employee-caller-inventory-local-2026-10-21.md), phiếu 15.2.4.
+Candidate 682/537: A/B exit 0/cleaned, 280/1.764/20 + employee 30/4, final recovery;
+control 194/194. Reviewer/full matrix/E2E và đủ tám đợt vẫn mở; gate không đổi.
+
+**Điểm hiện hành — toàn bộ VPS + signup, Plan + nghiệm thu:**
+[kế hoạch chi tiết](roomqc-vps-signup-preparation-plan-2026-10-21.md) và
+[quy trình nghiệm thu](roomqc-vps-signup-acceptance-protocol-2026-10-21.md).
+**A/B thành công gần nhất, source cũ:** [bản sửa account/session năm bảng — A/B local](roomqc-m06-business-actor-fix-local-2026-10-21.md).
+Source **668 files/535 migrations**, fingerprint trước A/sau A/B không đổi.
+A f1381bbb5dbe / B e2ab861d76b4 đều **exit 0**, cleaned 18 objects/run.
+Mỗi run: **1.764/1.764 account/session**, **280/280 hotel scope**, **20/20 races**.
+588 negative failures baseline đã đạt; 1.176 before/restored positives giữ nguyên.
+Tập identity/expected không đổi; actual Auth/logout/recovery và no-effect assertions.
+Race chỉ owner POST/năm bảng, profile lock/session deletion/hai thứ tự lock;
+không suy thành mọi role/action/workflow hoặc hủy in-flight GET.
+Full control DB **189/189**, 0 skip; 12 focused là subset. 364 policy có trước
+không đổi/xóa, thêm đúng 5 restrictive actor policies và 5 statement triggers.
+Advisors 605 (17 no-policy/8 FK/445 unused/135 permissive); không drop index theo count.
+Tiếp caller/capability/workflow/RPC/Edge/other-table matrix, 17-target/policy/FK →
+issuer/trust/atomic timed health và toàn bộ các đợt VPS/signup còn lại.
+Hai rebuild tuần tự không thay simultaneous A/B hoặc Linux/E2E/load/pilot.
+Chưa đóng R4/T03/T08/122 releaseAcceptance hoặc gate L/S/P/U/B; reviewer còn pending.
+
+**Các handoff bên dưới là lịch sử; không thay điểm hiện hành đầu trang.**
+
+**Handoff mới nhất — lifecycle service A/B:** [report/artifact](roomqc-m06-lifecycle-local-2026-10-21.md),
+647 files/531 migrations, control 154/154, unit riêng 27/27; A 41f2b3011bc6 /
+B 9b6a13ced16e exit 0/cleaned 16/run/advisors 634. Chưa đóng M06/T08/P2.
+Nhận provider/17-target/policy/FK → R3/R5 → R6 atomic health/gateway → R7 timed
+pipeline; five-service protocol drill chưa là atomic HealthStore/runtime proof.
+[Phiếu nhận tiếp](roomqc-vps-signup-execution-plan-2026-10-19.md#lifecycle-handoff).
+
+**Handoff trước lifecycle — email-admin local:** [report/artifact](roomqc-m06-email-admin-local-2026-10-21.md),
+643 files/531 migrations, control 152/152, Vitest riêng 7/7; A dbbf929824ec /
+B 36a0835d1dc3 exit 0/cleaned/advisors 640. Chưa đóng M06/T08/P2.
+Nhận service/provider/17-target disposition → policy/FK → R3/R5 → R6 atomic
+health/gateway → R7 timed pipeline; không thay runtime đang phục vụ.
+[Checklist triển khai hiện hành](roomqc-vps-signup-deployment-plan-2026-10-20.md#execution-checklist-2026-10-21).
+
+**Handoff trước email-admin — chín root ghi:** [mutation local proof](roomqc-m06-mutation-local-2026-10-20.md),
+640 files/530 migrations, control 148/148; A 6eade27a974f / B f2025aa52f13
+exit 0/cleaned/advisors 640. Scope chín root đã local_verified, R4-a tổng còn
+service/provider/17-target disposition rồi policy/FK. Sau đó R3/R5 → R6 atomic
+health/gateway → R7 timed pipeline; chưa nâng runtime/worker/signup.
+[Phiếu nhận tiếp](roomqc-vps-signup-execution-plan-2026-10-19.md#mutation-handoff).
+
+**Handoff trước mutation proof:** [email-ready/profile RLS local](roomqc-m06-email-ready-local-2026-10-20.md),
+637 files/529 migrations, control 144/144; A 95d9560fba65 / B 91373e6a5871
+exit 0/cleaned/advisors 645. Caller/room-complete/checkout/admin/policy/FK vẫn mở;
+hai fix không khép M06/T08/P2. Sau R4: R3 issuer/R5 trusted release → R6 credential
+revision/state/binding ngay transaction HealthStore.record + gateway/runtime →
+R7 timed pipeline. [Kế hoạch nhận việc](roomqc-vps-signup-deployment-plan-2026-10-20.md#launch-runbook).
+Chưa nâng runtime/worker/signup; quan sát 15:24 +07 schema 0005 là lịch sử.
+
+**Handoff lịch sử Auth xóa mềm 633/527:** [Auth-soft-delete local report](roomqc-m06-auth-soft-delete-local-2026-10-20.md),
+source 633/527, A 0d7e8d8f07ca / B 850b5d52cc1d exit 0/cleaned, control 142/142.
+High guard đã đạt local, R4/T08 vẫn mở caller/trigger/checkout/admin/policy/FK.
+Sau R4 tiếp R3 issuer/R5 artifact → R6 transaction health revision + gateway/
+runtime → R7 timed pipeline. Chưa deploy worker hay source 0007 vào runtime 0005;
+signup=false theo inspect 15:24 +07. [Nhận việc](roomqc-vps-signup-execution-plan-2026-10-19.md#auth-soft-delete-handoff).
+
+**Handoff trước Auth xóa mềm:** [registration proof](roomqc-m06-registration-local-2026-10-20.md),
+source 632 files/526 migrations; A 4317f0ce9c62 / B 0fe112b0e675 đều exit 0/cleaned,
+control 142/142, local build+verify đạt. Guard đăng ký đã có proof riêng, R4/T08
+vẫn mở do High Auth-soft-delete room/quote cùng caller/policy/FK còn lại. Sau đó
+R3 issuer/R5 approved release → R6 atomic health credential revision + gateway/
+runtime → R7 timed pipeline. Không suy source 0007 đã thay runtime 0005 hoặc đã
+bật worker/signup. Các snapshot M06 139/525 phía dưới là baseline lịch sử.
+
 Ngày 19/10/2026. Đây là kế hoạch thực hiện T05–T07, không phải báo cáo pass.
 Đi cùng [plan 25 bước](roomqc-vps-signup-execution-plan-2026-10-19.md),
 [27 gói](roomqc-vps-signup-work-packages-2026-10-19.md) và
@@ -7,6 +86,19 @@ Ngày 19/10/2026. Đây là kế hoạch thực hiện T05–T07, không phải 
 ở [tracker](roomqc-vps-signup-progress.md). Chưa mở public signup.
 
 ## 1. Mục đích và hiện trạng
+
+**Điểm nhận việc hiện hành 20/10:** [caller report/ledger R4](roomqc-m06-callers-local-2026-10-20.md),
+source 628 backend files/525 migrations; A 55a4b60c80b1 / B 0dbf25756725
+exit 0/cleaned; full control 139/139, audit+graph 14/14 là subset.
+149 triggers/25 candidate paths là discovery; guard đăng ký, trigger email,
+checkout/admin/session, policy/FK còn proof. Direct-write/FE/build trước giữ
+lịch sử có phạm vi; allSafe/transitiveReachability vẫn false. Tiếp R3
+issuer/R5 trusted artifact → R6 gateway/runtime và credential-revision check
+nguyên tử trong HealthStore.record → R7/pipeline/timed drill. M06/T08 chưa đóng,
+không deploy worker hoặc nâng runtime 0005 theo source 0007.
+[Phiếu nhận việc nhỏ](roomqc-vps-signup-execution-plan-2026-10-19.md#2416-phiếu-nhỏ-sẵn-sàng-nhận-việc--bắt-đầu-từ-đúng-phần-chưa-khép)
+không tăng M/P/T/acceptance IDs. Các số 44/59/66/111/123 bên dưới là lịch sử có
+phạm vi, không phải số test current tree hoặc bằng chứng production.
 
 Đội vận hành cần biết đúng máy/ổ/dịch vụ nào đang có vấn đề, dữ liệu đo lúc nào,
 vì sao không nhận thêm khách và phải làm gì. Khách đang dùng không bị tự khóa hay
@@ -30,12 +122,35 @@ DB down/password rotate và cleanup. Không phải Linux VPS/staging proof; M05 
 M06 năm service probes/T08 manifest và M07–M10 vẫn chưa đóng. Không mở admission
 hoặc triển khai monitor thường trực chỉ vì suite đạt; artifact 59-test cũ giữ nguyên.
 
-Chuẩn bị M06 mới nhất: manifest RPC/verifier và tests hiện là bản nháp chưa commit
-ở integration. Lượt full-backend sandbox đã dừng ở phase start trước SQL ứng dụng,
-đã cleanup đúng project; chưa chứng minh cài mới, quyền full app hoặc đủ năm probe.
+Implementation R3 mới tại integration: encrypted store directory `0007`,
+lease/CAS/rotation/fencing/quarantine và Auth thật refresh/revoke/recover,
+mất phản hồi sau server 200 đã test. Full suite mới 123/123, 0 fail/skip, không
+cộng với R2. [Báo cáo R3](roomqc-m06-session-local-2026-10-19.md)
+và [ADR](../adr/roomqc-probe-credential-lifecycle.md) ghi giới hạn: installer/
+production TTL/key recovery, R6 snapshot/runtime và full vendor pipeline chưa có.
+Không nâng M06/T08 sang done; runtime vẫn `0005`, source `0007`, chưa deploy.
+
+Implementation R2 ngày 19/10 vẫn ở integration, chưa commit/sync/deploy.
+[Báo cáo](roomqc-m06-partition-local-2026-10-19.md): full suite current tree
+**111/111**, 0 fail/skip, gồm 10 manifest DB tests. R1/R2 đã local_verified:
+hai full vendor builds `1d2e7d793b84`/`7bbeec983dbf`, 523 migrations, cùng v2
+initialized hash/init-spec/image/migration-set, cả hai exit 0. Janitor thật dọn/
+tạo child, hash tĩnh không đổi; năm faults/recovery và negative quyền/revoke/
+re-login đạt. Cleanup 13 objects/lượt, không còn objects theo project labels.
+
+Catalog chứng minh lỗi cũ do creator supabase_admin khác owner cuối; defaults
+và ALTER OWNER semantics đã sửa, không bỏ ACL/schema. Có thêm regression logical
+column/index positions và đổi defaults + mọi child ACL vẫn đổi static hash.
+Controlled RPC drill không thay scheduled soak staging. Advisors 679 findings
+còn R4; direct-grants audit 17 no-policy tables đạt 0 browser table/column grants,
+server caller/performance triage chưa đóng. R3 coordinated refresh/rotation có
+proof local mới ở trên, chưa phải issuer/installer/runtime production;
+trusted artifact/installer và gateway/runtime còn thiếu; M06/T08 vẫn mở.
 Theo [điểm nhận việc 18.3](roomqc-vps-signup-execution-plan-2026-10-19.md#183-cập-nhật-chuẩn-bị-m06-và-điều-kiện-bắt-đầu-kế-tiếp),
-khép startup/migration chain, audit PUBLIC/SECURITY DEFINER và dependency Functions
-offline trước khi nối pipeline. Không lấy test manifest trên fixture thay M06.
+giữ R1/R2 đã verified local làm regression; tiếp theo R3–R7 theo
+[phiếu chi tiết](roomqc-vps-signup-execution-plan-2026-10-19.md#1932-phiếu-nhận-việc-ngay-từ-hiện-trạng--không-cần-khóa-external):
+session/rotation/advisors/artifact trước nối gateway/worker. Không dùng observed hash live để
+ghi đè expected, bỏ publication khỏi kiểm tra hoặc dùng positive thay full M06.
 
 M01–M10 chỉ chia nhỏ P2, không đổi tổng 27 gói/70 acceptance case. Owner thực thi
 là kỹ sư nhận đợt; review/acceptance cần người đối chiếu artifact. Chưa phân công
@@ -174,7 +289,9 @@ stale >120s vẫn chặn ở reserve ngay cả watchdog ngừng. A07/B05–B07/C
 
 Phiếu giao việc chi tiết, quyền/schema drift/transport và tiêu chí khép pipeline
 ở [mục 19 của kế hoạch thực thi](roomqc-vps-signup-execution-plan-2026-10-19.md#19-phiếu-triển-khai-gần-nhất--m06t08-và-khép-giám-sát).
-Không coi các endpoint dự kiến dưới đây là đã được xác minh trên release hiện tại.
+Draft endpoint/transport đã có positive trên fixture pin; fault/lifecycle/runtime
+vẫn chưa hoàn tất. [Run sheet 19.3.1](roomqc-vps-signup-execution-plan-2026-10-19.md#1931-run-sheet-m06-còn-lại--nhận-việc-từ-lỗi-thực-không-làm-lại-nền)
+là thứ tự nhận việc kế tiếp, không làm lại exporter/worker nền.
 
 1. Chốt probe matrix theo image/release: endpoint/protocol/credential ref, payload
    tối thiểu, response shape, deadline, quyền và canary resource IDs.
@@ -235,7 +352,10 @@ không lộ secret kênh nhận. B08 phần local; outbound thật thuộc đầ
    heartbeat từng worker, không chỉ process Prometheus trên chính máy đó.
 2. Cấu hình đích/kênh do RoomQC quản lý, timeout/cadence, downtime window, runbook.
 3. Ngắt kết nối host staging thử; ghi thời gian detection → notification → ack →
-   recovery. Mục tiêu phát hiện ≤180s, giao thông báo ≤300s là đề xuất cần đo/duyệt.
+   recovery. Thống nhất T20: phát hiện ≤180s, nhận thông báo ≤300s, cả hai từ mốc
+   fault UTC (không cộng dồn); mục tiêu đề xuất cần đo/duyệt, chưa phải SLA. Ghi
+   riêng ack/recovery; không lấy provider accepted làm người trực đã nhận. Ngưỡng
+   admission stale >120s giữ nguyên, không nới thành 180s.
 4. Thử cảnh báo provider mất riêng; không dùng cùng SMTP/VPS làm kênh duy nhất.
 
 Đạt B09/F09 chỉ khi nhận thông báo ngoài host thật. Chưa có quyền/đích thì ghi

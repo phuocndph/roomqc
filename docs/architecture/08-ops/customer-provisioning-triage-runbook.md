@@ -65,20 +65,23 @@ không dừng nghiệp vụ của khách cũ. Lỗi kết nối cụm không cho
 
 ## Công cụ hỗ trợ tối thiểu (CLI)
 
-Đã có API POST `/api/control/support/lookup` và `/support/reconcile`, cùng CLI
+Đã có API POST `/api/control/support/lookup`, POST `/support/reconcile` và
+GET `/api/control/support/reconcile-result?workspaceId=UUID`, cùng CLI
 chạy từ gốc repo. Không cần mở một console lớn. Chưa có trang UI hỗ trợ mới.
 Trước khi dùng trên staging:
 
-1. Áp migration `20261017035237_platform_support_actor.sql` lên cụm làm nguồn
-   quyền quản trị; chạy `control:migrate` lên **DB directory riêng**, không phải
-   database Supabase. Khởi động image control mới, kiểm tra health.
+1. Dùng đầy đủ migration của release đã duyệt: cụm quyền cần actor/acceptance RPC;
+   directory cần acceptance consumption và durable command journal (đến0021
+   trong bản đang kiểm). Chạy `control:migrate` lên **DB directory riêng**,
+   không phải database Supabase. Không sửa checksum migration đã phát hành.
 2. Cấu hình `ROOMQC_CONTROL_SUPPORT_CLUSTER_ID` là ID cụm quản trị trong registry.
    Để trống thì API hỗ trợ đóng. Không cho caller tự chọn cụm để chứng minh quyền.
    Với v1 một cụm, đây chính là cluster-a. Tài khoản phải có role super_admin thật,
    hồ sơ active/không khóa và session còn trong Auth. Metadata do user sửa không
    cấp quyền; token đã đăng xuất hoặc phiên có not_after quá hạn bị từ chối.
-3. Runtime directory cần các quyền ở runbook directory; thêm quyền hỗ trợ như
-   phần nâng cấp bên dưới. Không cấp DDL/superuser và không dùng DB directory
+3. Runtime directory kế thừa role `roomqc_control_api` từ migrator đã duyệt,
+   gồm quyền journal/consumption. Không dùng bộ grants hỗ trợ cũ thiếu journal.
+   Không cấp DDL/superuser và không dùng DB directory
    làm một schema public của Supabase.
 4. Đặt token đăng nhập ngắn hạn của admin vào biến môi trường của terminal
    `ROOMQC_SUPPORT_ACCESS_TOKEN` bằng công cụ lưu bí mật hoặc nhập ẩn. Không đưa
@@ -91,8 +94,12 @@ Trước khi dùng trên staging:
 npm run control:support -- lookup --query an-thuy
 npm run control:support -- lookup --query REQUEST_UUID
 
+# Linux: create a dedicated private directory; never reuse another ticket's file.
+install -d -m 700 /var/lib/roomqc-support
 # Copy workspace ID + routing_version from the lookup just performed.
-npm run control:support -- reconcile --query an-thuy --workspace-id WORKSPACE_UUID --routing-version 1 --reason "Khoi phuc xac nhan da mat, ticket QC-123"
+npm run control:support -- reconcile --query an-thuy --workspace-id WORKSPACE_UUID --routing-version 1 --reason "Khoi phuc xac nhan da mat, ticket QC-123" --intent-file /var/lib/roomqc-support/QC-123.json
+# After network loss or restart, read with the same original file.
+npm run control:support -- result --intent-file /var/lib/roomqc-support/QC-123.json
 ```
 
 CLI đọc `ROOMQC_CONTROL_URL` (mặc định `http://127.0.0.1:8091`) và
@@ -110,10 +117,27 @@ Reconcile chỉ nhận receipt của đúng workspace/owner/tenant/hotel, khi tr
 hay trial. Workspace UUID và routing version cũ bị chặn. Khi chưa có receipt,
 chủ tài khoản tiếp tục luồng thiết lập cũ; khi mất kết nối, giữ mapping để thử lại.
 
-Mỗi lệnh hợp lệ ghi `started` trước khi gọi cụm. Kết quả `reconciled`, mapping
-và audit trước/sau commit cùng transaction; không ghi được audit thì rollback
-mapping. Lệnh bị chặn giữ `failed` + mã lỗi. Nếu process chết, dòng `started`
-còn lại là tín hiệu cần điều tra, không tự hiểu là thất bại và cấp phát lại.
+CLI lưu exact key/body/origin/actor vào file private trước network; token chỉ ở
+environment. Thử lại dùng nguyên lệnh và file cũ; requestId mới chỉ là trace.
+File tạo bằng exclusive create, kiểm ownership/mode/link, fsync trước gửi;
+file ghi dở hoặc đổi actor/origin/body phải chặn gửi, không tự ghi đè/phát key mới.
+Đây chưa phải atomic rename. Windows cần thư mục ACL private của operator;
+không coi mode Unix trên Windows là bằng chứng ACL hoặc Linux crash durability.
+
+GET result yêu cầu original Idempotency-Key và đúng một workspaceId; kiểm quyền
+live cả trước/sau đọc. Kết quả là snapshot lịch sử, không bảo đảm workspace đang
+sẵn sàng ở thời điểm hiện tại. 404/503/timeout là unknown, không chứng minh chưa
+commit. Giữ file, đối soát original intent; không tạo lệnh mới để né kết quả chưa rõ.
+Đổi reason/version/target là lệnh khác, cần giải quyết intent cũ trước. Actor không
+còn quyền không được dùng receipt lịch sử để mở recovery hoặc đọc kết quả.
+
+Mỗi lệnh hợp lệ ghi một action `started` và intent trước canonical acceptance.
+Kết quả `reconciled`, mapping, audit, consumption và result commit cùng transaction;
+không ghi được audit thì rollback effect. Lệnh bị chặn giữ `failed` + mã lỗi.
+Thử lại cùng key giữ action gốc; recovery thành công có thể đổi failed→reconciled,
+giữ ID/actor/reason/before-state và xóa error_code. Journal generation/expiry
+closures giữ lịch sử phục hồi; không coi support_actions là log append-only.
+Nếu process chết, `started` còn lại không chứng minh rollback hoặc cho phép cấp lại.
 Lý do chỉ ghi thông tin ticket, không chứa mật khẩu/OTP/token hoặc dữ liệu khách.
 
 ### Quyền runtime sau nâng cấp directory
@@ -122,19 +146,14 @@ Ví dụ dưới đây dành cho DBA, thay `roomqc_control_runtime` bằng role 
 Không chạy bằng browser, không cấp cho anon/authenticated của backend khách.
 
 ```sql
-GRANT USAGE ON SCHEMA roomqc_control TO roomqc_control_runtime;
-GRANT SELECT ON roomqc_control.clusters TO roomqc_control_runtime;
-GRANT SELECT, INSERT, UPDATE ON roomqc_control.workspaces TO roomqc_control_runtime;
-GRANT SELECT, INSERT ON roomqc_control.attempts TO roomqc_control_runtime;
-GRANT USAGE, SELECT ON SEQUENCE roomqc_control.attempts_id_seq TO roomqc_control_runtime;
-GRANT SELECT, INSERT ON roomqc_control.support_actions TO roomqc_control_runtime;
-GRANT UPDATE (outcome, after_state, error_code, finished_at)
-  ON roomqc_control.support_actions TO roomqc_control_runtime;
+GRANT roomqc_control_api TO roomqc_control_runtime;
 ```
 
-Đóng signup/dừng binary cũ, backup directory, migrate bằng tài khoản DDL rồi
-khởi động runtime mới. Chưa có `.env.control` trên máy local hiện tại; bộ test
-dùng service/DB/container tạm và tự dọn, không phải dịch vụ hỗ trợ thường trực.
+Đóng mutation/dừng writer cũ, backup directory, migrate bằng tài khoản DDL rồi
+khởi động runtime mới. Writer cũ không hiểu journal không được chạy song song
+hoặc rollback để ghi; giữ read-only tới khi compatibility được chứng minh.
+Không backfill receipt giả cho lịch sử cũ. Kiểm runtime health/config thực khi
+triển khai; container kiểm thử tạm không chứng minh dịch vụ thường trực đã bật.
 
 ## Điều kiện trước staging/production
 

@@ -1,5 +1,17 @@
 # Vận hành email RoomQC
 
+**02/11/2026 — đã xác minh miền Resend:** Đã thêm đúng DKIM/SPF/MX `send`
+trên AZDIGI; Resend hiển thị **Verified** cho `roomqc.com` và ba bản ghi.
+Chưa tạo khóa gửi mới hoặc cấu hình secret SMTP/API/webhook trên VPS; chưa
+gửi thư Internet. Form khóa chỉ quyền gửi cho roomqc.com đang chờ duyệt và
+chưa có địa chỉ nhận thử được chỉ định. Xem [biên bản live](roomqc-live-launch-progress-2026-11-02.md).
+Các quan sát Failed/chưa đăng nhập phía dưới là lịch sử, không còn là trạng
+thái xác minh DNS hiện tại.
+
+<!-- provider-observation-20261030 -->
+**Kiểm tra bên ngoài ngày 30/10/2026:** Trình duyệt hiện chỉ thấy trang công khai Resend, chưa truy cập tài khoản/domain. DNS công khai chưa có bản ghi tại những tên đã kiểm (domain gốc, `_dmarc`, `resend._domainkey`, TXT/MX `send`); xem [biên nhận DNS](../../../artifacts/roomqc-email-public-dns-preflight-2026-10-30.json). Chưa loại trừ mọi selector/subdomain, chưa lấy giá trị DNS chính xác từ nhà cung cấp, chưa gửi thư thật hoặc đổi DNS. Trạng thái Failed ghi trong các mục cũ là quan sát lịch sử, chưa được xác nhận lại. Cần truy cập Resend và quyền DNS để hoàn tất; không tự đoán DKIM/SPF hoặc thêm SPF thứ hai.
+<!-- /provider-observation-20261030 -->
+
 Cập nhật 16/10/2026. Tài khoản Resend đã mở và miền `roomqc.com` đã được tạo trong Resend, nhưng trạng thái hiện là **Failed** vì các bản ghi DNS chưa được thêm/xác minh. Hiện chỉ gửi vào Mailpit local; chưa cấu hình hoặc gửi email Internet.
 
 ## Bản đang chạy ở local

@@ -12,15 +12,17 @@
     "file": "src\\hooks\\announcements\\useActiveAnnouncements.ts",
     "queryKeys": [
       "'announcements', 'active'",
-      "'announcements', 'active', user?.id, subscription?.subscription_status, placement"
+      "'announcements', 'active', scope, subscription?.subscription_status, placement",
+      "'announcements', 'active', variables.ownerScope"
     ],
     "rpcs": [],
     "tables": [
-      "announcements",
-      "announcement_dismissals"
+      "announcement_dismissals",
+      "announcements"
     ],
     "invalidates": [
-      "'announcements', 'active'"
+      "'announcements', 'active'",
+      "'announcements', 'active', variables.ownerScope"
     ]
   },
   {
@@ -44,6 +46,14 @@
     "invalidates": [
       "'active-room-bookings', tenantId, hotelId"
     ]
+  },
+  {
+    "hook": "useAdvicePolicy",
+    "file": "src\\hooks\\super-admin\\useAdvicePolicy.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
   },
   {
     "hook": "useAnnouncementsAdmin",
@@ -164,9 +174,7 @@
       "'bookings'",
       "'rooms'"
     ],
-    "rpcs": [
-      "transition_booking_status"
-    ],
+    "rpcs": [],
     "tables": [],
     "invalidates": [
       "'room-bookings'",
@@ -192,6 +200,30 @@
       "'booking-detail', data.bookingId",
       "'bookings'"
     ]
+  },
+  {
+    "hook": "useBookingList",
+    "file": "src\\hooks\\useBookingList.ts",
+    "queryKeys": [
+      "'all-bookings', filters.tenantId, filters.allHotels ? 'all' : filters.hotelId, filters.status, filte"
+    ],
+    "rpcs": [],
+    "tables": [
+      "room_bookings"
+    ],
+    "invalidates": []
+  },
+  {
+    "hook": "useBookingNoShowResolution",
+    "file": "src\\hooks\\useBookingNoShowResolution.ts",
+    "queryKeys": [
+      "'booking-no-show-resolution', roomCommandRuntimeScope(), auth.user?.id, sessionId, user?.tenant_id, "
+    ],
+    "rpcs": [
+      "get_booking_no_show_resolution"
+    ],
+    "tables": [],
+    "invalidates": []
   },
   {
     "hook": "useBookingPayments",
@@ -271,9 +303,9 @@
     "hook": "useBookingStats",
     "file": "src\\hooks\\useBookingStats.ts",
     "queryKeys": [
-      "'booking-stats', hotelId, isAllHotelsMode, today",
-      "'today-checkouts', hotelId, isAllHotelsMode, today",
-      "'today-checkins', hotelId, isAllHotelsMode, today"
+      "'booking-stats', hotelId, isAllHotelsMode, today, tenantId",
+      "'today-checkouts', hotelId, isAllHotelsMode, today, tenantId",
+      "'today-checkins', hotelId, isAllHotelsMode, today, tenantId"
     ],
     "rpcs": [],
     "tables": [
@@ -289,7 +321,8 @@
     "queryKeys": [
       "'rooms'",
       "'room-stats'",
-      "'floor-plan'"
+      "'floor-plan'",
+      "'setup-checklist'"
     ],
     "rpcs": [],
     "tables": [
@@ -300,7 +333,8 @@
     "invalidates": [
       "'rooms'",
       "'room-stats'",
-      "'floor-plan'"
+      "'floor-plan'",
+      "'setup-checklist'"
     ]
   },
   {
@@ -312,8 +346,7 @@
       "'floor-plan'"
     ],
     "rpcs": [
-      "apply_room_standards",
-      "transition_room_status"
+      "apply_room_standards"
     ],
     "tables": [
       "room_items",
@@ -521,6 +554,56 @@
     ]
   },
   {
+    "hook": "useControlAdmin",
+    "file": "src\\hooks\\super-admin\\useControlAdmin.ts",
+    "queryKeys": [
+      "'control-admin', scope, epoch"
+    ],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useControlAlerts",
+    "file": "src\\hooks\\super-admin\\useControlAlerts.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useControlAutoRefresh",
+    "file": "src\\hooks\\super-admin\\useControlAutoRefresh.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useControlClusterCommands",
+    "file": "src\\hooks\\super-admin\\useControlClusterCommands.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useControlScroll",
+    "file": "src\\hooks\\super-admin\\useControlScroll.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useControlWorkspaceRecheck",
+    "file": "src\\hooks\\super-admin\\useControlWorkspaceRecheck.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
     "hook": "useCreateDistributionFromSupplement",
     "file": "src\\hooks\\useCreateDistributionFromSupplement.ts",
     "queryKeys": [
@@ -536,7 +619,6 @@
     ],
     "tables": [
       "supplement_requests",
-      "distribution_orders",
       "user_hotels"
     ],
     "invalidates": [
@@ -624,6 +706,7 @@
     ],
     "rpcs": [
       "get_distribution_orders_filtered",
+      "get_distribution_orders_count",
       "get_distribution_order_detail",
       "create_distribution_order",
       "cancel_distribution_order",
@@ -683,6 +766,18 @@
     ]
   },
   {
+    "hook": "useEmployeeAuthority",
+    "file": "src\\hooks\\useEmployeeAuthority.ts",
+    "queryKeys": [
+      "key"
+    ],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": [
+      "key"
+    ]
+  },
+  {
     "hook": "useEnsureVersionDraft",
     "file": "src\\hooks\\announcements\\useEnsureVersionDraft.ts",
     "queryKeys": [
@@ -699,21 +794,20 @@
     ]
   },
   {
+    "hook": "useFinancialReportExport",
+    "file": "src\\hooks\\useFinancialReportExport.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
     "hook": "useFinancialTargets",
     "file": "src\\hooks\\useFinancialTargets.ts",
-    "queryKeys": [
-      "'financial-targets', tenantId, hotelId ?? 'all', month",
-      "'financial-targets'",
-      "'operations-insights'"
-    ],
+    "queryKeys": [],
     "rpcs": [],
-    "tables": [
-      "financial_targets"
-    ],
-    "invalidates": [
-      "'financial-targets'",
-      "'operations-insights'"
-    ]
+    "tables": [],
+    "invalidates": []
   },
   {
     "hook": "useFirstAccessibleRoute",
@@ -727,13 +821,11 @@
     "hook": "useFixedExpenses",
     "file": "src\\hooks\\useFixedExpenses.ts",
     "queryKeys": [
-      "'fixed-expenses', tenantId, hotelId, monthStr",
-      "'monthly-target', tenantId, hotelId, monthStr"
+      "'fixed-expenses', tenantId, hotelId, monthStr"
     ],
     "rpcs": [],
     "tables": [
-      "hotel_fixed_expenses",
-      "monthly_targets"
+      "hotel_fixed_expenses"
     ],
     "invalidates": []
   },
@@ -881,7 +973,7 @@
     "hook": "useGuestsV2",
     "file": "src\\hooks\\useGuestsV2.ts",
     "queryKeys": [
-      "'guests-v2', tenantId, segment, search, sortBy, sortDir, page, pageSize",
+      "'guests-v2', tenantId, segment, search, sortBy, sortDir, segment === 'birthday' ? 'all' : page, segm",
       "'guest-stats', tenantId",
       "'guests'",
       "'guests-v2'",
@@ -974,6 +1066,18 @@
     "invalidates": [
       "'hotel-qc-mode', vars.hotelId",
       "'hotels'"
+    ]
+  },
+  {
+    "hook": "useHotelRoomSetup",
+    "file": "src\\hooks\\useHotelRoomSetup.ts",
+    "queryKeys": [
+      "prefix"
+    ],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": [
+      "prefix"
     ]
   },
   {
@@ -1154,6 +1258,7 @@
     "queryKeys": [
       "'inventory-hub-badges', tenantId",
       "'low-stock-items'",
+      "'inventory-dashboard', tenantId",
       "'inventory-hub-badges', tenantId, hotelId, isAllHotelsMode"
     ],
     "rpcs": [
@@ -1166,7 +1271,8 @@
     ],
     "invalidates": [
       "'inventory-hub-badges', tenantId",
-      "'low-stock-items'"
+      "'low-stock-items'",
+      "'inventory-dashboard', tenantId"
     ]
   },
   {
@@ -1296,10 +1402,10 @@
     "hook": "useLaborCost",
     "file": "src\\hooks\\useLaborCost.ts",
     "queryKeys": [
-      " 'labor-cost', tenantId, hotelId ?? 'all', dateRange.start.toISOString().slice(0, 10), dateRange.end"
+      "'labor-cost', ...scope.key"
     ],
     "rpcs": [
-      "get_labor_cost"
+      "get_labor_cost_scoped"
     ],
     "tables": [],
     "invalidates": []
@@ -1308,7 +1414,7 @@
     "hook": "useLaundryBatches",
     "file": "src\\hooks\\useLaundryBatches.ts",
     "queryKeys": [
-      "'laundry-batches', tenantId, selectedHotel?.id, isAllHotelsMode, filters, page, pageSize",
+      " 'laundry-batches', tenantId, selectedHotel?.id, isAllHotelsMode, filters, page, pageSize, ",
       "'laundry-batch', batchId",
       "'laundry-batches'",
       "'laundry-dashboard-stats'",
@@ -1504,7 +1610,9 @@
     "rpcs": [
       "get_maintenance_dashboard"
     ],
-    "tables": [],
+    "tables": [
+      "maintenance_requests"
+    ],
     "invalidates": []
   },
   {
@@ -1553,20 +1661,12 @@
     "hook": "useMarkBookingNoShow",
     "file": "src\\hooks\\useMarkBookingNoShow.ts",
     "queryKeys": [
-      "'overdue-checkins'",
-      "'bookings'",
-      "'room-bookings'",
-      "'rooms'"
+      "key"
     ],
-    "rpcs": [
-      "mark_booking_no_show"
-    ],
+    "rpcs": [],
     "tables": [],
     "invalidates": [
-      "'overdue-checkins'",
-      "'bookings'",
-      "'room-bookings'",
-      "'rooms'"
+      "key"
     ]
   },
   {
@@ -1603,11 +1703,17 @@
     "hook": "useMonthlyExpenses",
     "file": "src\\hooks\\useMonthlyExpenses.ts",
     "queryKeys": [
-      "'monthly-expenses', tenantId, months, isAllHotelsMode ? 'all' : selectedHotel?.id"
+      "'monthly-expenses', ...scope.key"
     ],
-    "rpcs": [
-      "get_monthly_expenses"
-    ],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useMyStaffInvitation",
+    "file": "src\\hooks\\useMyStaffInvitation.ts",
+    "queryKeys": [],
+    "rpcs": [],
     "tables": [],
     "invalidates": []
   },
@@ -1683,16 +1789,29 @@
     ]
   },
   {
-    "hook": "useOperationsInsights",
-    "file": "src\\hooks\\useOperationsInsights.ts",
+    "hook": "useOperationsAdvice",
+    "file": "src\\hooks\\useOperationsAdvice.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useOperationsFinancialReport",
+    "file": "src\\hooks\\useOperationsFinancialReport.ts",
     "queryKeys": [
-      " 'operations-insights', tenantId, hotelId ?? 'all', dateRange.start.toISOString(), dateRange.end.toI",
-      " 'operations-advice', tenantId, insights?.snapshot.netRevenue, insights?.snapshot.totalCost, insight"
+      "'operations-financial-report', ...scope.key"
     ],
     "rpcs": [],
-    "tables": [
-      "room_bookings"
-    ],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useOperationsInsights",
+    "file": "src\\hooks\\useOperationsInsights.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
     "invalidates": []
   },
   {
@@ -1769,17 +1888,17 @@
   {
     "hook": "useOverviewKpiStrip",
     "file": "src\\hooks\\useOverviewKpiStrip.ts",
-    "queryKeys": [
-      "'overview-room-aggregate', tenantId, hotelKey, current.start.toISOString(), current.end.toISOString(",
-      "'overview-chart', tenantId, hotelKey, days"
-    ],
+    "queryKeys": [],
     "rpcs": [],
-    "tables": [
-      "rooms",
-      "room_bookings",
-      "maintenance_requests",
-      "laundry_batches"
-    ],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "usePagedList",
+    "file": "src\\hooks\\usePagedList.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
     "invalidates": []
   },
   {
@@ -2025,14 +2144,12 @@
     "hook": "useProfile",
     "file": "src\\hooks\\useProfile.ts",
     "queryKeys": [
-      "'user'"
+      "'user', saved.id"
     ],
     "rpcs": [],
-    "tables": [
-      "users"
-    ],
+    "tables": [],
     "invalidates": [
-      "'user'"
+      "'user', saved.id"
     ]
   },
   {
@@ -2161,8 +2278,7 @@
       "'housekeeping-tasks'"
     ],
     "rpcs": [
-      "get_last_room_check",
-      "perform_quick_room_check"
+      "get_last_room_check"
     ],
     "tables": [],
     "invalidates": [
@@ -2231,7 +2347,7 @@
     "hook": "useRecurringIssues",
     "file": "src\\hooks\\useRecurringIssues.ts",
     "queryKeys": [
-      "'recurring-issues', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, days"
+      " \"recurring-issues\", tenantId, isAllHotelsMode ? \"all\" : selectedHotel?.id, period, "
     ],
     "rpcs": [],
     "tables": [
@@ -2307,7 +2423,7 @@
     "file": "src\\hooks\\useReports.ts",
     "queryKeys": [
       "'inventory-report', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, dateRange",
-      "'financial-report', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, dateRange",
+      "'financial-report', ...scope.key",
       "'abc-analysis', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id",
       "'turnover-analysis', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, months",
       "'laundry-report', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, dateRange",
@@ -2315,7 +2431,6 @@
     ],
     "rpcs": [
       "get_inventory_report",
-      "get_financial_report",
       "get_abc_analysis",
       "get_turnover_analysis",
       "get_laundry_report",
@@ -2327,6 +2442,28 @@
       "stock_adjustments"
     ],
     "invalidates": []
+  },
+  {
+    "hook": "useReportScope",
+    "file": "src\\hooks\\useReportScope.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
+    "hook": "useReportTargets",
+    "file": "src\\hooks\\useReportTargets.ts",
+    "queryKeys": [
+      "'report-targets'",
+      "prefix"
+    ],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": [
+      "'report-targets'",
+      "prefix"
+    ]
   },
   {
     "hook": "useRescheduleBookingCheckin",
@@ -2358,10 +2495,12 @@
     "hook": "useRevenueReport",
     "file": "src\\hooks\\useRevenueReport.ts",
     "queryKeys": [
-      "'revenue-report', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id, period, customKey",
+      "'revenue-report', runtime, auth.user?.id, sessionId, tenantId, user?.updated_at, hotelId ?? 'all', e",
       "'owner-alerts', tenantId, isAllHotelsMode ? 'all' : selectedHotel?.id"
     ],
-    "rpcs": [],
+    "rpcs": [
+      "get_revenue_report"
+    ],
     "tables": [
       "room_bookings",
       "room_checks"
@@ -2516,7 +2655,6 @@
       "'warehouses-with-stats'"
     ],
     "rpcs": [
-      "transition_room_status",
       "atomic_item_to_laundry",
       "atomic_item_lost",
       "atomic_item_consumed",
@@ -2563,6 +2701,14 @@
     "tables": [
       "room_check_sessions"
     ],
+    "invalidates": []
+  },
+  {
+    "hook": "useRoomCommandExecutor",
+    "file": "src\\hooks\\useRoomCommandExecutor.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
     "invalidates": []
   },
   {
@@ -2628,6 +2774,14 @@
     "invalidates": []
   },
   {
+    "hook": "useRoomOperationExecutor",
+    "file": "src\\hooks\\useRoomOperationExecutor.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
     "hook": "useRoomPerformance",
     "file": "src\\hooks\\useRoomPerformance.ts",
     "queryKeys": [
@@ -2665,7 +2819,6 @@
     "rpcs": [
       "get_rooms_filtered",
       "get_room_items_with_standards",
-      "transition_room_status",
       "transition_task_status"
     ],
     "tables": [
@@ -2688,6 +2841,7 @@
     "hook": "useRoomsNeedingActionToday",
     "file": "src\\hooks\\useRoomsNeedingActionToday.ts",
     "queryKeys": [
+      "'hk-action-buckets', tenantId, hotelId, today",
       "'hk-action-buckets', tenantId, hotelId"
     ],
     "rpcs": [
@@ -2800,9 +2954,7 @@
       "'room-detail', vars.roomId",
       "'audit-log'"
     ],
-    "rpcs": [
-      "transition_room_status"
-    ],
+    "rpcs": [],
     "tables": [],
     "invalidates": [
       "'rooms'",
@@ -2967,6 +3119,14 @@
     ]
   },
   {
+    "hook": "useSelfProfileForm",
+    "file": "src\\hooks\\useSelfProfileForm.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
+  },
+  {
     "hook": "useSendDraftBatch",
     "file": "src\\hooks\\useSendDraftBatch.ts",
     "queryKeys": [
@@ -3089,6 +3249,14 @@
     "tables": [
       "activity_logs"
     ],
+    "invalidates": []
+  },
+  {
+    "hook": "useStaffInvitationAdmin",
+    "file": "src\\hooks\\useStaffInvitationAdmin.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
     "invalidates": []
   },
   {
@@ -3265,31 +3433,16 @@
       "'subscription-plans'",
       "'tenant-subscription', tenantId",
       "'invoices', tenantId",
-      "'payment-transactions', tenantId",
-      "'payment-transactions'",
-      "'invoices'",
-      "'tenant-subscription'",
-      "'tenant-usage'",
-      "'check-quota'",
-      "'actual-room-count'"
+      "'payment-transactions', tenantId"
     ],
-    "rpcs": [
-      "update_tenant_usage"
-    ],
+    "rpcs": [],
     "tables": [
       "subscription_plans",
       "tenants",
       "invoices",
       "payment_transactions"
     ],
-    "invalidates": [
-      "'payment-transactions'",
-      "'invoices'",
-      "'tenant-subscription'",
-      "'tenant-usage'",
-      "'check-quota'",
-      "'actual-room-count'"
-    ]
+    "invalidates": []
   },
   {
     "hook": "useSuperAdminAuth",
@@ -3533,17 +3686,19 @@
     "hook": "useTenants",
     "file": "src\\hooks\\super-admin\\useTenants.ts",
     "queryKeys": [
-      "'super-admin-tenants'",
-      "'super-admin-tenant', tenantId"
+      "'super-admin-tenants', args",
+      "'super-admin-tenant', tenantId",
+      "key"
     ],
-    "rpcs": [],
+    "rpcs": [
+      "admin_tenant_directory_page",
+      "admin_manage_tenant"
+    ],
     "tables": [
-      "tenants",
-      "invoices",
-      "activity_logs"
+      "tenants"
     ],
     "invalidates": [
-      "'super-admin-tenants'"
+      "key"
     ]
   },
   {
@@ -3597,9 +3752,7 @@
       "'room-last-check', data.room_id",
       "'housekeeping-tasks'"
     ],
-    "rpcs": [
-      "undo_quick_room_check"
-    ],
+    "rpcs": [],
     "tables": [],
     "invalidates": [
       "'rooms'",
@@ -3654,7 +3807,7 @@
     "hook": "useUser",
     "file": "src\\hooks\\useUser.ts",
     "queryKeys": [
-      "'user', authUser?.id"
+      "'user', authUser?.id, runtimeConfig.workspace?.workspace.id"
     ],
     "rpcs": [],
     "tables": [
@@ -3667,16 +3820,13 @@
     "hook": "useUserHotels",
     "file": "src\\hooks\\useUserHotels.ts",
     "queryKeys": [
-      "'user-hotels', userId",
-      "'user-hotels', variables.userId"
+      "'user-hotels', userId"
     ],
     "rpcs": [],
     "tables": [
       "user_hotels"
     ],
-    "invalidates": [
-      "'user-hotels', variables.userId"
-    ]
+    "invalidates": []
   },
   {
     "hook": "useUserLevels",
@@ -3706,31 +3856,10 @@
   {
     "hook": "useUserPermissionConfiguration",
     "file": "src\\hooks\\useUserPermissionConfiguration.ts",
-    "queryKeys": [
-      "'user-permission-configuration', userId",
-      "'user-permission-configuration', variables.userId",
-      "'user-permissions', variables.userId",
-      "'user-permissions-summary', variables.userId",
-      "'user-module-permissions', variables.userId",
-      "'user-module-permissions'",
-      "'route-permission', variables.userId",
-      "'check-permission', variables.userId"
-    ],
-    "rpcs": [
-      "get_user_permissions_summary"
-    ],
-    "tables": [
-      "user_permissions"
-    ],
-    "invalidates": [
-      "'user-permission-configuration', variables.userId",
-      "'user-permissions', variables.userId",
-      "'user-permissions-summary', variables.userId",
-      "'user-module-permissions', variables.userId",
-      "'user-module-permissions'",
-      "'route-permission', variables.userId",
-      "'check-permission', variables.userId"
-    ]
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
   },
   {
     "hook": "useUserPermissions",
@@ -3739,12 +3868,6 @@
       "'user-permissions', userId",
       "'user-permissions-summary', userId",
       "'user-permissions-with-source', userId",
-      "'user-permissions', variables.userId",
-      "'user-permissions-summary', variables.userId",
-      "'user-module-permissions', variables.userId",
-      "'user-module-permissions'",
-      "'route-permission', variables.userId",
-      "'check-permission', variables.userId",
       "'check-permission', user?.id, module, action"
     ],
     "rpcs": [
@@ -3755,33 +3878,25 @@
     "tables": [
       "user_permissions"
     ],
-    "invalidates": [
-      "'user-permissions', variables.userId",
-      "'user-permissions-summary', variables.userId",
-      "'user-module-permissions', variables.userId",
-      "'user-module-permissions'",
-      "'route-permission', variables.userId",
-      "'check-permission', variables.userId"
-    ]
+    "invalidates": []
   },
   {
     "hook": "useUsers",
     "file": "src\\hooks\\useUsers.ts",
     "queryKeys": [
       "'users', tenant?.id, currentUser?.id, currentUser?.user_level_code, selectedHotelId, isAllHotelsMode",
-      "'check-quota'",
-      "'tenant-usage'",
+      "key",
       "'users'"
     ],
     "rpcs": [
-      "get_users_by_hotel"
+      "get_users_by_hotel",
+      "edit_employee_profile"
     ],
     "tables": [
       "users"
     ],
     "invalidates": [
-      "'check-quota'",
-      "'tenant-usage'",
+      "key",
       "'users'"
     ]
   },
@@ -3941,5 +4056,13 @@
       "'workflows'",
       "'workflow'"
     ]
+  },
+  {
+    "hook": "useWorkspaceSetupStatus",
+    "file": "src\\hooks\\useWorkspaceSetupStatus.ts",
+    "queryKeys": [],
+    "rpcs": [],
+    "tables": [],
+    "invalidates": []
   }
 ]
