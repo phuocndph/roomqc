@@ -1,174 +1,105 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { AlertTriangle, TrendingUp, Wrench, Eye, MoreHorizontal, MapPin } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import { RecurringIssueAnalysisDialog } from './RecurringIssueAnalysisDialog'
-import { cn } from '@/lib/utils'
+import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
+import {
+  issueTypeLabels,
+  recurringIssueName,
+  type RecurringIssue,
+} from "@/lib/maintenanceRecurring";
 
-interface RecurringIssue {
-  id: string
-  type: 'item' | 'room'
-  item?: any
-  room?: any
-  location: string
-  count30d: number
-  count90d: number
-  primaryIssue: string
-  issueCount: number
-  frequency: number
-  avgCost: number
-  totalCost: number
-}
-
-interface RecurringIssuesTableProps {
-  issues: RecurringIssue[]
-}
-
-const issueTypeLabels: Record<string, string> = {
-  repair: 'Sửa chữa',
-  replace: 'Thay thế',
-  inspection: 'Kiểm tra',
-  cleaning: 'Vệ sinh',
-  other: 'Khác',
-}
-
-const severityConfig = {
-  critical: { color: 'text-red-600', dot: 'bg-red-500', label: 'Nghiêm trọng' },
-  warning: { color: 'text-amber-600', dot: 'bg-amber-500', label: 'Cảnh báo' },
-}
-
-export const RecurringIssuesTable = ({ issues }: RecurringIssuesTableProps) => {
-  const [selectedIssue, setSelectedIssue] = useState<RecurringIssue | null>(null)
-
-  if (!issues || issues.length === 0) {
-    return (
-      <div className="border rounded-lg">
-        <div className="flex flex-col items-center justify-center py-12">
-          <Wrench className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">Không có vấn đề lặp lại</p>
-        </div>
-      </div>
-    )
-  }
-
+export function RecurringSeverity({ critical }: { critical: boolean }) {
   return (
-    <>
-      <div className="border rounded-lg">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Thiết bị / Phòng</TableHead>
-                <TableHead className="text-xs">Vị trí</TableHead>
-                <TableHead className="text-xs">Mức độ</TableHead>
-                <TableHead className="text-xs">Vấn đề chính</TableHead>
-                <TableHead className="text-xs text-center">30 ngày</TableHead>
-                <TableHead className="text-xs text-center">90 ngày</TableHead>
-                <TableHead className="text-xs text-right">Chi phí</TableHead>
-                <TableHead className="text-xs text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {issues.map((issue) => {
-                const severity = issue.count30d >= 3 ? severityConfig.critical : severityConfig.warning
-                
-                return (
-                  <TableRow key={issue.id} className="hover:bg-muted/30">
-                    <TableCell className="py-2">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {issue.type === 'item' ? issue.item?.name : `Phòng ${issue.room?.room_number}`}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {issue.type === 'item' ? issue.item?.code : issue.room?.room_type}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {issue.location}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <span className={cn("flex items-center gap-1.5 text-xs", severity.color)}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full", severity.dot)} />
-                        {severity.label}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div>
-                        <p className="text-xs font-medium">{issueTypeLabels[issue.primaryIssue] || issue.primaryIssue}</p>
-                        <p className="text-xs text-muted-foreground">{issue.issueCount} lần</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2 text-center">
-                      <span className={cn(
-                        "inline-flex items-center gap-1 text-xs font-medium",
-                        issue.count30d >= 3 ? "text-red-600" : "text-amber-600"
-                      )}>
-                        <TrendingUp className="h-3 w-3" />
-                        {issue.count30d}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-2 text-center">
-                      <span className="text-xs text-muted-foreground">{issue.count90d}</span>
-                    </TableCell>
-                    <TableCell className="py-2 text-right">
-                      <div>
-                        <p className="text-xs font-medium">{formatCurrency(issue.totalCost)}</p>
-                        <p className="text-xs text-muted-foreground">TB: {formatCurrency(issue.avgCost)}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7"
-                          onClick={() => setSelectedIssue(issue)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Thêm tùy chọn">
-                              <MoreHorizontal className="h-3.5 w-3.5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedIssue(issue)}>
-                              Phân tích chi tiết
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>Tạo yêu cầu bảo trì</DropdownMenuItem>
-                            <DropdownMenuItem>Đánh dấu đã xử lý</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+    <span
+      className={
+        critical
+          ? "inline-flex whitespace-nowrap rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white"
+          : "inline-flex whitespace-nowrap rounded bg-slate-600 px-2 py-1 text-xs font-semibold text-white"
+      }
+    >
+      {critical ? "Ưu tiên kiểm tra" : "Theo dõi"}
+    </span>
+  );
+}
 
-      <RecurringIssueAnalysisDialog
-        issue={selectedIssue}
-        open={!!selectedIssue}
-        onOpenChange={(open) => !open && setSelectedIssue(null)}
-      />
-    </>
-  )
+export function RecurringIssuesTable({
+  issues,
+  period,
+  onSelect,
+}: {
+  issues: RecurringIssue[];
+  period: number;
+  onSelect: (issue: RecurringIssue) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Thiết bị / Khu vực</TableHead>
+            <TableHead>Mức theo dõi</TableHead>
+            <TableHead>Sự cố chính</TableHead>
+            <TableHead className="text-center">Trong {period} ngày</TableHead>
+            <TableHead className="text-right">Chi phí ghi nhận</TableHead>
+            <TableHead className="text-right">Thao tác</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {issues.map((issue) => (
+            <TableRow
+              key={issue.id}
+              className="hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <TableCell className="max-w-72 py-4">
+                <p className="break-words font-medium">
+                  {recurringIssueName(issue)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[issue.item?.code, issue.location]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </TableCell>
+              <TableCell>
+                <RecurringSeverity critical={issue.count30d >= 3} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {issue.count30d} lần / 30 ngày
+                </p>
+              </TableCell>
+              <TableCell>
+                <p>
+                  {issueTypeLabels[issue.primaryIssue] || issue.primaryIssue}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {issue.issueCount} lần
+                </p>
+              </TableCell>
+              <TableCell className="text-center font-semibold tabular-nums">
+                {issue.countInPeriod} lần
+              </TableCell>
+              <TableCell className="text-right font-medium tabular-nums">
+                {formatCurrency(issue.totalCost)}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onSelect(issue)}
+                  aria-label={"Xem lịch sử " + recurringIssueName(issue)}
+                >
+                  Xem lịch sử
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 }

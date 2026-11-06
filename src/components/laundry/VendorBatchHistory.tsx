@@ -111,7 +111,7 @@ export function VendorBatchHistory({ vendorId }: VendorBatchHistoryProps) {
             {t('laundry:batchHistory.noOrders')}
           </p>
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-none border">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

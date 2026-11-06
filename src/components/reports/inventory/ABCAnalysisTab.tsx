@@ -161,7 +161,7 @@ export function ABCAnalysisTab() {
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-overlay)',
                 }}
               />
               <Legend />
@@ -201,7 +201,7 @@ export function ABCAnalysisTab() {
             </AlertDescription>
           </Alert>
           
-          <div className="rounded-md border">
+          <div className="rounded-none border">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

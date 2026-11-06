@@ -4,13 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBookingStats, useTodayCheckouts, useTodayCheckins } from '@/hooks/useBookingStats'
 import { formatCurrency } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
-export function OwnerRoomOverview() {
-  const { data: stats, isLoading: statsLoading } = useBookingStats()
-  const { data: checkouts, isLoading: checkoutsLoading } = useTodayCheckouts()
-  const { data: checkins, isLoading: checkinsLoading } = useTodayCheckins()
+export function OwnerRoomOverview({ showSummary = true }: { showSummary?: boolean }) {
+  const statsQuery = useBookingStats()
+  const checkoutsQuery = useTodayCheckouts()
+  const checkinsQuery = useTodayCheckins()
+  const { data: stats, isLoading: statsLoading } = statsQuery
+  const { data: checkouts, isLoading: checkoutsLoading } = checkoutsQuery
+  const { data: checkins, isLoading: checkinsLoading } = checkinsQuery
 
   const isLoading = statsLoading || checkoutsLoading || checkinsLoading
+
+  if ((showSummary && statsQuery.isError) || checkoutsQuery.isError || checkinsQuery.isError) {
+    return <Card><CardContent className="space-y-3 p-4" role="alert"><p className="text-sm">Chưa tải được lịch nhận / trả phòng.</p><Button variant="outline" onClick={() => { void statsQuery.refetch(); void checkoutsQuery.refetch(); void checkinsQuery.refetch() }}>Thử lại</Button></CardContent></Card>
+  }
 
   if (isLoading) {
     return (
@@ -35,42 +43,42 @@ export function OwnerRoomOverview() {
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Hotel className="h-4 w-4 text-primary" />
-          Hoạt động phòng hôm nay
+          {showSummary ? 'Hoạt động phòng hôm nay' : 'Lịch nhận / trả phòng hôm nay'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="p-3 rounded-lg bg-muted/50 text-center">
+        {showSummary && <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="p-3 rounded-none bg-muted/50 text-center">
             <p className="text-2xl font-bold text-foreground">{stats?.totalRooms || 0}</p>
             <p className="text-xs text-muted-foreground">Tổng phòng</p>
           </div>
-          <div className="p-3 rounded-lg border border-l-4 border-l-green-600 bg-background text-center">
+          <div className="p-3 rounded-none border border-l-4 border-l-green-600 bg-background text-center">
             <p className="text-2xl font-bold text-green-600">{stats?.occupiedRooms || 0}</p>
             <p className="text-xs text-muted-foreground">Đang có khách</p>
           </div>
-          <div className="p-3 rounded-lg border border-l-4 border-l-blue-600 bg-background text-center">
+          <div className="p-3 rounded-none border border-l-4 border-l-blue-600 bg-background text-center">
             <p className="text-2xl font-bold text-blue-600">{stats?.vacantRooms || 0}</p>
             <p className="text-xs text-muted-foreground">Phòng trống</p>
           </div>
-          <div className="p-3 rounded-lg border border-l-4 border-l-primary bg-background text-center">
+          <div className="p-3 rounded-none border border-l-4 border-l-primary bg-background text-center">
             <p className="text-2xl font-bold text-primary">{stats?.checkInsToday || 0}</p>
             <p className="text-xs text-muted-foreground">Check-in hôm nay</p>
           </div>
-          <div className="p-3 rounded-lg border border-l-4 border-l-orange-600 bg-background text-center">
+          <div className="p-3 rounded-none border border-l-4 border-l-orange-600 bg-background text-center">
             <p className="text-2xl font-bold text-orange-600">{stats?.checkOutsToday || 0}</p>
             <p className="text-xs text-muted-foreground">Check-out hôm nay</p>
           </div>
-        </div>
+        </div>}
 
         {/* Occupancy Rate */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+        {showSummary && <div className="flex items-center justify-between p-3 rounded-none bg-muted/30 border border-border">
           <div className="flex items-center gap-2">
             <Percent className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">Tỷ lệ lấp đầy</span>
           </div>
           <span className="text-lg font-bold text-primary">{stats?.occupancyRate || 0}%</span>
-        </div>
+        </div>}
 
         {/* Today's Check-ins & Check-outs */}
         <div className="grid md:grid-cols-2 gap-4">
@@ -94,7 +102,7 @@ export function OwnerRoomOverview() {
                 {checkins.slice(0, 3).map((checkin) => (
                   <Link
                     key={checkin.id}
-                    to={`/rooms/${checkin.room_id}`}
+                    to={`/bookings?action=checkin&bookingId=${checkin.id}`}
                     className="flex items-center justify-between p-2 rounded bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-2">
@@ -135,7 +143,7 @@ export function OwnerRoomOverview() {
                 {checkouts.slice(0, 3).map((checkout) => (
                   <Link
                     key={checkout.id}
-                    to={`/rooms/${checkout.room_id}`}
+                    to={`/bookings?action=checkout&bookingId=${checkout.id}`}
                     className="flex items-center justify-between p-2 rounded bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-2">
@@ -159,7 +167,7 @@ export function OwnerRoomOverview() {
         {/* Link to Bookings */}
         <Link
           to="/bookings"
-          className="flex items-center justify-between p-3 rounded-lg border border-l-4 border-l-primary bg-background hover:bg-muted/30 transition-colors"
+          className="flex items-center justify-between p-3 rounded-none border border-l-4 border-l-primary bg-background hover:bg-muted/30 transition-colors"
         >
           <span className="text-sm font-medium">Xem tất cả đặt phòng</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />

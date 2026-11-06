@@ -14,80 +14,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { usePaymentTransactions, useInvoices } from "@/hooks/useSubscription";
 import { formatDate } from "date-fns";
 import { vi } from "date-fns/locale";
-import { FileText, History, CheckCircle, XCircle, Clock, RefreshCw, Download, Loader2 } from "lucide-react";
+import { FileText, History, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from '@/integrations/supabase/client';
 import { formatVNCurrency } from '@/lib/pricing';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
 import { useUser } from '@/hooks/useUser';
-import { getFriendlyError } from '@/lib/errorMessage';
 import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function BillingHistory() {
-  const { data: transactions, isLoading: loadingTransactions, refetch: refetchTransactions } = usePaymentTransactions();
-  const { data: invoices, isLoading: loadingInvoices, refetch: refetchInvoices } = useInvoices();
-  const [selectedInvoice, setSelectedInvoice] = useState<typeof invoices extends (infer T)[] | null | undefined ? T : never>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const { user } = useUser();
-
-  const canSync = user?.user_level_code === 'super_admin' || user?.user_level_code === 'tenant_owner';
-
-  const handleSyncTransactions = async () => {
-    if (!canSync) return;
-    
-    setIsSyncing(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-
-      const response = await supabase.functions.invoke('sync-sepay-transactions', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Sync failed');
-      }
-
-      const result = response.data;
-      
-      if (result.success) {
-        if (result.matched > 0) {
-          toast.success(`Đã đồng bộ ${result.matched} giao dịch thành công!`, {
-            description: `Hóa đơn: ${result.matchedInvoices?.join(', ')}`
-          });
-          refetchTransactions();
-          refetchInvoices();
-        } else {
-          toast.info('Không tìm thấy giao dịch mới để đồng bộ', {
-            description: `Đã kiểm tra ${result.totalTransactions || 0} giao dịch từ SePay`
-          });
-        }
-      } else {
-        throw new Error(result.error || 'Unknown error');
-      }
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast.error('Lỗi đồng bộ giao dịch', {
-        description: getFriendlyError(error)
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+  const { data: transactions, isLoading: loadingTransactions, isError: transactionsError,
+    isFetching: fetchingTransactions, refetch: refetchTransactions } = usePaymentTransactions();
+  const { data: invoices, isLoading: loadingInvoices, isError: invoicesError,
+    isFetching: fetchingInvoices, refetch: refetchInvoices } = useInvoices();
+  const { tenantId } = useUser();
+  const [selection, setSelection] = useState<{ tenantId: string; id: string } | null>(null);
+  const hasError = transactionsError || invoicesError;
+  const isFetching = fetchingTransactions || fetchingInvoices;
+  // Resolve from current scoped data; never retain an invoice snapshot after a
+  // tenant switch, a failed refresh, or while revalidating access.
+  const selectedInvoice = !hasError && !isFetching && selection?.tenantId === tenantId
+    ? invoices?.find(invoice => invoice.id === selection.id) ?? null : null;
+  const refresh = () => { void refetchTransactions(); void refetchInvoices(); };
 
   // Realtime subscription for payment updates
   useEffect(() => {
+    if (!tenantId) return;
     const channel = supabase
-      .channel(instanceChannelName('billing-history-realtime'))
+      .channel(instanceChannelName(`billing-history:${tenantId}`))
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'payment_transactions' },
+        { event: '*', schema: 'public', table: 'payment_transactions', filter: `tenant_id=eq.${tenantId}` },
         () => refetchTransactions()
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'invoices' },
+        { event: '*', schema: 'public', table: 'invoices', filter: `tenant_id=eq.${tenantId}` },
         () => refetchInvoices()
       )
       .subscribe();
@@ -95,15 +57,18 @@ export function BillingHistory() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetchTransactions, refetchInvoices]);
+  }, [tenantId, refetchTransactions, refetchInvoices]);
 
   // Filter to show only completed or failed transactions (not pending - those are in "Đang chờ" tab)
   const completedTransactions = transactions?.filter(t => 
-    t.payment_status === 'completed' || t.payment_status === 'failed'
+    ['completed', 'failed', 'cancelled', 'expired', 'refunded'].includes(t.payment_status ?? '')
   ) || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'cancelled': return <Badge variant="outline">Đã hủy</Badge>;
+      case 'expired': return <Badge variant="outline">Đã hết hạn</Badge>;
+      case 'refunded': return <Badge variant="outline">Đã hoàn tiền</Badge>;
       case 'completed':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800">
@@ -135,9 +100,20 @@ export function BillingHistory() {
     return invoices.find(inv => inv.id === invoiceId);
   };
 
-  if (loadingTransactions || loadingInvoices) {
+  if (!tenantId) {
+    return <p role="alert">Không xác định được khách sạn. Vui lòng đăng nhập lại.</p>;
+  }
+
+  if (hasError) {
+    return <div role="alert" className="space-y-3">
+      <p>Không tải được lịch sử thanh toán. Vui lòng thử lại hoặc đăng nhập lại.</p>
+      <Button variant="outline" onClick={refresh} disabled={isFetching}>Thử lại</Button>
+    </div>;
+  }
+
+  if (loadingTransactions || loadingInvoices || isFetching) {
     return (
-      <div className="space-y-4">
+      <div role="status" aria-label="Đang tải lịch sử thanh toán" className="space-y-4">
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
@@ -157,33 +133,15 @@ export function BillingHistory() {
               <div>
                 <CardTitle>Lịch sử giao dịch</CardTitle>
                 <CardDescription>
-                  Tất cả giao dịch đã hoàn thành hoặc thất bại
+                  Lịch sử thuê bao RoomQC, không phải hóa đơn của khách lưu trú.
                 </CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {canSync && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleSyncTransactions}
-                  disabled={isSyncing}
-                >
-                  {isSyncing ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  Đồng bộ SePay
-                </Button>
-              )}
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  refetchTransactions();
-                  refetchInvoices();
-                }}
+                onClick={refresh}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Làm mới
@@ -192,6 +150,9 @@ export function BillingHistory() {
           </div>
         </CardHeader>
         <CardContent>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Chỉ tra cứu. Đồng bộ ngân hàng cũ đã được gỡ khỏi giao diện; thanh toán thật chưa được mở.
+          </p>
           {completedTransactions.length === 0 ? (
             <div className="text-center py-12">
               <History className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
@@ -216,9 +177,9 @@ export function BillingHistory() {
                 <TableBody>
                   {completedTransactions.map((transaction) => {
                     const invoice = getInvoiceForTransaction(transaction.invoice_id);
-                    const description = typeof transaction.metadata === 'object' && transaction.metadata !== null 
-                      ? (transaction.metadata as any).description || 'Thanh toán đăng ký'
-                      : 'Thanh toán đăng ký';
+                    const metadata = transaction.metadata;
+                    const description = typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)
+                      && typeof metadata.description === 'string' ? metadata.description : 'Thanh toán đăng ký';
                     
                     return (
                       <TableRow key={transaction.id}>
@@ -235,7 +196,8 @@ export function BillingHistory() {
                           {description}
                         </TableCell>
                         <TableCell>
-                          {getStatusBadge(transaction.payment_status)}
+                          {getStatusBadge(transaction.payment_status === 'failed' && invoice?.status === 'cancelled'
+                            ? 'cancelled' : transaction.payment_status)}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
                           {formatVNCurrency(transaction.amount)}
@@ -245,7 +207,8 @@ export function BillingHistory() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setSelectedInvoice(invoice)}
+                              aria-label={`Xem hóa đơn ${invoice.invoice_number}`}
+                              onClick={() => setSelection({ tenantId, id: invoice.id })}
                             >
                               <FileText className="h-4 w-4" />
                             </Button>
@@ -262,7 +225,7 @@ export function BillingHistory() {
       </Card>
 
       {/* Invoice Detail Dialog */}
-      <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
+      <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelection(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

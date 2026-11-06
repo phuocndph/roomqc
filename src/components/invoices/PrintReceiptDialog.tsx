@@ -169,7 +169,7 @@ export function PrintReceiptDialog({
         </DialogHeader>
 
         {/* Section 1: Totals */}
-        <div className="space-y-3 rounded-md border p-3">
+        <div className="space-y-3 rounded-none border p-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Thành tiền</span>
             <span className="font-medium">{formatCurrency(effectiveSubtotal)}</span>

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export type RoomCheckType = 'daily' | 'periodic' | 'checkin' | 'checkout' | 'maintenance' | 'delivery' | 'replenish'
@@ -68,34 +69,27 @@ export function useRoomCheckSession(roomId: string | undefined) {
 
     // Subscribe to realtime updates — filter by tenant_id (Postgres realtime
     // supports a single filter); narrow to this room in the handler.
-    const channel = supabase
-      .channel(instanceChannelName(`room-check-session-${tenantId}-${roomId}`))
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_check_sessions',
-          filter: `tenant_id=eq.${tenantId}`
-        },
-        (payload) => {
-          const next = payload.new as any
-          const prev = payload.old as any
-          const affectedRoom = next?.room_id ?? prev?.room_id
-          if (affectedRoom !== roomId) return
+    return subscribeSharedPostgresChanges(
+      `room-check-session-${tenantId}-${roomId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'room_check_sessions',
+        filter: `tenant_id=eq.${tenantId}`,
+      },
+      (payload) => {
+        const next = payload.new as any
+        const prev = payload.old as any
+        const affectedRoom = next?.room_id ?? prev?.room_id
+        if (affectedRoom !== roomId) return
 
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setSession(next as RoomCheckSession)
-          } else if (payload.eventType === 'DELETE') {
-            setSession(null)
-          }
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          setSession(next as RoomCheckSession)
+        } else if (payload.eventType === 'DELETE') {
+          setSession(null)
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      },
+    )
   }, [roomId, tenantId])
 
   const createSession = async (

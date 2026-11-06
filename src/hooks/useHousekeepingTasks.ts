@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { mapDbError } from '@/lib/dbErrors'
 import { triggerWorkflow, WorkflowTriggerTypes } from '@/lib/triggerWorkflow'
 import { triggerHousekeepingTaskAssignedNotification } from '@/hooks/useNotificationTriggers'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 import { 
   TASK_TYPE_LABELS,
   PRIORITY_LABELS
@@ -320,24 +321,15 @@ export function useUpdateTaskStatus() {
         }
       }
 
-      const updates: Partial<HousekeepingTask> = { status }
-      if (status === 'in_progress') {
-        updates.started_at = new Date().toISOString()
-      } else if (status === 'cancelled') {
-        updates.cancelled_at = new Date().toISOString()
-      }
-      if (notes) updates.notes = notes
-
-      const { data, error } = await supabase
-        .from('housekeeping_tasks')
-        .update(updates)
-        .eq('id', taskId)
-        .select(`
-          *,
-          room:rooms(id, room_number, floor, room_type),
-          assigned_user:users!housekeeping_tasks_assigned_to_fkey(id, full_name)
-        `)
-        .single()
+      // Every status transition must use the audited state-machine RPC. A
+      // direct UPDATE works in permissive environments but is intentionally
+      // denied by the current RLS/policy contract for staff users.
+      const { data, error } = await supabase.rpc('transition_task_status', {
+        _task_id: taskId,
+        _to_status: status,
+        _reason: notes ?? null,
+        _force: false,
+      })
 
       if (error) throw error
       return data as HousekeepingTask & {
@@ -449,25 +441,18 @@ export function usePendingTaskCount() {
   useEffect(() => {
     if (!userId) return
 
-    const channel = supabase
-      .channel(instanceChannelName(`task-count-${userId}`))
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'housekeeping_tasks',
-          filter: `assigned_to=eq.${userId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['pending-task-count'] })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return subscribeSharedPostgresChanges(
+      `task-count-${userId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'housekeeping_tasks',
+        filter: `assigned_to=eq.${userId}`,
+      },
+      () => {
+        queryClient.invalidateQueries({ queryKey: ['pending-task-count'] })
+      },
+    )
   }, [userId, queryClient])
 
   return query

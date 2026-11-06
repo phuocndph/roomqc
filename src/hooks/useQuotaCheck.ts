@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCheckQuota } from './useTenantUsage'
 import { useTenantUsage } from './useTenantUsage'
 import { useTenantSubscription } from './useSubscription'
+import { toast } from 'sonner'
 
 type ResourceType = 'hotel' | 'user' | 'room' | 'item' | 'storage'
 
@@ -16,8 +17,9 @@ export function useQuotaCheck(resourceType: ResourceType) {
     const result = await refetch()
     const freshCanAdd = result.data
     
-    if (isLoading || !usage || !subscription) {
-      return true // Allow if still loading
+    if (result.error || freshCanAdd === undefined || !usage || !subscription) {
+      toast.error('Chưa kiểm tra được giới hạn sử dụng. Vui lòng thử lại sau khi dữ liệu tải xong.')
+      return false
     }
 
     if (freshCanAdd) {
@@ -71,7 +73,7 @@ export function useQuotaCheck(resourceType: ResourceType) {
 
   return {
     checkQuota,
-    canAdd: canAdd ?? true,
+    canAdd: canAdd === true,
     isLoading,
     showDialog,
     setShowDialog,

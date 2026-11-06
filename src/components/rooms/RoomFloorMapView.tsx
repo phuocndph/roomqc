@@ -398,7 +398,7 @@ export function RoomFloorMapView({
 
         {/* Cell size control */}
         <div className="ml-auto flex items-center gap-1">
-          <div className="hidden lg:flex items-center rounded-md border bg-background p-0.5">
+          <div className="hidden lg:flex items-center rounded-none border bg-background p-0.5">
             {(['sm', 'md', 'lg'] as const).map((p) => (
               <button
                 key={p}

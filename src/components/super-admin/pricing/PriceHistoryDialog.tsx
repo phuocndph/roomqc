@@ -39,7 +39,7 @@ export function PriceHistoryDialog({
           <DialogTitle>Price History: {plan?.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="rounded-md border">
+        <div className="rounded-none border">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

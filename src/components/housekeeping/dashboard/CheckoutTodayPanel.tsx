@@ -1,71 +1,41 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import type { CheckoutTodayItem } from '@/hooks/useHousekeepingDashboardPanels'
+import { PanelError, type PanelQueryState } from './PanelError'
 
-interface Props {
+interface Props extends PanelQueryState {
   data?: CheckoutTodayItem[]
-  loading?: boolean
 }
 
 const STATUS_LABEL: Record<CheckoutTodayItem['status'], { text: string; cls: string }> = {
-  cleaned:  { text: 'Đã dọn',   cls: 'text-green-600' },
-  cleaning: { text: 'Đang dọn', cls: 'text-amber-600' },
-  dirty:    { text: 'Chưa dọn', cls: 'text-red-600' },
-  occupied: { text: 'Còn khách', cls: 'text-blue-600' },
+  cleaned: { text: 'Đã dọn', cls: 'bg-green-700 text-white' },
+  cleaning: { text: 'Đang dọn', cls: 'bg-blue-700 text-white' },
+  dirty: { text: 'Chưa dọn', cls: 'bg-orange-700 text-white' },
+  occupied: { text: 'Còn khách', cls: 'bg-blue-700 text-white' },
+  blocked: { text: 'Tạm ngừng / Khác', cls: 'bg-slate-700 text-white' },
 }
 
-export function CheckoutTodayPanel({ data, loading }: Props) {
+export function CheckoutTodayPanel({ data, loading, isError, onRetry }: Props) {
   const list = data || []
-  return (
-    <div className="border rounded-lg flex flex-col h-full">
-      <div className="flex items-baseline justify-between px-3 py-2 border-b">
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-sm font-medium">Check-out hôm nay</h3>
-          <span className="text-xs text-muted-foreground tabular-nums">({list.length} phòng)</span>
-        </div>
-      </div>
-      <div className="flex-1 overflow-hidden">
-        {loading ? (
-          <div className="m-2 h-32 animate-pulse bg-muted/30 rounded" />
-        ) : list.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-muted-foreground py-6">
-            Không có khách trả phòng hôm nay
-          </div>
-        ) : (
-          <div className="overflow-y-auto max-h-[220px]">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-muted-foreground sticky top-0 bg-background">
-                <tr className="border-b">
-                  <th className="text-left font-normal px-3 py-1.5">Phòng</th>
-                  <th className="text-left font-normal px-2 py-1.5">Khách trả</th>
-                  <th className="text-left font-normal px-2 py-1.5">Loại phòng</th>
-                  <th className="text-right font-normal px-3 py-1.5">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.slice(0, 8).map((r) => {
-                  const s = STATUS_LABEL[r.status]
-                  return (
-                    <tr key={r.bookingId} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-1.5 font-medium tabular-nums">
-                        <Link to={`/rooms/${r.roomId}`} className="hover:underline">P{r.roomNumber}</Link>
-                      </td>
-                      <td className="px-2 py-1.5 tabular-nums">{r.expectedTime || '—'}</td>
-                      <td className="px-2 py-1.5 truncate max-w-[140px]">{r.roomType || '—'}</td>
-                      <td className={`px-3 py-1.5 text-right font-medium ${s.cls}`}>{s.text}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-      <div className="border-t px-3 py-2 text-right">
-        <Link to="/bookings?tab=checkout-today" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">
-          Xem tất cả <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
+  return <section className="min-w-0 border bg-background">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+      <h2 className="font-semibold">Trả phòng hôm nay</h2>
+      <Link to="/bookings" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">Quản lý đặt phòng<ChevronRight className="h-4 w-4" /></Link>
     </div>
-  )
+    {isError ? <PanelError onRetry={onRetry} /> : loading ? <div className="m-4 h-20 animate-pulse bg-muted" /> : !list.length ? (
+      <p className="p-4 text-sm text-muted-foreground">Không có khách trả phòng hôm nay.</p>
+    ) : <div className="max-h-72 overflow-auto">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 bg-background text-muted-foreground"><tr className="border-b"><th scope="col" className="px-4 py-2 text-left font-medium">Phòng</th><th scope="col" className="px-2 py-2 text-left font-medium">Giờ trả</th><th scope="col" className="px-4 py-2 text-right font-medium">Tình trạng</th></tr></thead>
+        <tbody>{list.map(room => {
+          const state = STATUS_LABEL[room.status]
+          return <tr key={room.bookingId} className="border-b last:border-0 hover:bg-muted">
+            <td className="px-4 py-3 font-semibold"><Link to={`/rooms/${room.roomId}`} className="text-primary hover:underline">{room.roomNumber}</Link></td>
+            <td className="px-2 py-3 tabular-nums">{room.expectedTime || 'Chưa đặt'}</td>
+            <td className="px-4 py-3 text-right"><span className={`inline-block px-2 py-1 text-xs font-medium ${state.cls}`}>{state.text}</span></td>
+          </tr>
+        })}</tbody>
+      </table>
+    </div>}
+  </section>
 }

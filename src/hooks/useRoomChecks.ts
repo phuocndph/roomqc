@@ -10,6 +10,7 @@ import {
   sendTelegramNotification
 } from '@/hooks/useNotificationTriggers'
 import { getNotificationRecipients } from '@/utils/notificationRecipients'
+import { resolveRoomCheckPhotoUrls } from '@/lib/roomCheckPhotos'
 import type { RoomCheckFormData, LaundryItem, LostItem, ConsumedItem, DamagedItem, RoomStatusV2 } from '@/types/rooms.types'
 
 /**
@@ -53,7 +54,10 @@ export function useRoomChecks(roomId: string | undefined) {
         .limit(20)
       
       if (error) throw error
-      return data
+      return await Promise.all((data || []).map(async (check: any) => ({
+        ...check,
+        photos: await resolveRoomCheckPhotoUrls(check.photos),
+      })))
     },
     enabled: !!roomId,
   })

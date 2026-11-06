@@ -30,7 +30,7 @@ export function DashboardStatCard({
   
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 p-3 border rounded-lg">
+      <div className="flex items-center gap-3 p-3 border rounded-none">
         <Skeleton className="h-6 w-6 rounded" />
         <div className="flex-1">
           <Skeleton className="h-3 w-16 mb-1" />
@@ -59,7 +59,7 @@ export function DashboardStatCard({
   return (
     <div 
       className={cn(
-        "flex items-center gap-4 p-4 border rounded-lg transition-colors",
+        "flex items-center gap-4 p-4 border rounded-none transition-colors",
         onClick && "cursor-pointer hover:bg-muted/50 hover:border-primary"
       )}
       onClick={onClick}

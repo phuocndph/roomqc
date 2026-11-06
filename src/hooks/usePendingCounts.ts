@@ -1,10 +1,58 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { isStaff } from '@/lib/userAccess'
-import { instanceChannelName } from '@/lib/realtime/channelName'
+
+type PendingCountsListener = () => void
+const pendingCountsChannels = new Map<string, {
+  channel: RealtimeChannel
+  listeners: Set<PendingCountsListener>
+}>()
+
+function subscribePendingCountsRealtime(
+  userId: string,
+  tenantId: string,
+  listener: PendingCountsListener,
+): () => void {
+  const key = `pending-counts-chat-${userId}`
+  let entry = pendingCountsChannels.get(key)
+  if (!entry) {
+    const listeners = new Set<PendingCountsListener>()
+    const channel = supabase
+      .channel(key)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenantId}` },
+        () => listeners.forEach(invalidate => invalidate()),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${userId}` },
+        () => listeners.forEach(invalidate => invalidate()),
+      )
+      .subscribe((status, error) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[PendingCounts] Realtime unavailable:', error?.message ?? status)
+        }
+      })
+    entry = { channel, listeners }
+    pendingCountsChannels.set(key, entry)
+  }
+
+  entry.listeners.add(listener)
+  return () => {
+    const current = pendingCountsChannels.get(key)
+    if (!current) return
+    current.listeners.delete(listener)
+    if (current.listeners.size === 0) {
+      pendingCountsChannels.delete(key)
+      void supabase.removeChannel(current.channel).catch(() => undefined)
+    }
+  }
+}
 
 export interface PendingCounts {
   supplements: number
@@ -30,22 +78,9 @@ export function usePendingCounts() {
   // Realtime: tin nhắn mới -> invalidate counts
   useEffect(() => {
     if (!tenantId || !user?.id) return
-    const channel = supabase
-      .channel(instanceChannelName(`pending-counts-chat-${user.id}`))
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenantId}` },
-        () => queryClient.invalidateQueries({ queryKey: ['pending-counts-all'] })
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${user.id}` },
-        () => queryClient.invalidateQueries({ queryKey: ['pending-counts-all'] })
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return subscribePendingCountsRealtime(user.id, tenantId, () => {
+      void queryClient.invalidateQueries({ queryKey: ['pending-counts-all'] })
+    })
   }, [tenantId, user?.id, queryClient])
 
 

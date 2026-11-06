@@ -152,7 +152,7 @@ export function InventoryOverviewTab({ data, isLoading, chartRefs }: InventoryOv
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-overlay)',
                   }}
                 />
                 <Bar 
@@ -175,7 +175,7 @@ export function InventoryOverviewTab({ data, isLoading, chartRefs }: InventoryOv
             <CardTitle>Chi tiết theo danh mục</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-none border">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -244,7 +244,7 @@ export function InventoryOverviewTab({ data, isLoading, chartRefs }: InventoryOv
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-overlay)',
                 }}
               />
               <Legend />
@@ -262,7 +262,7 @@ export function InventoryOverviewTab({ data, isLoading, chartRefs }: InventoryOv
           <CardTitle>Top 10 Items theo giá trị</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-none border">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

@@ -30,6 +30,7 @@ import InvoicePreviewDialog from '@/components/invoices/InvoicePreviewDialog'
 import EditInvoiceDialog from '@/components/invoices/EditInvoiceDialog'
 import SendInvoiceEmailDialog from '@/components/invoices/SendInvoiceEmailDialog'
 import VatRequestDetailDialog from '@/components/invoices/VatRequestDetailDialog'
+import { QueryErrorPanel } from '@/components/shared/QueryErrorPanel'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả' },
@@ -77,17 +78,20 @@ export default function GuestInvoicesPage() {
     to: dateRange.to ?? undefined,
   }
 
-  const { data: receipts = [], isLoading: loadingReceipts } = useGuestInvoices({
+  const receiptQuery = useGuestInvoices({
     status: tab === 'receipt' ? statusFilter : 'all',
     search: tab === 'receipt' ? search : undefined,
     invoice_type: 'receipt',
     ...rangeFilter,
   })
 
-  const { data: vatRequests = [], isLoading: loadingVat } = useGuestInvoices({
+  const vatQuery = useGuestInvoices({
     invoice_type: 'vat_request',
     ...rangeFilter,
   })
+
+  const { data: receipts = [], isLoading: loadingReceipts } = receiptQuery
+  const { data: vatRequests = [], isLoading: loadingVat } = vatQuery
 
   const updateInvoice = useUpdateGuestInvoice()
   const createInvoice = useCreateGuestInvoice()
@@ -182,6 +186,7 @@ export default function GuestInvoicesPage() {
   }
 
   const handleExportReceiptExcel = async () => {
+    if (receiptQuery.isError || receiptQuery.isFetching || !receipts.length) return
     const data = receipts.map(inv => ({
       'Số HĐ': inv.invoice_number,
       'Khách hàng': inv.guest_name,
@@ -195,6 +200,7 @@ export default function GuestInvoicesPage() {
   }
 
   const handleExportVatExcel = async () => {
+    if (!canExport || vatQuery.isError || vatQuery.isFetching || !vatRequests.length) return
     const rows = vatRequests.map((inv, i) => ({
       'STT': i + 1,
       'Ngày yêu cầu': format(new Date(inv.created_at), 'dd/MM/yyyy HH:mm'),
@@ -240,7 +246,7 @@ export default function GuestInvoicesPage() {
         <div className="flex items-center gap-2">
           {tab === 'receipt' && (
             <>
-              <Button type="button" variant="outline" size="sm" className="h-8" onClick={handleExportReceiptExcel} disabled={receipts.length === 0}>
+              <Button type="button" variant="outline" size="sm" className="h-8" onClick={handleExportReceiptExcel} disabled={receiptQuery.isError || receiptQuery.isFetching || receipts.length === 0}>
                 <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
               </Button>
               <Button type="button" size="sm" className="h-8" onClick={() => setShowCreate(true)}>
@@ -249,7 +255,7 @@ export default function GuestInvoicesPage() {
             </>
           )}
           {tab === 'vat_request' && canExport && (
-            <Button type="button" variant="outline" size="sm" className="h-8" onClick={handleExportVatExcel} disabled={vatRequests.length === 0}>
+            <Button type="button" variant="outline" size="sm" className="h-8" onClick={handleExportVatExcel} disabled={vatQuery.isError || vatQuery.isFetching || vatRequests.length === 0}>
               <FileSpreadsheet className="h-4 w-4 mr-1" /> Xuất Excel
             </Button>
           )}
@@ -267,7 +273,7 @@ export default function GuestInvoicesPage() {
           <TabsTrigger value="receipt">Phiếu thu</TabsTrigger>
           <TabsTrigger value="vat_request" className="relative">
             Yêu cầu HĐVAT
-            {vatPendingCount > 0 && (
+            {!loadingVat && !vatQuery.isError && vatPendingCount > 0 && (
               <Badge variant="destructive" className="ml-2 h-4 px-1.5 text-[10px]">
                 {vatPendingCount}
               </Badge>
@@ -277,12 +283,12 @@ export default function GuestInvoicesPage() {
 
         {/* TAB 1: PHIẾU THU */}
         <TabsContent value="receipt" className="space-y-4 mt-4">
-          <div className="flex gap-2 flex-wrap">
+          {!receiptQuery.isError && !loadingReceipts && <div className="flex gap-2 flex-wrap">
             <StatCard label="Tổng phiếu" value={receiptStats.total} />
             <StatCard label="Tổng tiền" value={formatCurrency(receiptStats.sum)} />
-            <StatCard label="Đã in" value={receiptStats.printed} tone="text-green-600" />
-            <StatCard label="Còn nợ (nháp)" value={receiptStats.drafts} tone="text-amber-600" />
-          </div>
+            <StatCard label="Đã xuất" value={receiptStats.printed} tone="text-green-600" />
+            <StatCard label="Phiếu nháp" value={receiptStats.drafts} tone="text-amber-600" />
+          </div>}
 
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -297,7 +303,9 @@ export default function GuestInvoicesPage() {
             </Select>
           </div>
 
-          {loadingReceipts ? (
+          {receiptQuery.isError ? (
+            <QueryErrorPanel title="Không tải được phiếu thu" onRetry={() => { void receiptQuery.refetch() }} retrying={receiptQuery.isFetching} />
+          ) : loadingReceipts ? (
             <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div>
           ) : receipts.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
@@ -375,14 +383,16 @@ export default function GuestInvoicesPage() {
 
         {/* TAB 2: YÊU CẦU HĐVAT */}
         <TabsContent value="vat_request" className="space-y-4 mt-4">
-          <div className="flex gap-2 flex-wrap">
+          {!vatQuery.isError && !loadingVat && <div className="flex gap-2 flex-wrap">
             <StatCard label="Tổng yêu cầu" value={vatStats.total} />
             <StatCard label="Chờ xử lý" value={vatStats.pending} tone="text-amber-600" />
             <StatCard label="Đã xuất" value={vatStats.issued} tone="text-green-600" />
             <StatCard label="Đã hủy" value={vatStats.cancelled} tone="text-red-600" />
-          </div>
+          </div>}
 
-          {loadingVat ? (
+          {vatQuery.isError ? (
+            <QueryErrorPanel title="Không tải được yêu cầu HĐVAT" onRetry={() => { void vatQuery.refetch() }} retrying={vatQuery.isFetching} />
+          ) : loadingVat ? (
             <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div>
           ) : vatRequests.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">

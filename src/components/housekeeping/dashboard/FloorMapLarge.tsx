@@ -1,143 +1,143 @@
-import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
-import { useRooms } from '@/hooks/useRooms'
+import { Link } from 'react-router-dom'
+import { Brush, Check, ChevronRight, DoorOpen, Search, Sparkles, Wrench } from 'lucide-react'
+import { useFloorPlanLive, type FloorPlanRoom } from '@/hooks/useFloorPlanLive'
+import type { CleaningProgress } from '@/hooks/useHousekeepingDashboardPanels'
+import { useHotelContext } from '@/contexts/HotelContext'
+import { useHasPermission } from '@/hooks/usePermission'
+import { CreateTaskDialog } from '@/components/housekeeping/CreateTaskDialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { getOperationalLabel, getOperationalStatus, isRoomReady } from '@/lib/rooms/operations'
 import { cn } from '@/lib/utils'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PanelError } from './PanelError'
 
-// Mapping trạng thái → màu nền card + chấm + label rút gọn
-const STATUS_STYLE: Record<string, { dot: string; bg: string; text: string; label: string }> = {
-  vacant_clean:     { dot: 'bg-green-600',   bg: 'bg-background border-green-600',     text: 'text-green-700 dark:text-green-400',   label: 'Trống - sạch' },
-  vacant_inspected: { dot: 'bg-green-700',   bg: 'bg-background border-green-700',     text: 'text-green-700 dark:text-green-400',   label: 'Đã kiểm tra' },
-  vacant:           { dot: 'bg-green-600',   bg: 'bg-background border-green-600',     text: 'text-green-700 dark:text-green-400',   label: 'Trống' },
-  reserved:         { dot: 'bg-zinc-500',    bg: 'bg-background border-zinc-500',       text: 'text-zinc-600 dark:text-zinc-400',     label: 'Đặt trước' },
-  cleaning:         { dot: 'bg-blue-600',    bg: 'bg-background border-blue-600',       text: 'text-blue-700 dark:text-blue-400',     label: 'Đang dọn' },
-  vacant_dirty:     { dot: 'bg-red-600',     bg: 'bg-background border-red-600',         text: 'text-red-700 dark:text-red-400',       label: 'Bẩn - chờ dọn' },
-  check_out:        { dot: 'bg-red-600',     bg: 'bg-background border-red-600',         text: 'text-red-700 dark:text-red-400',       label: 'Đang trả' },
-  occupied:         { dot: 'bg-amber-600',   bg: 'bg-background border-amber-600',     text: 'text-amber-700 dark:text-amber-400',   label: 'Đang có khách' },
-  occupied_clean:   { dot: 'bg-amber-600',   bg: 'bg-background border-amber-600',     text: 'text-amber-700 dark:text-amber-400',   label: 'Đang có khách' },
-  occupied_dirty:   { dot: 'bg-orange-600',  bg: 'bg-background border-orange-600',   text: 'text-orange-700 dark:text-orange-400', label: 'Có khách - bẩn' },
-  dnd:              { dot: 'bg-purple-600',  bg: 'bg-background border-purple-600',   text: 'text-purple-700 dark:text-purple-400', label: 'DND' },
-  sleep_out:        { dot: 'bg-indigo-600',  bg: 'bg-background border-indigo-600',   text: 'text-indigo-700 dark:text-indigo-400', label: 'Vắng đêm' },
-  service_refused:  { dot: 'bg-pink-600',    bg: 'bg-background border-pink-600',       text: 'text-pink-700 dark:text-pink-400',     label: 'Từ chối dọn' },
-  out_of_order:     { dot: 'bg-zinc-700',    bg: 'bg-background border-zinc-700',       text: 'text-zinc-700 dark:text-zinc-300',     label: 'Bảo trì' },
-  out_of_service:   { dot: 'bg-zinc-700',    bg: 'bg-background border-zinc-700',       text: 'text-zinc-700 dark:text-zinc-300',     label: 'Tạm khóa' },
-  maintenance:      { dot: 'bg-zinc-600',    bg: 'bg-background border-zinc-600',       text: 'text-zinc-700 dark:text-zinc-300',     label: 'Bảo trì' },
+type RoomFilter = 'all' | 'dirty' | 'cleaning' | 'review' | 'ready' | 'occupied' | 'blocked'
+
+const STATES = {
+  dirty: { label: 'Chờ dọn', badge: 'bg-orange-700 text-white', border: 'border-l-orange-700', icon: Brush },
+  cleaning: { label: 'Đang dọn', badge: 'bg-blue-700 text-white', border: 'border-l-blue-700', icon: Sparkles },
+  review: { label: 'Chờ kiểm tra', badge: 'bg-purple-700 text-white', border: 'border-l-purple-700', icon: Check },
+  ready: { label: 'Trống sạch', badge: 'bg-green-700 text-white', border: 'border-l-green-700', icon: Check },
+  occupied: { label: 'Có khách', badge: 'bg-blue-700 text-white', border: 'border-l-blue-700', icon: DoorOpen },
+  blocked: { label: 'Tạm ngừng / Khác', badge: 'bg-slate-700 text-white', border: 'border-l-slate-700', icon: Wrench },
+} as const
+
+function roomState(room: FloorPlanRoom, work?: CleaningProgress): Exclude<RoomFilter, 'all'> {
+  if (['maintenance', 'out_of_order', 'out_of_service', 'skipper'].includes(room.status)) return 'blocked'
+  if (!['dnd', 'service_refused'].includes(room.status)) {
+    if (work?.inProgressRoomIds.includes(room.id)) return 'cleaning'
+    if (work?.reworkRoomIds.includes(room.id)) return 'dirty'
+    if (work?.awaitingReviewRoomIds.includes(room.id)) return 'review'
+  }
+  if (room.status === 'cleaning') return 'cleaning'
+  if (isRoomReady(room)) return 'ready'
+  const state = getOperationalStatus(room)
+  return state === 'available' ? 'ready' : state
 }
 
-function styleFor(s?: string | null) {
-  return STATUS_STYLE[s || ''] || { dot: 'bg-zinc-300', bg: 'bg-muted/30', text: 'text-muted-foreground', label: s || '—' }
-}
+export function FloorMapLarge({ work, workLoading = false, workError = false, onRetryWork }: { work?: CleaningProgress; workLoading?: boolean; workError?: boolean; onRetryWork?: () => void } = {}) {
+  const { selectedHotel } = useHotelContext()
+  const query = useFloorPlanLive()
+  const { data, isFetching, refetch } = query
+  const isLoading = query.isLoading || workLoading
+  const isError = query.isError || workError
+  const { hasPermission: canAssign } = useHasPermission('rooms', 'manage')
+  const [status, setStatus] = useState<RoomFilter>('all')
+  const [floor, setFloor] = useState('all')
+  const [type, setType] = useState('all')
+  const [search, setSearch] = useState('')
+  const [taskRoom, setTaskRoom] = useState<FloorPlanRoom | null>(null)
 
-const LEGEND = [
-  { key: 'vacant_clean',  label: 'Trống - sạch' },
-  { key: 'cleaning',      label: 'Đang dọn' },
-  { key: 'vacant_dirty',  label: 'Bẩn - chờ dọn' },
-  { key: 'occupied',      label: 'Đang có khách' },
-  { key: 'maintenance',   label: 'Bảo trì' },
-  { key: 'reserved',      label: 'Đặt trước' },
-]
-
-export function FloorMapLarge() {
-  const { data: rooms, isLoading } = useRooms()
-  const [floor, setFloor] = useState<string>('all')
-  const [type, setType] = useState<string>('all')
-
-  const allFloors = useMemo(() => {
-    const set = new Set<number>()
-    for (const r of rooms || []) set.add((r.floor ?? 0) as number)
-    return Array.from(set).sort((a, b) => a - b)
-  }, [rooms])
-
-  const allTypes = useMemo(() => {
-    const set = new Set<string>()
-    for (const r of rooms || []) if (r.room_type) set.add(r.room_type as string)
-    return Array.from(set).sort()
-  }, [rooms])
-
-  const filtered = useMemo(() => {
-    return (rooms || []).filter((r) => {
-      if (floor !== 'all' && String(r.floor ?? 0) !== floor) return false
-      if (type !== 'all' && r.room_type !== type) return false
-      return true
-    })
-  }, [rooms, floor, type])
-
-  const byFloor = useMemo(() => {
-    const m = new Map<number, typeof filtered>()
-    for (const r of filtered) {
-      const f = (r.floor ?? 0) as number
-      if (!m.has(f)) m.set(f, [])
-      m.get(f)!.push(r)
-    }
-    for (const l of m.values()) {
-      l.sort((a, b) => a.room_number.localeCompare(b.room_number, undefined, { numeric: true }))
-    }
-    return Array.from(m.entries()).sort((a, b) => a[0] - b[0])
-  }, [filtered])
+  const floors = useMemo(() => Object.entries(data || {}).sort(([a], [b]) => a.localeCompare(b, 'vi', { numeric: true })), [data])
+  const rooms = useMemo(() => floors.flatMap(([, list]) => list), [floors])
+  const types = useMemo(() => [...new Set(rooms.map(room => room.room_type).filter(Boolean))].sort(), [rooms])
+  const counts = useMemo(() => {
+    const result = { dirty: 0, cleaning: 0, review: 0, ready: 0, occupied: 0, blocked: 0 }
+    rooms.forEach(room => result[roomState(room, work)]++)
+    return result
+  }, [rooms, work])
+  const visible = useMemo(() => floors
+    .filter(([name]) => floor === 'all' || name === floor)
+    .map(([name, list]) => ({
+      name,
+      rooms: list.filter(room => (status === 'all' || roomState(room, work) === status)
+        && (type === 'all' || room.room_type === type)
+        && (!search.trim() || room.room_number.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())))
+        .sort((a, b) => a.room_number.localeCompare(b.room_number, 'vi', { numeric: true })),
+    })).filter(group => group.rooms.length), [floors, floor, status, type, search, work])
+  const hasFilters = status !== 'all' || floor !== 'all' || type !== 'all' || !!search
+  const reset = () => { setStatus('all'); setFloor('all'); setType('all'); setSearch('') }
+  const filterStatus = (next: RoomFilter) => { setStatus(next); setFloor('all'); setType('all'); setSearch('') }
 
   return (
-    <div id="housekeeping-floor-map" className="border rounded-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 border-b gap-2">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <h3 className="text-sm font-medium">Sơ đồ phòng</h3>
-          <Select value={floor} onValueChange={setFloor}>
-            <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Tất cả tầng" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả tầng</SelectItem>
-              {allFloors.map((f) => <SelectItem key={f} value={String(f)}>Tầng {f || '—'}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Tất cả loại phòng" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả loại phòng</SelectItem>
-              {allTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex max-w-full items-center gap-x-3 gap-y-1 overflow-x-auto pb-0.5">
-          {LEGEND.map((it) => (
-            <span key={it.key} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <span className={cn('h-2 w-2 rounded-full', styleFor(it.key).dot)} />
-              {it.label}
-            </span>
-          ))}
-        </div>
+    <section id="housekeeping-floor-map" aria-label="Tình trạng buồng phòng" className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {(['dirty', 'cleaning', 'review', 'ready'] as const).map(key => {
+          const meta = STATES[key]
+          const Icon = meta.icon
+          return <button key={key} type="button" aria-pressed={status === key} onClick={() => filterStatus(status === key ? 'all' : key)}
+            className={cn('flex min-w-0 items-center gap-3 border border-l-4 bg-background p-3 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-4', meta.border, status === key && 'ring-2 ring-primary')}>
+            <Icon className="hidden h-5 w-5 shrink-0 text-muted-foreground sm:block" />
+            <span className="min-w-0"><span className="block text-sm font-medium">{meta.label}</span><span className="mt-1 block text-3xl font-bold tabular-nums">{isLoading ? '…' : isError ? '—' : counts[key]}</span></span>
+          </button>
+        })}
       </div>
 
-      {isLoading ? (
-        <div className="p-4 grid grid-cols-10 gap-2">
-          {Array.from({ length: 30 }).map((_, i) => <div key={i} className="h-14 bg-muted/30 animate-pulse rounded" />)}
+      <div className="min-w-0 border bg-background">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
+          <div><h2 className="font-semibold">Phòng theo tầng</h2><p className="mt-1 text-sm text-muted-foreground">Chọn phòng để xem chi tiết hoặc giao việc.</p></div>
+          <Button asChild variant="outline" size="sm"><Link to="/rooms?view=list">Quản lý phòng<ChevronRight className="h-4 w-4" /></Link></Button>
         </div>
-      ) : byFloor.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground text-center">Không có phòng phù hợp bộ lọc.</div>
-      ) : (
-        <div className="p-3 flex flex-col gap-2">
-          {byFloor.map(([f, list]) => (
-            <div key={f} className="flex items-start gap-3">
-              <div className="w-14 shrink-0 pt-2 text-xs text-muted-foreground">Tầng {f || '—'}</div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-2 flex-1">
-                {list.map((r) => {
-                  const s = styleFor(r.status as string)
-                  return (
-                    <Link
-                      key={r.id}
-                      to={`/rooms/${r.id}`}
-                      className={cn('border rounded-md px-2 py-1.5 hover:shadow-sm transition', s.bg)}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} />
-                        <span className="text-sm font-semibold tabular-nums">{r.room_number}</span>
-                      </div>
-                      <div className={cn('text-[11px] truncate mt-0.5', s.text)}>{s.label}</div>
+        <div className="space-y-3 border-b p-3 sm:p-4">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <div className="relative col-span-2 min-w-0 sm:min-w-[150px] sm:flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Tìm số phòng" placeholder="Tìm số phòng..." value={search} onChange={event => setSearch(event.target.value)} className="pl-9" /></div>
+            <select aria-label="Lọc theo tầng" value={floor} onChange={event => setFloor(event.target.value)} className="h-10 w-full min-w-0 border bg-background px-3 text-sm sm:w-auto">
+              <option value="all">Tất cả tầng</option>{floors.map(([name]) => <option key={name} value={name}>Tầng {name}</option>)}
+            </select>
+            <select aria-label="Lọc theo hạng phòng" value={type} onChange={event => setType(event.target.value)} className="h-10 w-full min-w-0 max-w-full border bg-background px-3 text-sm sm:w-auto">
+              <option value="all">Mọi hạng phòng</option>{types.map(name => <option key={name} value={name}>{name}</option>)}
+            </select>
+            <select aria-label="Lọc theo tình trạng" value={status} onChange={event => setStatus(event.target.value as RoomFilter)} className="col-span-2 h-10 w-full min-w-0 border bg-background px-3 text-sm sm:w-auto">
+              <option value="all">Tất cả tình trạng</option>{(Object.keys(STATES) as Exclude<RoomFilter, 'all'>[]).map(key => <option key={key} value={key}>{STATES[key].label}</option>)}
+            </select>
+            {hasFilters && <Button variant="ghost" onClick={reset}>Xóa lọc</Button>}
+          </div>
+        </div>
+        <div className="p-4" aria-busy={isFetching}>
+          {isError ? <PanelError onRetry={() => { void refetch(); onRetryWork?.() }} /> : isLoading ? (
+            <div aria-label="Đang tải phòng" className="grid grid-cols-2 gap-3 sm:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-28" />)}</div>
+          ) : !rooms.length ? (
+            <div className="space-y-3 py-5 text-center"><DoorOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="font-semibold">Khách sạn chưa có phòng</h3><p className="text-sm text-muted-foreground">Thêm phòng hoặc nhập file Excel để bắt đầu.</p><Button asChild><Link to="/rooms?view=list">Thêm phòng / Nhập Excel</Link></Button></div>
+          ) : !visible.length ? (
+            <div className="space-y-3 py-5 text-center"><p className="text-sm">Không có phòng phù hợp.</p><Button variant="outline" onClick={reset}>Xóa bộ lọc</Button></div>
+          ) : <div className="space-y-5">
+            <p role="status" className="text-sm text-muted-foreground">Hiển thị {visible.reduce((sum, group) => sum + group.rooms.length, 0)}/{rooms.length} phòng</p>
+            {visible.map(group => <div key={group.name}>
+              <h3 className="mb-2 text-sm font-semibold">Tầng {group.name}<span className="ml-2 font-normal text-muted-foreground">{group.rooms.length} phòng</span></h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {group.rooms.map(room => {
+                  const state = roomState(room, work)
+                  const meta = STATES[state]
+                  const label = state === 'cleaning' ? 'Đang dọn' : state === 'review' ? 'Chờ kiểm tra' : work?.reworkRoomIds.includes(room.id) && state === 'dirty' ? 'Cần làm lại' : room.status === 'reserved' ? 'Đặt trước' : getOperationalLabel(room)
+                  return <article key={room.id} aria-label={`Phòng ${room.room_number}`} className={cn('min-w-0 border border-l-4', meta.border)}>
+                    <Link to={`/rooms/${room.id}`} className="block space-y-2 p-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <span className="flex items-center justify-between gap-2"><span className="text-xl font-bold">{room.room_number}</span><ChevronRight className="h-4 w-4 shrink-0" /></span>
+                      <span className={cn('inline-block px-2 py-1 text-xs font-medium', meta.badge)}>{label}</span>
+                      <span className="block truncate text-xs text-muted-foreground" title={room.room_type}>{room.room_type || 'Chưa có hạng phòng'}</span>
+                      {['cleaning', 'review'].includes(state) && (room.current_booking || room.status.startsWith('occupied')) && <span className="block text-xs font-medium">Phòng đang có khách</span>}
+                      {!!room.open_hk_tasks && <span className="block text-xs font-medium">{room.open_hk_tasks} việc buồng phòng đang mở</span>}
                     </Link>
-                  )
+                    {canAssign && !['blocked', 'review', 'cleaning'].includes(state) && !['dnd', 'service_refused'].includes(room.status) && <button type="button" className="w-full border-t px-3 py-2 text-left text-sm font-medium text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Giao việc phòng ${room.room_number}`} onClick={() => setTaskRoom(room)}>Giao việc</button>}
+                  </article>
                 })}
               </div>
-            </div>
-          ))}
+            </div>)}
+          </div>}
         </div>
-      )}
-    </div>
+      </div>
+      {taskRoom && selectedHotel && <CreateTaskDialog key={taskRoom.id} open onOpenChange={open => { if (!open) setTaskRoom(null) }} roomId={taskRoom.id} roomNumber={taskRoom.room_number} hotelId={selectedHotel.id} />}
+    </section>
   )
 }

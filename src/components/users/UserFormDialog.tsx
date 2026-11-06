@@ -34,7 +34,7 @@ import { usePositions } from '@/hooks/usePositions'
 import { useUser } from '@/hooks/useUser'
 import { useManagersByHotel } from '@/hooks/useManagersByHotel'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { Eye, EyeOff, Info, AlertTriangle, Plus } from 'lucide-react'
+import { Info, AlertTriangle, Plus } from 'lucide-react'
 import { PositionManagementDialog } from './PositionManagementDialog'
 import { UserWithRelations } from '@/types/database.types'
 
@@ -53,7 +53,6 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const { t } = useTranslation(['users', 'common'])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [showPositionDialog, setShowPositionDialog] = useState(false)
   const { data: hotels, isLoading: hotelsLoading } = useHotels({ status: 'active' })
   const { data: userLevels, isLoading: levelsLoading } = useAvailableUserLevels()
@@ -64,7 +63,6 @@ export function UserFormDialog({
     defaultValues: {
       fullName: '',
       email: '',
-      password: '',
       userLevelCode: 'staff',
       hotelId: null,
       positionId: null,
@@ -112,17 +110,28 @@ export function UserFormDialog({
 
   // Reset form when dialog opens
   useEffect(() => {
-    if (open && !user) {
+    if (!open) return
+
+    if (user) {
       form.reset({
-        fullName: '',
-        email: '',
-        password: '',
-        userLevelCode: 'staff',
-        hotelId: null,
-        positionId: null,
-        reportsTo: null,
+        fullName: user.full_name,
+        email: user.email,
+        userLevelCode: (user.user_level_code || 'staff') as UserFormData['userLevelCode'],
+        hotelId: user.hotel_id,
+        positionId: user.position_id,
+        reportsTo: user.reports_to,
       })
+      return
     }
+
+    form.reset({
+      fullName: '',
+      email: '',
+      userLevelCode: 'staff',
+      hotelId: null,
+      positionId: null,
+      reportsTo: null,
+    })
   }, [open, user, form])
 
   // Reset reportsTo when hotel changes
@@ -270,41 +279,9 @@ export function UserFormDialog({
                 )}
               />
 
-              {/* Password - only for new users */}
+              {/* Staff set their own password after accepting the invitation. */}
               {!user && (
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('users:fields.password')} *</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder={t('users:form.passwordPlaceholder')}
-                            {...field}
-                            className="pr-10"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <Alert><Info className="h-4 w-4" /><AlertDescription>Nhân viên sẽ nhận email mời và tự đặt mật khẩu. Quyền đã chọn chỉ có hiệu lực sau khi họ chấp nhận lời mời.</AlertDescription></Alert>
               )}
 
               {/* User Level */}
@@ -484,7 +461,7 @@ export function UserFormDialog({
                   {t('common:cancel')}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? t('common:processing') : user ? t('common:update') : t('users:form.createUser')}
+                  {isSubmitting ? t('common:processing') : user ? t('common:update') : 'Gửi lời mời'}
                 </Button>
               </div>
             </form>

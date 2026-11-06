@@ -21,7 +21,7 @@ export function HotelPerformanceTable({ dateRange }: HotelPerformanceTableProps)
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg p-4">
+      <div className="border border-border rounded-none p-4">
         <Skeleton className="h-5 w-48 mb-4" />
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -34,7 +34,7 @@ export function HotelPerformanceTable({ dateRange }: HotelPerformanceTableProps)
 
   if (!hotels || hotels.length === 0) {
     return (
-      <div className="border border-border rounded-lg p-6 text-center">
+      <div className="border border-border rounded-none p-6 text-center">
         <Building2 className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">Không có dữ liệu so sánh khách sạn</p>
       </div>
@@ -75,7 +75,7 @@ export function HotelPerformanceTable({ dateRange }: HotelPerformanceTableProps)
   const avgEfficiency = hotels.reduce((sum, h) => sum + h.efficiency_score, 0) / hotels.length
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="border border-border rounded-none p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-foreground">So sánh hiệu suất khách sạn</h3>
         <div className="flex items-center gap-2">

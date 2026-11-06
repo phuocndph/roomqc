@@ -9,18 +9,18 @@ interface BatchStatusBadgeProps {
 }
 
 const statusStyles: Record<BatchStatus, string> = {
-  draft: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
-  delivered: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-  washing: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
-  ready: 'bg-purple-100 text-purple-800 hover:bg-purple-200',
-  received: 'bg-orange-100 text-orange-800 hover:bg-orange-200',
-  stocked: 'bg-green-100 text-green-800 hover:bg-green-200',
-  cancelled: 'bg-red-100 text-red-800 hover:bg-red-200',
+  draft: 'bg-slate-600 text-white hover:bg-slate-600',
+  delivered: 'bg-blue-700 text-white hover:bg-blue-700',
+  washing: 'bg-amber-700 text-white hover:bg-amber-700',
+  ready: 'bg-green-700 text-white hover:bg-green-700',
+  received: 'bg-blue-700 text-white hover:bg-blue-700',
+  stocked: 'bg-green-700 text-white hover:bg-green-700',
+  cancelled: 'bg-slate-600 text-white hover:bg-slate-600',
 }
 
 export function BatchStatusBadge({ status, className }: BatchStatusBadgeProps) {
   const { t } = useTranslation('laundry')
-  
+
   const statusLabels: Record<BatchStatus, string> = {
     draft: t('statusBadge.draft', 'Nháp'),
     delivered: t('statusBadge.delivered'),
@@ -30,9 +30,15 @@ export function BatchStatusBadge({ status, className }: BatchStatusBadgeProps) {
     stocked: t('statusBadge.stocked'),
     cancelled: t('statusBadge.cancelled'),
   }
-  
+
   return (
-    <Badge className={cn(statusStyles[status], className)}>
+    <Badge
+      className={cn(
+        'whitespace-nowrap border-transparent',
+        statusStyles[status],
+        className,
+      )}
+    >
       {statusLabels[status]}
     </Badge>
   )

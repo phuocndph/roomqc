@@ -6,6 +6,7 @@ import { useTenant } from './useTenant'
 import { toast } from 'sonner'
 import type { SupplementRequestItem } from './useSupplementRequests'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { workspacePath } from '@/lib/workspace'
 
 interface CreateDistributionFromSupplementParams {
   supplementRequestId: string
@@ -99,7 +100,7 @@ export function useCreateDistributionFromSupplement() {
         action: {
           label: 'Mở phiếu',
           onClick: () => {
-            window.location.href = `/inventory/distributions/${result.orderId}`
+            window.location.href = workspacePath(`/inventory/distributions/${result.orderId}`)
           },
         },
       })

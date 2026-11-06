@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MobileDetailHeader } from '@/components/layout/MobileDetailHeader'
-import { useCreateMaintenanceRequest, useUpdateMaintenanceRequest } from '@/hooks/useMaintenanceRequests'
+import { useCreateMaintenanceRequest, useMaintenanceRequest, useUpdateMaintenanceRequest } from '@/hooks/useMaintenanceRequests'
 import { useRooms } from '@/hooks/useRooms'
 import { useItems } from '@/hooks/useItems'
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react'
@@ -28,11 +28,11 @@ import { useHotelContext } from '@/contexts/HotelContext'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const requestSchema = z.object({
-  title: z.string().min(1, 'validation.titleRequired'),
-  description: z.string().min(1, 'validation.descriptionRequired'),
+  title: z.string().trim().min(1, 'validation.titleRequired'),
+  description: z.string().trim().min(1, 'validation.descriptionRequired'),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   issue_type: z.enum(['repair', 'replace', 'inspection', 'cleaning', 'other']),
-  location: z.string().min(1, 'validation.locationRequired'),
+  location: z.string().trim().min(1, 'validation.locationRequired'),
   room_id: z.string().optional(),
   item_id: z.string().optional(),
 })
@@ -40,10 +40,10 @@ const requestSchema = z.object({
 type RequestFormData = z.infer<typeof requestSchema>
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', color: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'medium', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { value: 'high', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { value: 'urgent', color: 'bg-red-100 text-red-800 border-red-200' },
+  { value: 'low', color: 'text-green-800 border-green-700' },
+  { value: 'medium', color: 'text-blue-800 border-blue-700' },
+  { value: 'high', color: 'text-orange-800 border-orange-700' },
+  { value: 'urgent', color: 'text-red-800 border-red-700' },
 ]
 
 const ISSUE_TYPE_OPTIONS = ['repair', 'replace', 'inspection', 'cleaning', 'other']
@@ -55,6 +55,8 @@ export const MobileMaintenanceRequestForm = () => {
   const roomIdFromUrl = searchParams.get('roomId') || ''
   const { t } = useTranslation('maintenance')
   const [currentStep, setCurrentStep] = useState(1)
+  const [initializedId, setInitializedId] = useState<string | null>(null)
+  const hydratedId = useRef<string | null>(null)
   const { isAllHotelsMode } = useHotelContext()
 
   const STEPS = [
@@ -65,8 +67,17 @@ export const MobileMaintenanceRequestForm = () => {
 
   const createRequest = useCreateMaintenanceRequest()
   const updateRequest = useUpdateMaintenanceRequest()
+  const { data: existingRequest, isLoading, isError, refetch } = useMaintenanceRequest(id || '')
   const { data: rooms = [] } = useRooms({})
-  const { data: items = [] } = useItems({})
+  const { data: items } = useItems({})
+  const isPending = createRequest.isPending || updateRequest.isPending
+  const roomOptions: { id: string; room_number: string; floor: number | null }[] = [...rooms]
+  if (existingRequest?.room && !roomOptions.some(room => room.id === existingRequest.room.id)) {
+    roomOptions.push(existingRequest.room)
+  }
+  const itemOptions = [...(items?.items || [])]
+  const linkedItem = existingRequest?.item
+  const linkedItemMissing = linkedItem && !itemOptions.some(item => item.id === linkedItem.id)
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -82,8 +93,24 @@ export const MobileMaintenanceRequestForm = () => {
   })
 
   useEffect(() => {
+    if (!id || !existingRequest || existingRequest.id !== id || hydratedId.current === id) return
+    form.reset({
+      title: existingRequest.title,
+      description: existingRequest.description,
+      priority: existingRequest.priority as RequestFormData['priority'],
+      issue_type: existingRequest.issue_type as RequestFormData['issue_type'],
+      location: existingRequest.location,
+      room_id: existingRequest.room_id || '',
+      item_id: existingRequest.item_id || '',
+    })
+    hydratedId.current = id
+    setInitializedId(id)
+    setCurrentStep(1)
+  }, [existingRequest, form, id])
+
+  useEffect(() => {
     if (id || !roomIdFromUrl) return
-    const room = rooms.find((entry: any) => entry.id === roomIdFromUrl)
+    const room = rooms.find(entry => entry.id === roomIdFromUrl)
     form.setValue('room_id', roomIdFromUrl)
     if (room && !form.getValues('location')) {
       form.setValue('location', `Phòng ${room.room_number}`)
@@ -91,11 +118,13 @@ export const MobileMaintenanceRequestForm = () => {
   }, [form, id, roomIdFromUrl, rooms])
 
   const onSubmit = async (data: RequestFormData) => {
+    if (isPending || (id ? initializedId !== id || isError : isAllHotelsMode)) return
+    const payload = { ...data, room_id: data.room_id || null, item_id: data.item_id || null }
     try {
       if (id) {
-        await updateRequest.mutateAsync({ id, data })
+        await updateRequest.mutateAsync({ id, data: payload })
       } else {
-        await createRequest.mutateAsync(data)
+        await createRequest.mutateAsync(payload)
       }
       navigate('/maintenance/requests')
     } catch (error) {
@@ -103,20 +132,49 @@ export const MobileMaintenanceRequestForm = () => {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (isPending || form.formState.isSubmitting || (isAllHotelsMode && !id)) return
     if (currentStep < STEPS.length) {
+      const fields: (keyof RequestFormData)[] = currentStep === 1
+        ? ['title', 'description', 'priority', 'issue_type']
+        : ['location', 'room_id', 'item_id']
+      if (!await form.trigger(fields, { shouldFocus: true })) return
       setCurrentStep(currentStep + 1)
     } else {
-      form.handleSubmit(onSubmit)()
+      await form.handleSubmit(onSubmit, errors => {
+        setCurrentStep(errors.title || errors.description || errors.priority || errors.issue_type ? 1 : 2)
+      })()
     }
   }
 
   const handleBack = () => {
+    if (isPending) return
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     } else {
       navigateBack(navigate, '/maintenance/requests')
     }
+  }
+
+  if (id && (isError || (!isLoading && !existingRequest))) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileDetailHeader title={t('requests.edit')} onBack={handleBack} />
+        <Alert variant="destructive" className="m-4 w-auto">
+          <AlertDescription>Không tải được yêu cầu bảo trì. Yêu cầu có thể đã bị xóa hoặc bạn không có quyền xem.</AlertDescription>
+          <Button variant="outline" className="mt-3" onClick={() => refetch()}>Thử lại</Button>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (id && (isLoading || initializedId !== id)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileDetailHeader title={t('requests.edit')} onBack={handleBack} />
+        <p role="status" className="p-4 text-sm text-muted-foreground">Đang tải yêu cầu bảo trì…</p>
+      </div>
+    )
   }
 
   return (
@@ -166,14 +224,15 @@ export const MobileMaintenanceRequestForm = () => {
         </div>
 
         {/* Form Content */}
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={event => { event.preventDefault(); void handleNext() }} className="space-y-4">
           {/* Step 1: Basic Info */}
           {currentStep === 1 && (
             <Card>
               <CardContent className="p-4 space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('form.titleLabel')} *</Label>
+                  <Label htmlFor="maintenance-title">{t('form.titleLabel')} *</Label>
                   <Input
+                    id="maintenance-title"
                     placeholder={t('form.titlePlaceholder')}
                     {...form.register('title')}
                   />
@@ -185,8 +244,9 @@ export const MobileMaintenanceRequestForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('form.descriptionLabel')} *</Label>
+                  <Label htmlFor="maintenance-description">{t('form.descriptionLabel')} *</Label>
                   <Textarea
+                    id="maintenance-description"
                     placeholder={t('form.descriptionPlaceholder')}
                     rows={4}
                     {...form.register('description')}
@@ -203,7 +263,7 @@ export const MobileMaintenanceRequestForm = () => {
                   <RadioGroup
                     value={form.watch('priority')}
                     onValueChange={(value) =>
-                      form.setValue('priority', value as any)
+                      form.setValue('priority', value as RequestFormData['priority'], { shouldDirty: true })
                     }
                     className="grid grid-cols-2 gap-2"
                   >
@@ -225,14 +285,14 @@ export const MobileMaintenanceRequestForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('form.issueTypeLabel')} *</Label>
+                  <Label htmlFor="maintenance-type">{t('form.issueTypeLabel')} *</Label>
                   <Select
                     value={form.watch('issue_type')}
                     onValueChange={(value) =>
-                      form.setValue('issue_type', value as any)
+                      form.setValue('issue_type', value as RequestFormData['issue_type'], { shouldDirty: true })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="maintenance-type">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -253,8 +313,9 @@ export const MobileMaintenanceRequestForm = () => {
             <Card>
               <CardContent className="p-4 space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('form.locationLabel')} *</Label>
+                  <Label htmlFor="maintenance-location">{t('form.locationLabel')} *</Label>
                   <Input
+                    id="maintenance-location"
                     placeholder={t('form.locationPlaceholder')}
                     {...form.register('location')}
                   />
@@ -266,16 +327,17 @@ export const MobileMaintenanceRequestForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('form.roomLabel')}</Label>
+                  <Label htmlFor="maintenance-room">{t('form.roomLabel')}</Label>
                   <Select
-                    value={form.watch('room_id')}
-                    onValueChange={(value) => form.setValue('room_id', value)}
+                    value={form.watch('room_id') || '__none__'}
+                    onValueChange={(value) => form.setValue('room_id', value === '__none__' ? '' : value, { shouldDirty: true })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="maintenance-room">
                       <SelectValue placeholder={t('form.roomPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {rooms.map((room: any) => (
+                      <SelectItem value="__none__">Không gắn với phòng</SelectItem>
+                      {roomOptions.map(room => (
                         <SelectItem key={room.id} value={room.id}>
                           {t('form.roomDisplay', { number: room.room_number, floor: room.floor })}
                         </SelectItem>
@@ -285,16 +347,20 @@ export const MobileMaintenanceRequestForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('form.itemLabel')}</Label>
+                  <Label htmlFor="maintenance-item">{t('form.itemLabel')}</Label>
                   <Select
-                    value={form.watch('item_id')}
-                    onValueChange={(value) => form.setValue('item_id', value)}
+                    value={form.watch('item_id') || '__none__'}
+                    onValueChange={(value) => form.setValue('item_id', value === '__none__' ? '' : value, { shouldDirty: true })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="maintenance-item">
                       <SelectValue placeholder={t('form.itemPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {(Array.isArray(items) ? items : items?.items || []).map((item: any) => (
+                      <SelectItem value="__none__">Không gắn với vật tư</SelectItem>
+                      {linkedItemMissing && (
+                        <SelectItem value={linkedItem.id}>{linkedItem.name} ({linkedItem.code})</SelectItem>
+                      )}
+                      {itemOptions.map(item => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name} ({item.code})
                         </SelectItem>
@@ -349,6 +415,7 @@ export const MobileMaintenanceRequestForm = () => {
               variant="outline"
               className="flex-1"
               onClick={handleBack}
+              disabled={isPending || form.formState.isSubmitting}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               {currentStep === 1 ? t('actions.cancel') : t('actions.back')}
@@ -357,7 +424,7 @@ export const MobileMaintenanceRequestForm = () => {
               type="button"
               className="flex-1"
               onClick={handleNext}
-              disabled={createRequest.isPending || updateRequest.isPending || (isAllHotelsMode && !id)}
+              disabled={isPending || form.formState.isSubmitting || (isAllHotelsMode && !id)}
             >
               {currentStep === STEPS.length ? (
                 createRequest.isPending || updateRequest.isPending ? (

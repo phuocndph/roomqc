@@ -1,202 +1,199 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { MobileStatCard, StatScrollContainer } from '@/components/mobile/MobileDashboardStats'
-import { SwipeableCard } from '@/components/mobile/TouchOptimized'
-import { useMaintenanceDashboard } from '@/hooks/useMaintenanceDashboard'
-import { useNavigate } from 'react-router-dom'
+import { Link } from "react-router-dom";
 import {
+  AlertTriangle,
   Wrench,
-  Clock,
   CheckCircle,
-  DollarSign,
-  Calendar,
-  FileText,
-  Users,
   Plus,
-  AlertCircle,
-  Building2,
-} from 'lucide-react'
-import { PriorityBadge } from './PriorityBadge'
-import { cn } from '@/lib/utils'
-import { formatDistanceToNow } from 'date-fns'
-import { vi } from 'date-fns/locale'
+  RefreshCw,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PermissionGate } from "@/components/auth/PermissionGate";
+import { useMaintenanceDashboard } from "@/hooks/useMaintenanceDashboard";
+import { PriorityBadge } from "./PriorityBadge";
+import { StatusBadge } from "./StatusBadge";
+import { formatCurrency } from "@/lib/utils";
 
-export const MobileMaintenanceDashboard = () => {
-  const navigate = useNavigate()
-  const { data: dashboard, isLoading } = useMaintenanceDashboard()
-
-  const stats = dashboard?.stats || {
-    total: 0,
-    inProgress: 0,
-    completed: 0,
-    avgTime: 0,
-    costLast30Days: 0,
-  }
-
-  const quickActions = [
-    {
-      icon: Plus,
-      label: 'Tạo yêu cầu',
-      onClick: () => navigate('/maintenance/requests/new'),
-      color: 'text-primary',
-    },
-    {
-      icon: FileText,
-      label: 'Tất cả yêu cầu',
-      onClick: () => navigate('/maintenance/requests'),
-      color: 'text-blue-600',
-    },
-  ]
-
-  const activeRequests = dashboard?.activeRequests || {
-    urgent: [],
-    high: [],
-    medium: [],
-    low: [],
-  }
-
-  const allActive = [
-    ...activeRequests.urgent,
-    ...activeRequests.high,
-    ...activeRequests.medium,
-    ...activeRequests.low,
-  ].slice(0, 5)
+export function MobileMaintenanceDashboard() {
+  const { data, isLoading, isPending, isError, refetch } =
+    useMaintenanceDashboard();
+  const active = data
+    ? [
+        ...data.activeRequests.urgent,
+        ...data.activeRequests.high,
+        ...data.activeRequests.medium,
+        ...data.activeRequests.low,
+      ]
+    : [];
 
   return (
-    <div className="pb-20">
-      <div className="space-y-4">
-        {/* Stats */}
-        <StatScrollContainer>
-          <MobileStatCard
-            title="Tổng yêu cầu"
-            value={stats.total.toString()}
-            icon={Wrench}
-            variant="default"
-          />
-          <MobileStatCard
-            title="Đang xử lý"
-            value={stats.inProgress.toString()}
-            icon={AlertCircle}
-            variant="warning"
-          />
-          <MobileStatCard
-            title="Hoàn thành"
-            value={stats.completed.toString()}
-            icon={CheckCircle}
-            variant="success"
-          />
-          <MobileStatCard
-            title="Thời gian TB"
-            value={`${stats.avgTime}h`}
-            icon={Clock}
-            variant="default"
-          />
-          <MobileStatCard
-            title="Chi phí (30d)"
-            value={new Intl.NumberFormat('vi-VN', {
-              style: 'currency',
-              currency: 'VND',
-              notation: 'compact',
-            }).format(stats.costLast30Days)}
-            icon={DollarSign}
-            variant="default"
-          />
-        </StatScrollContainer>
-
-        {/* Quick Actions */}
-        <div className="px-4 space-y-3">
-          <h2 className="text-lg font-semibold">Thao tác nhanh</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {quickActions.map((action) => (
-              <Card
-                key={action.label}
-                className="cursor-pointer active:scale-[0.97] transition-all duration-150"
-                onClick={action.onClick}
+    <div className="space-y-4 px-4 pb-24">
+      <div>
+        <h1 className="text-xl font-bold">Bảo trì</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Ưu tiên sự cố cần xử lý, theo dõi tiến độ sửa chữa.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" asChild>
+          <Link to="/maintenance/requests">Tất cả yêu cầu</Link>
+        </Button>
+        <PermissionGate module="maintenance" action="create">
+          <Button asChild>
+            <Link to="/maintenance/requests/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Tạo yêu cầu
+            </Link>
+          </Button>
+        </PermissionGate>
+      </div>
+      {isError ? (
+        <div role="alert" className="rounded-lg border p-6 text-center">
+          <p>Không thể tải tổng quan bảo trì.</p>
+          <Button variant="outline" className="mt-3" onClick={() => refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Thử lại
+          </Button>
+        </div>
+      ) : isLoading || isPending ? (
+        <div
+          role="status"
+          aria-label="Đang tải tổng quan bảo trì"
+          className="space-y-3"
+        >
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-52 w-full" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                label: "Khẩn cấp",
+                count: data?.activeRequests.urgent.length || 0,
+                icon: AlertTriangle,
+                color: "text-red-700 dark:text-red-400",
+                to: "/maintenance/requests?view=urgent",
+              },
+              {
+                label: "Cần xử lý",
+                count: data?.stats.inProgress || 0,
+                icon: Wrench,
+                color: "text-amber-700 dark:text-amber-400",
+                to: "/maintenance/requests?view=active",
+              },
+              {
+                label: "Hoàn thành",
+                count: data?.stats.completed || 0,
+                icon: CheckCircle,
+                color: "text-green-700 dark:text-green-400",
+                to: "/maintenance/requests?view=completed",
+              },
+            ].map((card) => (
+              <Link
+                key={card.label}
+                to={card.to}
+                className="rounded-lg border bg-card p-3 focus-visible:outline focus-visible:outline-2"
               >
-                <CardContent className="flex flex-col items-center justify-center p-4 min-h-[100px]">
-                  <action.icon className={cn('h-7 w-7 mb-2', action.color)} />
-                  <span className="text-xs font-medium text-center leading-tight">
-                    {action.label}
-                  </span>
-                </CardContent>
-              </Card>
+                <card.icon className={"mb-2 h-5 w-5 " + card.color} />
+                <p className="text-xs font-medium">{card.label}</p>
+                <p
+                  className={
+                    "mt-1 text-2xl font-bold tabular-nums " + card.color
+                  }
+                >
+                  {card.count}
+                </p>
+              </Link>
             ))}
           </div>
-        </div>
-
-        {/* Active Requests */}
-        <div className="px-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Yêu cầu đang xử lý</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/maintenance/requests')}
-            >
-              Xem tất cả
-            </Button>
-          </div>
-
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="h-16 bg-muted rounded" />
-                  </CardContent>
-                </Card>
-              ))}
+          <section className="overflow-hidden rounded-lg border bg-card">
+            <div className="flex items-center justify-between gap-2 border-b p-4">
+              <h2 className="font-semibold">Cần xử lý</h2>
+              <Link
+                className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 dark:text-blue-400"
+                to="/maintenance/requests?view=active"
+              >
+                Tất cả
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-          ) : allActive.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Không có yêu cầu đang xử lý
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {allActive.map((request: any) => (
-                <SwipeableCard
-                  key={request.id}
-                  onSwipeLeft={() => navigate(`/maintenance/requests/${request.id}`)}
-                >
-                  <Card
-                    className="cursor-pointer active:scale-[0.98] transition-transform"
-                    onClick={() => navigate(`/maintenance/requests/${request.id}`)}
+            {active.length ? (
+              <div className="divide-y">
+                {active.slice(0, 5).map((request) => (
+                  <Link
+                    key={request.id}
+                    to={"/maintenance/requests/" + request.id}
+                    className="block space-y-2 p-4 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <PriorityBadge priority={request.priority} />
-                            <span className="text-xs text-muted-foreground">
-                              {request.request_code}
-                            </span>
-                          </div>
-                          <p className="font-medium truncate mb-1">{request.title}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{request.location}</span>
-                            <span>•</span>
-                            <span>
-                              {formatDistanceToNow(new Date(request.reported_at), {
-                                addSuffix: true,
-                                locale: vi,
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </SwipeableCard>
-              ))}
-            </div>
+                    <div className="flex flex-wrap gap-2">
+                      <PriorityBadge priority={request.priority} />
+                      <StatusBadge status={request.status} />
+                    </div>
+                    <p className="break-words font-medium">{request.title}</p>
+                    <p className="break-words text-xs text-muted-foreground">
+                      {request.request_code} ·{" "}
+                      {request.room?.room_number
+                        ? "Phòng " + request.room.room_number
+                        : request.location}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <CheckCircle className="mx-auto mb-3 h-8 w-8 text-green-700 dark:text-green-400" />
+                <p className="text-sm text-muted-foreground">
+                  Không có yêu cầu cần xử lý.
+                </p>
+              </div>
+            )}
+          </section>
+          {data && (
+            <details className="rounded-lg border bg-card p-4">
+              <summary className="cursor-pointer text-sm font-medium">
+                Chi phí & hiệu suất bảo trì
+              </summary>
+              <dl className="mt-4 space-y-3 text-sm">
+                <div>
+                  <dt className="text-muted-foreground">Chi phí 30 ngày</dt>
+                  <dd className="mt-1 font-semibold">
+                    {formatCurrency(data.stats.costLast30Days)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">
+                    Thời gian xử lý trung bình
+                  </dt>
+                  <dd className="mt-1 font-semibold">
+                    {data.stats.avgTime} giờ
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Tỷ lệ hoàn thành</dt>
+                  <dd className="mt-1 font-semibold">
+                    {data.stats.completionRate}%
+                  </dd>
+                </div>
+              </dl>
+            </details>
           )}
-        </div>
+        </>
+      )}
+      <div className="flex flex-wrap gap-2 border-t pt-4">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/maintenance/recurring-issues">Vấn đề lặp lại</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/reports/maintenance">Báo cáo bảo trì</Link>
+        </Button>
+        <PermissionGate module="users" action="view">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/settings/users">Nhân viên kỹ thuật</Link>
+          </Button>
+        </PermissionGate>
       </div>
     </div>
-  )
+  );
 }

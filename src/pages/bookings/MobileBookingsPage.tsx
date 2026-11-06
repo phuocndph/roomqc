@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { format, isToday, differenceInDays, startOfDay, isBefore, isAfter } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
@@ -29,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
 import { BOOKING_SOURCES, OTA_SOURCES } from '@/lib/constants'
 import type { BookingWithRoom } from './BookingsPage'
+import { ListPagination } from '@/components/shared/ListPagination'
 
 type BookingStatus =
   | 'all'
@@ -44,6 +44,9 @@ type BookingStatus =
 interface MobileBookingsPageProps {
   bookings: BookingWithRoom[]
   filteredBookings: BookingWithRoom[]
+  visibleBookings: BookingWithRoom[]
+  page: number
+  onPageChange: (page: number) => void
   isLoading: boolean
   stats: {
     total: number
@@ -86,6 +89,9 @@ const STATUS_TABS: { value: BookingStatus; label: string }[] = [
 export function MobileBookingsPage({
   bookings,
   filteredBookings,
+  visibleBookings,
+  page,
+  onPageChange,
   isLoading,
   stats,
   statusFilter,
@@ -184,9 +190,9 @@ export function MobileBookingsPage({
       <div className="flex items-center justify-between pt-2">
         <div>
           <h1 className="text-xl font-bold">Đặt phòng</h1>
-          <p className="text-xs text-muted-foreground">
+          {!isError && !isLoading && <p className="text-xs text-muted-foreground">
             {stats.checkedIn} đang ở • {stats.checkingInToday} check-in • {stats.checkingOutToday} check-out hôm nay
-          </p>
+          </p>}
         </div>
         <Button size="sm" className="h-8" onClick={onAddBooking}>
           <Plus className="h-4 w-4 mr-1" />
@@ -287,7 +293,7 @@ export function MobileBookingsPage({
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredBookings.map((booking) => {
+          {visibleBookings.map((booking) => {
             const isOverdueCheckin = booking.status === 'confirmed' && overdueCheckinIds.includes(booking.id)
             const statusColor = getStatusColor(booking.status, booking.check_out_date, isOverdueCheckin)
             const statusLabel = getStatusLabel(booking.status, booking.check_out_date, isOverdueCheckin)
@@ -429,6 +435,7 @@ export function MobileBookingsPage({
               </div>
             )
           })}
+          <ListPagination total={filteredBookings.length} page={page} onPageChange={onPageChange} />
         </div>
       )}
     </div>

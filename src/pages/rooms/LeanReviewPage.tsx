@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft, ImagePlus, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useRoom } from '@/hooks/useRooms'
 import { readLeanDraft, clearLeanDraft } from '@/hooks/useLeanDraft'
 import { useSubmitRoomCheckLean } from '@/hooks/useRoomCheckLean'
 import { useRoomCheckLeanConfig } from '@/hooks/useRoomCheckLeanConfig'
+import { useHotelPhotoMode } from '@/hooks/useHotelPhotoMode'
+import { useImageUpload } from '@/hooks/useImageUpload'
+import { useUser } from '@/hooks/useUser'
 import {
   sanitizeLeanDraft,
   preSubmitValidate,
@@ -50,10 +53,13 @@ export default function LeanReviewPage() {
   const { data: roomData, isLoading, isError, refetch } = useRoom(id)
   const room = roomData?.room
   const items = useMemo(() => roomData?.items ?? [], [roomData?.items])
+  const { tenantId } = useUser()
 
   const [note, setNote] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [errorItemId, setErrorItemId] = useState<string | null>(null)
+  const [reviewPhotos, setReviewPhotos] = useState<string[]>([])
+  const [isReviewUploading, setIsReviewUploading] = useState(false)
   const itemRefs = useRef<Record<string, HTMLLIElement | null>>({})
   const draftRef = useRef<SanitizedLeanDraft | null>(null)
 
@@ -96,6 +102,7 @@ export default function LeanReviewPage() {
   const okCount = Math.max(0, totalItems - itemsWithIssue)
 
   const submitMutation = useSubmitRoomCheckLean()
+  const { uploadImage } = useImageUpload()
 
   const handleEditIssue = (itemId: string) => {
     navigate(
@@ -110,6 +117,32 @@ export default function LeanReviewPage() {
   }
 
   const { data: leanCfg } = useRoomCheckLeanConfig(room?.hotel_id)
+  const { data: photoMode = 'none' } = useHotelPhotoMode(room?.hotel_id)
+
+  const handleReviewPhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !tenantId) return
+
+    const issuePhotoCount = issues.reduce((sum, issue) => sum + issue.photos.length, 0)
+    if (issuePhotoCount + reviewPhotos.length >= 10) {
+      setSubmitError('Tối đa 10 ảnh cho một lần kiểm phòng.')
+      return
+    }
+
+    setIsReviewUploading(true)
+    try {
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
+      if (uploaded?.url) {
+        setReviewPhotos((current) => [...current, uploaded.url])
+        setSubmitError(null)
+      } else {
+        setSubmitError('Ảnh chưa tải lên được. Vui lòng thử lại.')
+      }
+    } finally {
+      setIsReviewUploading(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!id) return
@@ -219,7 +252,12 @@ export default function LeanReviewPage() {
       })
     }
 
-    const allPhotos = issues.flatMap((i) => i.photos)
+    const allPhotos = [...issues.flatMap((i) => i.photos), ...reviewPhotos]
+
+    if (photoMode === 'always' && allPhotos.length === 0) {
+      setSubmitError('Khách sạn yêu cầu ít nhất 1 ảnh bằng chứng cho mỗi lần kiểm phòng.')
+      return
+    }
 
     try {
       const res = await submitMutation.mutateAsync({
@@ -387,7 +425,7 @@ export default function LeanReviewPage() {
                               />
                             ))}
                             {iss.photos.length > 4 && (
-                              <div className="w-12 h-12 rounded-md border bg-muted flex items-center justify-center text-[12px] font-medium">
+                              <div className="w-12 h-12 rounded-none border bg-muted flex items-center justify-center text-[12px] font-medium">
                                 +{iss.photos.length - 4}
                               </div>
                             )}
@@ -433,6 +471,67 @@ export default function LeanReviewPage() {
             </ul>
           </section>
         )}
+
+        <section className="rounded-xl border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[14px] font-bold uppercase tracking-wide text-muted-foreground">
+                Ảnh bằng chứng phòng{photoMode === 'always' ? ' (bắt buộc)' : ''}
+              </h2>
+              <p className="text-[13px] text-muted-foreground mt-1">
+                {photoMode === 'always'
+                  ? 'Chụp ít nhất một ảnh tổng quan trước khi gửi kết quả.'
+                  : 'Có thể thêm ảnh tổng quan để người duyệt đối chiếu.'}
+              </p>
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {reviewPhotos.length}/10
+            </span>
+          </div>
+
+          {reviewPhotos.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {reviewPhotos.map((url, index) => (
+                <div key={`${url}-${index}`} className="relative h-20 w-20">
+                  <img src={url} alt="Ảnh bằng chứng phòng" className="h-full w-full rounded-lg border object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setReviewPhotos((current) => current.filter((_, i) => i !== index))}
+                    className="absolute -right-1.5 -top-1.5 rounded-full bg-background border p-1 shadow"
+                    aria-label="Xóa ảnh bằng chứng"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {reviewPhotos.length < 10 && (
+            <label
+              htmlFor="review-room-photo-upload"
+              className="mt-3 flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-3 text-[15px] font-semibold hover:border-primary hover:bg-muted/40"
+            >
+              <ImagePlus className="h-5 w-5" />
+              {isReviewUploading ? 'Đang tải ảnh…' : 'Chụp hoặc chọn ảnh'}
+              <input
+                id="review-room-photo-upload"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleReviewPhotoSelect}
+                disabled={isReviewUploading || !tenantId}
+              />
+            </label>
+          )}
+
+          {photoMode === 'always' && reviewPhotos.length === 0 && issues.every((issue) => issue.photos.length === 0) && (
+            <p className="mt-2 text-[13px] font-medium text-destructive">
+              Cần thêm ít nhất 1 ảnh trước khi gửi.
+            </p>
+          )}
+        </section>
 
         <section>
           <h2 className="text-[14px] font-bold uppercase tracking-wide mb-2 text-muted-foreground">

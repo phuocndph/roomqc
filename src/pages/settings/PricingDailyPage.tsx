@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useUser } from '@/hooks/useUser'
+import { workspacePath } from '@/lib/workspace'
 import { useRoomTypes } from '@/hooks/useRoomTypes'
 import {
   useRatePlans,
@@ -410,7 +411,7 @@ export default function PricingDailyPage() {
               <AlertDescription className="flex items-center justify-between gap-3 flex-wrap">
                 <span>Chưa có hạng phòng nào cho khách sạn này. Tạo hạng phòng trước khi thiết lập lịch giá theo ngày.</span>
                 <Button type="button" size="sm" variant="outline" asChild>
-                  <a href="/settings/categories?tab=rooms">
+                  <a href={workspacePath('/settings/categories?tab=rooms')}>
                     <Plus className="h-4 w-4 mr-1.5" /> Tạo hạng phòng
                   </a>
                 </Button>
@@ -474,7 +475,7 @@ export default function PricingDailyPage() {
                       <span className="text-xs text-muted-foreground">·</span>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <a href="/settings/pricing?tab=seasonal" className="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline">
+                          <a href={workspacePath('/settings/pricing?tab=seasonal')} className="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
                             {seasonalsInRange.length} quy tắc mùa đang áp
                           </a>

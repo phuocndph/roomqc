@@ -23,7 +23,7 @@
  *
  * Liên quan: docs/architecture/09-refactor/findings.md → F-RPC-OVERLOAD-02.
  */
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 const TEST_ENV = {
@@ -63,9 +63,13 @@ function assertNoSchemaError(error: unknown, label: string) {
 }
 
 describe.skipIf(!INTEGRATION_ENABLED)('Critical RPC schema guard (integration)', () => {
-  const client = createClient(TEST_ENV.url, TEST_ENV.key, {
+  // Vitest collects skipped describe callbacks too. Do not construct a client
+  // until an explicitly configured integration suite actually runs.
+  const makeClient = () => createClient(TEST_ENV.url, TEST_ENV.key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  let client: ReturnType<typeof makeClient>;
+  beforeAll(() => { client = makeClient(); });
 
   it('create_distribution_order: không có schema error', async () => {
     const { error } = await client.rpc('create_distribution_order', {

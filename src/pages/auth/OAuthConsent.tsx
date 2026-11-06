@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { workspacePath } from '@/lib/workspace';
 
 type OAuthNamespace = {
   getAuthorizationDetails: (id: string) => Promise<{ data: any; error: any }>;
@@ -31,7 +32,7 @@ export default function OAuthConsent() {
       const { data: sess } = await supabase.auth.getSession();
       if (!sess.session) {
         const next = window.location.pathname + window.location.search;
-        window.location.href = "/auth/login?next=" + encodeURIComponent(next);
+        window.location.href = workspacePath("/auth/login?next=" + encodeURIComponent(next));
         return;
       }
       const { data, error } = await oauthApi().getAuthorizationDetails(authorizationId);

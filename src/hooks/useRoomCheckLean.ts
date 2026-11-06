@@ -55,13 +55,14 @@ export function useSubmitRoomCheckLean() {
       }
       return data as {
         check_id: string
-        room_id: string
         summary_ok_count: number
         summary_issue_count: number
-        minibar_count: number
+        summary_minibar_count: number
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data, variables) => {
+      // The RPC response contains the check ID and summary, not the room ID.
+      const roomId = variables.roomId
       const issues = data.summary_issue_count
       toast.success(
         issues === 0
@@ -70,13 +71,15 @@ export function useSubmitRoomCheckLean() {
       )
       // Xoá draft localStorage
       try {
-        localStorage.removeItem(`room-check-${data.room_id}`)
+        localStorage.removeItem(`room-check-${roomId}`)
       } catch { /* draft cleanup is best effort */ }
       qc.invalidateQueries({ queryKey: ['rooms'] })
-      qc.invalidateQueries({ queryKey: ['room', data.room_id] })
-      qc.invalidateQueries({ queryKey: ['room-checks', data.room_id] })
-      qc.invalidateQueries({ queryKey: ['room-last-check', data.room_id] })
-      qc.invalidateQueries({ queryKey: ['last-room-check', data.room_id] })
+      // The wizard may unmount the room query before navigation. Refresh its
+      // cached overview before mutateAsync resolves, including inactive queries.
+      await qc.invalidateQueries({ queryKey: ['room', roomId], refetchType: 'all' })
+      qc.invalidateQueries({ queryKey: ['room-checks', roomId] })
+      qc.invalidateQueries({ queryKey: ['room-last-check', roomId] })
+      qc.invalidateQueries({ queryKey: ['last-room-check', roomId] })
       qc.invalidateQueries({ queryKey: ['housekeeping-tasks'] })
     },
     onError: (err: Error) => {

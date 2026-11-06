@@ -1,3 +1,5 @@
+import type { WorkspaceBootstrap } from './workspace'
+
 const rawSupabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? '').trim()
 const rawPublishableKey = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '').trim()
 
@@ -21,9 +23,27 @@ export function isServiceRoleKey(value: string): boolean {
 export const runtimeConfig = {
   supabaseUrl: rawSupabaseUrl,
   supabasePublishableKey: rawPublishableKey,
+  vapidPublicKey: String(import.meta.env.VITE_VAPID_PUBLIC_KEY || ''),
+  workspace: null as WorkspaceBootstrap | null,
   // Require an explicit opt-in even during dev so a local dev server cannot
   // accidentally seed a remote production project.
   demoDataEnabled: String(import.meta.env.VITE_ENABLE_DEMO_DATA ?? '').toLowerCase() === 'true',
+}
+
+/** Called once by main before importing App and its Supabase singleton. */
+export function configureWorkspace(bootstrap: WorkspaceBootstrap | null): void {
+  if (!bootstrap) return
+  if (isServiceRoleKey(bootstrap.cluster.publishableKey)) throw new Error('Không được đưa khóa quản trị vào trình duyệt.')
+  runtimeConfig.supabaseUrl = bootstrap.cluster.url
+  runtimeConfig.supabasePublishableKey = bootstrap.cluster.publishableKey
+  runtimeConfig.vapidPublicKey = bootstrap.cluster.vapidPublicKey
+  runtimeConfig.workspace = bootstrap
+  assertRuntimeConfig()
+}
+
+export function scopedStorageKey(key: string, userId?: string | null): string {
+  const workspace = runtimeConfig.workspace
+  return workspace ? `roomqc:${workspace.cluster.id}:${workspace.workspace.id}:${userId || 'anonymous'}:${key}` : key
 }
 
 /**

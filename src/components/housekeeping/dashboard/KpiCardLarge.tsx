@@ -35,7 +35,7 @@ export function KpiCardLarge({ label, value, percent, icon: Icon, to, tone = 'de
           <div className="text-[11px] text-muted-foreground tabular-nums">{percent.toFixed(1)}%</div>
         )}
       </div>
-      <div className="h-9 w-9 rounded-md border border-border bg-background flex items-center justify-center shrink-0">
+      <div className="h-9 w-9 rounded-none border border-border bg-background flex items-center justify-center shrink-0">
         <Icon className={cn('h-5 w-5', t.icon)} />
       </div>
     </div>

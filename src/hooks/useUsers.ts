@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { supabase } from '@/integrations/supabase/client'
-import { AppRole, User, UserWithRelations } from '@/types/database.types'
+import { User, UserWithRelations } from '@/types/database.types'
 import { toast } from 'sonner'
 import { UserFormData } from '@/lib/validations/user.schemas'
-import { logCreate, logUpdate, logDelete } from '@/lib/activityLogger'
+import { logDelete } from '@/lib/activityLogger'
+import { workspacePath } from '@/lib/workspace'
 import { useTenant } from './useTenant'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
@@ -31,7 +32,36 @@ export function useUsers() {
       })
 
       if (error) throw error
-      return (data || []) as UserWithRelations[]
+
+      const users = (data || []) as UserWithRelations[]
+      if (users.length === 0) return users
+
+      // get_users_by_hotel intentionally returns the users table shape for
+      // its security boundary. Enrich the read model separately so the
+      // hierarchy/table views can show the selected hotel and job title after
+      // an update without changing the RPC contract.
+      const [{ data: hotels, error: hotelsError }, { data: positions, error: positionsError }] = await Promise.all([
+        supabase
+          .from('hotels')
+          .select('id, name')
+          .eq('tenant_id', tenant.id),
+        supabase
+          .from('positions')
+          .select('id, code, name, user_level_code, department')
+          .eq('tenant_id', tenant.id),
+      ])
+
+      if (hotelsError) throw hotelsError
+      if (positionsError) throw positionsError
+
+      const hotelsById = new Map((hotels || []).map((hotel) => [hotel.id, hotel]))
+      const positionsById = new Map((positions || []).map((position) => [position.id, position]))
+
+      return users.map((user) => ({
+        ...user,
+        hotel: user.hotel_id ? hotelsById.get(user.hotel_id) : undefined,
+        position: user.position_id ? positionsById.get(user.position_id) : undefined,
+      }))
     },
     enabled: !!tenant?.id && !!currentUser,
   })
@@ -58,7 +88,7 @@ export function useCreateUser() {
         body: {
           email: data.email,
           fullName: data.fullName,
-          password: data.password,
+          path: workspacePath('/auth/accept-invite'),
           userLevelCode: data.userLevelCode,
           hotelId: data.hotelId || null,
           positionId: data.positionId || null,
@@ -76,15 +106,15 @@ export function useCreateUser() {
         throw error
       }
 
-      const user = result.user
-      await logCreate('user', user.id, user.full_name, data)
-      return user
+      if (!result?.success) throw new Error(result?.error || 'Không thể gửi lời mời.')
+      return result.invitation
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['staff-invitations'] })
       queryClient.invalidateQueries({ queryKey: ['check-quota'] })
       queryClient.invalidateQueries({ queryKey: ['tenant-usage'] })
-      toast.success('Người dùng đã được tạo thành công')
+      toast.success('Đã gửi lời mời. Nhân viên sẽ tự đặt mật khẩu để tham gia.')
     },
     onError: (error: Error) => {
       const errorMessage = error.message.toLowerCase()
@@ -113,66 +143,21 @@ export function useUpdateUser() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UserFormData }) => {
-      const { data: oldData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      const roleMapping: Record<string, AppRole> = {
-        tenant_owner: 'owner',
-        manager: 'hotel_manager',
-        department_manager: 'department_manager',
-        staff: 'staff',
-      }
-
-      let department: string | null = null
-      if (data.positionId) {
-        const { data: position, error: positionError } = await supabase
-          .from('positions')
-          .select('department')
-          .eq('id', data.positionId)
-          .maybeSingle()
-
-        if (positionError) throw positionError
-        department = position?.department ?? null
-      }
-
-      const { data: user, error } = await supabase
-        .from('users')
-        .update({
-          full_name: data.fullName,
-          user_level_code: data.userLevelCode,
-          role: roleMapping[data.userLevelCode],
-          hotel_id: data.hotelId || null,
-          position_id: data.positionId || null,
-          department,
-        })
-        .eq('id', id)
-        .select()
-        .single()
+      const { data: result, error } = await supabase.functions.invoke('update-user', {
+        body: {
+          userId: id,
+          fullName: data.fullName,
+          userLevelCode: data.userLevelCode,
+          hotelId: data.hotelId || null,
+          positionId: data.positionId || null,
+        },
+      })
 
       if (error) throw error
-
-      // Keep the app role in sync without requiring the optional local
-      // Edge Function runtime.
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .upsert({ user_id: id, role: roleMapping[data.userLevelCode] }, {
-          onConflict: 'user_id,role',
-        })
-
-      if (roleError) throw roleError
-
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', id)
-        .in('role', ['owner', 'hotel_manager', 'department_manager', 'staff'])
-        .neq('role', roleMapping[data.userLevelCode])
-
-      await logUpdate('user', user.id, user.full_name, oldData, data)
-      return user
+      if (!result?.success || !result.user) {
+        throw new Error(result?.error || 'Không thể cập nhật người dùng')
+      }
+      return result.user as User
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })

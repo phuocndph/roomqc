@@ -7,7 +7,7 @@ export interface PendingPayment {
   tenant_id: string;
   invoice_id: string | null;
   amount: number;
-  payment_method: string;
+  payment_method: string | null;
   payment_status: string;
   transaction_reference: string | null;
   notes: string | null;
@@ -19,7 +19,7 @@ export interface PendingPayment {
     account_number?: string;
     rooms?: number;
     duration_days?: number;
-    type?: 'extend' | 'add_rooms';
+    type?: 'extend' | 'add_rooms' | 'quote_draft';
     [key: string]: unknown;
   };
   invoice?: {
@@ -27,7 +27,8 @@ export interface PendingPayment {
     status: string;
     total_amount: number;
     notes: string | null;
-  };
+    subscription_quote_id?: string | null;
+  } | null;
 }
 
 export function usePendingPayments() {
@@ -42,16 +43,16 @@ export function usePendingPayments() {
         .from('payment_transactions')
         .select(`
           *,
-          invoice:invoices(invoice_number, status, total_amount, notes)
+          invoice:invoices(invoice_number, status, total_amount, notes, subscription_quote_id)
         `)
         .eq('tenant_id', tenantId)
-        .eq('payment_method', 'bank_transfer')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as unknown as PendingPayment[];
     },
     enabled: !!tenantId,
+    refetchInterval: 5000,
   });
 }
 
@@ -67,7 +68,6 @@ export function usePendingPaymentsCount() {
         .from('payment_transactions')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
-        .eq('payment_method', 'bank_transfer')
         .eq('payment_status', 'pending');
 
       if (error) throw error;

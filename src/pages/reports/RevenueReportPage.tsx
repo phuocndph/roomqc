@@ -156,7 +156,7 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
               <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-overlay)' }}
               />
               <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#revenueGrad)" />
             </AreaChart>

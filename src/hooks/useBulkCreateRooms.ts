@@ -7,6 +7,7 @@ interface RoomImportData {
   room_number: string
   floor: number
   room_type: string
+  source_row?: number
   status?: string
   bed_type?: string
   max_guests?: number
@@ -79,7 +80,7 @@ export function useBulkCreateRooms() {
         
         for (let j = 0; j < batch.length; j++) {
           const room = batch[j]
-          const rowNumber = i + j + 2 // +2 for Excel row (header + 0-index)
+          const rowNumber = room.source_row ?? i + j + 2
 
           try {
             // Check if room already exists
@@ -109,7 +110,7 @@ export function useBulkCreateRooms() {
                 room_number: room.room_number,
                 floor: room.floor,
                 room_type: room.room_type,
-                status: room.status || 'vacant',
+                status: !room.status || room.status === 'vacant' ? 'vacant_clean' : room.status,
                 bed_type: room.bed_type,
                 max_guests: room.max_guests,
                 area_sqm: room.area_sqm,
@@ -142,6 +143,7 @@ export function useBulkCreateRooms() {
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['room-stats'] })
       queryClient.invalidateQueries({ queryKey: ['floor-plan'] })
+      queryClient.invalidateQueries({ queryKey: ['setup-checklist'] })
       
       if (result.failed === 0) {
         toast.success(`Đã import thành công ${result.success} phòng`)

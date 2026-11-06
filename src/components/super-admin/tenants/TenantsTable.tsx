@@ -1,15 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -20,6 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -31,10 +28,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown, Building2, Users, AlertCircle, Receipt, DollarSign, ShieldCheck, ShieldAlert, ShieldX, DoorOpen } from 'lucide-react';
-import { useTenants, useSuspendTenant, useReactivateTenant, useDeleteTenant } from '@/hooks/super-admin/useTenants';
+import { useTenants, useSuspendTenant, useReactivateTenant } from '@/hooks/super-admin/useTenants';
 import { TenantDetailsDialog } from './TenantDetailsDialog';
 import { ChangePlanDialog } from './ChangePlanDialog';
-import { DeleteTenantDialog } from './DeleteTenantDialog';
 import { TenantBillingDialog } from './TenantBillingDialog';
 import {
   AlertDialog,
@@ -48,72 +44,50 @@ import {
 } from '@/components/ui/alert-dialog';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import type { AdminTenant, TenantDirectoryRequest } from '@/lib/admin-tenant-directory';
 
 interface TenantsTableProps {
-  statusFilter?: string;
-  planFilter?: string;
-  approvalFilter?: string;
-  searchQuery?: string;
+  directory: ReturnType<typeof useTenants>;
+  onPageChange: (page: number) => void;
+  sort: TenantDirectoryRequest['sort'];
+  descending: boolean;
+  onSortChange: (sort: TenantDirectoryRequest['sort'], descending: boolean) => void;
   selectedTenants?: string[];
   onSelectionChange?: (selected: string[]) => void;
 }
 
 export function TenantsTable({
-  statusFilter = 'all',
-  planFilter = 'all',
-  approvalFilter = 'all',
-  searchQuery = '',
+  directory,
+  onPageChange,
+  sort,
+  descending,
+  onSortChange,
   selectedTenants = [],
   onSelectionChange,
 }: TenantsTableProps) {
   const { t } = useTranslation('superAdmin');
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [selectedTenant, setSelectedTenant] = useState<any | null>(null);
+  const [selectedTenant, setSelectedTenant] = useState<AdminTenant | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [changePlanOpen, setChangePlanOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
-  const [tenantToSuspend, setTenantToSuspend] = useState<any | null>(null);
+  const [tenantToSuspend, setTenantToSuspend] = useState<AdminTenant | null>(null);
 
   const suspendMutation = useSuspendTenant();
   const reactivateMutation = useReactivateTenant();
-  const deleteMutation = useDeleteTenant();
+  const [statusAction, setStatusAction] = useState<'suspend' | 'reactivate'>('suspend');
+  const [statusReason, setStatusReason] = useState('');
+  const statusPending = suspendMutation.isPending || reactivateMutation.isPending;
 
-  const { data: tenants = [], isLoading } = useTenants();
-
-  // Filter tenants based on props
-  const filteredTenants = useMemo(() => {
-    return tenants.filter((tenant: any) => {
-      // Status filter with new options
-      let matchesStatus = statusFilter === 'all';
-      if (!matchesStatus) {
-        if (statusFilter === 'expired') {
-          matchesStatus = tenant.actual_status === 'expired';
-        } else if (statusFilter === 'not_registered') {
-          matchesStatus = tenant.actual_status === 'not_registered';
-        } else if (statusFilter === 'expiring_soon') {
-          matchesStatus = tenant.days_until_expiry !== null && 
-            tenant.days_until_expiry > 0 && 
-            tenant.days_until_expiry <= 7;
-        } else {
-          matchesStatus = tenant.subscription_status === statusFilter;
-        }
-      }
-      
-      const matchesApproval = approvalFilter === 'all' || tenant.approval_status === approvalFilter;
-      const matchesSearch = !searchQuery || 
-        tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tenant.primary_contact_email?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      return matchesStatus && matchesApproval && matchesSearch;
-    });
-  }, [tenants, statusFilter, approvalFilter, searchQuery]);
+  const { data, isLoading, isError, isFetching, refetch } = directory;
+  const filteredTenants = isError ? [] : data?.items || [];
+  const page = data?.page || 0;
+  const pageCount = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const toggleSort = (value: TenantDirectoryRequest['sort']) => onSortChange(value, sort === value ? !descending : false);
 
   const handleSelectAll = (checked: boolean) => {
     if (onSelectionChange) {
-      onSelectionChange(checked ? filteredTenants.map((t: any) => t.id) : []);
+      onSelectionChange(checked ? filteredTenants.map(t => t.id) : []);
     }
   };
 
@@ -175,21 +149,23 @@ export function TenantsTable({
     }).format(value);
   };
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<AdminTenant>[] = [
     {
       id: 'select',
-      header: ({ table }) => (
+      header: () => (
         <Checkbox
-          checked={selectedTenants.length === filteredTenants.length && filteredTenants.length > 0}
+          checked={filteredTenants.length > 0 && filteredTenants.every(tenant => selectedTenants.includes(tenant.id))}
           onCheckedChange={handleSelectAll}
-          aria-label="Select all"
+          aria-label="Chọn tất cả khách hàng trên trang hiện tại"
+          disabled={isFetching || isError}
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={selectedTenants.includes(row.original.id)}
           onCheckedChange={(checked) => handleSelectRow(row.original.id, checked as boolean)}
-          aria-label="Select row"
+          aria-label={`Chọn ${row.original.name}`}
+          disabled={isFetching || isError}
         />
       ),
       enableSorting: false,
@@ -197,11 +173,12 @@ export function TenantsTable({
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => {
+      header: () => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => toggleSort('name')}
+            disabled={isFetching || isError}
             className="whitespace-nowrap"
           >
             {t('tenants.table.tenantName')}
@@ -212,7 +189,7 @@ export function TenantsTable({
       cell: ({ row }) => (
         <div className="min-w-[180px]">
           <div className="font-medium text-foreground">{row.original.name}</div>
-          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{row.original.primary_contact_email}</div>
+          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{row.original.email}</div>
         </div>
       ),
     },
@@ -246,7 +223,10 @@ export function TenantsTable({
         const registeredRooms = tenant.registered_rooms || 0;
         const durationDays = tenant.subscription_duration_days || 0;
         
-        if (!tenant.has_subscription) {
+        if (tenant.actual_status === 'trial' && !tenant.has_subscription) {
+          return <span>{t('tenants.status.trial')}</span>;
+        }
+        if (!tenant.has_subscription && !plan) {
           return <span className="text-muted-foreground">-</span>;
         }
         
@@ -316,11 +296,12 @@ export function TenantsTable({
     },
     {
       accessorKey: 'subscription_end_date',
-      header: ({ column }) => {
+      header: () => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => toggleSort('subscription_end_date')}
+            disabled={isFetching || isError}
             className="whitespace-nowrap"
           >
             {t('tenants.table.expires')}
@@ -333,19 +314,18 @@ export function TenantsTable({
         if (!date) return <span className="text-muted-foreground">-</span>;
         
         const expiryDate = new Date(date);
-        const daysUntilExpiry = Math.ceil(
-          (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        );
+        const daysUntilExpiry = row.original.days_until_expiry;
         
         return (
           <div className="whitespace-nowrap">
             <div className="text-foreground">{expiryDate.toLocaleDateString()}</div>
-            {daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
+            {daysUntilExpiry === 0 && <div className="text-xs text-orange-600">Hết hạn hôm nay (UTC)</div>}
+            {daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
               <div className="text-xs text-orange-600">
                 {t('tenants.table.daysLeft', { count: daysUntilExpiry })}
               </div>
             )}
-            {daysUntilExpiry < 0 && (
+            {daysUntilExpiry !== null && daysUntilExpiry < 0 && (
               <div className="text-xs text-destructive">{t('tenants.table.expired')}</div>
             )}
           </div>
@@ -354,16 +334,7 @@ export function TenantsTable({
     },
     {
       accessorKey: 'lifetime_revenue',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="whitespace-nowrap"
-        >
-          {t('tenants.table.lifetimeRevenue')}
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Đã thu theo hóa đơn',
       cell: ({ row }) => {
         const revenue = row.original.lifetime_revenue || 0;
         return (
@@ -427,7 +398,12 @@ export function TenantsTable({
               {tenant.subscription_status === 'suspended' ? (
                 <DropdownMenuItem
                   className="text-green-600"
-                  onClick={() => reactivateMutation.mutate(tenant.id)}
+                  onClick={() => {
+                    setTenantToSuspend(tenant);
+                    setStatusAction('reactivate');
+                    setStatusReason('');
+                    setSuspendDialogOpen(true);
+                  }}
                 >
                   {t('tenants.actions.reactivate')}
                 </DropdownMenuItem>
@@ -436,20 +412,16 @@ export function TenantsTable({
                   className="text-orange-600"
                   onClick={() => {
                     setTenantToSuspend(tenant);
+                    setStatusAction('suspend');
+                    setStatusReason('');
                     setSuspendDialogOpen(true);
                   }}
                 >
                   {t('tenants.actions.suspend')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  setSelectedTenant(tenant);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                {t('tenants.actions.delete')}
+              <DropdownMenuItem disabled>
+                Xóa khách hàng — chưa hỗ trợ
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -462,22 +434,25 @@ export function TenantsTable({
     data: filteredTenants,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    state: {
-      sorting,
-      columnFilters,
-    },
+    manualPagination: true,
+    manualSorting: true,
+    getRowId: row => row.id,
   });
 
   return (
     <div className="space-y-4">
 
+      {isError && (
+        <div role="alert" className="rounded-md border border-destructive p-4 space-y-2">
+          <p>Không tải được danh sách khách hàng. Dữ liệu cũ đã được ẩn; không dùng để ra quyết định.</p>
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>Thử lại</Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        “Đã thu” cộng toàn bộ hóa đơn trạng thái đã thanh toán của từng khách hàng; không thay thế sổ đối soát.
+      </p>
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-none border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -503,7 +478,7 @@ export function TenantsTable({
                     {t('tenants.table.loading')}
                   </TableCell>
                 </TableRow>
-              ) : table.getRowModel().rows?.length ? (
+              ) : isError ? null : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
@@ -528,22 +503,22 @@ export function TenantsTable({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {t('tenants.table.tenantsTotal', { count: table.getFilteredRowModel().rows.length })}
+          {isError ? 'Chưa có số liệu hợp lệ' : data ? `${data.total} khách hàng phù hợp · Trang ${page + 1}/${pageCount}` : 'Đang tải số liệu...'}
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => onPageChange(page - 1)}
+            disabled={isError || isFetching || !data || page === 0}
           >
             {t('tenants.table.previous')}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => onPageChange(page + 1)}
+            disabled={isError || isFetching || !data || page + 1 >= pageCount}
           >
             {t('tenants.table.next')}
           </Button>
@@ -569,33 +544,36 @@ export function TenantsTable({
         onOpenChange={setChangePlanOpen}
       />
       
-      <DeleteTenantDialog
-        tenant={selectedTenant}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      />
       
       {/* Suspend Confirmation Dialog */}
-      <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+      <AlertDialog open={suspendDialogOpen} onOpenChange={(open) => { if (!statusPending) setSuspendDialogOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('tenants.dialogs.suspendTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{statusAction === 'suspend' ? t('tenants.dialogs.suspendTitle') : 'Khôi phục quyền truy cập'}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('tenants.dialogs.suspendDescription', { name: tenantToSuspend?.name })}
+              {statusAction === 'suspend' ? t('tenants.dialogs.suspendDescription', { name: tenantToSuspend?.name }) : 'Chỉ khôi phục khi gói còn hiệu lực; thao tác này không gia hạn gói.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <Label htmlFor="tenant-status-reason">Lý do (bắt buộc)</Label>
+          <Input id="tenant-status-reason" value={statusReason} maxLength={1000} onChange={(event) => setStatusReason(event.target.value)} disabled={statusPending} />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('tenants.dialogs.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={statusPending}>{t('tenants.dialogs.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (tenantToSuspend) {
-                  suspendMutation.mutate(tenantToSuspend.id);
-                  setSuspendDialogOpen(false);
-                  setTenantToSuspend(null);
-                }
+              disabled={statusPending || statusReason.trim().length < 5}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!tenantToSuspend) return;
+                const mutation = statusAction === 'suspend' ? suspendMutation : reactivateMutation;
+                mutation.mutate({ tenantId: tenantToSuspend.id, reason: statusReason.trim() }, {
+                  onSuccess: () => {
+                    setSuspendDialogOpen(false);
+                    setTenantToSuspend(null);
+                    setStatusReason('');
+                  },
+                });
               }}
             >
-              {t('tenants.dialogs.suspendConfirm')}
+              {statusPending ? 'Đang xử lý...' : statusAction === 'suspend' ? t('tenants.dialogs.suspendConfirm') : 'Khôi phục'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

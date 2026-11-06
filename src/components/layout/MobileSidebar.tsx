@@ -63,7 +63,7 @@ export const MobileSidebar = ({ onClose }: MobileSidebarProps) => {
   const location = useLocation()
   const { signOut } = useAuth()
   const { user, role, tenantId } = useUser()
-  const { data: modulePermissions } = useUserModulePermissions()
+  const { data: modulePermissions, isLoading: permissionsLoading } = useUserModulePermissions()
   const { selectedHotel, isAllHotelsMode } = useHotelContext()
   const { canInstall, installPWA, isInstalled } = usePWAInstall()
   const { toast } = useToast()
@@ -145,6 +145,7 @@ export const MobileSidebar = ({ onClose }: MobileSidebarProps) => {
       title: 'Quản lý',
       items: [
         { title: 'Khách sạn', icon: Building2, path: '/settings/hotels' },
+        { title: 'Thiết lập phòng ban đầu', icon: DoorOpen, path: '/rooms', roles: ['owner'] },
         { title: 'Nhân sự', icon: Users, path: '/settings/users', minMode: 'standard' },
       ]
     },
@@ -211,6 +212,9 @@ export const MobileSidebar = ({ onClose }: MobileSidebarProps) => {
   const hasModuleAccess = (moduleCode?: string): boolean => {
     if (!moduleCode) return true
     if (role === 'super_admin' || role === 'owner') return true
+    // Permission-sensitive mobile navigation also fails closed while the
+    // effective summary is being refreshed, so revoked links do not flash.
+    if (permissionsLoading) return false
     
     // Support multiple modules separated by comma
     const modules = moduleCode.split(',')

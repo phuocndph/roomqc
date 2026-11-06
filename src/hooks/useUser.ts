@@ -2,12 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserWithRelations, AppRole } from '@/types/database.types'
+import { runtimeConfig } from '@/lib/runtime-config'
 
 export const useUser = () => {
   const { user: authUser } = useAuth()
 
   const { data: userData, isLoading, error, refetch } = useQuery({
-    queryKey: ['user', authUser?.id],
+    queryKey: ['user', authUser?.id, runtimeConfig.workspace?.workspace.id],
     queryFn: async () => {
       if (!authUser?.id) return null
 
@@ -26,6 +27,13 @@ export const useUser = () => {
 
       // If user doesn't exist in users table, return null (needs onboarding)
       if (userError) throw userError
+      const workspace = runtimeConfig.workspace?.workspace
+      if (workspace?.tenantId && user?.tenant_id !== workspace.tenantId) {
+        throw new Error('Tài khoản không thuộc doanh nghiệp đang mở. Hãy đăng xuất và chọn đúng doanh nghiệp.')
+      }
+      if (workspace && !workspace.tenantId && user?.tenant_id) {
+        throw new Error('Doanh nghiệp chưa hoàn tất xác nhận thiết lập. Hãy tải lại trang để kiểm tra kết quả.')
+      }
       if (!user) return null
 
       // Fetch user roles

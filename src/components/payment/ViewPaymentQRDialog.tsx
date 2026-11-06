@@ -2,28 +2,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { BankQRCode } from './BankQRCode';
 import { QRCountdown, useQRExpiry } from './QRCountdown';
-import { useBankPaymentSettings } from '@/hooks/useBankPaymentSettings';
+import { useSuperAdminBankPaymentSettings } from '@/hooks/useBankPaymentSettings';
 import { Loader2, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatVNCurrency } from '@/lib/pricing';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { PendingPayment } from '@/hooks/usePendingPayments';
+import { canDisplaySubscriptionTransferQR } from '@/lib/subscription-payment-safety';
 
 interface ViewPaymentQRDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payment: PendingPayment | null;
-  hotelId?: string;
+  isChecking?: boolean;
 }
 
 export function ViewPaymentQRDialog({
   open,
   onOpenChange,
   payment,
-  hotelId,
+  isChecking = false,
 }: ViewPaymentQRDialogProps) {
-  const { data: bankSettings, isLoading: isLoadingSettings } = useBankPaymentSettings(hotelId);
+  const { data: bankSettings, isLoading: isLoadingSettings } = useSuperAdminBankPaymentSettings();
   const [refreshKey, setRefreshKey] = useState(0);
   const { isExpired } = useQRExpiry(`${open}-${payment?.id ?? ''}-${refreshKey}`);
 
@@ -32,6 +33,7 @@ export function ViewPaymentQRDialog({
   const isPending = payment.payment_status === 'pending';
   const isCompleted = payment.payment_status === 'completed';
   const isFailed = payment.payment_status === 'failed';
+  const canShowQR = canDisplaySubscriptionTransferQR(payment);
 
   const getStatusBadge = () => {
     if (isPending) {
@@ -58,10 +60,14 @@ export function ViewPaymentQRDialog({
     return <Badge variant="secondary">{payment.payment_status}</Badge>;
   };
 
-  if (isLoadingSettings) {
+  if (isLoadingSettings || isChecking) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Đang kiểm tra trạng thái đơn</DialogTitle>
+            <DialogDescription>Thông tin chuyển khoản tạm ẩn trong lúc cập nhật dữ liệu.</DialogDescription>
+          </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -70,12 +76,13 @@ export function ViewPaymentQRDialog({
     );
   }
 
-  if (!bankSettings && isPending) {
+  if (!bankSettings && canShowQR) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Chi tiết thanh toán</DialogTitle>
+            <DialogDescription>Chưa tìm thấy cấu hình nhận tiền của nền tảng.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
@@ -130,7 +137,7 @@ export function ViewPaymentQRDialog({
           </div>
 
           {/* Show QR if pending and bank settings available */}
-          {isPending && bankSettings && (
+          {canShowQR && bankSettings && (
             <>
               <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <Clock className="h-5 w-5 text-amber-500" />
@@ -156,6 +163,10 @@ export function ViewPaymentQRDialog({
                 onRefresh={() => setRefreshKey((k) => k + 1)}
               />
             </>
+          )}
+
+          {!canShowQR && !isCompleted && !isFailed && (
+            <p role="status" className="text-sm text-muted-foreground">Đơn này chưa hoặc không còn được thanh toán. Không chuyển khoản; vui lòng kiểm tra lại trạng thái.</p>
           )}
 
           {/* Completed status */}

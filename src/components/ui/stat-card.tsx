@@ -20,7 +20,7 @@ interface StatCardProps {
 export const StatCard = ({ title, value, description, icon: Icon, trend, change, isLoading }: StatCardProps) => {
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 p-3 border rounded-lg">
+      <div className="flex items-center gap-3 p-3 border rounded-none">
         <Skeleton className="h-8 w-8 rounded" />
         <div className="flex-1">
           <Skeleton className="h-3 w-16 mb-1" />
@@ -31,7 +31,7 @@ export const StatCard = ({ title, value, description, icon: Icon, trend, change,
   }
 
   return (
-    <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+    <div className="flex items-center gap-3 p-3 border rounded-none hover:bg-muted/30 transition-colors">
       <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted-foreground truncate">{title}</p>

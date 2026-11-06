@@ -235,7 +235,7 @@ export function PricingPlansTable() {
           {/* Quick Reference Table */}
           <div>
             <Label className="mb-2 block text-xs">Bảng giá tham khảo theo số phòng</Label>
-            <div className="rounded-md border overflow-hidden">
+            <div className="rounded-none border overflow-hidden">
               <table className="w-full text-xs">
                 <thead className="bg-muted">
                   <tr>

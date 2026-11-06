@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
   firstRoute: '/' as string | null,
   refetch: vi.fn(),
   signOut: vi.fn(),
+  invitation: { data: null as null | { passwordReady: boolean; expired: boolean }, isLoading: false, isError: false, refetch: vi.fn() },
 }))
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -24,6 +25,8 @@ vi.mock('@/hooks/useUser', () => ({
 vi.mock('@/hooks/useFirstAccessibleRoute', () => ({
   useFirstAccessibleRoute: () => ({ firstAccessibleRoute: state.firstRoute, isLoading: state.permissionsLoading }),
 }))
+vi.mock('@/hooks/useMyStaffInvitation', () => ({ useMyStaffInvitation: () => state.invitation }))
+vi.mock('@/components/auth/ResumeStaffInvitation', () => ({ ResumeStaffInvitation: () => <div>Resume invitation</div> }))
 
 function openCallback(path = '/auth/callback') {
   const router = createMemoryRouter([
@@ -43,6 +46,7 @@ beforeEach(() => {
   state.permissionsLoading = false
   state.firstRoute = '/'
   state.refetch.mockReset()
+  state.invitation = { data: null, isLoading: false, isError: false, refetch: vi.fn() }
 })
 
 afterEach(() => {
@@ -51,6 +55,29 @@ afterEach(() => {
 })
 
 describe('AuthCallback registration routing', () => {
+  it('waits for invitation lookup before treating a missing profile as a new owner', () => {
+    state.profile = null
+    state.invitation.isLoading = true
+    const router = openCallback()
+    act(() => vi.advanceTimersByTime(10000))
+    expect(router.state.location.pathname).toBe('/auth/callback')
+  })
+
+  it('resumes pending staff setup instead of opening owner onboarding', () => {
+    state.profile = null
+    state.invitation.data = { passwordReady: true, expired: false }
+    expect(openCallback().state.location.pathname).toBe('/auth/callback')
+    expect(screen.getByText('Resume invitation')).toBeInTheDocument()
+  })
+
+  it('fails closed when invitation lookup is unavailable', () => {
+    state.profile = null
+    state.invitation.isError = true
+    expect(openCallback().state.location.pathname).toBe('/auth/callback')
+    fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
+    expect(state.invitation.refetch).toHaveBeenCalledOnce()
+  })
+
   it('sends a new owner to onboarding without waiting for permissions', () => {
     state.profile = null
     state.permissionsLoading = true

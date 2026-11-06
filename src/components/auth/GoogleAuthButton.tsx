@@ -2,6 +2,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getFriendlyError } from '@/lib/errorMessage'
+import { workspacePath, workspaceNext } from '@/lib/workspace';
+import { authRedirectUrl } from '@/lib/native/auth-links';
+import { isNativeApp } from '@/lib/native/platform';
+import { Browser } from '@capacitor/browser';
 export function GoogleAuthButton() {
   const {
     toast
@@ -10,14 +14,15 @@ export function GoogleAuthButton() {
     try {
       // Giữ lại ?next=... (vd: màn hình đồng ý OAuth) sau khi quay về từ Google
       const rawNext = new URLSearchParams(window.location.search).get('next');
-      const safeNext = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null;
-      const redirectUrl = `${window.location.origin}/auth/callback${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ''}`;
+      const safeNext = workspaceNext(rawNext);
+      const redirectUrl = authRedirectUrl('/auth/callback', safeNext);
       const {
-        error
+        data, error
       } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
+          skipBrowserRedirect: isNativeApp(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -25,6 +30,7 @@ export function GoogleAuthButton() {
         }
       });
       if (error) throw error;
+      if (isNativeApp() && data?.url) await Browser.open({ url: data.url });
     } catch (error: any) {
       console.error('Google login error:', error);
       toast({

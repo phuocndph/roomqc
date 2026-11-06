@@ -66,7 +66,7 @@ export function ReviewStep({ form, room, checkType, currentBooking }: ReviewStep
     }
     
     try {
-      const uploaded = await uploadImages(files, tenantId)
+      const uploaded = await uploadImages(files, tenantId, 'room-check-photos')
       const urls = uploaded.map(img => img.url)
       const newPhotos = [...photos, ...urls]
       

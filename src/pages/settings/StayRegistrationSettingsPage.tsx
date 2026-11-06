@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useHotelContext } from '@/contexts/HotelContext'
-import { useHotel, useUpdateHotel } from '@/hooks/useHotels'
+import { useHotel } from '@/hooks/useHotels'
+import { supabase } from '@/integrations/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -23,6 +24,9 @@ interface TbltkbttConfig {
   token?: string
   establishment_code?: string
   mode?: 'live' | 'dry_run'
+  account_configured?: boolean
+  token_configured?: boolean
+  updated_at?: string
 }
 
 const EMPTY: TbltkbttConfig = {
@@ -37,16 +41,25 @@ const EMPTY: TbltkbttConfig = {
 export default function StayRegistrationSettingsPage() {
   const { selectedHotel } = useHotelContext()
   const { data: hotel, isLoading } = useHotel(selectedHotel?.id)
-  const updateHotel = useUpdateHotel()
   const [cfg, setCfg] = useState<TbltkbttConfig>(EMPTY)
+  const [configLoading, setConfigLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
 
   useEffect(() => {
-    if (hotel) {
-      setCfg({ ...EMPTY, ...((hotel as any).tbltkbtt_config ?? {}) })
+    if (!selectedHotel?.id) return
+    let cancelled = false
+    setConfigLoading(true)
+    supabase.rpc('get_tbltkbtt_safe_config', { p_hotel_id: selectedHotel.id }).then(({ data, error }) => {
+      if (cancelled) return
+      if (error) throw error
+      setCfg({ ...EMPTY, ...(data as TbltkbttConfig), account: '', token: '' })
       setDirty(false)
-    }
-  }, [hotel])
+    }).catch(() => {
+      if (!cancelled) setCfg(EMPTY)
+    }).finally(() => { if (!cancelled) setConfigLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedHotel?.id])
 
   if (!selectedHotel) {
     return (
@@ -59,7 +72,7 @@ export default function StayRegistrationSettingsPage() {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || configLoading) {
     return <div className="p-4 text-sm text-muted-foreground">Đang tải…</div>
   }
 
@@ -72,11 +85,17 @@ export default function StayRegistrationSettingsPage() {
     if (cfg.enabled && (!cfg.endpoint_url || !cfg.establishment_code)) {
       return
     }
-    await updateHotel.mutateAsync({
-      id: selectedHotel.id,
-      data: { tbltkbtt_config: cfg } as any,
-    })
-    setDirty(false)
+    setSaving(true)
+    try {
+      const { error } = await supabase.rpc('save_tbltkbtt_config', {
+        p_hotel_id: selectedHotel.id,
+        p_config: { ...cfg, account: cfg.account || undefined, token: cfg.token || undefined },
+      })
+      if (error) throw error
+      setDirty(false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const canSave = !cfg.enabled || (!!cfg.endpoint_url && !!cfg.establishment_code)
@@ -154,7 +173,7 @@ export default function StayRegistrationSettingsPage() {
             <Label className="text-xs">Tài khoản</Label>
             <Input
               className="h-8 font-mono text-xs"
-              placeholder="Tài khoản BCA cấp"
+              placeholder={cfg.account_configured ? 'Đã lưu (nhập mới để thay)' : 'Tài khoản BCA cấp'}
               value={cfg.account ?? ''}
               onChange={(e) => set('account', e.target.value)}
             />
@@ -165,7 +184,7 @@ export default function StayRegistrationSettingsPage() {
             <Input
               className="h-8 font-mono text-xs"
               type="password"
-              placeholder="••••••••"
+              placeholder={cfg.token_configured ? 'Đã lưu (nhập mới để thay)' : '••••••••'}
               value={cfg.token ?? ''}
               onChange={(e) => set('token', e.target.value)}
             />
@@ -184,9 +203,9 @@ export default function StayRegistrationSettingsPage() {
             size="sm"
             className="h-8"
             onClick={handleSave}
-            disabled={!dirty || !canSave || updateHotel.isPending}
+            disabled={!dirty || !canSave || saving}
           >
-            {updateHotel.isPending && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+            {saving && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
             Lưu cấu hình
           </Button>
         </div>

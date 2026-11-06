@@ -217,6 +217,7 @@ const navigation: NavItem[] = [
       { titleKey: 'changePassword', href: '/settings/change-password', icon: KeyRound, group: 'Tài khoản' },
 
       // Khách sạn & Pháp lý
+      { titleKey: 'Thiết lập phòng ban đầu', href: '/rooms', icon: ClipboardList, roles: ['owner'], group: 'Khách sạn & Pháp lý' },
       { titleKey: 'hotelsSettings', href: '/settings/hotels', icon: Building2, group: 'Khách sạn & Pháp lý' },
       { titleKey: 'hotelPolicy', href: '/settings/hotel-policy', icon: ScrollText, minMode: 'standard', group: 'Khách sạn & Pháp lý' },
       { titleKey: 'bcaConfig', href: '/settings/legal/stay-registration', icon: ShieldCheck, group: 'Khách sạn & Pháp lý' },
@@ -312,14 +313,18 @@ export const Sidebar = () => {
     }
   }, [location.pathname])
 
-  // Only block on user auth; tenant + permissions load in background to avoid full-skeleton flash.
-  const isLoading = userLoading
+  // Permission state is security-sensitive. Keep the navigation skeleton visible
+  // for protected roles until the effective permission summary is available,
+  // instead of briefly showing links that may already have been revoked.
+  const isPermissionProtectedRole = role !== 'owner' && role !== 'super_admin'
+  const isLoading = userLoading || (isPermissionProtectedRole && permissionsLoading)
 
   // Check if user has access to a module
   const hasModuleAccess = (navigationTitleKey: string): boolean => {
     if (role === 'super_admin' || role === 'owner') return true
-    // While permissions are loading, optimistically show items to avoid nav flicker
-    if (permissionsLoading) return true
+    // Fail closed while permissions are loading. A revoked item must never be
+    // exposed during the permission refresh window.
+    if (permissionsLoading) return false
 
     const moduleCode = NAVIGATION_MODULE_MAP[navigationTitleKey]
     if (!moduleCode) return true
@@ -335,7 +340,9 @@ export const Sidebar = () => {
   // Check if user has access to a child item
   const hasChildAccess = (parentTitleKey: string, childTitleKey: string): boolean => {
     if (role === 'super_admin' || role === 'owner') return true
-    if (permissionsLoading) return true
+    // Fail closed while permissions are loading. A revoked child must never be
+    // exposed during the permission refresh window.
+    if (permissionsLoading) return false
     
     const moduleCode = NAVIGATION_MODULE_MAP[parentTitleKey]
     if (!moduleCode) return true

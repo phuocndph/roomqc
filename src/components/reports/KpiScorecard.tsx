@@ -41,7 +41,7 @@ const TONE_TEXT: Record<KpiTone, string> = {
 /**
  * Tile chuẩn dùng cho mọi Report Hub.
  * - Layout compact, semantic color theo `goodDirection`.
- * - Không dùng Card — chỉ border + rounded để bám design Enterprise Minimalist.
+ * - Không dùng Card — chỉ border + góc vuông để bám design Enterprise Minimalist.
  */
 export function KpiScorecard({
   label,
@@ -63,7 +63,7 @@ export function KpiScorecard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'flex flex-col gap-1 rounded-lg border border-border bg-background p-3 text-left transition-colors',
+        'flex flex-col gap-1 rounded-panel border border-border bg-background p-3 text-left transition-colors',
         onClick && 'hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-ring',
         className,
       )}

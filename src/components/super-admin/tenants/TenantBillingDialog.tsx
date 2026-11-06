@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +36,7 @@ import {
 } from '@/hooks/super-admin/useTenantBilling';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SubscriptionReconciliationPanel } from './SubscriptionReconciliationPanel';
 
 interface TenantBillingDialogProps {
   tenant: any | null;
@@ -47,11 +49,11 @@ export function TenantBillingDialog({
   open,
   onOpenChange,
 }: TenantBillingDialogProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('reconciliation');
 
-  const { data: payments = [], isLoading: paymentsLoading } = useTenantPayments(tenant?.id);
-  const { data: invoices = [], isLoading: invoicesLoading } = useTenantInvoices(tenant?.id);
-  const { data: stats, isLoading: statsLoading } = useTenantPaymentStats(tenant?.id);
+  const { data: payments = [], isLoading: paymentsLoading } = useTenantPayments(tenant?.id, open && activeTab === 'payments');
+  const { data: invoices = [], isLoading: invoicesLoading } = useTenantInvoices(tenant?.id, open && activeTab === 'invoices');
+  const { data: stats, isLoading: statsLoading } = useTenantPaymentStats(tenant?.id, open && activeTab === 'overview');
 
   if (!tenant) return null;
 
@@ -84,11 +86,13 @@ export function TenantBillingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Billing History - {tenant.name}</DialogTitle>
+          <DialogTitle className="text-2xl">Thanh toán thuê bao — {tenant.name}</DialogTitle>
+          <DialogDescription>Tra cứu chứng từ và các đơn cần đối soát của khách hàng này.</DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="reconciliation">Đối soát</TabsTrigger>
             <TabsTrigger value="overview">
               <TrendingUp className="h-4 w-4 mr-2" />
               Overview
@@ -102,6 +106,9 @@ export function TenantBillingDialog({
               Invoices
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="reconciliation" className="flex-1 overflow-auto">
+            {open && activeTab === 'reconciliation' && <SubscriptionReconciliationPanel tenantId={tenant.id} />}
+          </TabsContent>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="flex-1 overflow-auto">

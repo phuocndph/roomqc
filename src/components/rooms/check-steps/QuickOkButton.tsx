@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from '@/hooks/use-toast'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { isNativeApp } from '@/lib/native/platform'
+import { NativePhotoButton } from '@/components/mobile/NativePhotoButton'
 
 interface Props {
   roomId: string
@@ -48,17 +50,20 @@ export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = 
 
   const requirePhoto = photoMode === 'always'
 
-  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const uploadPhoto = async (file: File) => {
     if (!file || !tenantId) return
     try {
-      const uploaded = await uploadImage(file, tenantId)
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
       if (uploaded?.url) setPhotos((p) => [...p, uploaded.url])
     } catch (err: any) {
       toast({ title: 'Tải ảnh thất bại', description: getFriendlyError(err), variant: 'destructive' })
-    } finally {
-      e.target.value = ''
     }
+  }
+
+  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await uploadPhoto(file)
+    e.target.value = ''
   }
 
   const handleConfirm = async () => {
@@ -135,7 +140,7 @@ export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = 
                     </button>
                   </div>
                 ))}
-                <label className="w-16 h-16 border border-dashed rounded-md flex items-center justify-center cursor-pointer hover:bg-muted">
+                {isNativeApp() ? <NativePhotoButton onPhoto={uploadPhoto} disabled={isUploading || !tenantId} /> : <label className="w-16 h-16 border border-dashed rounded-md flex items-center justify-center cursor-pointer hover:bg-muted">
                   {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   <input
                     type="file"
@@ -144,7 +149,7 @@ export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = 
                     className="hidden"
                     onChange={handlePickPhoto}
                   />
-                </label>
+                </label>}
               </div>
             </div>
           )}

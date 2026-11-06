@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { computeRevenueData, emptyRevenueData, type RevenueBookingRow } from './useRevenueReport'
+
+// These tests exercise pure calculations, not the network-backed report hook.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))
 
 function makeBooking(overrides: Partial<RevenueBookingRow> = {}): RevenueBookingRow {
   return {

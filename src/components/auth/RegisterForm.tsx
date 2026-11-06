@@ -7,7 +7,6 @@ import { Eye, EyeOff, UserPlus, Loader2, Mail, User, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/integrations/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui/form'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { registerSchema, RegisterFormData } from '@/lib/validations/auth.schemas'
+import { runtimeConfig } from '@/lib/runtime-config'
 
 export function RegisterForm() {
   const { t } = useTranslation(['auth', 'common'])
@@ -34,7 +34,10 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       fullName: '',
-      email: '',
+      email: (() => {
+        try { return JSON.parse(sessionStorage.getItem(`roomqc-signup:${runtimeConfig.workspace?.workspace.slug}`) || '{}').email || '' }
+        catch { return '' }
+      })(),
       password: '',
       confirmPassword: '',
     },
@@ -58,15 +61,6 @@ export function RegisterForm() {
         return
       }
 
-      // The welcome function requires a JWT. With email confirmation enabled,
-      // signUp intentionally returns no session, so let Supabase's auth hook
-      // send the confirmation email instead of making a guaranteed 401 call.
-      if (signUpData?.session) {
-        supabase.functions.invoke('send-welcome-email', {
-          body: { email: data.email, fullName: data.fullName },
-        }).catch(err => console.error('Failed to send welcome email:', err))
-      }
-
       if (signUpData?.session) {
         toast.success('Đăng ký thành công! Hãy hoàn tất thiết lập khách sạn.')
         navigate('/onboarding', { replace: true })
@@ -74,7 +68,7 @@ export function RegisterForm() {
       }
 
       toast.success('Đăng ký thành công! Hãy xác thực email; sau đó hệ thống sẽ đưa bạn tới bước thiết lập khách sạn.')
-      navigate('/auth/login', { replace: true })
+      navigate(`/auth/verify-email?email=${encodeURIComponent(data.email.trim().toLowerCase())}`, { replace: true })
     } catch (error: any) {
       console.error('Registration error:', error)
       toast.error('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.')

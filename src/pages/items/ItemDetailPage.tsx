@@ -492,7 +492,7 @@ function KpiCell({
   valueClass?: string
 }) {
   return (
-    <div className="rounded-md border bg-card p-3">
+    <div className="rounded-none border bg-card p-3">
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
         {label}
       </p>

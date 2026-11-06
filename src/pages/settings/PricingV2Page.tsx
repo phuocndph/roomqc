@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
+import { workspacePath } from '@/lib/workspace'
 
 type Bucket = 'daily_rate' | 'hourly_rate' | 'monthly_rate'
 
@@ -85,10 +86,10 @@ export default function PricingV2Page() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <a href="/settings/pricing?tab=daily">Lịch giá theo ngày →</a>
+            <a href={workspacePath('/settings/pricing?tab=daily')}>Lịch giá theo ngày →</a>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <a href="/settings/pricing?tab=seasonal">Quy tắc mùa →</a>
+            <a href={workspacePath('/settings/pricing?tab=seasonal')}>Quy tắc mùa →</a>
           </Button>
         </div>
       </div>

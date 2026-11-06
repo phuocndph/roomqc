@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Plus,
 } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ScrollableTabsList } from '@/components/shared/ScrollableTabsList'
 import { Button } from '@/components/ui/button'
@@ -19,13 +18,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useBreakpoint } from '@/lib/breakpoints'
 import { useUser } from '@/hooks/useUser'
 import type { AppRole } from '@/types/database.types'
 import { AccessDenied } from '@/components/auth/AccessDenied'
 import { useCanAccess } from '@/components/auth/PermissionRoute'
 import { InventoryOverviewSection } from '@/components/inventory/InventoryOverviewSection'
-import { MobileInventoryDashboard } from '@/components/inventory/MobileInventoryDashboard'
 import { InventoryQuickSearch } from '@/components/inventory/hub/InventoryQuickSearch'
 import { useInventoryHubBadges } from '@/hooks/useInventoryHubBadges'
 import { useInventoryHubShortcuts } from '@/hooks/useInventoryHubShortcuts'
@@ -67,7 +64,6 @@ const defaultSubByTab: Partial<Record<MainTab, OpSub | AssetsSub | AnalyticsSub 
 }
 
 export function InventoryDashboardPage() {
-  const { isMobile } = useBreakpoint()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { hasAnyRole } = useUser()
@@ -130,6 +126,9 @@ export function InventoryDashboardPage() {
 
   const setTab = useCallback((next: MainTab, nextSub?: string) => {
     const params = new URLSearchParams(searchParams)
+    // A destination must not inherit another section's filters or form view.
+    params.delete('view')
+    params.delete('item')
     params.set('tab', next)
     if (nextSub) params.set('sub', nextSub)
     else if (defaultSubByTab[next]) params.set('sub', defaultSubByTab[next]!)
@@ -183,7 +182,7 @@ export function InventoryDashboardPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" variant="outline" className="h-10 lg:h-9 font-body">
-              Khác
+              Thao tác khác
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -199,7 +198,7 @@ export function InventoryDashboardPage() {
             )}
             {canItemsCreate && (
               <DropdownMenuItem onClick={() => navigate('/items/new')}>
-                <Plus className="h-4 w-4 mr-2" /> Thêm tài sản
+                <Plus className="h-4 w-4 mr-2" /> Thêm mặt hàng
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -209,38 +208,22 @@ export function InventoryDashboardPage() {
   )
 
   return (
-    <div className="font-body space-y-3 lg:space-y-4">
-      {/* Compact topbar on laptop, classic PageHeader on smaller */}
-      <div className="hidden lg:flex items-center justify-between gap-3 pb-3 border-b border-border/60">
-        <div className="flex items-baseline gap-3 min-w-0">
-          <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">Kho</h1>
+    <div className="mx-auto w-full max-w-[1600px] space-y-5 p-4 pb-24 font-body lg:p-0">
+      {tab === 'overview' && <header className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Kho & tài sản</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Theo dõi tồn kho, xử lý phiếu và bổ sung hàng kịp thời.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">{primaryActions}</div>
         </div>
-        <div className="flex items-center gap-2">
-          <InventoryQuickSearch ref={searchRef} />
-          {primaryActions}
-        </div>
-      </div>
-
-      <div className="lg:hidden">
-        <PageHeader
-          title="Kho & Tài sản"
-          description="Chọn chức năng Kho từ menu chính"
-        >
-          <div className="flex items-center gap-2">{primaryActions}</div>
-        </PageHeader>
-      </div>
-
-      {/* Mobile/tablet: search */}
-      <div className="flex items-center gap-2 lg:hidden">
-        <div className="flex-1">
-          <InventoryQuickSearch ref={searchRef} />
-        </div>
-      </div>
+        <InventoryQuickSearch ref={searchRef} />
+      </header>}
 
       <div className="grid gap-4">
         <Tabs value={tab} onValueChange={(v) => setTab(v as MainTab)} className="min-w-0">
-          <TabsContent value="overview" className="mt-4">
-            {isMobile ? <MobileInventoryDashboard /> : <InventoryOverviewSection onNavigate={setTab as (t: string, s?: string) => void} />}
+          <TabsContent value="overview" className="mt-0">
+            <InventoryOverviewSection onNavigate={setTab as (t: string, s?: string) => void} />
           </TabsContent>
 
         <TabsContent value="assets" className="mt-4">

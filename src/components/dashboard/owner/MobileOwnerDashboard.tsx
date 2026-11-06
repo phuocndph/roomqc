@@ -140,7 +140,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
             <Link
               key={alert.id}
               to={alert.link}
-              className="flex items-center justify-between p-3 rounded-lg border border-l-4 border-l-amber-600 bg-background"
+              className="flex items-center justify-between p-3 rounded-none border border-l-4 border-l-amber-600 bg-background"
             >
               <div className="flex items-center gap-2">
                 <alert.icon className={cn('h-4 w-4', alert.color)} />
@@ -156,7 +156,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
       )}
 
       {/* Revenue Section - Today */}
-      <div className="border border-border rounded-lg divide-y divide-border">
+      <div className="border border-border rounded-none divide-y divide-border">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-2">
             <Receipt className="h-4 w-4 text-green-600" />
@@ -194,7 +194,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
           ))}
         </div>
       ) : (
-        <div className="border border-border rounded-lg divide-y divide-border">
+        <div className="border border-border rounded-none divide-y divide-border">
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
@@ -249,7 +249,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
           <Link
             key={link.href}
             to={link.href}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-background border border-border"
+            className="flex flex-col items-center gap-1.5 p-3 rounded-none bg-background border border-border"
           >
             <link.icon className={cn('h-5 w-5', link.color)} />
             <span className="text-[10px] font-medium text-foreground text-center">{link.label}</span>
@@ -260,7 +260,7 @@ export function MobileOwnerDashboard({ dateRange, datePreset, onDatePresetChange
       {/* Link to Reports */}
       <Link
         to="/reports"
-        className="flex items-center justify-between p-4 rounded-lg border border-l-4 border-l-primary bg-background"
+        className="flex items-center justify-between p-4 rounded-none border border-l-4 border-l-primary bg-background"
       >
         <div className="flex items-center gap-3">
           <BarChart3 className="h-5 w-5 text-primary" />

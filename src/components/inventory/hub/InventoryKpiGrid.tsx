@@ -1,135 +1,44 @@
-import { useMemo } from 'react'
-import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useInventoryDashboard } from '@/hooks/useInventoryDashboard'
-import { useStockoutItems } from '@/hooks/useStockoutItems'
-import { useDeadStockReport } from '@/hooks/useDeadStockReport'
 import { Skeleton } from '@/components/ui/skeleton'
+import { InventoryPanelError } from './InventoryPanelError'
 
+const number = new Intl.NumberFormat('vi-VN')
 function formatVnd(value: number) {
-  if (!value) return '0 ₫'
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)} tỷ ₫`
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} tr ₫`
-  return new Intl.NumberFormat('vi-VN').format(value) + ' ₫'
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} triệu ₫`
+  return number.format(value) + ' ₫'
 }
-
-type Tone = 'default' | 'warning' | 'danger' | 'success'
 
 interface Props {
   onNavigate: (tab: string, sub?: string) => void
 }
 
-/**
- * Compact 4-tile "Tình hình kho" — supporting stats only.
- * Action-oriented "sắp hết 7d" đã chuyển lên TodoCard; tile thứ 3 ở đây
- * đổi sang "Đã hết hàng" (stock=0 thực tế) để không trùng TodoCard.
- */
 export function InventoryKpiGrid({ onNavigate }: Props) {
-  const { data: stats, isLoading } = useInventoryDashboard()
-  const { outOfStockCount } = useStockoutItems()
-  const { data: deadStock } = useDeadStockReport(90)
+  const navigate = useNavigate()
+  const query = useInventoryDashboard()
+  const stats = query.data
 
-  const deadStockValue = useMemo(
-    () => (deadStock ?? []).reduce((acc, r) => acc + (r.total_value || 0), 0),
-    [deadStock],
-  )
-  const deadStockCount = (deadStock ?? []).length
+  if (query.isLoading) return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Đang tải số liệu kho">
+    {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-28" />)}
+  </div>
+  if (query.isError) return <div className="border bg-card"><InventoryPanelError message="Không tải được số liệu tổng quan." onRetry={() => void query.refetch()} /></div>
 
-  if (isLoading) {
-    return (
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[104px] rounded-xl" />
-        ))}
-      </div>
-    )
-  }
-
-  const deltaPct = stats?.stock_value_change_percent ?? 0
-  const deltaPositive = deltaPct >= 0
-
-  const tiles: Array<{
-    label: string
-    value: string
-    hint?: string
-    tone?: Tone
-    trailing?: React.ReactNode
-    onClick: () => void
-  }> = [
-    {
-      label: 'Giá trị tồn kho',
-      value: stats ? formatVnd(stats.total_stock_value) : '—',
-      hint: stats
-        ? `${deltaPositive ? '+' : ''}${deltaPct.toFixed(1)}% so tháng trước`
-        : undefined,
-      trailing: stats ? (
-        deltaPositive ? (
-          <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-        ) : (
-          <TrendingDown className="h-3.5 w-3.5 text-rose-600" />
-        )
-      ) : null,
-      onClick: () => onNavigate('analytics', 'consumption'),
-    },
-    {
-      label: 'Loại hàng',
-      value: stats ? new Intl.NumberFormat('vi-VN').format(stats.total_product_types) : '—',
-      hint: stats
-        ? `${new Intl.NumberFormat('vi-VN').format(stats.total_items_count)} món tồn`
-        : undefined,
-      onClick: () => onNavigate('assets', 'items'),
-    },
-    {
-      label: 'Đã hết hàng',
-      value: String(outOfStockCount),
-      hint: outOfStockCount > 0 ? 'Tồn thực tế bằng 0' : 'Không có món nào hết',
-      tone: outOfStockCount > 0 ? 'danger' : 'success',
-      onClick: () => onNavigate('analytics', 'consumption'),
-    },
-    {
-      label: 'Tồn lâu (>3 tháng)',
-      value: deadStockCount ? String(deadStockCount) : '0',
-      hint: deadStockCount ? formatVnd(deadStockValue) : 'Không có',
-      tone: deadStockCount > 0 ? 'warning' : 'default',
-      onClick: () => onNavigate('analytics', 'dead-stock'),
-    },
+  const tiles = [
+    { label: 'Giá trị tồn kho', value: stats ? formatVnd(stats.total_stock_value) : '—', hint: 'Giá trị hàng đang có', onClick: () => onNavigate('analytics', 'consumption') },
+    { label: 'Mặt hàng', value: stats ? number.format(stats.total_product_types) : '—', hint: 'Xem danh sách hàng hóa', onClick: () => navigate('/items') },
+    { label: 'Cần bổ sung', value: stats ? number.format(stats.low_stock_count) : '—', hint: 'Tồn kho dưới định mức', alert: (stats?.low_stock_count ?? 0) > 0, onClick: () => navigate('/items?stockStatus=low_stock') },
+    { label: 'Giao dịch hôm nay', value: stats ? number.format(stats.today_transactions?.total ?? 0) : '—', hint: stats ? `${stats.today_transactions?.in ?? 0} nhập · ${stats.today_transactions?.out ?? 0} xuất` : 'Chưa có dữ liệu', onClick: () => onNavigate('operations', 'transactions') },
   ]
 
-  return (
-    <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-      {tiles.map((k) => (
-        <button
-          key={k.label}
-          type="button"
-          onClick={k.onClick}
-          className={cn(
-            'group relative text-left rounded-xl border border-border/70 bg-card p-4 transition-all',
-            'hover:border-steel/50 hover:shadow-tile focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            'min-h-[104px]',
-          )}
-        >
-          <div className="font-body text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
-            {k.label}
-          </div>
-          <div
-            className={cn(
-              'mt-1.5 font-display text-2xl lg:text-[26px] font-semibold tabular-nums leading-none tracking-tight',
-              k.tone === 'danger' && 'text-rose-600',
-              k.tone === 'warning' && 'text-amber-600',
-              k.tone === 'success' && 'text-emerald-600',
-            )}
-          >
-            {k.value}
-          </div>
-          {k.hint && (
-            <div className="mt-2 flex items-center gap-1 font-body text-[11px] text-muted-foreground line-clamp-1">
-              {k.trailing}
-              <span className="truncate">{k.hint}</span>
-            </div>
-          )}
-          <ArrowUpRight className="absolute top-3 right-3 h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-steel transition-colors" />
-        </button>
-      ))}
-    </div>
-  )
+  return <section aria-label="Tình hình kho" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    {tiles.map(tile => <button key={tile.label} type="button" onClick={tile.onClick} className="group relative min-w-0 border bg-card p-4 text-left transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <span className="block pr-4 text-sm font-medium text-muted-foreground">{tile.label}</span>
+      <span className={cn('mt-2 block break-words text-2xl font-bold tabular-nums tracking-tight', tile.alert && 'text-red-700 dark:text-red-400')}>{tile.value}</span>
+      <span className="mt-1 block text-xs text-muted-foreground">{tile.hint}</span>
+      <ArrowUpRight aria-hidden="true" className="absolute right-3 top-4 h-4 w-4 text-muted-foreground group-hover:text-primary" />
+    </button>)}
+  </section>
 }
