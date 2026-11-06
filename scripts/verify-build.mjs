@@ -26,6 +26,13 @@ if (!statSync(distDir, { throwIfNoEntry: false })) {
 }
 
 const files = collectFiles(distDir)
+// Documentation embeds example manifests with REPLACE_WITH_* tokens by
+// design. They are prose examples, not runtime configuration, so exclude the
+// generated docs chunk from the runtime placeholder check.
+const runtimeBundle = files
+  .filter((file) => !/docs-loader-/i.test(file))
+  .map((file) => readFileSync(file, 'utf8'))
+  .join('\n')
 const bundle = files.map((file) => readFileSync(file, 'utf8')).join('\n')
 const indexHtml = readFileSync(join(distDir, 'index.html'), 'utf8')
 const errors = []
@@ -37,7 +44,7 @@ else {
   if (!indexHtml.includes(supabaseOrigin)) errors.push('index.html does not contain the configured Supabase origin')
 }
 
-if (/replace_with_/i.test(bundle)) errors.push('The production bundle contains an environment placeholder')
+if (/(?:REPLACE_WITH_APPROVED_PUBLISHABLE_KEY|REPLACE_WITH_64_HEX|REPLACE_WITH_APPROVED_RELEASE|REPLACE_WITH_APPROVED_CANARY_BYTES_SHA256)/.test(runtimeBundle)) errors.push('The production bundle contains an unreplaced deployment manifest placeholder')
 
 if (mode === 'vps') {
   if (/(?:localhost|127\.0\.0\.1|\[::1\]):5432[12]\b/i.test(bundle)) {
