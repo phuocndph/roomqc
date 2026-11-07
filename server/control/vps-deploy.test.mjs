@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {resolve} from 'node:path';
+import {tmpdir} from 'node:os';
 import {inventoryFixture} from './vps-onboarding.mjs';
 import {buildReleasePlan,deployArguments,executeReleasePlan,releasePaths,shellQuote,deploymentCompose,assertDeploymentTarget} from './vps-deploy.mjs';
 
+const absInventory=resolve(tmpdir(),'i.json'),absCompose=resolve(tmpdir(),'c.yml');
 const image='roomqc/control@sha256:'+'b'.repeat(64);
 const options={clusterId:'cluster-fixture',releaseId:'release-fixture',image,composeFile:'C:\\fixture\\compose.yml'};
 const model=()=>({services:{control:{image,environment:{ROOMQC_CONTROL_SIGNUP_ENABLED:'false'},healthcheck:{test:['CMD','true']}}}});
@@ -99,7 +102,7 @@ test('production installation remains blocked until authoritative admission, bac
 });
 
 test('deploy parser requires target only for execute and shell values stay bounded',()=>{
-  assert.deepEqual(deployArguments(['--inventory-file','C:\\i.json','--cluster-id','cluster-fixture','--release-id','release-fixture','--image',image,'--compose-file','C:\\c.yml','--mode','plan']).mode,'plan');
-  assert.throws(()=>deployArguments(['--inventory-file','C:\\i.json','--cluster-id','cluster-fixture','--release-id','release-fixture','--image',image,'--compose-file','C:\\c.yml','--mode','execute']),{code:'VPS_DEPLOY_EXECUTION_TARGET_REQUIRED'});
+  assert.deepEqual(deployArguments(['--inventory-file',absInventory,'--cluster-id','cluster-fixture','--release-id','release-fixture','--image',image,'--compose-file',absCompose,'--mode','plan']).mode,'plan');
+  assert.throws(()=>deployArguments(['--inventory-file',absInventory,'--cluster-id','cluster-fixture','--release-id','release-fixture','--image',image,'--compose-file',absCompose,'--mode','execute']),{code:'VPS_DEPLOY_EXECUTION_TARGET_REQUIRED'});
   assert.match(shellQuote("a'b"),/^'a'\\''b'$/);assert.throws(()=>shellQuote('bad\nvalue'),{code:'VPS_DEPLOY_SHELL_VALUE_INVALID'});
 });

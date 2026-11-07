@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,unlink,rmdir} from 'node:fs/promises';
+import {mkdir,mkdtemp,writeFile,unlink,rmdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {executorDocument,loadExecutorRelease,prepareExecutorRelease,main} from '../../scripts/roomqc-vps-executor.mjs';
@@ -11,6 +11,7 @@ import {releaseApprovalEndpointFingerprint} from './release-approval.mjs';
 
 const image='roomqc/test@sha256:'+'a'.repeat(64);
 async function fixture(){
+  await mkdir(resolve('.local'),{recursive:true});
   const directory=await mkdtemp(resolve('.local/executor-test-')),id=randomUUID();
   const options={inventoryFile:resolve(directory,'inventory.json'),composeFile:resolve(directory,'compose.json'),
     clusterId:'cluster-fixture',releaseId:'release-executor',image,host:'1.1.1.1',user:'roomqc',identityFile:resolve(directory,'test-key')};

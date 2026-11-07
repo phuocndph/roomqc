@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,rm} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {randomUUID} from 'node:crypto';
 import {hostInventoryArguments,readHostInventory,validateHostInventory} from './host-inventory.mjs';
@@ -34,7 +34,8 @@ test('host inventory accepts local only behind explicit development flag and rej
 });
 test('host inventory requires candidate-compatible cluster IDs and exact CLI arguments',async()=>{
   const tooLong=structuredClone(valid);tooLong.inventory[0].id='a'.repeat(41);assert.throws(()=>validateHostInventory(tooLong),{code:'HOST_INVENTORY_NO_CANDIDATES'});
-  assert.deepEqual(hostInventoryArguments(['--inventory-file','C:\\private\\inventory.json']),{inventoryFile:'C:\\private\\inventory.json'});
+  const absolute=resolve(tmpdir(),'private','inventory.json');
+  assert.deepEqual(hostInventoryArguments(['--inventory-file',absolute]),{inventoryFile:absolute});
   assert.deepEqual(hostInventoryArguments(['--help']),{help:true});
   for(const args of [[],['--inventory-file','relative.json'],['--inventory-file','a','extra']])assert.throws(()=>hostInventoryArguments(args),{code:'HOST_INVENTORY_ARGUMENTS_INVALID'});
   const root=await mkdtemp(join(tmpdir(),'roomqc-host-inventory-')),file=join(root,'inventory.json');
