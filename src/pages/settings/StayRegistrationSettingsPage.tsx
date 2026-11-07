@@ -50,13 +50,19 @@ export default function StayRegistrationSettingsPage() {
     if (!selectedHotel?.id) return
     let cancelled = false
     setConfigLoading(true)
-    supabase.rpc('get_tbltkbtt_safe_config', { p_hotel_id: selectedHotel.id }).then(({ data, error }) => {
-      if (cancelled) return
-      if (error) throw error
-      setCfg({ ...EMPTY, ...(data as TbltkbttConfig), account: '', token: '' })
-      setDirty(false)
-    }).catch(() => { if (!cancelled) setCfg(EMPTY) })
-      .finally(() => { if (!cancelled) setConfigLoading(false) })
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_tbltkbtt_safe_config', { p_hotel_id: selectedHotel.id })
+        if (cancelled) return
+        if (error) throw error
+        setCfg({ ...EMPTY, ...(data as unknown as TbltkbttConfig), account: '', token: '' })
+        setDirty(false)
+      } catch {
+        if (!cancelled) setCfg(EMPTY)
+      } finally {
+        if (!cancelled) setConfigLoading(false)
+      }
+    })()
     return () => { cancelled = true }
   }, [selectedHotel?.id])
 

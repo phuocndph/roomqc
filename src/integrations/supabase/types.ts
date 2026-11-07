@@ -13972,6 +13972,10 @@ export type Database = {
         Args: { p_days?: number; p_hotel_id: string; p_start_date: string }
         Returns: Json
       }
+      get_tbltkbtt_safe_config: {
+        Args: { p_hotel_id: string }
+        Returns: Json
+      }
       get_tenant_billing_summary: {
         Args: { p_tenant_id: string }
         Returns: Json
@@ -14809,6 +14813,10 @@ export type Database = {
           p_receiver_name: string
           p_vendor_id: string
         }
+        Returns: Json
+      }
+      save_tbltkbtt_config: {
+        Args: { p_config: Json; p_hotel_id: string }
         Returns: Json
       }
       set_conversation_mute: {

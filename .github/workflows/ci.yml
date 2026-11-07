@@ -17,6 +17,8 @@ jobs:
       VITE_SUPABASE_PROJECT_ID: roomqc-ci
       VITE_VAPID_PUBLIC_KEY: BIb2-YMJYspRhZ2J_Xpb3DQuWydfRqjeSvzHhJwWDE19G9WqTcX_l6HJM9PlmWZYIqaEQKyJ4SG-WwztLK6Pqx8
       VITE_ENABLE_DEMO_DATA: "false"
+      # The MCP edge entrypoint is RoomQC-owned; skip the plugin sync that would overwrite it.
+      ROOMQC_SKIP_MCP_SYNC: "true"
     steps:
       - uses: actions/checkout@v4
 
