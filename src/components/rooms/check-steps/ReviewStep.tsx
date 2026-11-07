@@ -16,6 +16,7 @@ import type { RoomCheckFormData, LaundryItem, ConsumedItem, LostItem, ReplacedIt
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ReviewStepProps {
   form: UseFormReturn<RoomCheckFormData>
@@ -416,7 +417,7 @@ export function ReviewStep({ form, room, checkType, currentBooking }: ReviewStep
         <div className="flex flex-wrap gap-2">
           {photos.map((url, index) => (
             <div key={index} className="relative group">
-              <img
+              <StorageImage
                 src={url}
                 alt={`Photo ${index + 1}`}
                 className="h-16 w-16 rounded object-cover"

@@ -24,6 +24,7 @@ import { MobileItemDetailPage } from '@/components/items/MobileItemDetailPage'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { toast } from 'sonner'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export default function ItemDetailPage() {
   const { t } = useTranslation(['items', 'common', 'inventory'])
@@ -161,7 +162,7 @@ export default function ItemDetailPage() {
                     img.is_primary && "ring-2 ring-primary"
                   )}
                 >
-                  <img
+                  <StorageImage
                     src={img.url}
                     alt={`${item.name} ${idx + 1}`}
                     className="h-full w-full object-cover"

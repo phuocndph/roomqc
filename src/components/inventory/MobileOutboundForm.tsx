@@ -53,6 +53,7 @@ import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { triggerHaptic } from '@/lib/haptics'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const DRAFT_KEY = 'outbound_form_draft'
 
@@ -729,7 +730,7 @@ export function MobileOutboundForm() {
                       {/* Header: Image + Name + Remove button */}
                       <div className="flex items-start gap-3 mb-3">
                         {primaryImage ? (
-                          <img 
+                          <StorageImage 
                             src={primaryImage} 
                             alt={item?.name}
                             className="w-14 h-14 rounded-lg object-cover shrink-0" 
@@ -1056,7 +1057,7 @@ export function MobileOutboundForm() {
                     >
                       <div className="flex gap-3">
                         {primaryImage ? (
-                          <img 
+                          <StorageImage 
                             src={primaryImage} 
                             alt={item.name}
                             className="w-12 h-12 rounded object-cover" 

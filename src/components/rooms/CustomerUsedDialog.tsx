@@ -16,6 +16,7 @@ import { useCreateChargeableConsumption } from '@/hooks/useChargeableConsumption
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { triggerHaptic } from '@/lib/haptics'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface CustomerUsedDialogProps {
   open: boolean
@@ -147,7 +148,7 @@ export function CustomerUsedDialog({
           {/* Item Info */}
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             {item.item_thumbnail ? (
-              <img
+              <StorageImage
                 src={item.item_thumbnail}
                 alt={item.item_name}
                 className="h-12 w-12 rounded object-cover"

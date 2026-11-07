@@ -11,6 +11,7 @@ import type { RoomItemWithDetails, ConsumedItem } from '@/types/rooms.types'
 import { CategoryGroup, groupItemsByCategory } from './CategoryGroup'
 import { getCheckTypeConfig, type CheckType } from '@/lib/roomCheckConfig'
 import { supabase } from '@/integrations/supabase/client'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ExtendedRoomItem extends RoomItemWithDetails {
   category_name?: string | null
@@ -182,7 +183,7 @@ export function ConsumableTab({
           {/* Row 1: Info + Status Badge */}
           <div className="flex items-center gap-3">
             {item.item_thumbnail ? (
-              <img
+              <StorageImage
                 src={item.item_thumbnail}
                 alt={item.item_name}
                 className="w-10 h-10 object-cover rounded-lg flex-shrink-0"

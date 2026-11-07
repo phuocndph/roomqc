@@ -46,6 +46,7 @@ import { useRoomViewDensity } from '@/hooks/useRoomViewDensity'
 import { canCreateHousekeepingTask } from '@/lib/userAccess'
 import { TASK_TYPE_LABELS } from '@/types/housekeeping.types'
 import type { RoomWithStats } from '@/types/rooms.types'
+import { resolveRoomNightPrice } from '@/lib/roomPriceSource'
 import type { TaskType } from '@/types/housekeeping.types'
 
 
@@ -149,7 +150,16 @@ export function RoomTable({ rooms, isLoading, selectedIds, onSelectionChange }: 
                 <TableCell className="text-right">
                   {(() => {
                     const tp = todayPrices?.get((room.room_type ?? '').toLowerCase())
-                    if (!tp) {
+                    const resolved = resolveRoomNightPrice(tp, room.base_price)
+                    if (resolved.source === 'room_base') {
+                      return (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="font-medium">{formatCurrency(resolved.price)}</span>
+                          <span className="text-[10px] text-muted-foreground" title="Loại phòng chưa có bảng giá nên dùng giá cơ bản nhập cho phòng này">{resolved.label}</span>
+                        </div>
+                      )
+                    }
+                    if (!tp || resolved.source === 'none') {
                       return (
                         <button
                           type="button"
@@ -170,6 +180,7 @@ export function RoomTable({ rooms, isLoading, selectedIds, onSelectionChange }: 
                         <div className="flex gap-1">
                           {tp.has_seasonal && <span className="text-amber-600 text-[10px]" title="Áp quy tắc mùa">● Mùa</span>}
                           {tp.has_override && <span className="text-blue-600 text-[10px]" title="Giá ghi đè theo ngày">● Ngày</span>}
+                          {resolved.source === 'table' && <span className="text-muted-foreground text-[10px]" title="Giá lấy từ bảng giá của loại phòng, không phải giá cơ bản nhập cho phòng">{resolved.label}</span>}
                         </div>
                       </div>
                     )

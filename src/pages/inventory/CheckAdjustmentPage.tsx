@@ -38,6 +38,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const AUTO_SAVE_DELAY = 2000 // 2 seconds
 
@@ -383,7 +384,7 @@ export function CheckAdjustmentPage() {
           {/* Item Info */}
           <div className="flex items-start gap-4">
             {currentItem.item?.item_images?.[0]?.url && (
-              <img
+              <StorageImage
                 src={currentItem.item.item_images[0].url}
                 alt={currentItem.item.name}
                 className="h-24 w-24 rounded-lg object-cover"

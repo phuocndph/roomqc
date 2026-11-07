@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { instanceChannelName } from '@/lib/realtime/channelName'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 type Row = {
   id: string
@@ -168,7 +169,7 @@ export default function IssuesReviewPage() {
                       <div className="flex gap-1 mt-2">
                         {r.photos.slice(0, 4).map((p, i) => (
                           <a key={i} href={p} target="_blank" rel="noreferrer">
-                            <img src={p} alt="" className="w-12 h-12 object-cover rounded border" />
+                            <StorageImage src={p} alt="" className="w-12 h-12 object-cover rounded border" />
                           </a>
                         ))}
                       </div>

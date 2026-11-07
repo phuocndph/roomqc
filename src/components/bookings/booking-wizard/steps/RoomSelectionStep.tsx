@@ -35,6 +35,7 @@ const getRoomStatusBadge = (status: string) => {
 }
 import { useHotelContext } from '@/contexts/HotelContext'
 import { BookingFormState, BookingFormComputed, SelectedRoomWithPrice } from '../types'
+import { resolveBookingUnitPrice } from '@/lib/roomPriceSource'
 
 interface RoomSelectionStepProps {
   state: BookingFormState
@@ -80,11 +81,8 @@ const getTotalLabel = (bookingType: string) => {
   }
 }
 
-const getRoomDisplayPrice = (room: AvailableRoom, bookingType: string): number | null => {
-  if (bookingType === 'hourly') return room.rate_hourly
-  if (bookingType === 'monthly') return room.rate_monthly
-  return room.rate_daily
-}
+const getRoomDisplayPrice = (room: AvailableRoom, bookingType: string) =>
+  resolveBookingUnitPrice(room, bookingType === 'hourly' ? 'hourly' : bookingType === 'monthly' ? 'monthly' : 'daily')
 
 export function RoomSelectionStep({ 
   state, 
@@ -177,11 +175,15 @@ export function RoomSelectionStep({
                     T{room.floor} • {getRoomTypeLabel(room.room_type)}
                   </span>
                   {(() => {
-                    const displayPrice = getRoomDisplayPrice(room, state.bookingType)
-                    if (displayPrice && displayPrice > 0) {
+                    const display = getRoomDisplayPrice(room, state.bookingType)
+                    if (display.price > 0) {
                       return (
-                        <span className="text-xs font-medium text-primary">
-                          {formatCurrency(displayPrice)}
+                        <span
+                          className="text-xs font-medium text-primary"
+                          title={display.source === 'room_base' ? 'Giá cơ bản của phòng (loại phòng chưa có bảng giá)' : 'Bảng giá loại phòng'}
+                        >
+                          {formatCurrency(display.price)}
+                          {display.source === 'room_base' && <span className="ml-0.5 text-[10px] text-muted-foreground">(giá phòng)</span>}
                         </span>
                       )
                     }

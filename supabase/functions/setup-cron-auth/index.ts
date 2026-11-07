@@ -44,6 +44,10 @@ const PROTECTED_JOBS: Record<string, { url: string; body: string }> = {
     url: `${SUPABASE_URL}/functions/v1/reconcile-room-check-side-effects`,
     body: `jsonb_build_object('source','cron','at', now()::text)`,
   },
+  "room-check-photo-retention-daily": {
+    url: `${SUPABASE_URL}/functions/v1/room-check-photo-retention`,
+    body: `jsonb_build_object('triggered_at', now())`,
+  },
 };
 
 function buildCommand(url: string, body: string, secret: string): string {

@@ -13,6 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface MobileItemCardProps {
   item: {
@@ -72,7 +73,7 @@ export function MobileItemCard({ item, onView, onEdit, onDelete }: MobileItemCar
       {/* Image */}
       <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden">
         {primaryImage ? (
-          <img 
+          <StorageImage 
             src={primaryImage} 
             alt={item.name}
             className="w-full h-full object-cover"

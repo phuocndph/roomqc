@@ -22,6 +22,7 @@ import {
 import { SubReasonPicker } from './SubReasonPicker'
 import { isNativeApp } from '@/lib/native/platform'
 import { NativePhotoButton } from '@/components/mobile/NativePhotoButton'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 /**
  * LeanReportIssueSheet — Phase B1.
@@ -428,7 +429,7 @@ export function LeanReportIssueSheet({
                 <div className="mt-2 flex flex-wrap gap-2">
                   {photos.map((url, i) => (
                     <div key={i} className="relative w-20 h-20">
-                      <img
+                      <StorageImage
                         src={url}
                         alt=""
                         className="w-20 h-20 object-cover rounded-md border"

@@ -410,17 +410,17 @@ const router = createBrowserRouter([
 
       // Rooms
       { path: "setup/rooms", element: <RoleGuard allowedRoles={['owner']}><PermissionRoute module="rooms" action="create"><Navigate to="/rooms" replace /></PermissionRoute></RoleGuard> },
-      { path: "rooms", element: <PermissionRoute module="rooms"><RoomsPage /></PermissionRoute> },
+      { path: "rooms", element: <PermissionRoute module="rooms" fallback={<Navigate to="/my-tasks" replace />}><RoomsPage /></PermissionRoute> },
       { path: "rooms/new", element: <PermissionRoute module="rooms" action="create"><RoomFormPage /></PermissionRoute> },
       { path: "rooms/:id", element: <PermissionRoute module="rooms"><RoomDetailPage /></PermissionRoute> },
       { path: "rooms/:id/edit", element: <PermissionRoute module="rooms" action="update"><RoomFormPage /></PermissionRoute> },
-      { path: "rooms/:id/check", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomCheckRouter /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomCheckOverviewPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/inspection", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanInspectionPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/review", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanReviewPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/success", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanSuccessPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-replenish", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomReplenishLeanPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-delivery", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomDeliveryLeanPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomCheckRouter /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomCheckOverviewPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/inspection", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanInspectionPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/review", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanReviewPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/success", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanSuccessPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-replenish", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomReplenishLeanPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-delivery", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomDeliveryLeanPage /></RequireShiftRouteGate></PermissionRoute> },
 
       { path: "rooms/standards", element: <PermissionRoute module="rooms"><RoomStandardsPage /></PermissionRoute> },
 

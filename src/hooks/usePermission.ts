@@ -18,6 +18,7 @@ export type PermissionModule =
   | 'subscription'
   | 'hotels'
   | 'purchase_orders'
+  | 'room_checks'
 
 export type PermissionAction = 'view' | 'create' | 'update' | 'delete' | 'export' | 'approve' | 'assign' | 'manage'
 
@@ -27,6 +28,7 @@ export const ALL_MODULES: { code: PermissionModule; name: string }[] = [
   { code: 'inventory', name: 'Kho hàng' },
   { code: 'items', name: 'Tài sản' },
   { code: 'rooms', name: 'Phòng' },
+  { code: 'room_checks', name: 'Kiểm phòng' },
   { code: 'bookings', name: 'Đặt phòng' },
   { code: 'laundry', name: 'Giặt là' },
   { code: 'maintenance', name: 'Bảo trì' },

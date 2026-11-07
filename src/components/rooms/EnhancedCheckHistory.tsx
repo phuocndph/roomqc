@@ -15,6 +15,7 @@ import { vi } from 'date-fns/locale'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CheckoutReportCard } from './CheckoutReportCard'
 import type { RoomCheckWithUser, CheckType } from '@/types/rooms.types'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface EnhancedCheckHistoryProps {
   checks: RoomCheckWithUser[]
@@ -302,7 +303,7 @@ export function EnhancedCheckHistory({ checks }: EnhancedCheckHistoryProps) {
                             }}
                             className="relative w-16 h-16 rounded border overflow-hidden hover:opacity-80 transition-opacity"
                           >
-                            <img 
+                            <StorageImage 
                               src={photo} 
                               alt={`Photo ${idx + 1}`}
                               className="w-full h-full object-cover"
@@ -365,7 +366,7 @@ export function EnhancedCheckHistory({ checks }: EnhancedCheckHistoryProps) {
                 rel="noopener noreferrer"
                 className="relative aspect-square rounded-lg overflow-hidden border hover:border-primary transition-colors group"
               >
-                <img 
+                <StorageImage 
                   src={photo} 
                   alt={`Photo ${idx + 1}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"

@@ -23,6 +23,7 @@ import {
   LEAN_TEXT,
 } from '@/components/rooms/lean/LeanStates'
 import { resolveBucket } from '@/lib/issueBucketMapping'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 type LeanCheckType = 'daily' | 'periodic' | 'checkin' | 'checkout' | 'maintenance'
 
@@ -417,7 +418,7 @@ export default function LeanReviewPage() {
                         {iss.photos.length > 0 && (
                           <div className="mt-2 flex gap-1.5">
                             {iss.photos.slice(0, 4).map((url, i) => (
-                              <img
+                              <StorageImage
                                 key={i}
                                 src={url}
                                 alt=""
@@ -480,7 +481,7 @@ export default function LeanReviewPage() {
               </h2>
               <p className="text-[13px] text-muted-foreground mt-1">
                 {photoMode === 'always'
-                  ? 'Chụp ít nhất một ảnh tổng quan trước khi gửi kết quả.'
+                  ? 'Cần ít nhất một ảnh trước khi gửi: ảnh tổng quan hoặc ảnh sự cố đều được.'
                   : 'Có thể thêm ảnh tổng quan để người duyệt đối chiếu.'}
               </p>
             </div>
@@ -493,7 +494,7 @@ export default function LeanReviewPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               {reviewPhotos.map((url, index) => (
                 <div key={`${url}-${index}`} className="relative h-20 w-20">
-                  <img src={url} alt="Ảnh bằng chứng phòng" className="h-full w-full rounded-lg border object-cover" />
+                  <StorageImage src={url} alt="Ảnh bằng chứng phòng" className="h-full w-full rounded-lg border object-cover" />
                   <button
                     type="button"
                     onClick={() => setReviewPhotos((current) => current.filter((_, i) => i !== index))}

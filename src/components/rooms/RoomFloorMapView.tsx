@@ -32,6 +32,7 @@ import { getPresetCellSize, useFloorMapCellSize, type CellSizeState } from '@/ho
 import { useFloorMapCellSizeRemote } from '@/hooks/useFloorMapCellSizeRemote'
 import { toast } from 'sonner'
 import { useTodayPricesByHotel } from '@/hooks/usePricingDaily'
+import { resolveRoomNightPrice } from '@/lib/roomPriceSource'
 
 
 // "Bucket" hiển thị cho lễ tân — gom 11 trạng thái nội bộ vào 5 nhóm dễ hiểu
@@ -711,7 +712,7 @@ export function RoomFloorMapView({
                                 const tp = todayPrices?.get((room.room_type ?? '').toLowerCase())
                                 if (tp && !tp.is_closed && tp.final_price > 0) {
                                   return (
-                                    <div className={cn('font-bold text-white drop-shadow-sm flex items-center gap-0.5', cellSize.classes.bodyCls)} style={cellSize.classes.bodyStyle}>
+                                    <div className={cn('font-bold text-white drop-shadow-sm flex items-center gap-0.5', cellSize.classes.bodyCls)} style={cellSize.classes.bodyStyle} title={resolveRoomNightPrice(tp, null).label}>
                                       {formatCurrency(tp.final_price)}
                                       {tp.has_seasonal && <span className="text-amber-200" title="Có quy tắc mùa">●</span>}
                                     </div>

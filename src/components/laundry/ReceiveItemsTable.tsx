@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatCurrency } from '@/lib/utils'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ReceiveItemsTableProps {
   items: any[]
@@ -64,7 +65,7 @@ export function ReceiveItemsTable({
                 >
                   <TableCell>
                     {(item as any).item?.images?.[0] ? (
-                      <img
+                      <StorageImage
                         src={(item as any).item.images[0]}
                         alt={(item as any).item.name}
                         className="h-10 w-10 rounded object-cover"

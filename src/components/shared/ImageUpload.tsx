@@ -6,6 +6,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { useUser } from '@/hooks/useUser';
 import { isNativeApp } from '@/lib/native/platform';
 import { NativePhotoButton } from '@/components/mobile/NativePhotoButton';
+import { StorageImage } from '@/components/shared/StorageImage'
 interface ImageUploadProps {
   images: string[];
   onChange: (images: string[]) => void;
@@ -81,7 +82,7 @@ export function ImageUpload({
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5">
           {images.map((image, index) => (
             <div key={index} className="relative aspect-square">
-              <img 
+              <StorageImage 
                 src={image} 
                 alt={`Upload ${index + 1}`} 
                 className="h-full w-full rounded-lg object-cover" 

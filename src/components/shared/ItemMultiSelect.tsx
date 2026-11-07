@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useItems } from '@/hooks/useItems'
 import { ItemStatus } from '@/types/items.types'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ItemMultiSelectProps {
   value: string[]
@@ -119,7 +120,7 @@ export function ItemMultiSelect({
                   )}
                 />
                 {item.item_images?.[0]?.url && (
-                  <img
+                  <StorageImage
                     src={item.item_images[0].url}
                     alt={item.name}
                     className="mr-2 h-8 w-8 rounded object-cover"

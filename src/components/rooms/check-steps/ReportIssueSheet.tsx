@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast'
 import { getFriendlyError } from '@/lib/errorMessage'
 import { isNativeApp } from '@/lib/native/platform'
 import { NativePhotoButton } from '@/components/mobile/NativePhotoButton'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export type IssueAction =
   | { type: 'laundry'; quantity: number; photos?: string[] }
@@ -263,7 +264,7 @@ export function ReportIssueSheet({
               <div className="mt-2 flex flex-wrap gap-2">
                 {photos.map((url, i) => (
                   <div key={i} className="relative w-16 h-16">
-                    <img src={url} alt="" className="w-16 h-16 object-cover rounded-md border" />
+                    <StorageImage src={url} alt="" className="w-16 h-16 object-cover rounded-md border" />
                     <button
                       type="button"
                       onClick={() => setPhotos(p => p.filter((_, idx) => idx !== i))}

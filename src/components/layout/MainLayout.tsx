@@ -31,6 +31,7 @@ import { useHotelContext } from '@/contexts/HotelContext'
 import { setPrefetchContext } from '@/lib/route-data-prefetch'
 import { RoomCommandRecovery } from '@/components/rooms/RoomCommandRecovery'
 import { RoomOperationRecovery } from '@/components/rooms/RoomOperationRecovery'
+import { UsageModeRouteGuard } from './UsageModeRouteGuard'
 
 const MainLayoutContent = () => {
   const { isMobile } = useBreakpoint()
@@ -95,7 +96,7 @@ const MainLayoutContent = () => {
                   <QuotaWarningBanner onDismiss={() => dismissBanner('quota_warning')} />
                 </div>
               )}
-              <Outlet />
+              <UsageModeRouteGuard><Outlet /></UsageModeRouteGuard>
             </>
           )}
         </main>
@@ -122,7 +123,7 @@ const MainLayoutContent = () => {
                   <QuotaWarningBanner onDismiss={() => dismissBanner('quota_warning')} />
                 </div>
               )}
-              <Outlet />
+              <UsageModeRouteGuard><Outlet /></UsageModeRouteGuard>
             </div>
           )}
         </main>

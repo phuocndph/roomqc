@@ -28,6 +28,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { useHasPermission } from '@/hooks/usePermission'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const STATUS_CONFIG = {
   in_stock: { label: 'Còn hàng', variant: 'default' as const },
@@ -129,7 +130,7 @@ export const MobileItemDetailPage = () => {
         {/* Hero Image */}
         {primaryImage && (
           <Card className="overflow-hidden">
-            <img
+            <StorageImage
               src={primaryImage}
               alt={item.name}
               className="w-full h-48 object-cover"

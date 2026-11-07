@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface BatchItemsTableProps {
   items: any[]
@@ -118,7 +119,7 @@ function ItemsTableContent({
                 >
                   <TableCell>
                     {item.item_thumbnail ? (
-                      <img
+                      <StorageImage
                         src={item.item_thumbnail}
                         alt={item.item_name}
                         className="h-10 w-10 rounded object-cover"

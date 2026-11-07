@@ -409,6 +409,7 @@ export function MobileRoomFormPage() {
                     {...register('base_price', { valueAsNumber: true })}
                     className="h-12 text-base"
                   />
+                  <p className="text-xs text-muted-foreground">Chỉ dùng khi loại phòng chưa có bảng giá. Có bảng giá (mặc định, theo mùa, theo ngày) thì bán theo bảng giá.</p>
                   {errors.base_price && (
                     <p className="text-sm text-destructive">{errors.base_price.message}</p>
                   )}

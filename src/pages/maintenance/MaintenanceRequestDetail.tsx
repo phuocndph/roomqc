@@ -40,6 +40,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { PermissionGate } from '@/components/auth/PermissionGate'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const ISSUE_TYPE_LABELS: Record<string, string> = {
   repair: 'Sửa chữa',
@@ -427,7 +428,7 @@ export default function MaintenanceRequestDetail() {
                     </p>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                       {request.photos.map((photo: string, index: number) => (
-                        <img
+                        <StorageImage
                           key={index}
                           src={photo}
                           alt={`Ảnh báo cáo ${index + 1}`}
@@ -452,7 +453,7 @@ export default function MaintenanceRequestDetail() {
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {request.completion_photos.map(
                           (photo: string, index: number) => (
-                            <img
+                            <StorageImage
                               key={index}
                               src={photo}
                               alt={`Ảnh hoàn thành ${index + 1}`}
@@ -484,7 +485,7 @@ export default function MaintenanceRequestDetail() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     {request.reporter?.avatar_url ? (
-                      <img
+                      <StorageImage
                         src={request.reporter.avatar_url}
                         alt={request.reporter.full_name || 'Người báo cáo'}
                         className="h-8 w-8 rounded-full"

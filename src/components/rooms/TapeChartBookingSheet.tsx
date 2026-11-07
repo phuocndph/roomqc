@@ -45,6 +45,7 @@ import {
   ChevronDown,
   ExternalLink,
 } from 'lucide-react'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface Props {
   booking: TapeChartBooking | null
@@ -559,7 +560,7 @@ export function TapeChartBookingSheet({
                             rel="noreferrer"
                             className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted"
                           >
-                            <img
+                            <StorageImage
                               src={details.guest_id_image_url}
                               alt="Giấy tờ"
                               className="h-full w-full object-cover"
