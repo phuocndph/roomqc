@@ -1,14 +1,65 @@
 import { focusManager, onlineManager, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useTenantSubscription } from '@/hooks/useSubscription';
 import { isTenantOwner, isManager, isStaff } from '@/lib/userAccess';
 import type { Announcement, AnnouncementPlacement } from '@/types/announcement.types';
 import { announcementScope, confirmDismissal, dismissalSnapshot, isAnnouncementDismissed, pendingDismissals, rememberDismissal, subscribeDismissals } from '@/lib/announcement-state';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 const syncing = new Map<string, Promise<void>>();
 const lastAttempt = new Map<string, number>();
+
+// MainLayout mounts several announcement consumers (active-banner, top,
+// bottom and popup). They all need the same invalidation signal, but creating
+// the same Realtime topic once per consumer makes newer supabase-js versions
+// reject a second callback registration after the topic is subscribed. Keep a
+// single channel and fan the invalidation out locally. Realtime is an
+// enhancement here: a channel failure must never take down the authenticated
+// application; the query still has its normal fetch/focus recovery path.
+let announcementsChannel: RealtimeChannel | null = null;
+const announcementRealtimeListeners = new Set<() => void>();
+
+function subscribeAnnouncementRealtime(listener: () => void): () => void {
+  announcementRealtimeListeners.add(listener);
+
+  if (!announcementsChannel) {
+    try {
+      const channel = supabase.channel(instanceChannelName('announcements-runtime-v2'));
+      announcementsChannel = channel;
+      channel
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'announcements' },
+          () => {
+            for (const invalidate of announcementRealtimeListeners) invalidate();
+          },
+        )
+        .subscribe((status, error) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            // Keep the query usable through its HTTP/focus path. Do not throw
+            // from a realtime callback because it would crash MainLayout.
+            console.warn('[Announcements] Realtime unavailable:', error?.message ?? status);
+          }
+        });
+    } catch (error) {
+      // A malformed/stale Realtime runtime must not block login or navigation.
+      console.warn('[Announcements] Realtime setup skipped:', error);
+      announcementsChannel = null;
+    }
+  }
+
+  return () => {
+    announcementRealtimeListeners.delete(listener);
+    if (announcementRealtimeListeners.size === 0 && announcementsChannel) {
+      const channel = announcementsChannel;
+      announcementsChannel = null;
+      void supabase.removeChannel(channel).catch(() => undefined);
+    }
+  };
+}
 
 async function syncDismissals(scope: string, userId: string) {
   const existing = syncing.get(scope);
@@ -87,17 +138,9 @@ export function useActiveAnnouncements(placement?: AnnouncementPlacement) {
 
   // Realtime invalidation
   useEffect(() => {
-    const ch = supabase
-      .channel('announcements-runtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'announcements' },
-        () => qc.invalidateQueries({ queryKey: ['announcements', 'active'] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return subscribeAnnouncementRealtime(() => {
+      void qc.invalidateQueries({ queryKey: ['announcements', 'active'] });
+    });
   }, [qc]);
 
   const query = useQuery({

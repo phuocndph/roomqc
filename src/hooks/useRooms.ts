@@ -8,6 +8,7 @@ import { useRoomCommandExecutor } from './useRoomCommandExecutor'
 import { RoomCommandError } from '@/lib/room-transition-command'
 import type { RoomWithStats, RoomFilters } from '@/types/rooms.types'
 import { isAdminUser } from '@/lib/userAccess'
+import { resolveRoomCheckPhotoUrls } from '@/lib/roomCheckPhotos'
 import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 
 export function useRooms(filters: RoomFilters = {}) {
@@ -162,7 +163,7 @@ export function useRoom(roomId: string | undefined) {
       }))
       
       // Transform checks data
-      const recent_checks = (recentChecks || []).map((check: any) => ({
+      const recent_checks = await Promise.all((recentChecks || []).map(async (check: any) => ({
         id: check.id,
         check_type: check.check_type,
         cleanliness_score: check.cleanliness_score,
@@ -174,11 +175,11 @@ export function useRoom(roomId: string | undefined) {
         items_lost: check.items_lost,
         items_replaced: check.items_replaced,
         notes: check.notes,
-        photos: check.photos,
+        photos: await resolveRoomCheckPhotoUrls(check.photos),
         checked_at: check.checked_at,
         checked_by_name: check.users?.full_name || 'Unknown',
         checked_by_avatar: check.users?.avatar_url,
-      }))
+      })))
 
       
       return {

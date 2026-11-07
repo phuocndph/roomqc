@@ -234,7 +234,7 @@ export function LeanReportIssueSheet({
     if (!file || !tenantId) return
     setUploadError(null)
     try {
-      const uploaded = await uploadImage(file, tenantId)
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
       if (uploaded?.url) setPhotos((p) => [...p, uploaded.url])
     } catch {
       setUploadError('Ảnh chưa gửi lên được. Bạn có thể thử lại hoặc chụp ảnh khác.')

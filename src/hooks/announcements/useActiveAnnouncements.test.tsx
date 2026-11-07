@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   insert: vi.fn(),
   getUser: vi.fn(),
   reads: vi.fn(),
+  channels: [] as Array<{ on: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> }>,
 }))
 vi.mock('@/hooks/useUser', () => ({ useUser: () => ({ user: state.user }) }))
 vi.mock('@/hooks/useSubscription', () => ({
@@ -21,8 +22,12 @@ vi.mock('@/lib/userAccess', () => ({ isTenantOwner: () => true, isManager: () =>
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: state.getUser },
-    channel: () => { const channel = { on: () => channel, subscribe: () => channel }; return channel },
-    removeChannel: vi.fn(),
+    channel: () => {
+      const channel = { on: vi.fn(() => channel), subscribe: vi.fn(() => channel) }
+      state.channels.push(channel)
+      return channel
+    },
+    removeChannel: vi.fn(async () => ({ error: null })),
     from: (table: string) => ({
       insert: state.insert,
       select: () => {
@@ -52,6 +57,7 @@ beforeEach(() => {
   state.insert.mockReset().mockResolvedValue({ error: null })
   state.getUser.mockReset().mockImplementation(async () => ({ data: { user: { id: state.user.id } }, error: null }))
   state.reads.mockClear()
+  state.channels = []
 })
 afterEach(cleanup)
 
@@ -124,5 +130,19 @@ describe('announcement server/local acknowledgement', () => {
     }, { wrapper: wrapper() })
     await waitFor(() => expect(pendingDismissals(scope)).toEqual([]))
     expect(state.insert).toHaveBeenCalledTimes(1)
+  })
+
+  it('shares one realtime channel across multiple consumers', async () => {
+    const client = wrapper()
+    const view = renderHook(() => {
+      useActiveAnnouncements()
+      useActiveAnnouncements('popup_center')
+      return useActiveAnnouncements('top_banner')
+    }, { wrapper: client })
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true))
+    expect(state.channels).toHaveLength(1)
+    expect(state.channels[0].on).toHaveBeenCalledTimes(1)
+    view.unmount()
+    await waitFor(() => expect(state.channels).toHaveLength(1))
   })
 })

@@ -5,6 +5,7 @@ import { useHotelContext } from '@/contexts/HotelContext'
 import { useHasPermission } from './usePermission'
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 /**
  * Đếm số task `completed_pending_review` thuộc tenant + (hotel đang chọn nếu có).
@@ -24,7 +25,7 @@ export function usePendingReviewCount() {
   useEffect(() => {
     if (!enabled) return
     const ch = supabase
-      .channel('pending-review-count')
+      .channel(instanceChannelName('pending-review-count'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'housekeeping_tasks' },

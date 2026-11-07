@@ -12,6 +12,7 @@ import {
   sendTelegramNotification
 } from '@/hooks/useNotificationTriggers'
 import { getNotificationRecipients } from '@/utils/notificationRecipients'
+import { resolveRoomCheckPhotoUrls } from '@/lib/roomCheckPhotos'
 import type { RoomCheckFormData, LaundryItem, LostItem, ConsumedItem, DamagedItem, RoomStatusV2 } from '@/types/rooms.types'
 
 /**
@@ -53,7 +54,10 @@ export function useRoomChecks(roomId: string | undefined) {
         .limit(20)
       
       if (error) throw error
-      return data
+      return await Promise.all((data || []).map(async (check: any) => ({
+        ...check,
+        photos: await resolveRoomCheckPhotoUrls(check.photos),
+      })))
     },
     enabled: !!roomId,
   })
@@ -745,7 +749,7 @@ export function useCreateRoomCheck() {
       // Get room info first
       const { data: room, error: roomError } = await supabase
         .from('rooms')
-        .select('hotel_id, room_number')
+        .select('hotel_id, tenant_id, room_number')
         .eq('id', roomId)
         .single()
       
@@ -777,6 +781,10 @@ export function useCreateRoomCheck() {
       // Create room check record
       const insertData = {
         room_id: roomId,
+        // Scope columns used by tenant/hotel filtered reads (dashboards,
+        // reports). They were left NULL by this legacy path (W1, 2026-11-06).
+        tenant_id: room.tenant_id,
+        hotel_id: hotelId,
         checked_by: user?.id,
         check_type: data.check_type,
         cleanliness_score: data.cleanliness_score,
@@ -818,42 +826,11 @@ export function useCreateRoomCheck() {
         throw error
       }
 
-      // Delete old photos from previous checks - FIRE AND FORGET (non-blocking)
-      // Wrap in async IIFE to handle properly
-      (async () => {
-        try {
-          const { data: recentChecks } = await supabase
-            .from('room_checks')
-            .select('id, photos')
-            .eq('room_id', roomId)
-            .order('checked_at', { ascending: false })
-            .limit(10)
-          
-          if (recentChecks && recentChecks.length > 1) {
-            const oldChecks = recentChecks.slice(1)
-            for (const oldCheck of oldChecks) {
-              if (oldCheck.photos && Array.isArray(oldCheck.photos) && oldCheck.photos.length > 0) {
-                // Delete photos in parallel
-                await Promise.allSettled(
-                  oldCheck.photos.map(async (photoUrl: string) => {
-                    const urlParts = photoUrl.split('/item-images/')
-                    if (urlParts.length > 1) {
-                      await deleteImage(urlParts[1])
-                    }
-                  })
-                )
-                // Clear photos array
-                await supabase
-                  .from('room_checks')
-                  .update({ photos: [] })
-                  .eq('id', oldCheck.id)
-              }
-            }
-          }
-        } catch (err) {
-          console.error('Cleanup old photos failed:', err)
-        }
-      })() // Fire and forget - no await
+      // Previous checks' photos are evidence and are kept. This legacy path used
+      // to delete every older check's Storage objects for the room (any author)
+      // after each submit, while RLS left the old rows pointing at the deleted
+      // files (W1, 2026-11-06). The Lean flow never did this; any retention
+      // policy must be a deliberate server-side job, not a client side effect.
 
       // ===== PROCESS BY CHECK TYPE =====
       const baseParams = {

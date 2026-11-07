@@ -25,6 +25,8 @@ try {
   };
   const database = inspect(state.container);
   assert.equal(database?.Config.Labels['roomqc.restore-verification'], state.run);
+  assert.equal(database?.Config.Labels['roomqc.logic-audit'], undefined,
+    'This restore DB is owned by the frozen logic-audit stack. Do not reuse it as a fresh acceptance DB.');
   if (!database.State.Running) docker(['start', state.container]);
   const sql = statement => docker(['exec', '-i', state.container, 'psql', '-U', 'supabase_admin',
     '-d', 'postgres', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1'], statement);
@@ -69,7 +71,10 @@ try {
   if (attached.none) docker(['network', 'disconnect', 'none', state.container]);
   if (!attached[state.network]) docker(['network', 'connect', '--alias', 'db', state.network, state.container]);
   const subnet = network.IPAM.Config[0].Subnet;
-  assert.match(subnet, /^172\.\d+\.\d+\.0\/\d+$/);
+  // Docker may allocate any RFC1918 private range (10/8, 172.16/12 or
+  // 192.168/16).  The acceptance network is still isolated by --internal;
+  // do not reject a valid private subnet merely because it is not 172.x.
+  assert.match(subnet, /^(?:10\.\d+\.\d+\.0\/\d+|172\.(?:1[6-9]|2\d|3[0-1])\.\d+\.0\/\d+|192\.168\.\d+\.0\/\d+)$/);
   const hbaFile = artifact('roomqc-sandbox-hba-' + state.run + '.local');
   await writeFile(hbaFile, `local all all trust\nhost all all 127.0.0.1/32 scram-sha-256\nhost all all ${subnet} scram-sha-256\n`, { mode: 0o600 });
   docker(['cp', fileURLToPath(hbaFile), state.container + ':/tmp/roomqc-restore-data/pg_hba.conf']);

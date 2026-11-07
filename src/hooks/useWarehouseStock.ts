@@ -4,6 +4,7 @@ import { useTenant } from './useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useEffect } from 'react'
 import type { WarehouseStockWithItem } from '@/types/warehouse.types'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function useWarehouseStock(warehouseId: string | undefined) {
   const queryClient = useQueryClient()
@@ -27,7 +28,7 @@ export function useWarehouseStock(warehouseId: string | undefined) {
     if (!warehouseId) return
 
     const channel = supabase
-      .channel(`warehouse-stock-${warehouseId}`)
+      .channel(instanceChannelName(`warehouse-stock-${warehouseId}`))
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

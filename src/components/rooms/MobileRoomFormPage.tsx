@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -27,6 +27,21 @@ import { QuotaExceededDialog } from '@/components/settings/usage/QuotaExceededDi
 // Schema dùng chung với desktop qua `@/lib/rooms/roomFormSchema`
 const roomSchema = roomFormSchema
 
+const EMPTY_ROOM_FORM: RoomFormData = {
+  room_number: '',
+  room_type: 'standard',
+  floor: 1,
+  area_sqm: undefined,
+  max_guests: 2,
+  base_price: 0,
+  bed_type: undefined,
+  view_type: undefined,
+  has_window: true,
+  has_balcony: false,
+  smoking_allowed: false,
+  notes: '',
+}
+
 const STEPS = [
   { id: 1, title: 'Cơ bản', description: 'Số phòng, loại phòng' },
   { id: 2, title: 'Chi tiết', description: 'Giường, diện tích' },
@@ -41,6 +56,7 @@ export function MobileRoomFormPage() {
 
   const { tenantId } = useUser()
   const { selectedHotel, isAllHotelsMode } = useHotelContext()
+  const createHotelIdRef = useRef<string | null>(selectedHotel?.id ?? null)
   const { data: roomData, isLoading: roomLoading } = useRoom(id)
   const createRoom = useCreateRoom()
   const updateRoom = useUpdateRoom()
@@ -56,7 +72,7 @@ export function MobileRoomFormPage() {
     reset,
     control,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<RoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
@@ -68,6 +84,25 @@ export function MobileRoomFormPage() {
       smoking_allowed: false,
     },
   })
+
+  // Keep a new-room draft bound to the hotel selected when it was started.
+  // Switching hotels clears dirty data instead of allowing a silent cross-
+  // hotel submission.
+  useEffect(() => {
+    if (isEdit || !selectedHotel?.id) return
+    const previousHotelId = createHotelIdRef.current
+    if (!previousHotelId) {
+      createHotelIdRef.current = selectedHotel.id
+      return
+    }
+    if (previousHotelId !== selectedHotel.id) {
+      if (isDirty) {
+        reset(EMPTY_ROOM_FORM)
+        toast.info(`Đã đổi sang ${selectedHotel.name}. Bản nháp phòng cũ đã được xóa để tránh lưu nhầm khách sạn.`)
+      }
+      createHotelIdRef.current = selectedHotel.id
+    }
+  }, [isEdit, isDirty, reset, selectedHotel?.id, selectedHotel?.name])
 
   useEffect(() => {
     if (room && isEdit) {
@@ -120,6 +155,13 @@ export function MobileRoomFormPage() {
       return
     }
 
+    if (!isEdit && createHotelIdRef.current && createHotelIdRef.current !== selectedHotel.id) {
+      reset(EMPTY_ROOM_FORM)
+      createHotelIdRef.current = selectedHotel.id
+      toast.error('Khách sạn đã thay đổi. Bản nháp đã được xóa; hãy nhập lại phòng cho khách sạn hiện tại.')
+      return
+    }
+
     if (!isEdit && !(await quotaCheck.checkQuota())) {
       return
     }
@@ -155,7 +197,9 @@ export function MobileRoomFormPage() {
             updated_at: new Date().toISOString(),
           },
         })
-        navigate(`/rooms/${id}`)
+        // Replace the form entry so Back from the detail page returns to the
+        // room list instead of reopening the just-submitted form.
+        navigate(`/rooms/${id}`, { replace: true })
       } else {
         const newRoom = await createRoom.mutateAsync({
           ...data,
@@ -165,7 +209,8 @@ export function MobileRoomFormPage() {
           status: 'vacant_clean',
           amenities: [],
         })
-        navigate(`/rooms/${newRoom.id}`)
+        // Do not leave /rooms/new in history after a successful create.
+        navigate(`/rooms/${newRoom.id}`, { replace: true })
       }
     } catch (error) {
       // Error handled by mutation

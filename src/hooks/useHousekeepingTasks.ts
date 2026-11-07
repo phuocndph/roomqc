@@ -19,6 +19,7 @@ import type {
   TaskStatus,
   TaskType
 } from '@/types/housekeeping.types'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 // Fetch a single task by ID
 export function useTaskById(taskId: string | null) {
@@ -90,7 +91,7 @@ export function useMyTasks() {
     if (!userId || !tenantId) return
 
     const channel = supabase
-      .channel(`my-tasks-${userId}`)
+      .channel(instanceChannelName(`my-tasks-${userId}`))
       .on(
         'postgres_changes',
         {
@@ -148,7 +149,7 @@ export function useHotelTasks(hotelId?: string) {
     if (!hotelId || !tenantId) return
 
     const channel = supabase
-      .channel(`hotel-tasks-${hotelId}`)
+      .channel(instanceChannelName(`hotel-tasks-${hotelId}`))
       .on(
         'postgres_changes',
         {
@@ -320,6 +321,9 @@ export function useUpdateTaskStatus() {
         }
       }
 
+      // Every status transition must use the audited state-machine RPC. A
+      // direct UPDATE works in permissive environments but is intentionally
+      // denied by the current RLS/policy contract for staff users.
       const { data, error } = await supabase.rpc('transition_task_status', {
         _task_id: taskId,
         _to_status: status,
@@ -547,7 +551,7 @@ export function useUnassignedTasks() {
     if (!tenantId) return
 
     const channel = supabase
-      .channel(`unassigned-tasks-${tenantId}`)
+      .channel(instanceChannelName(`unassigned-tasks-${tenantId}`))
       .on(
         'postgres_changes',
         {
@@ -750,7 +754,7 @@ export function useTaskStats(hotelId?: string) {
     if (!tenantId) return
 
     const channel = supabase
-      .channel(`task-stats-${tenantId}`)
+      .channel(instanceChannelName(`task-stats-${tenantId}`))
       .on(
         'postgres_changes',
         {
@@ -822,7 +826,7 @@ export function useAllHotelTasks(hotelId?: string, statusFilter?: TaskStatus | '
     const filterStr = hotelId ? `hotel_id=eq.${hotelId}` : undefined
 
     const channel = supabase
-      .channel(`all-hotel-tasks-${hotelId || 'all'}`)
+      .channel(instanceChannelName(`all-hotel-tasks-${hotelId || 'all'}`))
       .on(
         'postgres_changes',
         {

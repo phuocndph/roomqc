@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatVNCurrency } from '@/lib/pricing';
 import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/hooks/useUser';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function BillingHistory() {
   const { data: transactions, isLoading: loadingTransactions, isError: transactionsError,
@@ -40,7 +41,7 @@ export function BillingHistory() {
   useEffect(() => {
     if (!tenantId) return;
     const channel = supabase
-      .channel(`billing-history:${tenantId}`)
+      .channel(instanceChannelName(`billing-history:${tenantId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'payment_transactions', filter: `tenant_id=eq.${tenantId}` },

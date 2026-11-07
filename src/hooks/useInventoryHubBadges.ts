@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from './useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useQueryClient } from '@tanstack/react-query'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { InventoryDashboardStats } from '@/types/inventory.types'
 
 export interface InventoryHubBadges {
@@ -13,6 +14,59 @@ export interface InventoryHubBadges {
   distributionsStale: number
   lowStock: number
   adjustmentsPending: number
+}
+
+type InventoryBadgesListener = () => void
+const inventoryBadgesChannels = new Map<string, {
+  channel: RealtimeChannel
+  listeners: Set<InventoryBadgesListener>
+}>()
+
+function subscribeInventoryBadgesRealtime(
+  tenantId: string,
+  listener: InventoryBadgesListener,
+): () => void {
+  const key = `inv-hub-badges-${tenantId}`
+  let entry = inventoryBadgesChannels.get(key)
+
+  if (!entry) {
+    const listeners = new Set<InventoryBadgesListener>()
+    const invalidate = () => listeners.forEach((callback) => callback())
+    const channel = supabase
+      .channel(key)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reorder_suggestions', filter: `tenant_id=eq.${tenantId}` }, invalidate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'distribution_orders', filter: `tenant_id=eq.${tenantId}` }, invalidate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_adjustments', filter: `tenant_id=eq.${tenantId}` }, invalidate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` }, invalidate)
+      .subscribe((status, error) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          // Realtime is an enhancement; HTTP query/focus refresh remains the source of truth.
+          console.warn('[InventoryHubBadges] Realtime unavailable:', error?.message ?? status)
+        }
+      })
+    entry = { channel, listeners }
+    inventoryBadgesChannels.set(key, entry)
+  }
+
+  entry.listeners.add(listener)
+  return () => {
+    const current = inventoryBadgesChannels.get(key)
+    if (!current) return
+    current.listeners.delete(listener)
+    if (current.listeners.size === 0) {
+      inventoryBadgesChannels.delete(key)
+      // Supabase returns a Promise in production, while lightweight test doubles
+      // may return void. Keep unmount cleanup safe in both cases.
+      try {
+        const removal = supabase.removeChannel(current.channel)
+        if (removal && typeof (removal as PromiseLike<unknown>).then === 'function') {
+          void Promise.resolve(removal).catch(() => undefined)
+        }
+      } catch {
+        // Cleanup is best effort; the query remains the source of truth.
+      }
+    }
+  }
 }
 
 /**
@@ -29,38 +83,11 @@ export function useInventoryHubBadges() {
   // Realtime invalidation on key tables
   useEffect(() => {
     if (!tenantId) return
-    const ch = supabase
-      .channel(`inv-hub-badges-${tenantId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'reorder_suggestions', filter: `tenant_id=eq.${tenantId}` },
-        () => qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'distribution_orders', filter: `tenant_id=eq.${tenantId}` },
-        () => qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'stock_adjustments', filter: `tenant_id=eq.${tenantId}` },
-        () => qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
-      )
-      // Realtime cho ô KPI "Low stock" / "Đã hết hàng" khi staff adjust trực tiếp
-      // (RPC dashboard đọc quantity_in_stock của items).
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
-          qc.invalidateQueries({ queryKey: ['low-stock-items'] })
-          qc.invalidateQueries({ queryKey: ['inventory-dashboard', tenantId] })
-        }
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(ch)
-    }
+    return subscribeInventoryBadgesRealtime(tenantId, () => {
+      void qc.invalidateQueries({ queryKey: ['inventory-hub-badges', tenantId] })
+      void qc.invalidateQueries({ queryKey: ['low-stock-items'] })
+      void qc.invalidateQueries({ queryKey: ['inventory-dashboard', tenantId] })
+    })
   }, [tenantId, qc])
 
   return useQuery({

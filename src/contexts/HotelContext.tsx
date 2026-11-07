@@ -5,6 +5,7 @@ import { useUser } from '@/hooks/useUser'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { scopedStorageKey } from '@/lib/runtime-config'
+import { liveAuthorityQueryOptions } from '@/lib/live-authority-query'
 
 interface HotelContextType {
   selectedHotel: Hotel | null
@@ -51,6 +52,9 @@ export function HotelProvider({ children }: { children: ReactNode }) {
       return data?.map(d => d.hotel_id) || []
     },
     enabled: !!userId && !canViewAllHotels,
+    // A hotel can be unassigned while this session is open; re-read the
+    // assignment so the switcher and selected hotel follow the server scope.
+    ...liveAuthorityQueryOptions,
   })
 
   // Filter hotels based on user permissions
@@ -148,6 +152,11 @@ export function HotelProvider({ children }: { children: ReactNode }) {
     if (!canViewAllHotels && assignedLoading) return
     if (availableHotels.length === 0) return
 
+    // Keep the current selection while it is still assigned. Re-initialising
+    // here would jump to the stored preference whenever the assignment list
+    // changes (for example when another hotel is added back).
+    if (selectedHotel && availableHotels.some(h => h.id === selectedHotel.id)) return
+
     // Check for "All Hotels" mode first (only for owners/super_admin)
     if (canViewAllHotels) {
       const preferences = userPreference?.preferences as { is_all_hotels_mode?: boolean } | null
@@ -192,7 +201,7 @@ export function HotelProvider({ children }: { children: ReactNode }) {
     if (availableHotels.length > 0) {
       setSelectedHotelState(availableHotels[0])
     }
-  }, [availableHotels, hotelId, userPreference, hotelsLoading, preferenceLoading, canViewAllHotels, assignedLoading, allHotelsKey, selectedHotelKey])
+  }, [availableHotels, selectedHotel, hotelId, userPreference, hotelsLoading, preferenceLoading, canViewAllHotels, assignedLoading, allHotelsKey, selectedHotelKey])
 
   // Centralized cache invalidation when hotel context changes.
   // Add new keys here so both setSelectedHotel & setAllHotelsMode stay in sync.

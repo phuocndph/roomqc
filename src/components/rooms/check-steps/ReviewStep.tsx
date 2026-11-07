@@ -37,7 +37,10 @@ const CHECK_TYPE_ICONS: Record<CheckType, any> = {
 export function ReviewStep({ form, room, checkType, currentBooking }: ReviewStepProps) {
   const { tenantId } = useUser()
   const { uploadImages, isUploading } = useImageUpload()
-  const [photos, setPhotos] = useState<string[]>([])
+  // Start from photos already on the form (issue photos collected in the items
+  // step). Starting empty overwrote them on the first upload, so damage
+  // evidence was dropped from the saved check (W1, 2026-11-06).
+  const [photos, setPhotos] = useState<string[]>(() => ((form.getValues('photos') || []) as string[]))
   const [showDetails, setShowDetails] = useState(false)
   
   const config = getCheckTypeConfig(checkType)
@@ -63,7 +66,7 @@ export function ReviewStep({ form, room, checkType, currentBooking }: ReviewStep
     }
     
     try {
-      const uploaded = await uploadImages(files, tenantId)
+      const uploaded = await uploadImages(files, tenantId, 'room-check-photos')
       const urls = uploaded.map(img => img.url)
       const newPhotos = [...photos, ...urls]
       

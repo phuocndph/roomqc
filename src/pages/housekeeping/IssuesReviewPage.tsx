@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type Row = {
   id: string
@@ -75,7 +76,7 @@ export default function IssuesReviewPage() {
   useEffect(() => {
     if (!tenantId) return
     const ch = supabase
-      .channel('issues-review-rt')
+      .channel(instanceChannelName('issues-review-rt'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'room_check_issues' }, () => {
         qc.invalidateQueries({ queryKey: ['issues-review'] })
       })

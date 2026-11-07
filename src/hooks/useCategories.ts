@@ -6,6 +6,7 @@ import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from './use-toast'
 import type { CategoryWithStats, CategoryFormData } from '@/types/items.types'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 
 export function useCategories() {
   const { tenantId, hotelId: userHotelId } = useUser()
@@ -13,30 +14,30 @@ export function useCategories() {
   const queryClient = useQueryClient()
   const effectiveHotelId = isAllHotelsMode ? null : (selectedHotel?.id ?? userHotelId ?? null)
   
-  // Subscribe to real-time changes on items and item_categories tables
+  // Subscribe to real-time changes on items and item_categories tables.
+  // Several components mount this hook at once (inventory hub, item forms,
+  // filters). A fixed channel name made later instances add callbacks to an
+  // already-subscribed channel, which Supabase rejects at runtime and which
+  // crashed the inventory page. Shared, tenant-scoped channels register their
+  // callback once and fan out to every mounted consumer.
   useEffect(() => {
     if (!tenantId) return
 
-    const channel = supabase
-      .channel('categories-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'items' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['categories'] })
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'item_categories' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['categories'] })
-        }
-      )
-      .subscribe()
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ['categories'] })
+    const unsubscribeItems = subscribeSharedPostgresChanges(
+      `categories_items_${tenantId}`,
+      { event: '*', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` },
+      invalidate,
+    )
+    const unsubscribeCategories = subscribeSharedPostgresChanges(
+      `categories_item_categories_${tenantId}`,
+      { event: '*', schema: 'public', table: 'item_categories', filter: `tenant_id=eq.${tenantId}` },
+      invalidate,
+    )
 
     return () => {
-      supabase.removeChannel(channel)
+      unsubscribeItems()
+      unsubscribeCategories()
     }
   }, [tenantId, queryClient])
   

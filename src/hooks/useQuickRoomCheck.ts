@@ -4,6 +4,9 @@ import { toast } from '@/hooks/use-toast'
 import { useRoomOperationExecutor } from './useRoomOperationExecutor'
 import { roomOperationErrorMessage } from '@/lib/room-operation-client'
 import { ROOM_STATUS_META_V2 } from '@/lib/roomStatus'
+import { mapDbError } from '@/lib/dbErrors'
+import { getFriendlyError } from '@/lib/errorMessage'
+import { resolveRoomCheckPhotoUrls } from '@/lib/roomCheckPhotos'
 
 export type QuickCheckType = 'daily' | 'periodic'
 
@@ -32,7 +35,8 @@ export function useLastRoomCheck(roomId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_last_room_check', { _room_id: roomId! })
       if (error) throw error
-      return (data?.[0] ?? null) as LastRoomCheck | null
+      const row = data?.[0] ?? null
+      return row ? ({ ...row, photos: await resolveRoomCheckPhotoUrls(row.photos) } as LastRoomCheck) : null
     },
   })
 }

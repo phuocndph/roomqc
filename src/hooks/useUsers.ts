@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { invalidateEffectivePermissions } from './useUserModulePermissions'
 import { supabase } from '@/integrations/supabase/client'
 import { useRef } from 'react'
 import { UserWithRelations } from '@/types/database.types'
@@ -32,7 +33,36 @@ export function useUsers() {
       })
 
       if (error) throw error
-      return (data || []) as UserWithRelations[]
+
+      const users = (data || []) as UserWithRelations[]
+      if (users.length === 0) return users
+
+      // get_users_by_hotel intentionally returns the users table shape for
+      // its security boundary. Enrich the read model separately so the
+      // hierarchy/table views can show the selected hotel and job title after
+      // an update without changing the RPC contract.
+      const [{ data: hotels, error: hotelsError }, { data: positions, error: positionsError }] = await Promise.all([
+        supabase
+          .from('hotels')
+          .select('id, name')
+          .eq('tenant_id', tenant.id),
+        supabase
+          .from('positions')
+          .select('id, code, name, user_level_code, department')
+          .eq('tenant_id', tenant.id),
+      ])
+
+      if (hotelsError) throw hotelsError
+      if (positionsError) throw positionsError
+
+      const hotelsById = new Map((hotels || []).map((hotel) => [hotel.id, hotel]))
+      const positionsById = new Map((positions || []).map((position) => [position.id, position]))
+
+      return users.map((user) => ({
+        ...user,
+        hotel: user.hotel_id ? hotelsById.get(user.hotel_id) : undefined,
+        position: user.position_id ? positionsById.get(user.position_id) : undefined,
+      })) as UserWithRelations[]
     },
     enabled: !!tenant?.id && !!currentUser,
   })

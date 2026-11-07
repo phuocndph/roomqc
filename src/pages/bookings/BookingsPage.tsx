@@ -108,6 +108,7 @@ import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
 import { roomOperationErrorMessage } from '@/lib/room-operation-client'
 import type { RoomOperationResult } from '@/lib/room-operation-command'
 import { runBookingOperationFollowUps, bookingOperationDescription, bookingAdjustmentNotes } from '@/lib/booking-operation-followups'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type BookingStatus = 'all' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show' | 'conflict' | 'overdue' | 'overdue_checkin'
 
@@ -333,7 +334,7 @@ export function BookingsPage() {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`bookings-realtime-${tId}`)
+        .channel(instanceChannelName(`bookings-realtime-${tId}`))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'room_bookings', filter: `tenant_id=eq.${tId}` }, () => {
           queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
           queryClient.invalidateQueries({ queryKey: ['available-rooms'] })

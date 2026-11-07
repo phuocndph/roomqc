@@ -5,7 +5,7 @@ const auth = vi.hoisted(() => ({ resetPasswordForEmail: vi.fn(), resend: vi.fn()
 const invoke = vi.hoisted(() => vi.fn())
 const factory = vi.hoisted(() => vi.fn(() => ({ auth, functions: { invoke } })))
 const config = vi.hoisted(() => ({ supabaseUrl: 'http://127.0.0.1:54321', supabasePublishableKey: 'public-test', workspace: { workspace: { tenantId: '66666666-6666-4666-8666-666666666666' } } }))
-vi.mock('@supabase/supabase-js', () => ({ createClient: factory }))
+vi.mock('@supabase/supabase-js', async (importOriginal) => ({ ...(await importOriginal<typeof import('@supabase/supabase-js')>()), createClient: factory }))
 vi.mock('./runtime-config', () => ({ runtimeConfig: config }))
 vi.mock('./native/auth-links', () => ({ authRedirectUrl: (path: string) => `com.roomqc.app://${path}` }))
 import { createEmailAuthFlow } from './email-auth'

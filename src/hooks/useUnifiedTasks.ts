@@ -1,3 +1,4 @@
+import { instanceChannelName } from '@/lib/realtime/channelName'
  import { useQuery, useQueryClient } from '@tanstack/react-query'
  import { useEffect } from 'react'
  import { supabase } from '@/integrations/supabase/client'
@@ -167,7 +168,7 @@
      const subscribe = () => {
        if (channel) return
        channel = supabase
-         .channel(`unified-tasks-${tenantId}-${userId}`)
+         .channel(instanceChannelName(`unified-tasks-${tenantId}-${userId}`))
          .on(
            'postgres_changes',
            {

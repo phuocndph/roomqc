@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type Row = {
   id: string
@@ -88,7 +89,7 @@ export default function PendingChargesPage() {
   useEffect(() => {
     if (!tenantId) return
     const ch = supabase
-      .channel('pending-charges-rt')
+      .channel(instanceChannelName('pending-charges-rt'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chargeable_consumptions' }, () => {
         qc.invalidateQueries({ queryKey: ['pending-charges'] })
       })

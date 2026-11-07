@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from './useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 /**
  * Accurate "out of stock" count (items.quantity_in_stock = 0).
@@ -23,7 +24,7 @@ export function useOutOfStockCount() {
   useEffect(() => {
     if (!tenantId) return
     const ch = supabase
-      .channel(`out-of-stock-count-${tenantId}`)
+      .channel(instanceChannelName(`out-of-stock-count-${tenantId}`))
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'items', filter: `tenant_id=eq.${tenantId}` },

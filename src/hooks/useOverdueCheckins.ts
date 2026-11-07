@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from '@/hooks/useTenant'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useQueryClient } from '@tanstack/react-query'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface OverdueCheckin {
   id: string
@@ -61,7 +62,7 @@ export function useOverdueCheckins() {
   useEffect(() => {
     if (!tenantId) return
     const channel = supabase
-      .channel(`overdue-checkins-${tenantId}`)
+      .channel(instanceChannelName(`overdue-checkins-${tenantId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'room_bookings' },

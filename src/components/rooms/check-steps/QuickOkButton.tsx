@@ -53,7 +53,7 @@ export function QuickOkButton({ roomId, hotelId, checkType, onSuccessNavigate = 
   const uploadPhoto = async (file: File) => {
     if (!file || !tenantId) return
     try {
-      const uploaded = await uploadImage(file, tenantId)
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
       if (uploaded?.url) setPhotos((p) => [...p, uploaded.url])
     } catch (err: any) {
       toast({ title: 'Tải ảnh thất bại', description: getFriendlyError(err), variant: 'destructive' })

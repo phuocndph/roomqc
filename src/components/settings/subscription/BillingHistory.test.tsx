@@ -79,7 +79,8 @@ it('scopes realtime and closes a selected invoice when changing tenant', () => {
   view.rerender(<BillingHistory />);
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(state.removeChannel).toHaveBeenCalledOnce();
-  expect(state.channel).toHaveBeenLastCalledWith('billing-history:tenant-b');
+  // Each subscription gets its own topic suffix (see lib/realtime/channelName).
+  expect(state.channel).toHaveBeenLastCalledWith(expect.stringMatching(/^billing-history:tenant-b#\d+$/));
 });
 
 it('does not subscribe or claim an empty history without a tenant', () => {

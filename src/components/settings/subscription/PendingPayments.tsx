@@ -15,6 +15,7 @@ import { checkoutError } from '@/lib/subscription-checkout';
 import { isNonPayableSubscriptionDraft } from '@/lib/subscription-payment-safety';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function PendingPayments() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export function PendingPayments() {
   // Realtime subscription for payment status changes
   useEffect(() => {
     const channel = supabase
-      .channel('pending-payments-realtime')
+      .channel(instanceChannelName('pending-payments-realtime'))
       .on(
         'postgres_changes',
         {
