@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { BankQRCode } from './BankQRCode';
 import { QRCountdown, useQRExpiry } from './QRCountdown';
-import { useSuperAdminBankPaymentSettings } from '@/hooks/useBankPaymentSettings';
+import { useSubscriptionPaymentInstructions } from '@/hooks/useSubscriptionPaymentInstructions';
 import { Loader2, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatVNCurrency } from '@/lib/pricing';
@@ -24,7 +24,9 @@ export function ViewPaymentQRDialog({
   payment,
   isChecking = false,
 }: ViewPaymentQRDialogProps) {
-  const { data: bankSettings, isLoading: isLoadingSettings } = useSuperAdminBankPaymentSettings();
+  const canShowQR = !!payment && canDisplaySubscriptionTransferQR(payment);
+  const { data: instructions, isLoading: isLoadingSettings } = useSubscriptionPaymentInstructions(payment?.id, canShowQR);
+  const bankSettings = instructions?.payable ? instructions : null;
   const [refreshKey, setRefreshKey] = useState(0);
   const { isExpired } = useQRExpiry(`${open}-${payment?.id ?? ''}-${refreshKey}`);
 
@@ -33,7 +35,6 @@ export function ViewPaymentQRDialog({
   const isPending = payment.payment_status === 'pending';
   const isCompleted = payment.payment_status === 'completed';
   const isFailed = payment.payment_status === 'failed';
-  const canShowQR = canDisplaySubscriptionTransferQR(payment);
 
   const getStatusBadge = () => {
     if (isPending) {
@@ -60,7 +61,7 @@ export function ViewPaymentQRDialog({
     return <Badge variant="secondary">{payment.payment_status}</Badge>;
   };
 
-  if (isLoadingSettings || isChecking) {
+  if ((canShowQR && isLoadingSettings) || isChecking) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
@@ -82,7 +83,7 @@ export function ViewPaymentQRDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Chi tiết thanh toán</DialogTitle>
-            <DialogDescription>Chưa tìm thấy cấu hình nhận tiền của nền tảng.</DialogDescription>
+            <DialogDescription>RoomQC chưa mở nhận thanh toán. Không chuyển khoản lúc này.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
@@ -152,8 +153,8 @@ export function ViewPaymentQRDialog({
                   bankName={bankSettings.bank_name}
                   accountNumber={bankSettings.account_number}
                   accountHolder={bankSettings.account_holder}
-                  amount={payment.amount}
-                  paymentContent={payment.transaction_reference || ''}
+                  amount={bankSettings.amount}
+                  paymentContent={bankSettings.transaction_reference}
                   qrTemplate={bankSettings.qr_template}
                 />
               </div>

@@ -8,6 +8,8 @@ import { useTenantSubscription } from '@/hooks/useSubscription';
 import { useRoomSubscriptionLimit } from '@/hooks/useRoomSubscriptionLimit';
 import { DURATION_OPTIONS } from '@/lib/pricing';
 import { BankTransferPaymentDialog } from '@/components/payment/BankTransferPaymentDialog';
+import { renewalBlock } from '@/lib/subscription-checkout';
+import { RenewalBlockNotice } from './RenewalBlockNotice';
 
 interface PlanChangeDialogProps {
   open: boolean;
@@ -25,11 +27,14 @@ export function PlanChangeDialog({ open, onOpenChange, initialRooms = 50, initia
   useEffect(() => {
     if (open) { setRooms(subscription?.registered_rooms || initialRooms); setDays(initialDuration); }
   }, [open, subscription?.registered_rooms, initialRooms, initialDuration]);
+  // Same eligibility as the server order guard. An expired (read-only) plan can
+  // renew online; only unapproved, cancelled or admin-suspended tenants cannot.
+  const block = renewalBlock(subscription);
   const valid = Number.isInteger(rooms) && rooms >= Math.max(actualRooms || 0, 1) && rooms <= 100000;
   return <>
     <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="sm:max-w-lg">
       <DialogHeader><DialogTitle>Gia hạn gói dịch vụ</DialogTitle>
-        <DialogDescription>Chọn số phòng và thời hạn. Bước tiếp theo hiển thị giá chính xác từ máy chủ; chưa thu tiền.</DialogDescription>
+        <DialogDescription>Chọn số phòng và thời hạn. Bước tiếp theo hiển thị giá chính xác từ máy chủ, sau đó bạn chuyển khoản theo mã QR.</DialogDescription>
       </DialogHeader>
       <Label htmlFor="renewal-rooms">Số phòng đăng ký</Label>
       <Input id="renewal-rooms" type="number" min={Math.max(actualRooms || 0, 1)} max={100000} value={rooms}
@@ -39,10 +44,12 @@ export function PlanChangeDialog({ open, onOpenChange, initialRooms = 50, initia
       <select id="renewal-days" className="h-10 rounded-md border bg-background px-3" value={days} onChange={e => setDays(Number(e.target.value))}>
         {DURATION_OPTIONS.map(option => <option key={option.days} value={option.days}>{option.label}</option>)}
       </select>
+      {block && <RenewalBlockNotice block={block} />}
       <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Đóng</Button>
-        <Button disabled={!valid} onClick={() => { onOpenChange(false); setShowQuote(true); }}>Xem báo giá</Button></DialogFooter>
+        {!block && <Button disabled={!valid} onClick={() => { onOpenChange(false); setShowQuote(true); }}>Xem báo giá</Button>}
+      </DialogFooter>
     </DialogContent></Dialog>
-    {showQuote && <BankTransferPaymentDialog open onOpenChange={setShowQuote} kind="extend" rooms={rooms} durationDays={days}
+    {showQuote && !block && <BankTransferPaymentDialog open onOpenChange={setShowQuote} kind="extend" rooms={rooms} durationDays={days}
       onPaymentCreated={id => { setShowQuote(false); navigate('/settings/subscription/pay/' + id); }} />}
   </>;
 }

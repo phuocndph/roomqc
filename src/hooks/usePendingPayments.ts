@@ -19,7 +19,7 @@ export interface PendingPayment {
     account_number?: string;
     rooms?: number;
     duration_days?: number;
-    type?: 'extend' | 'add_rooms' | 'quote_draft';
+    type?: 'extend' | 'add_rooms' | 'quote_draft' | 'subscription_quote';
     [key: string]: unknown;
   };
   invoice?: {

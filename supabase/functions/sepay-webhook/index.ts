@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isRenewalOrder, renewalPaymentAccepted } from "../_shared/subscription-renewal.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -532,7 +533,20 @@ Deno.serve(async (req) => {
         `  - Invoice match: ${invoiceMatch}, TransRef match: ${transRefMatch}`,
       );
 
-      if (invoiceMatch || transRefMatch) {
+      if ((invoiceMatch || transRefMatch) && isRenewalOrder(payment.metadata)) {
+        // RoomQC renewal: platform account only, never less than the order total.
+        if (renewalPaymentAccepted({
+          metadata: payment.metadata,
+          expectedAmount: Number(payment.amount),
+          transferAmount: payload.transferAmount,
+          toPlatformAccount: globalAccountNumbers.has(normalizedAccountNumber),
+        })) {
+          console.log(`  - ✅ MATCHED renewal order`);
+          matchedPayment = payment;
+          break;
+        }
+        console.log(`  - ❌ Renewal order rejected (account or amount)`);
+      } else if (invoiceMatch || transRefMatch) {
         // Verify amount matches (tolerance theo tenant — Phase 1)
         const tenantId = payment.tenant_id || null;
         const tolerance = await getTenantTolerance(supabase, tenantId);

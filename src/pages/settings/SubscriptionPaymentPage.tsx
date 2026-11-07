@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useSuperAdminBankPaymentSettings } from '@/hooks/useBankPaymentSettings';
 import { BankQRCode } from '@/components/payment/BankQRCode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import { formatVNCurrency } from '@/lib/pricing';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { canDisplaySubscriptionTransferQR, isNonPayableSubscriptionDraft } from '@/lib/subscription-payment-safety';
+import { useSubscriptionPaymentInstructions } from '@/hooks/useSubscriptionPaymentInstructions';
 import { instanceChannelName } from '@/lib/realtime/channelName'
 export default function SubscriptionPaymentPage() {
   const {
@@ -20,10 +20,6 @@ export default function SubscriptionPaymentPage() {
     invoiceId: string;
   }>();
   const navigate = useNavigate();
-  const {
-    data: bankSettings,
-    isLoading: isLoadingBank
-  } = useSuperAdminBankPaymentSettings();
   const queryClient = useQueryClient();
   const [showConfetti, setShowConfetti] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -51,6 +47,14 @@ export default function SubscriptionPaymentPage() {
     enabled: !!invoiceId,
     refetchInterval: 5000 // Refetch every 5s as backup
   });
+
+  // Transfer instructions (platform account) come from the server for this
+  // tenant's own pending renewal order; tenants cannot read the bank row.
+  const payable = !!payment && canDisplaySubscriptionTransferQR(payment);
+  const {
+    data: instructions,
+    isLoading: isLoadingBank
+  } = useSubscriptionPaymentInstructions(payment?.id, payable);
 
   // Realtime subscription for instant updates
   useEffect(() => {
@@ -114,7 +118,7 @@ export default function SubscriptionPaymentPage() {
       if (historyTab) historyTab.click();
     }, 100);
   };
-  if (isLoading || isLoadingBank) {
+  if (isLoading || (payable && isLoadingBank)) {
     return <div className="container mx-auto py-6 flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
@@ -242,16 +246,16 @@ export default function SubscriptionPaymentPage() {
   }
 
   // Pending state - show QR Code
-  if (!bankSettings) {
+  if (!instructions?.payable) {
     return <div className="container mx-auto py-6">
         <Card className="max-w-lg mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="h-5 w-5" />
-              Không tìm thấy thông tin ngân hàng
+              Chưa mở nhận thanh toán
             </CardTitle>
             <CardDescription>
-              Cấu hình thanh toán ngân hàng chưa được thiết lập.
+              RoomQC chưa cấu hình tài khoản nhận tiền. Không chuyển khoản lúc này; đơn vẫn nằm trong mục Đang chờ.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,9 +290,10 @@ export default function SubscriptionPaymentPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <BankQRCode bankCode={bankSettings.bank_code} bankName={bankSettings.bank_name} accountNumber={bankSettings.account_number} accountHolder={bankSettings.account_holder} amount={amount} paymentContent={paymentContent} qrTemplate={bankSettings.qr_template} />
-
-          
+          <BankQRCode bankCode={instructions.bank_code} bankName={instructions.bank_name} accountNumber={instructions.account_number} accountHolder={instructions.account_holder} amount={instructions.amount} paymentContent={instructions.transaction_reference} qrTemplate={instructions.qr_template} />
+          <p className="text-sm text-muted-foreground">
+            Chuyển đúng số tiền và giữ nguyên nội dung chuyển khoản. Gói được kích hoạt tự động trong vài phút sau khi RoomQC nhận tiền; trang này tự cập nhật.
+          </p>
         </CardContent>
       </Card>
     </div>;

@@ -12461,6 +12461,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      get_subscription_payment_instructions: {
+        Args: { p_payment_id: string }
+        Returns: Json
+      }
       expire_pending_subscription_payments: {
         Args: { p_limit?: number; p_tenant_id?: string | null }
         Returns: Json

@@ -151,7 +151,7 @@ export function BillingHistory() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            Chỉ tra cứu. Đồng bộ ngân hàng cũ đã được gỡ khỏi giao diện; thanh toán thật chưa được mở.
+            Chỉ tra cứu. Đơn gia hạn được xác nhận tự động khi RoomQC nhận tiền qua chuyển khoản.
           </p>
           {completedTransactions.length === 0 ? (
             <div className="text-center py-12">

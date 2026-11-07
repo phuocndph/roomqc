@@ -17,8 +17,9 @@ interface BankTransferPaymentDialogProps {
   onPaymentCreated?: (invoiceId: string) => void;
 }
 
-// Retains the component name, but no longer accepts money, bank details or
-// arbitrary metadata from the browser. Opening only fetches a server quote.
+// Retains the component name, but never accepts money, bank details or
+// arbitrary metadata from the browser. Opening only fetches a server quote;
+// the order (amount, transfer reference, platform account) is created server side.
 export function BankTransferPaymentDialog(props: BankTransferPaymentDialogProps) {
   const { tenantId } = useUser();
   return <QuoteDraftDialog key={JSON.stringify([tenantId, props.kind, props.rooms, props.durationDays])} {...props} />;
@@ -55,7 +56,7 @@ function QuoteDraftDialog({ open, onOpenChange, kind, rooms, durationDays, onPay
       if (result.error) throw result.error;
       const value = result.data;
       if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.invoice_id !== 'string'
-        || value.non_payable !== true || value.checkout_enabled !== false) throw new Error('INVALID_DRAFT_RESPONSE');
+        || value.non_payable !== false || value.checkout_enabled !== true) throw new Error('INVALID_DRAFT_RESPONSE');
       setInvoiceId(value.invoice_id);
       void client.invalidateQueries({ queryKey: ['pending-payments'] });
       void client.invalidateQueries({ queryKey: ['pending-payments-count'] });
@@ -66,7 +67,7 @@ function QuoteDraftDialog({ open, onOpenChange, kind, rooms, durationDays, onPay
   return <Dialog open={open} onOpenChange={creating ? undefined : onOpenChange}>
     <DialogContent className="sm:max-w-lg">
       <DialogHeader><DialogTitle>Báo giá từ hệ thống</DialogTitle>
-        <DialogDescription>Giá được tính trên máy chủ. Hiện chỉ tạo bản nháp, chưa thu tiền hoặc kích hoạt gói.</DialogDescription>
+        <DialogDescription>Giá được tính trên máy chủ. Sau khi tạo đơn, chuyển khoản theo mã QR; gói được kích hoạt tự động khi RoomQC nhận đủ tiền.</DialogDescription>
       </DialogHeader>
       {!tenantId ? <p role="alert">Không xác định được tài khoản khách sạn. Vui lòng đăng nhập lại.</p>
         : isLoading ? <p role="status"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Đang lấy báo giá…</p>
@@ -80,14 +81,13 @@ function QuoteDraftDialog({ open, onOpenChange, kind, rooms, durationDays, onPay
           <dt className="font-semibold">Tổng dự kiến</dt><dd className="text-right font-semibold">{formatVNCurrency(quote.total_amount)}</dd>
           <dt>Kỳ dự kiến</dt><dd className="text-right">{quote.period_start} → {quote.period_end}</dd>
         </dl>}
-      <p className="text-sm font-medium">Không chuyển khoản cho bản nháp này.</p>
       {failure && <p role="alert" className="text-sm text-destructive">{failure}</p>}
-      {invoiceId && <p role="status">Đã tạo bản nháp. Bạn có thể xem hoặc hủy trong mục Đang chờ.</p>}
+      {invoiceId && <p role="status">Đã tạo đơn. Mở trang thanh toán để quét mã QR; đơn cũng nằm trong mục Đang chờ.</p>}
       <DialogFooter>
         <Button variant="outline" disabled={creating} onClick={() => onOpenChange(false)}>Đóng</Button>
-        {invoiceId ? <Button onClick={() => onPaymentCreated?.(invoiceId)}>Xem bản nháp</Button>
+        {invoiceId ? <Button onClick={() => onPaymentCreated?.(invoiceId)}>Thanh toán ngay</Button>
           : <Button disabled={!quote || creating || !!error || !tenantId} onClick={() => void createDraft()}>
-            {creating ? 'Đang tạo…' : 'Tạo bản nháp'}
+            {creating ? 'Đang tạo…' : 'Tạo đơn thanh toán'}
           </Button>}
       </DialogFooter>
     </DialogContent>

@@ -10,6 +10,8 @@ import { Check, Package, Calculator, Sparkles, Calendar, Building2, RefreshCw, P
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanChangeDialog } from './PlanChangeDialog';
 import { AddRoomsDialog } from './AddRoomsDialog';
+import { RenewalBlockNotice } from './RenewalBlockNotice';
+import { renewalBlock } from '@/lib/subscription-checkout';
 import {
   PRICE_PER_ROOM_DAILY,
   MIN_SUBSCRIPTION_DAYS,
@@ -393,8 +395,11 @@ export function PlanComparison() {
     );
   }
 
+  const block = renewalBlock(currentSubscription);
+
   return (
     <>
+      {block && <div className="max-w-4xl mx-auto"><RenewalBlockNotice block={block} /></div>}
       <SubscriptionForm onOpenDialog={handleOpenDialog} />
 
       <PlanChangeDialog

@@ -32,6 +32,8 @@ import { AddRoomsDialog } from './AddRoomsDialog';
 import { GracePeriodAlert } from './GracePeriodAlert';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { RenewalBlockNotice } from './RenewalBlockNotice';
+import { renewalBlock } from '@/lib/subscription-checkout';
 import { instanceChannelName } from '@/lib/realtime/channelName'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -101,6 +103,7 @@ export function SubscriptionOverview() {
   const status = subscription.subscription_status || 'inactive';
   
   // Override status based on grace period state
+  const block = renewalBlock(subscription);
   const effectiveStatus = isGracePeriodExpired ? 'suspended' : (isInGracePeriod ? 'grace_period' : status);
   const statusInfo = statusConfig[effectiveStatus] || statusConfig.inactive;
 
@@ -227,6 +230,8 @@ export function SubscriptionOverview() {
               </AlertDescription>
             </Alert>
           )}
+
+          {block && <RenewalBlockNotice block={block} />}
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-2">

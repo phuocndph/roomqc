@@ -36,7 +36,7 @@ export function GracePeriodBanner({ onDismiss }: { onDismiss?: () => void } = {}
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => navigate('/settings/subscription')}
+          onClick={() => navigate('/settings/subscription?tab=plans')}
           className="shrink-0">
           
           Gia hạn ngay
@@ -59,7 +59,7 @@ export function GracePeriodBanner({ onDismiss }: { onDismiss?: () => void } = {}
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => navigate('/settings/subscription')}
+            onClick={() => navigate('/settings/subscription?tab=plans')}
             className="shrink-0">
             
             Gia hạn ngay
@@ -91,7 +91,7 @@ export function GracePeriodBanner({ onDismiss }: { onDismiss?: () => void } = {}
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            onClick={() => navigate('/settings/subscription')}
+            onClick={() => navigate('/settings/subscription?tab=plans')}
             className="shrink-0 bg-[#e60000]">
             
             Gia hạn ngay

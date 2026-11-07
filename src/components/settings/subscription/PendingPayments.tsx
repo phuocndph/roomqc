@@ -184,7 +184,7 @@ export function PendingPayments() {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  Bản nháp và đơn cũ đang chờ xử lý. Chưa mở thu tiền; không chuyển khoản cho các đơn này.
+                  Đơn gia hạn chờ chuyển khoản. Mở mã QR để thanh toán; bản nháp và đơn cũ không nhận chuyển khoản.
                 </CardDescription>
               </div>
               <Button
