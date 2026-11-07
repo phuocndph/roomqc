@@ -22,7 +22,7 @@ export function ReadOnlyBanner() {
         </div>
       </div>
       <Link
-        to="/settings/subscription"
+        to="/settings/subscription?tab=plans"
         className="shrink-0 text-xs font-medium underline hover:no-underline"
       >
         Gia hạn ngay

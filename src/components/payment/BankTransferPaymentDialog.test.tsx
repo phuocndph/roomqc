@@ -9,7 +9,7 @@ vi.mock('@/hooks/useUser', () => ({ useUser: () => ({ tenantId: state.tenantId }
 const quote = { quote_id: 'server-quote', billed_rooms: 3, duration_days: 30,
   price_per_room_daily: 2400, subtotal: 216000, discount_amount: 0, total_amount: 216000,
   period_start: '2026-10-17', period_end: '2026-11-16', currency: 'VND', checkout_enabled: false };
-const draft = { invoice_id: 'server-invoice', non_payable: true, checkout_enabled: false };
+const draft = { invoice_id: 'server-invoice', non_payable: false, checkout_enabled: true, transaction_reference: 'RQC0123456789AB' };
 function mount(extra = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const callback = vi.fn();
@@ -30,21 +30,21 @@ describe('server-priced draft dialog', () => {
       p_request_id: expect.any(String), p_kind: 'extend', p_rooms: 3, p_duration_days: 30,
     });
     expect(state.from).not.toHaveBeenCalled();
-    expect(screen.getByText('Không chuyển khoản cho bản nháp này.')).toBeInTheDocument();
+    expect(screen.getByText(/chuyển khoản theo mã QR/)).toBeInTheDocument();
   });
   it('deduplicates clicks and waits for an explicit click before navigating', async () => {
     let finish!: (value: unknown) => void;
     state.rpc.mockImplementation((name: string) => name === 'create_subscription_quote'
       ? Promise.resolve({ data: quote, error: null }) : new Promise(resolve => { finish = resolve; }));
     const { callback } = mount();
-    const button = await screen.findByRole('button', { name: 'Tạo bản nháp' });
+    const button = await screen.findByRole('button', { name: 'Tạo đơn thanh toán' });
     await waitFor(() => expect(button).toBeEnabled());
     fireEvent.click(button); fireEvent.click(button);
     expect(state.rpc.mock.calls.filter(c => c[0] === 'create_subscription_checkout_draft')).toHaveLength(1);
     finish({ data: draft, error: null });
-    expect(await screen.findByRole('button', { name: 'Xem bản nháp' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Thanh toán ngay' })).toBeInTheDocument();
     expect(callback).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Xem bản nháp' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thanh toán ngay' }));
     expect(callback).toHaveBeenCalledWith('server-invoice');
   });
   it('uses the same draft request ID after an uncertain network response', async () => {
@@ -52,11 +52,11 @@ describe('server-priced draft dialog', () => {
     state.rpc.mockImplementation(async (name: string) => name === 'create_subscription_quote' ? { data: quote, error: null }
       : ++calls === 1 ? { data: null, error: { message: 'network' } } : { data: draft, error: null });
     mount();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo bản nháp' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: 'Tạo bản nháp' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo đơn thanh toán' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo đơn thanh toán' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Tạo bản nháp' }));
-    await screen.findByRole('button', { name: 'Xem bản nháp' });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo đơn thanh toán' }));
+    await screen.findByRole('button', { name: 'Thanh toán ngay' });
     const callsToCreate = state.rpc.mock.calls.filter(c => c[0] === 'create_subscription_checkout_draft');
     expect(callsToCreate[0][1]).toEqual(callsToCreate[1][1]);
     expect(Object.keys(callsToCreate[0][1]).sort()).toEqual(['p_quote_id', 'p_request_id']);
@@ -65,8 +65,8 @@ describe('server-priced draft dialog', () => {
     state.rpc.mockImplementation(async (name: string) => name === 'create_subscription_quote' ? { data: quote, error: null }
       : { error: { message: 'PENDING_SUBSCRIPTION_ORDER_EXISTS' }, data: null });
     mount();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo bản nháp' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: 'Tạo bản nháp' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo đơn thanh toán' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo đơn thanh toán' }));
     expect(await screen.findByText(/Bạn còn đơn đang chờ/)).toBeInTheDocument();
     expect(state.rpc.mock.calls.filter(c => c[0] === 'create_subscription_quote')).toHaveLength(1);
   });
@@ -76,6 +76,16 @@ describe('server-priced draft dialog', () => {
     expect(state.rpc).toHaveBeenCalledWith('create_subscription_quote', expect.objectContaining({
       p_kind: 'add_rooms', p_rooms: 3, p_duration_days: undefined,
     }));
+  });
+  it('refuses a server reply that is still a non-payable technical draft', async () => {
+    state.rpc.mockImplementation(async (name: string) => ({ data: name === 'create_subscription_quote' ? quote
+      : { invoice_id: 'server-invoice', non_payable: true, checkout_enabled: false }, error: null }));
+    const { callback } = mount();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tạo đơn thanh toán' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo đơn thanh toán' }));
+    expect(await screen.findByText(/Không thể hoàn tất yêu cầu/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Thanh toán ngay' })).not.toBeInTheDocument();
+    expect(callback).not.toHaveBeenCalled();
   });
   it('does not issue a quote without a tenant session', () => {
     state.tenantId = '';

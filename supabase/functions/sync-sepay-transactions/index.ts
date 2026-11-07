@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isRenewalOrder, renewalPaymentAccepted } from "../_shared/subscription-renewal.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -474,11 +475,20 @@ Deno.serve(async (req) => {
           normalizedTransRef && normalizedContent.includes(normalizedTransRef);
 
         if (invoiceMatch || transRefMatch) {
-          // Verify amount matches (with tolerance)
+          // Verify amount matches (with tolerance). RoomQC renewal orders use
+          // the stricter platform rule: platform account, never underpaid.
           const amountDiff = Math.abs(payment.amount - sepayTx.amount_in);
 
           const tolerance = toleranceFor(payment.tenant_id);
-          if (amountDiff <= tolerance) {
+          const accepted = isRenewalOrder(payment.metadata)
+            ? renewalPaymentAccepted({
+                metadata: payment.metadata,
+                expectedAmount: Number(payment.amount),
+                transferAmount: Number(sepayTx.amount_in),
+                toPlatformAccount: globalAccountNumbers.has(normalizeString(sepayTx.account_number)),
+              })
+            : amountDiff <= tolerance;
+          if (accepted) {
             console.log(`  ✅ MATCHED with SePay tx ${sepayTx.id}`);
             console.log(`    Content: ${content}`);
             console.log(`    Amount: ${sepayTx.amount_in}`);

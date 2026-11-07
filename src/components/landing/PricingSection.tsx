@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { ROOMQC_CONTACT_EMAIL } from '@/lib/contact'
 
 const plans = ['starter', 'professional', 'enterprise'] as const
 
@@ -87,7 +88,7 @@ export const PricingSection = () => {
 
                 {plan === 'enterprise' ? (
                   <Button variant="outline" className="w-full" asChild>
-                    <a href="mailto:roomqc@gmail.com">{t('pricing.ctaEnterprise')}</a>
+                    <a href={`mailto:${ROOMQC_CONTACT_EMAIL}`}>{t('pricing.ctaEnterprise')}</a>
                   </Button>
                 ) : (
                   <Button

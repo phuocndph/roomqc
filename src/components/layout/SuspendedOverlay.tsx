@@ -19,7 +19,7 @@ export function SuspendedOverlay() {
         <p className="text-sm text-muted-foreground">
           {t('subscription.suspended_description', 'Vui lòng gia hạn gói đăng ký để tiếp tục sử dụng hệ thống.')}
         </p>
-        <Button onClick={() => navigate('/settings/subscription')} className="mt-2">
+        <Button onClick={() => navigate('/settings/subscription?tab=plans')} className="mt-2">
           {t('subscription.renew_now', 'Gia hạn ngay')}
         </Button>
       </div>

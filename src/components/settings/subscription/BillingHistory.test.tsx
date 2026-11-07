@@ -34,7 +34,7 @@ it('keeps history and invoice inspection without a legacy provider action even f
   render(<BillingHistory />);
   expect(screen.queryByRole('button', { name: /SePay/ })).not.toBeInTheDocument();
   expect(screen.getByText(/không phải hóa đơn của khách lưu trú/)).toBeInTheDocument();
-  expect(screen.getByText(/thanh toán thật chưa được mở/)).toBeInTheDocument();
+  expect(screen.getByText(/xác nhận tự động khi RoomQC nhận tiền/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Xem hóa đơn A0-LOCAL' }));
   expect(screen.getByRole('dialog')).toHaveTextContent('Hóa đơn A0-LOCAL');
   expect(state.invoke).not.toHaveBeenCalled();
