@@ -60,7 +60,7 @@ function metadataMount(service,target){
   const mounts=service.volumes??[];
   if(!Array.isArray(mounts))fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
   const matches=mounts.filter(m=>m.target===target),mount=matches[0];
-  if(matches.length!==1||mount.type!=='bind'||mount.read_only!==true||!path(mount.source)||mount.bind?.create_host_path!==false)
+  if(matches.length!==1||mount.type!=='bind'||mount.read_only!==true||!path(mount.source)||mount.bind?.create_host_path===true)
     fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
   // A parent mount would shadow the file even when the file itself is read-only.
   if(mounts.some(m=>m!==mount&&(!containerPath(m.target)||m.target==='/'||target.startsWith(m.target+'/'))))fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');

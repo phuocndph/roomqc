@@ -45,7 +45,7 @@ async function mountMap(service){
  const mounts=new Map(),sources=[];
  for(const m of remaining){
   if(!targets.has(m.target)||mounts.has(m.target)||m.type!=='bind'||(m.read_only===true)!==targets.get(m.target)
-   ||typeof m.source!=='string'||!isAbsolute(m.source)||m.bind?.create_host_path!==false)fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
+   ||typeof m.source!=='string'||!isAbsolute(m.source)||m.bind?.create_host_path===true)fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
   let stat,source;try{stat=await lstat(m.source);source=await realpath(m.source)}catch{fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID')}
   if(stat.isSymbolicLink()||([ '/etc/roomqc/rotation.json',...extra].includes(m.target)?!stat.isFile():!stat.isDirectory()))fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
   if(sources.some(p=>overlaps(p,source)||overlaps(source,p)))fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');

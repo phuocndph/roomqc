@@ -39,7 +39,7 @@ function fileSource(target,service,project,{directory=false}={}){
  const matches=[];
  for(const mount of service.volumes??[]){
   if(mount.target!==target&&!(directory&&target.startsWith(mount.target+'/')))continue;
-  if(mount.type!=='bind'||mount.read_only!==true||mount.bind?.create_host_path!==false||!isAbsolute(mount.source))
+  if(mount.type!=='bind'||mount.read_only!==true||mount.bind?.create_host_path===true||!isAbsolute(mount.source))
    fail('RESOURCE_CONSUMER_TARGET_SOURCE_INVALID');
   const suffix=target.slice(mount.target.length+1);
   if(mount.target!==target&&(suffix.includes('/')||!suffix))fail('RESOURCE_CONSUMER_TARGET_SOURCE_INVALID');

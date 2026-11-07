@@ -47,7 +47,7 @@ async function mounts(service){
  if(remaining.length!==allowed.length)fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
  for(const mount of remaining){
   if(!allowed.includes(mount.target)||found.has(mount.target)||mount.type!=='bind'||mount.read_only!==true
-   ||typeof mount.source!=='string'||!isAbsolute(mount.source)||mount.bind?.create_host_path!==false)fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
+   ||typeof mount.source!=='string'||!isAbsolute(mount.source)||mount.bind?.create_host_path===true)fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
   let stat,path;try{stat=await lstat(mount.source);path=await realpath(mount.source)}catch{fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID')}
   if(stat.isSymbolicLink()||(mount.target===credentials?!stat.isDirectory():!stat.isFile())
    ||sources.some(source=>overlaps(source,path)||overlaps(path,source)))fail('RESOURCE_DEPLOYMENT_MOUNT_INVALID');
