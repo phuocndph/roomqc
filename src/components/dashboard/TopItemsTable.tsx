@@ -16,6 +16,7 @@ import { useTopItems } from '@/hooks/useTopItems'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export function TopItemsTable() {
   const { t } = useTranslation('dashboard')
@@ -62,7 +63,7 @@ export function TopItemsTable() {
         <CardTitle>{t('topItems.title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-none border">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -96,7 +97,7 @@ export function TopItemsTable() {
                     </TableCell>
                     <TableCell>
                       {item.thumbnail ? (
-                        <img
+                        <StorageImage
                           src={item.thumbnail}
                           alt={item.name}
                           className="h-10 w-10 rounded object-cover"

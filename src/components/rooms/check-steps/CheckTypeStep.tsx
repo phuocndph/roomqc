@@ -44,7 +44,7 @@ export function CheckTypeStep({
     ? checkTypes.filter(t => t.value !== 'delivery')
     : checkTypes
 
-  const quickEligible: QuickCheckType[] = ['daily', 'checkin', 'checkout']
+  const quickEligible: QuickCheckType[] = ['daily', 'periodic']
   const showQuickPath = !!roomId && quickEligible.includes(selectedType as QuickCheckType)
 
   return (

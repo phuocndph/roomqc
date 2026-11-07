@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useItems } from '@/hooks/useItems'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ItemSelectProps {
   value: string
@@ -43,7 +44,7 @@ export function ItemSelect({ value, onChange, placeholder = "Chọn đồ dùng"
           {selectedItem ? (
             <div className="flex items-center gap-2">
               {selectedItem.item_images?.[0]?.url && (
-                <img 
+                <StorageImage 
                   src={selectedItem.item_images[0].url} 
                   alt={selectedItem.name}
                   className="h-4 w-4 rounded object-cover"
@@ -80,7 +81,7 @@ export function ItemSelect({ value, onChange, placeholder = "Chọn đồ dùng"
                   />
                   <div className="flex items-center gap-2 flex-1">
                     {item.item_images?.[0]?.url && (
-                      <img 
+                      <StorageImage 
                         src={item.item_images[0].url} 
                         alt={item.name}
                         className="h-6 w-6 rounded object-cover"

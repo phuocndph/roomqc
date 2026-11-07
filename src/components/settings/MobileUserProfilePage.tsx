@@ -15,10 +15,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { User, Mail, Lock, Save, MessageCircle, Loader2, Upload } from 'lucide-react'
 import { TelegramConnectionCard } from '@/components/profile/TelegramConnectionCard'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
-import { supabase } from '@/integrations/supabase/client'
+import { useSelfProfileForm } from '@/hooks/useSelfProfileForm'
+import { uploadSelfProfileAvatar, ProfileIdentityChangedError, ProfileSaveNotConfirmedError } from '@/lib/self-profile'
+import { getFriendlyError } from '@/lib/errorMessage'
 import { toast } from 'sonner'
 import {
-  profileFormSchema,
   ProfileFormData,
   changePasswordSchema,
   ChangePasswordData,
@@ -42,18 +43,13 @@ const getUserLevelLabel = (code?: string | null) => {
 export const MobileUserProfilePage = () => {
   const navigate = useNavigate()
   const { user, refetch } = useUser()
-  const { updateProfile, changePassword, isUpdating, isChangingPassword } = useProfile()
+  const { updateProfile, changePasswordAsync, checkPasswordChangeAsync, isUpdating, isChangingPassword } = useProfile()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const currentIdentity = useRef(user?.id)
+  currentIdentity.current = user?.id
 
-  const profileForm = useForm<ProfileFormData>({
-    resolver: zodResolver(profileFormSchema),
-    values: {
-      fullName: user?.full_name || '',
-      phone: user?.phone || '',
-      avatarUrl: user?.avatar_url || '',
-    },
-  })
+  const profileForm = useSelfProfileForm(user)
 
   const passwordForm = useForm<ChangePasswordData>({
     resolver: zodResolver(changePasswordSchema),
@@ -71,38 +67,18 @@ export const MobileUserProfilePage = () => {
     const file = e.target.files?.[0]
     if (!file || !user?.id) return
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn tệp ảnh')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh tối đa 5MB')
-      return
-    }
-
     setIsUploadingAvatar(true)
     try {
-      const ext = file.name.split('.').pop() || 'jpg'
-      const filePath = `${user.id}/avatar-${Date.now()}.${ext}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true, cacheControl: '3600' })
-
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
-
-      profileForm.setValue('avatarUrl', publicUrl, { shouldDirty: true })
-
-      await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id)
+      const saved = await uploadSelfProfileAvatar(user.id, file, () => currentIdentity.current === user.id)
+      if (currentIdentity.current !== saved.id) return
+      profileForm.resetField('avatarUrl', {defaultValue: saved.avatar_url || ''})
       await refetch()
-
+      if (currentIdentity.current !== saved.id) return
       toast.success('Tải ảnh đại diện thành công')
-    } catch (err: any) {
-      toast.error('Lỗi khi tải ảnh: ' + (err.message || 'Không xác định'))
+    } catch (error: unknown) {
+      if (!(error instanceof ProfileIdentityChangedError)) {
+        toast.error(error instanceof ProfileSaveNotConfirmedError ? error.message : getFriendlyError(error))
+      }
     } finally {
       setIsUploadingAvatar(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -112,14 +88,16 @@ export const MobileUserProfilePage = () => {
   const onUpdateProfile = (data: ProfileFormData) => {
     updateProfile({
       full_name: data.fullName,
-      phone: data.phone || undefined,
-      avatar_url: data.avatarUrl || undefined,
+      phone: data.phone ?? '',
+      avatar_url: data.avatarUrl ?? '',
     })
   }
 
-  const onChangePassword = (data: ChangePasswordData) => {
-    changePassword(data.newPassword)
-    passwordForm.reset()
+  const onChangePassword = async (data: ChangePasswordData) => {
+    try {
+      await changePasswordAsync({ currentPassword: data.currentPassword, newPassword: data.newPassword })
+      passwordForm.reset()
+    } catch { /* Preserve input until the server confirms completion. */ }
   }
 
   return (
@@ -199,6 +177,7 @@ export const MobileUserProfilePage = () => {
 
               <div className="space-y-2">
                 <Label>Ảnh đại diện</Label>
+                <input type="hidden" {...profileForm.register('avatarUrl')} />
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={currentAvatarUrl || undefined} alt={user?.full_name || ''} />
@@ -210,7 +189,8 @@ export const MobileUserProfilePage = () => {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      aria-label="Chọn ảnh đại diện"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
                       className="hidden"
                       onChange={handleAvatarUpload}
                     />
@@ -219,7 +199,7 @@ export const MobileUserProfilePage = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingAvatar}
+                      disabled={isUploadingAvatar || isUpdating}
                       className="w-full"
                     >
                       {isUploadingAvatar ? (
@@ -229,7 +209,7 @@ export const MobileUserProfilePage = () => {
                       )}
                       {isUploadingAvatar ? 'Đang tải...' : 'Tải ảnh từ máy'}
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG tối đa 5MB</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP, GIF tối đa 5MB</p>
                   </div>
                 </div>
                 {profileForm.formState.errors.avatarUrl && (
@@ -240,7 +220,7 @@ export const MobileUserProfilePage = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isUpdating}
+                disabled={isUpdating || isUploadingAvatar}
               >
                 {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 {isUpdating ? 'Đang lưu...' : 'Lưu thay đổi'}
@@ -300,10 +280,14 @@ export const MobileUserProfilePage = () => {
                 type="submit"
                 className="w-full"
                 variant="secondary"
-                disabled={isChangingPassword}
+                disabled={isChangingPassword || passwordForm.formState.isSubmitting}
               >
                 {isChangingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Lock className="h-4 w-4 mr-2" />}
                 {isChangingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
+              </Button>
+              <Button type="button" variant="outline" className="w-full" disabled={isChangingPassword}
+                onClick={() => { void checkPasswordChangeAsync().catch(() => {}) }}>
+                Kiểm tra lần đổi trước
               </Button>
             </form>
           </CardContent>

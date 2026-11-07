@@ -1,7 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders } from '../_shared/cors.ts'
 import { requireCronAuth } from '../_shared/cronAuth.ts'
-
 interface WorkflowTrigger {
   trigger_type: string
   event_data: Record<string, any>
@@ -32,20 +31,109 @@ const UPDATE_RECORD_TABLE_WHITELIST = new Set<string>([
   'in_app_notifications',
 ])
 
+const WORKFLOW_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// A browser event is a lookup hint. The source command mints the delivery
+// witness; the caller's JWT, current authority and all effects are checked in
+// the database transaction. Service credentials never substitute for the user.
+async function executeDeliveryWorkflow(
+  req: Request,
+  payload: WorkflowTrigger,
+  supabaseUrl: string,
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
+  const reply = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), {
+    status, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  })
+  const authorization = req.headers.get('authorization')
+  if (!authorization || authorization.length > 8192 || !/^Bearer\s+\S+$/i.test(authorization)) {
+    return reply(401, { success: false, code: 'WORKFLOW_SESSION_REQUIRED', error: 'Vui lòng đăng nhập lại.' })
+  }
+  const stopId = payload.event_data?.room_order_id
+  if (typeof stopId !== 'string' || !WORKFLOW_UUID.test(stopId)
+    || typeof payload.tenant_id !== 'string' || !WORKFLOW_UUID.test(payload.tenant_id)
+    || (payload.hotel_id !== undefined && !WORKFLOW_UUID.test(payload.hotel_id))) {
+    return reply(400, { success: false, code: 'WORKFLOW_SOURCE_INVALID', error: 'Thông tin phiếu giao hàng không hợp lệ.' })
+  }
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  if (!anonKey) {
+    return reply(503, { success: false, code: 'WORKFLOW_UNAVAILABLE', error: 'Chưa thể xử lý tác vụ. Vui lòng thử lại.' })
+  }
+  const caller = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authorization } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  })
+  const { data, error } = await caller.rpc('complete_delivery_workflow', {
+    p_stop_id: stopId, p_tenant_id: payload.tenant_id, p_hotel_id: payload.hotel_id ?? null,
+  })
+  if (error) {
+    if (error.code === 'PGRST301' || error.code === 'PGRST303') {
+      return reply(401, { success: false, code: 'WORKFLOW_SESSION_REQUIRED', error: 'Vui lòng đăng nhập lại.' })
+    }
+    if (error.code === '42501') {
+      return reply(403, { success: false, code: 'WORKFLOW_NOT_ALLOWED', error: 'Tài khoản hiện tại không được xử lý phiếu này.' })
+    }
+    if (error.code === '22023' || error.code === '22P02') {
+      return reply(400, { success: false, code: 'WORKFLOW_SOURCE_INVALID', error: 'Phiếu giao hàng chưa hoàn tất hoặc không hợp lệ.' })
+    }
+    if (error.code === 'PT409') {
+      const legacy = error.message === 'WORKFLOW_SOURCE_REQUIRES_REVIEW'
+      return reply(409, { success: false, code: legacy ? 'WORKFLOW_SOURCE_REQUIRES_REVIEW' : 'WORKFLOW_REQUIRES_REVIEW',
+        error: 'Tác vụ cần được kiểm tra trước khi tiếp tục.' })
+    }
+    // A failed response does not prove rollback. Retrying this same source
+    // reads its durable result instead of creating a second task.
+    return reply(503, { success: false, code: 'WORKFLOW_RESULT_UNKNOWN', error: 'Chưa xác nhận được kết quả. Vui lòng thử lại với cùng phiếu.' })
+  }
+  if (data?.success !== true || typeof data?.task_id !== 'string') {
+    return reply(503, { success: false, code: 'WORKFLOW_RESULT_UNKNOWN', error: 'Chưa xác nhận được kết quả. Vui lòng thử lại với cùng phiếu.' })
+  }
+  return reply(200, data)
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = buildCorsHeaders(req)
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ success: false, code: 'WORKFLOW_METHOD_NOT_ALLOWED' }), {
+      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json', Allow: 'POST, OPTIONS' },
+    })
+  }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+
+    let payload: WorkflowTrigger
+    try {
+      payload = await req.json()
+    } catch {
+      return new Response(JSON.stringify({ success: false, code: 'WORKFLOW_PAYLOAD_INVALID' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return new Response(JSON.stringify({ success: false, code: 'WORKFLOW_PAYLOAD_INVALID' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const { trigger_type, event_data, tenant_id, hotel_id } = payload
+
+    if (trigger_type === 'delivery_stop_completed') {
+      try {
+        return await executeDeliveryWorkflow(req, payload, supabaseUrl, corsHeaders)
+      } catch {
+        return new Response(JSON.stringify({ success: false, code: 'WORKFLOW_RESULT_UNKNOWN',
+          error: 'Chưa xác nhận được kết quả. Vui lòng thử lại với cùng phiếu.' }), {
+          status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        })
+      }
+    }
+
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
-
-    const payload: WorkflowTrigger = await req.json()
-    const { trigger_type, event_data, tenant_id, hotel_id } = payload
 
     // ---- AuthZ ------------------------------------------------------------
     // Allow either (a) cron / service-role internal callers, or
@@ -118,24 +206,6 @@ Deno.serve(async (req) => {
 
     if (!workflows || workflows.length === 0) {
       console.log(`[execute-workflow] No active workflows found for trigger: ${trigger_type}`)
-      
-      // Fallback: Auto-create delivery_confirmation task if no workflow configured
-      if (trigger_type === 'delivery_stop_completed') {
-        console.log('[execute-workflow] Auto-creating delivery confirmation task (fallback)')
-        try {
-          await createDeliveryConfirmationTask(supabase, event_data, tenant_id, hotel_id)
-          return new Response(
-            JSON.stringify({ success: true, message: 'Auto-created delivery confirmation task', executed: 1 }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
-        } catch (fallbackError) {
-          console.error('[execute-workflow] Fallback task creation failed:', fallbackError)
-          return new Response(
-            JSON.stringify({ success: false, error: String(fallbackError) }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
-        }
-      }
       
       return new Response(
         JSON.stringify({ success: true, message: 'No matching workflows', executed: 0 }),
@@ -597,53 +667,4 @@ function getTaskTypeLabel(taskType: string): string {
     other: 'Công việc khác',
   }
   return labels[taskType] || taskType
-}
-
-/**
- * Fallback: Auto-create delivery confirmation task when no workflow is configured
- */
-async function createDeliveryConfirmationTask(
-  supabase: any,
-  eventData: Record<string, any>,
-  tenantId: string,
-  hotelId?: string
-): Promise<void> {
-  const { room_id, room_number, order_code, items, room_order_id, item_count } = eventData
-  
-  if (!room_id) {
-    throw new Error('Missing room_id in event data')
-  }
-  
-  const effectiveHotelId = hotelId || eventData.hotel_id
-  if (!effectiveHotelId) {
-    throw new Error('Missing hotel_id')
-  }
-  
-  const itemsCount = item_count || items?.length || 0
-  const title = `Xác nhận nhận hàng - P.${room_number || 'N/A'}`
-  const description = `Phiếu ${order_code || 'N/A'} - ${itemsCount} sản phẩm`
-  
-  const { data: newTask, error } = await supabase
-    .from('housekeeping_tasks')
-    .insert({
-      tenant_id: tenantId,
-      hotel_id: effectiveHotelId,
-      room_id: room_id,
-      task_type: 'delivery_confirmation',
-      title,
-      description,
-      priority: 'high',
-      assigned_to: null, // Unassigned - staff can claim
-      status: 'pending',
-      distribution_order_room_id: room_order_id || null,
-    })
-    .select()
-    .single()
-  
-  if (error) {
-    console.error('[execute-workflow] Failed to create delivery confirmation task:', error)
-    throw error
-  }
-  
-  console.log(`[execute-workflow] Auto-created delivery confirmation task: ${newTask.id}`)
 }

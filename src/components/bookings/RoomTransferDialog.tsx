@@ -17,7 +17,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAvailableRooms } from '@/hooks/useAvailableRooms'
-import { mapDbError } from '@/lib/dbErrors'
+import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
 
 interface RoomTransferDialogProps {
   open: boolean
@@ -45,6 +46,7 @@ export function RoomTransferDialog({
   onSuccess,
 }: RoomTransferDialogProps) {
   const queryClient = useQueryClient()
+  const executeOperation = useRoomOperationExecutor(JSON.stringify([open, booking.id]))
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -52,11 +54,12 @@ export function RoomTransferDialog({
   const [hourlyChecking, setHourlyChecking] = useState(false)
 
   useEffect(() => {
+    setSubmitting(false)
     if (!open) {
       setSelectedRoomId(null)
       setReason('')
     }
-  }, [open])
+  }, [open, booking.id])
 
   const isHourly = booking.booking_type === 'hourly'
 
@@ -134,23 +137,25 @@ export function RoomTransferDialog({
     if (!target) return
     setSubmitting(true)
     try {
-      const { error } = await supabase.rpc('transfer_booking_room', {
+      const { data, error } = await executeOperation('transfer_booking_room', {
         p_booking_id: booking.id,
         p_new_room_id: selectedRoomId,
         p_reason: reason.trim() || null,
-      })
+      }, [booking.room_id])
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-      toast.success(`Đã chuyển sang phòng ${target.room_number}`)
+      toast.success(data.replayed ? 'Đã xác nhận lần chuyển phòng trước đó.' : `Đã chuyển sang phòng ${target.room_number}`)
       queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
       queryClient.invalidateQueries({ queryKey: ['available-rooms'] })
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       onSuccess?.()
       onOpenChange(false)
-    } catch (err: any) {
-      toast.error(mapDbError(err?.message ?? String(err)))
+    } catch (err: unknown) {
+      if (!executeOperation.isCurrent()) return
+      toast.error(roomOperationErrorMessage(err))
     } finally {
-      setSubmitting(false)
+      if (executeOperation.isCurrent()) setSubmitting(false)
     }
   }
 

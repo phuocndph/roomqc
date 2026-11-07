@@ -1,6 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { Package } from 'lucide-react'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ItemsPreviewTableProps {
   items: any[]
@@ -59,7 +60,7 @@ export function ItemsPreviewTable({
                 <td className="px-4 py-3">
                   <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
                     {item.item_images?.[0]?.url ? (
-                      <img
+                      <StorageImage
                         src={item.item_images[0].url}
                         alt={item.name}
                         className="h-full w-full object-cover"

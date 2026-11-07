@@ -1,0 +1,101 @@
+{
+  "format": 1,
+  "recordedAt": "2026-10-19T07:45:35.316Z",
+  "scope": "P2 M02/M03 local module verification, not full P2 completion",
+  "source": {
+    "baseCommit": "d0f9b7b01a2c44b4578f59ce12e77bf400e167b9",
+    "verifiedState": "uncommitted source prior to scoped commit; content hashes identify tested files",
+    "hashAlgorithm": "SHA-256 over UTF-8 with CRLF normalized to LF",
+    "files": {
+      "server/control/admin-contract.test.mjs": "a2d418b5db87e563196ce4e4f6bdcdf013f566c949505af75d554ff1a603f422",
+      "server/control/admin.mjs": "db567f95a65b9f85c12904434437b19f8dc5258abe6cb674143b2c4e24b639f8",
+      "server/control/contracts/control-v3.openapi.json": "6095be9e37033ee739ccd6cfeef1e8ed4d61ffeb04f6aa03d9e9e60f932ff278",
+      "server/control/health-policy.mjs": "2c3a8b09320f787d15eb137e7c3ee2e319a82c53664ab9134d379186d90574a0",
+      "server/control/health-policy.test.mjs": "0ade8abfd29e6cd538b30a2009a967c6c296e7c97e2af6361e08f90a61462b46",
+      "server/control/telemetry-cases.mjs": "4272a03eef923b0e8d9ff0d8f689c935e4ef51a90cb8df2961a6d216287714c9",
+      "server/control/telemetry.mjs": "43e83b08ca494d4409dede3f470d0415d844ea1248f761a18860285d260d7492",
+      "server/control/telemetry-promql.test.mjs": "b63c041167a9897cd42517c4f0d417023406da5f2e9182c821cc4a86d9ff41d2",
+      "server/control/telemetry-source.mjs": "d5ce149cc18e42c74dd7448d56f464570145aadf67861f6bc2280b24f6be2cda",
+      "server/control/telemetry-source.test.mjs": "43fa6884888f0101d9ac270ae0bae50236ff13c2e836ca1a0f958098bd8b57cd",
+      "docs/architecture/08-ops/roomqc-vps-signup-execution-plan-2026-10-19.md": "e5cb64658d6c9a77af0b92a69a23611b1c91bcf696752d0f26ce77334692a818",
+      "docs/architecture/08-ops/roomqc-vps-signup-implementation-plan-2026-10-19.md": "ff23a650c613dc7ec064e5d56450ced2e46acdc45d19e37ec82c12d9efd65700",
+      "docs/architecture/08-ops/roomqc-vps-signup-progress.md": "fb524cd79c771df5c89471b0946e03310ba7727ec85fff636b98a6b8e7693b31",
+      "docs/architecture/08-ops/roomqc-p2-monitoring-delivery-plan-2026-10-19.md": "431526349e9c41bbd31568136b0ad9c74a3c67659bb9b7b99b470cd68846d604",
+      "docs/architecture/08-ops/roomqc-p2-source-local-2026-10-19.md": "8d11fe966d73738e1c6a72cdac1280177505c1251928c7fa0b6749a6dc05c9e7",
+      "docs/architecture/08-ops/roomqc-vps-signup-work-packages-2026-10-19.md": "e59618a2332a6b7bb8633cf2a93ee2e129dedb008c5505541ed2e75be90daa4f"
+    }
+  },
+  "tests": {
+    "command": "npm run test:control:db",
+    "exitCode": 0,
+    "total": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "log": "artifacts/roomqc-p2-source-local-2026-10-19.log",
+    "environments": [
+      "owned disposable PostgreSQL",
+      "pinned Prometheus promtool engine with synthetic series",
+      "real loopback HTTP fixture"
+    ],
+    "prometheusImage": "prom/prometheus:v3.2.1@sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62",
+    "timestampSourcesIndividuallyTested": 14,
+    "initialFailure": "New fixture omitted explicit operator reopen after warmup; corrected test to execute real admin open_admission, production guard unchanged"
+  },
+  "runtime": {
+    "checkCommand": "npm run control:local -- verify",
+    "exitCode": 0,
+    "schemaVersion": "0005-health-snapshot-guard.sql",
+    "signup": "closed",
+    "controlImage": "sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1",
+    "frontendImage": "sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b",
+    "newCodeDeployed": false,
+    "collectorWorkerRunning": false,
+    "exporterScrapeVerified": false,
+    "fixtureHealthWrittenToLocalA": false
+  },
+  "acceptance": {
+    "A07": "partial: API/DB regression verified; collector/provision worker runtime pending",
+    "B01": "not_run: Linux staging host/mount comparison",
+    "B02": "partial: bad response, readonly, timeout and source validation tested; real exporters/probes pending",
+    "B03": "partial: fixed templates/pinned HTTP/size/redirect verified; deployment private network pending",
+    "B04": "local_verified for sample v1/v2 units/version/time/disks; not a production deployment result",
+    "B05": "partial: real DB metrics-role ordering/restart regression verified; two persistent collector processes pending",
+    "B06": "partial: stale gate/recovery logic verified; scheduled collector restart and active business bootstrap E2E pending",
+    "B07": "local_verified evaluator boundaries/windows using controlled clock; staging runtime pending",
+    "B08": "not_run: alert lifecycle and notification dispatcher pending",
+    "B09": "not_run: external heartbeat/host loss requires external target",
+    "C07": "partial: critical storage blocks new directory reserve; active workspace record/mapping preserved in fixture"
+  },
+  "safety": {
+    "businessDatabaseMutated": false,
+    "productionDeployment": false,
+    "realEmailsSent": false,
+    "otherProjectsChanged": false,
+    "ownedTestContainersRemaining": 0,
+    "primaryIndexBeforeSync": ""
+  },
+  "remaining": [
+    "M04 private exporter/Prometheus deployment and real mapping",
+    "M05 scheduled worker/stale watchdog and expected target binding",
+    "M06/T08 manifest plus five real service probes",
+    "M07/M08 alerts and bounded delivery",
+    "M09 external heartbeat",
+    "P3-P8 remaining work and release gates"
+  ],
+  "goalComplete": false,
+  "handoff": {
+    "verifiedAt": "2026-10-19T07:49:04.710Z",
+    "filesCompared": 18,
+    "mismatches": [],
+    "missingLinks": [],
+    "counts": {
+      "T": 25,
+      "P": 27,
+      "acceptance": 70,
+      "M": 10
+    },
+    "primaryStaged": "",
+    "newCodeDeployed": false
+  }
+}

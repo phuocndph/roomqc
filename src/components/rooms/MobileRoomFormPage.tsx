@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -27,6 +27,21 @@ import { QuotaExceededDialog } from '@/components/settings/usage/QuotaExceededDi
 // Schema dùng chung với desktop qua `@/lib/rooms/roomFormSchema`
 const roomSchema = roomFormSchema
 
+const EMPTY_ROOM_FORM: RoomFormData = {
+  room_number: '',
+  room_type: 'standard',
+  floor: 1,
+  area_sqm: undefined,
+  max_guests: 2,
+  base_price: 0,
+  bed_type: undefined,
+  view_type: undefined,
+  has_window: true,
+  has_balcony: false,
+  smoking_allowed: false,
+  notes: '',
+}
+
 const STEPS = [
   { id: 1, title: 'Cơ bản', description: 'Số phòng, loại phòng' },
   { id: 2, title: 'Chi tiết', description: 'Giường, diện tích' },
@@ -41,6 +56,7 @@ export function MobileRoomFormPage() {
 
   const { tenantId } = useUser()
   const { selectedHotel, isAllHotelsMode } = useHotelContext()
+  const createHotelIdRef = useRef<string | null>(selectedHotel?.id ?? null)
   const { data: roomData, isLoading: roomLoading } = useRoom(id)
   const createRoom = useCreateRoom()
   const updateRoom = useUpdateRoom()
@@ -56,7 +72,7 @@ export function MobileRoomFormPage() {
     reset,
     control,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<RoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
@@ -69,13 +85,32 @@ export function MobileRoomFormPage() {
     },
   })
 
+  // Keep a new-room draft bound to the hotel selected when it was started.
+  // Switching hotels clears dirty data instead of allowing a silent cross-
+  // hotel submission.
+  useEffect(() => {
+    if (isEdit || !selectedHotel?.id) return
+    const previousHotelId = createHotelIdRef.current
+    if (!previousHotelId) {
+      createHotelIdRef.current = selectedHotel.id
+      return
+    }
+    if (previousHotelId !== selectedHotel.id) {
+      if (isDirty) {
+        reset(EMPTY_ROOM_FORM)
+        toast.info(`Đã đổi sang ${selectedHotel.name}. Bản nháp phòng cũ đã được xóa để tránh lưu nhầm khách sạn.`)
+      }
+      createHotelIdRef.current = selectedHotel.id
+    }
+  }, [isEdit, isDirty, reset, selectedHotel?.id, selectedHotel?.name])
+
   useEffect(() => {
     if (room && isEdit) {
       reset({
         room_number: room.room_number || '',
         room_type: room.room_type || 'standard',
         floor: room.floor || 1,
-        area_sqm: room.area_sqm || undefined,
+        area_sqm: room.area_sqm ?? undefined,
         max_guests: room.max_guests || 2,
         base_price: room.base_price || 0,
         bed_type: room.bed_type || undefined,
@@ -94,7 +129,7 @@ export function MobileRoomFormPage() {
     if (currentStep === 1) {
       fieldsToValidate = ['room_number', 'room_type', 'floor']
     } else if (currentStep === 2) {
-      fieldsToValidate = ['max_guests', 'base_price']
+      fieldsToValidate = ['area_sqm', 'max_guests', 'base_price']
     }
     
     const isValid = await trigger(fieldsToValidate)
@@ -120,7 +155,14 @@ export function MobileRoomFormPage() {
       return
     }
 
-    if (!isEdit && !quotaCheck.checkQuota()) {
+    if (!isEdit && createHotelIdRef.current && createHotelIdRef.current !== selectedHotel.id) {
+      reset(EMPTY_ROOM_FORM)
+      createHotelIdRef.current = selectedHotel.id
+      toast.error('Khách sạn đã thay đổi. Bản nháp đã được xóa; hãy nhập lại phòng cho khách sạn hiện tại.')
+      return
+    }
+
+    if (!isEdit && !(await quotaCheck.checkQuota())) {
       return
     }
 
@@ -151,19 +193,24 @@ export function MobileRoomFormPage() {
           id: id!,
           data: {
             ...data,
+            area_sqm: data.area_sqm ?? null,
             updated_at: new Date().toISOString(),
           },
         })
-        navigate(`/rooms/${id}`)
+        // Replace the form entry so Back from the detail page returns to the
+        // room list instead of reopening the just-submitted form.
+        navigate(`/rooms/${id}`, { replace: true })
       } else {
         const newRoom = await createRoom.mutateAsync({
           ...data,
+          area_sqm: data.area_sqm ?? null,
           tenant_id: tenantId,
           hotel_id: selectedHotel.id,
           status: 'vacant_clean',
           amenities: [],
         })
-        navigate(`/rooms/${newRoom.id}`)
+        // Do not leave /rooms/new in history after a successful create.
+        navigate(`/rooms/${newRoom.id}`, { replace: true })
       }
     } catch (error) {
       // Error handled by mutation
@@ -341,9 +388,16 @@ export function MobileRoomFormPage() {
                       id="area_sqm"
                       type="number" min={0}
                       step="0.01"
-                      {...register('area_sqm', { valueAsNumber: true })}
+                      {...register('area_sqm', {
+                        setValueAs: value => value === '' ? undefined : Number(value),
+                      })}
+                      aria-invalid={!!errors.area_sqm}
+                      aria-describedby={errors.area_sqm ? 'area_sqm-error' : undefined}
                       className="h-12 text-base"
                     />
+                    {errors.area_sqm && (
+                      <p id="area_sqm-error" role="alert" className="text-sm text-destructive">{errors.area_sqm.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -355,6 +409,7 @@ export function MobileRoomFormPage() {
                     {...register('base_price', { valueAsNumber: true })}
                     className="h-12 text-base"
                   />
+                  <p className="text-xs text-muted-foreground">Chỉ dùng khi loại phòng chưa có bảng giá. Có bảng giá (mặc định, theo mùa, theo ngày) thì bán theo bảng giá.</p>
                   {errors.base_price && (
                     <p className="text-sm text-destructive">{errors.base_price.message}</p>
                   )}
@@ -467,8 +522,8 @@ export function MobileRoomFormPage() {
           )}
         </form>
 
-        {/* Fixed Bottom Actions */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 safe-area-bottom">
+        {/* Keep form actions above MainLayout's 4rem navigation and safe area. */}
+        <div className="fixed bottom-[calc(4rem+var(--safe-area-bottom))] left-0 right-0 z-40 bg-background border-t p-4">
           <div className="flex gap-3">
             {currentStep > 1 ? (
               <Button 

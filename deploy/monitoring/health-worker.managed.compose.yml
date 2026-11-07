@@ -1,0 +1,24 @@
+{
+  "services": {
+    "health-worker": {
+      "environment": {
+        "ROOMQC_HEALTH_PROBE_CONFIG_FILE": "/etc/roomqc/health-probes.json",
+        "ROOMQC_HEALTH_PROBE_DATABASE_URL_FILE": "/run/secrets/probe-dsn",
+        "ROOMQC_HEALTH_PROBE_KEYRING_FILE": "/run/secrets/probe-keyring",
+        "ROOMQC_HEALTH_RELEASE_TRUST_FILE": "/etc/roomqc/release-trust.json",
+        "ROOMQC_HEALTH_RELEASE_APPROVAL_MAX_VALIDITY_MS": "${ROOMQC_HEALTH_RELEASE_APPROVAL_MAX_VALIDITY_MS:?approval validity policy required}"
+      },
+      "volumes": [{"type": "bind", "source": "${ROOMQC_HEALTH_PROBE_CONFIG_FILE:?approved managed probe metadata required}",
+        "target": "/etc/roomqc/health-probes.json", "read_only": true, "bind": {"create_host_path": false}},
+        {"type": "bind", "source": "${ROOMQC_HEALTH_RELEASE_TRUST_FILE:?public release trust keyring required}",
+        "target": "/etc/roomqc/release-trust.json", "read_only": true, "bind": {"create_host_path": false}}],
+      "secrets": ["probe-dsn", "probe-keyring"],
+      "networks": ["backend"]
+    }
+  },
+  "secrets": {
+    "probe-dsn": {"file": "${ROOMQC_HEALTH_PROBE_DATABASE_URL_FILE:?dedicated probe runtime DSN required}"},
+    "probe-keyring": {"file": "${ROOMQC_HEALTH_PROBE_KEYRING_FILE:?private canary decryption keyring required}"}
+  },
+  "networks": {"backend": {"external": true, "name": "${ROOMQC_HEALTH_BACKEND_NETWORK:?approved backend network required}"}}
+}

@@ -25,6 +25,7 @@ import { useRoomSupplements, useCreateRoomSupplement, type SupplementItem } from
 import { formatCurrency, cn } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { motion, AnimatePresence } from 'framer-motion'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface RoomSupplementSheetProps {
   open: boolean
@@ -333,7 +334,7 @@ function SupplementItemCard({
           {/* Thumbnail */}
           <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
             {item.item_thumbnail ? (
-              <img src={item.item_thumbnail} alt="" className="w-full h-full object-cover" />
+              <StorageImage src={item.item_thumbnail} alt="" className="w-full h-full object-cover" />
             ) : (
               <Package className="h-6 w-6 text-muted-foreground" />
             )}

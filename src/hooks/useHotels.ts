@@ -308,38 +308,46 @@ export const useDeleteHotel = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       // Check if hotel has any users
-      const { count } = await supabase
+      const { count, error: usersError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('hotel_id', id)
 
+      if (usersError) throw usersError
       if (count && count > 0) {
-        throw new Error('Cannot delete hotel with assigned users')
+        throw new Error('Khách sạn đang có nhân viên được phân công. Hãy điều chuyển nhân viên trước khi xóa.')
       }
 
-      const { data: hotel } = await supabase
-        .from('hotels')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      const { error } = await supabase
+      // The returned row proves a deletion actually happened. An RLS-filtered
+      // zero-row result must not become a success toast or a false delete audit.
+      const { data: hotel, error } = await supabase
         .from('hotels')
         .delete()
         .eq('id', id)
+        .select('*')
+        .maybeSingle()
 
-      if (error) throw error
-
-      if (hotel) {
-        await logDelete('hotel', id, hotel.name, hotel)
+      if (error?.code === '23503') {
+        throw new Error('Khách sạn còn liên kết với dữ liệu cần giữ lại. Bạn có thể ngừng hoạt động khách sạn thay vì xóa.')
       }
+      if (error?.code === '42501') {
+        throw new Error('Tài khoản hoặc phiên đăng nhập không còn quyền xóa khách sạn này.')
+      }
+      if (error) throw error
+      if (!hotel) {
+        throw new Error('Khách sạn không còn tồn tại hoặc bạn không có quyền xóa. Hãy tải lại danh sách.')
+      }
+
+      await logDelete('hotel', id, hotel.name, hotel)
+      return hotel
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hotels'] })
-      toast.success('Hotel deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['hotel'] })
+      toast.success('Đã xóa khách sạn')
     },
     onError: (error: Error) => {
-      toast.error('Failed to delete hotel: ' + error.message)
+      toast.error('Không thể xóa khách sạn: ' + error.message)
     },
   })
 }

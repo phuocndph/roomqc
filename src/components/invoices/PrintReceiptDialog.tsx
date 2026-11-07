@@ -11,14 +11,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { printInvoice, type HotelInfo } from './InvoicePDFTemplate'
 import { VatRequestForm } from './VatRequestForm'
+import type { GuestInvoice, InvoiceLineItem } from '@/hooks/useGuestInvoices'
 
 interface PrintReceiptDialogProps {
   open: boolean
@@ -43,55 +41,56 @@ export function PrintReceiptDialog({
   bookingId,
   guestName,
   roomNumber,
-  subtotal,
   tenantId,
   hotelId,
   hotelInfo: hotelInfoProp,
 }: PrintReceiptDialogProps) {
-  const [vatEnabled, setVatEnabled] = useState(false)
-  const [vatRate, setVatRate] = useState(10)
   const [showVatRequestForm, setShowVatRequestForm] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
 
   // Reset state when dialog re-opens
   useEffect(() => {
     if (open) {
-      setVatEnabled(false)
-      setVatRate(10)
       setShowVatRequestForm(false)
     }
-  }, [open, bookingId])
+  }, [open, bookingId, tenantId, hotelId])
 
   // Fetch the auto-created receipt invoice for this booking
-  const { data: invoice, isLoading: invoiceLoading } = useQuery({
-    queryKey: ['invoice-for-booking', bookingId],
-    queryFn: async () => {
+  const { data: invoice, isLoading: invoiceLoading, error: invoiceError, refetch: refetchInvoice } = useQuery({
+    queryKey: ['invoice-for-booking', tenantId, hotelId, bookingId],
+    queryFn: async ({ signal }) => {
       const { data, error } = await supabase
         .from('guest_invoices')
         .select('*')
         .eq('booking_id', bookingId)
         .eq('tenant_id', tenantId)
+        .eq('hotel_id', hotelId)
+        .eq('invoice_type', 'receipt')
         .order('created_at', { ascending: false })
         .limit(1)
+        .abortSignal(signal)
         .maybeSingle()
       if (error) throw error
       return data
     },
-    enabled: open && !!bookingId && !!tenantId,
-    refetchInterval: (q) => (q.state.data ? false : 1000), // poll until invoice appears
+    enabled: open && !!bookingId && !!tenantId && !!hotelId,
+    refetchInterval: q => !q.state.data && !q.state.error && q.state.dataUpdateCount < 5 ? 1000 : false,
     refetchOnWindowFocus: false,
   })
 
   // Fallback fetch hotel info if not passed in
   const { data: fetchedHotel } = useQuery({
-    queryKey: ['hotel-info-for-receipt', hotelId],
-    queryFn: async () => {
-      const { data } = await supabase
+    queryKey: ['hotel-info-for-receipt', tenantId, hotelId],
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase
         .from('hotels')
         .select('*')
         .eq('id', hotelId)
+        .eq('tenant_id', tenantId)
+        .abortSignal(signal)
         .maybeSingle()
-      return data as any
+      if (error) throw error
+      return data
     },
     enabled: open && !!hotelId && !hotelInfoProp,
   })
@@ -102,17 +101,15 @@ export function PrintReceiptDialog({
         name: hotelInfoSource.name,
         address: hotelInfoSource.address ?? undefined,
         phone: hotelInfoSource.phone ?? undefined,
-        taxCode: hotelInfoSource.tax_code ?? undefined,
+        taxCode: hotelInfoProp?.tax_code ?? undefined,
       }
     : undefined
 
-  const effectiveSubtotal = subtotal ?? invoice?.subtotal ?? 0
+  const effectiveSubtotal = invoice?.subtotal ?? 0
   const effectiveGuestName = guestName || invoice?.guest_name || ''
   const effectiveRoomNumber = roomNumber || invoice?.room_number || ''
 
-  const safeRate = Math.max(0, Math.min(30, Number.isFinite(vatRate) ? vatRate : 0))
-  const vatAmount = vatEnabled ? Math.round((effectiveSubtotal * safeRate) / 100) : 0
-  const totalWithVat = effectiveSubtotal + vatAmount
+  const totalAmount = invoice?.total_amount ?? 0
 
   const handlePrint = async () => {
     if (!invoice) {
@@ -121,34 +118,12 @@ export function PrintReceiptDialog({
     }
     setIsPrinting(true)
     try {
-      const newVatRate = vatEnabled ? safeRate : 0
-      const needUpdate =
-        newVatRate !== (invoice.vat_rate ?? 0) ||
-        vatAmount !== (invoice.vat_amount ?? 0) ||
-        totalWithVat !== (invoice.total_amount ?? 0)
-
-      let invoiceForPrint = invoice
-      if (needUpdate) {
-        const { data: updated, error } = await supabase
-          .from('guest_invoices')
-          .update({
-            vat_rate: newVatRate,
-            vat_amount: vatAmount,
-            total_amount: totalWithVat,
-          })
-          .eq('id', invoice.id)
-          .eq('tenant_id', tenantId)
-          .select('*')
-          .single()
-        if (error) throw error
-        invoiceForPrint = updated
-      }
-
-      await printInvoice(invoiceForPrint as any, 'K80', hotelInfo)
+      // Printing never changes the issued quote, VAT or service fee.
+      await printInvoice({ ...invoice, line_items: invoice.line_items as unknown as InvoiceLineItem[] } as GuestInvoice, 'K80', hotelInfo)
       toast.success('Đã gửi lệnh in phiếu thu')
       onOpenChange(false)
-    } catch (e: any) {
-      toast.error('Không in được phiếu thu', { description: e?.message })
+    } catch {
+      toast.error('Không in được phiếu thu. Vui lòng thử lại.')
     } finally {
       setIsPrinting(false)
     }
@@ -169,53 +144,37 @@ export function PrintReceiptDialog({
         </DialogHeader>
 
         {/* Section 1: Totals */}
-        <div className="space-y-3 rounded-md border p-3">
+        {invoice && <div className="space-y-3 rounded-none border p-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Thành tiền</span>
             <span className="font-medium">{formatCurrency(effectiveSubtotal)}</span>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="vat-enabled"
-                checked={vatEnabled}
-                onCheckedChange={setVatEnabled}
-              />
-              <Label htmlFor="vat-enabled" className="text-sm">
-                Tính VAT
-              </Label>
-            </div>
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={30}
-                step={1}
-                value={vatRate}
-                disabled={!vatEnabled}
-                onChange={(e) => setVatRate(Number(e.target.value))}
-                className="h-8 w-16 text-right"
-              />
-              <span className="text-sm text-muted-foreground">%</span>
-            </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">VAT ({invoice?.vat_rate ?? 0}%)</span>
+            <span>{formatCurrency(invoice?.vat_amount ?? 0)}</span>
           </div>
-
-          {vatEnabled && (
-            <div className="flex items-center justify-between text-sm text-amber-600">
-              <span>VAT ({safeRate}%)</span>
-              <span className="font-medium">{formatCurrency(vatAmount)}</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Phí dịch vụ ({invoice?.service_fee_rate ?? 0}%)</span>
+            <span>{formatCurrency(invoice?.service_fee_amount ?? 0)}</span>
+          </div>
 
           <Separator />
 
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">TỔNG CỘNG</span>
-            <span className="text-lg font-bold">{formatCurrency(totalWithVat)}</span>
+            <span className="text-lg font-bold">{formatCurrency(totalAmount)}</span>
           </div>
-        </div>
+        </div>}
+
+        {invoiceLoading && <p role="status" className="text-sm">Đang tải phiếu thu…</p>}
+
+        {!invoiceLoading && !invoice && (
+          <div role="status" className="space-y-2 border p-3 text-sm">
+            <p>{invoiceError ? 'Chưa tải được phiếu thu.' : 'Chưa có phiếu thu đã xác nhận. Không thực hiện trả phòng lại.'}</p>
+            <Button type="button" variant="outline" onClick={() => void refetchInvoice()}>Kiểm tra lại phiếu thu</Button>
+          </div>
+        )}
 
         {/* Section 2: Actions */}
         {!showVatRequestForm ? (
@@ -258,7 +217,7 @@ export function PrintReceiptDialog({
             bookingId={bookingId}
             tenantId={tenantId}
             hotelId={hotelId}
-            subtotal={vatEnabled ? totalWithVat : effectiveSubtotal}
+            subtotal={totalAmount}
             onSuccess={() => { setShowVatRequestForm(false); onOpenChange(false) }}
             onCancel={() => setShowVatRequestForm(false)}
           />

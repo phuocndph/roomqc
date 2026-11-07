@@ -1,0 +1,23 @@
+# Merge after the control API base/image overlays. The CA volume holds public
+# certificates only; neither directory-private nor an admin DSN is mounted here.
+services:
+  roomqc-control:
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/roomqc-directory-ca/ca.crt
+    networks: [directory, egress]
+    volumes:
+      - type: volume
+        source: directory-ca
+        target: /run/roomqc-directory-ca
+        read_only: true
+networks:
+  directory:
+    external: true
+    name: ${ROOMQC_DIRECTORY_NETWORK:?owned internal directory network required}
+  egress:
+    external: true
+    name: ${ROOMQC_CONTROL_EGRESS_NETWORK:?approved API egress network required}
+volumes:
+  directory-ca:
+    external: true
+    name: ${ROOMQC_DIRECTORY_CA_VOLUME:?public directory CA volume required}

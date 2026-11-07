@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { assertRuntimeConfig, runtimeConfig } from '@/lib/runtime-config';
+import { isNativeApp } from '@/lib/native/platform';
+import { nativeAuthStorage } from '@/lib/native/auth-storage';
 
 assertRuntimeConfig();
 
@@ -10,7 +12,9 @@ assertRuntimeConfig();
 
 export const supabase = createClient<Database>(runtimeConfig.supabaseUrl, runtimeConfig.supabasePublishableKey, {
   auth: {
-    storage: localStorage,
+    ...(isNativeApp() ? { flowType: 'pkce' as const, detectSessionInUrl: false } : {}),
+    storage: isNativeApp() ? nativeAuthStorage : localStorage,
+    ...(runtimeConfig.workspace ? { storageKey: `roomqc-auth:${runtimeConfig.workspace.cluster.id}:${runtimeConfig.workspace.workspace.id}` } : {}),
     persistSession: true,
     autoRefreshToken: true,
   }

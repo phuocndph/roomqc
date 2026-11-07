@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { ItemWithCategory } from '@/types/items.types'
 import type { ItemCategory } from '@/types/items.types'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface RoomStandardItemPickerProps {
   items: ItemWithCategory[]
@@ -236,7 +237,7 @@ function ItemRow({
       {/* Image */}
       <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center overflow-hidden shrink-0">
         {primaryImage ? (
-          <img src={primaryImage} alt={item.name} className="w-full h-full object-cover" />
+          <StorageImage src={primaryImage} alt={item.name} className="w-full h-full object-cover" />
         ) : (
           <Package className="h-5 w-5 text-muted-foreground" />
         )}

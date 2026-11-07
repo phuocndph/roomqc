@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
+import { resolveRoomCheckPhotoUrls } from '@/lib/roomCheckPhotos'
 
 export function useRoomLastCheck(roomId: string) {
   return useQuery({
@@ -20,7 +21,7 @@ export function useRoomLastCheck(roomId: string) {
         .maybeSingle()
       
       if (error && error.code !== 'PGRST116') throw error
-      return data
+      return data ? { ...data, photos: await resolveRoomCheckPhotoUrls(data.photos) } : data
     },
     enabled: !!roomId,
   })

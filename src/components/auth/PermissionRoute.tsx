@@ -22,6 +22,7 @@ export type PermissionModule =
   | 'subscription'
   | 'hotels'
   | 'purchase_orders'
+  | 'room_checks'
 
 export type PermissionAction = 'view' | 'create' | 'update' | 'delete' | 'export' | 'approve' | 'assign' | 'manage'
 

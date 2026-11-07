@@ -7,14 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext';
 import { loginSchema, LoginFormData } from '@/lib/validations/auth.schemas';
 import { storeCredential, clearLocalCredential } from '@/lib/credential-manager';
+import { workspacePath } from '@/lib/workspace';
+import { loginNextPath } from '@/lib/login-navigation';
+import { scopedStorageKey, runtimeConfig } from '@/lib/runtime-config';
 
 // Storage keys for remember me functionality
-const REMEMBERED_EMAIL_KEY = 'remembered_email';
+const REMEMBERED_EMAIL_KEY = scopedStorageKey('remembered_email');
 
 export const LoginForm = () => {
   const { t } = useTranslation('auth');
@@ -56,7 +58,8 @@ export const LoginForm = () => {
       }
       // Full-page navigation để iOS/Android nhận diện "successful login submit"
       // và prompt lưu mật khẩu vào iCloud Keychain / Google Password Manager
-      window.location.assign('/auth/callback');
+      const next = loginNextPath();
+      window.location.assign(workspacePath('/auth/callback') + (next ? `?next=${encodeURIComponent(next)}` : ''));
     }
   };
 
@@ -71,12 +74,11 @@ export const LoginForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('login.email')}</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <FormControl>
                     <Input
                       {...field}
-                      id="login-email"
                       name="email"
                       type="email"
                       placeholder="email@example.com"
@@ -87,8 +89,8 @@ export const LoginForm = () => {
                       autoCorrect="off"
                       spellCheck={false}
                     />
-                  </div>
-                </FormControl>
+                  </FormControl>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -101,23 +103,25 @@ export const LoginForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('login.password')}</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <FormControl>
                     <Input
                       {...field}
-                      id="login-password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
                       autoComplete="current-password"
                     />
-                    <Button
+                  </FormControl>
+                  <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      aria-pressed={showPassword}
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -125,9 +129,8 @@ export const LoginForm = () => {
                       ) : (
                         <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
-                    </Button>
-                  </div>
-                </FormControl>
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -143,9 +146,9 @@ export const LoginForm = () => {
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <Label className="text-sm font-normal cursor-pointer">
+                  <FormLabel className="text-sm font-normal cursor-pointer">
                     {t('login.rememberMe')}
-                  </Label>
+                  </FormLabel>
                 </FormItem>
               )}
             />
@@ -162,13 +165,16 @@ export const LoginForm = () => {
         </form>
       </Form>
 
+      <p className="text-center text-sm"><Link to="/auth/accept-invite" className="text-primary hover:underline">Nhận lời mời nhân viên</Link></p>
+      <p className="text-center text-sm"><Link to="/auth/verify-email" className="text-primary hover:underline">Xác minh email đăng ký</Link></p>
+
       {/* Register Link */}
-      <p className="text-center text-sm text-muted-foreground">
+      {runtimeConfig.workspace?.workspace.status !== 'active' && <p className="text-center text-sm text-muted-foreground">
         {t('login.noAccount')}{' '}
         <Link to="/auth/register" className="text-primary hover:underline font-medium">
           {t('login.signUp')}
         </Link>
-      </p>
+      </p>}
     </div>
   );
 };

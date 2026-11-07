@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface HousekeepingKpi {
   totalRooms: number
@@ -98,7 +99,7 @@ export function useHousekeepingKpi(hotelId?: string | null) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const channel = supabase
-      .channel(`hk-kpi-${hotelId}`)
+      .channel(instanceChannelName(`hk-kpi-${hotelId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `hotel_id=eq.${hotelId}` }, () =>
         qc.invalidateQueries({ queryKey: ['hk-kpi', tenantId, hotelId] }),
       )

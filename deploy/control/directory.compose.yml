@@ -1,0 +1,80 @@
+# Separate clean directory database. Never point this at a tenant/Supabase DB.
+# External resources must be owned/provisioned before starting this service.
+services:
+  roomqc-directory:
+    image: postgres:16-alpine@sha256:b7587f3cb74f4f4b2a4f9d67f052edbf95eb93f4fec7c5ada3792546caaf7383
+    pull_policy: never
+    user: "70:70"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    environment:
+      POSTGRES_DB: roomqc_control
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/roomqc-directory-private/admin-password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=peer"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/roomqc-directory/postgresql.conf
+      - -c
+      - hba_file=/etc/roomqc-directory/pg_hba.conf
+      - -c
+      - max_connections=${ROOMQC_DIRECTORY_MAX_CONNECTIONS:?reviewed directory connection ceiling required}
+      - -c
+      - shared_buffers=${ROOMQC_DIRECTORY_SHARED_BUFFERS:?reviewed directory shared buffers required}
+    volumes:
+      - type: volume
+        source: directory-data
+        target: /var/lib/postgresql/data
+      - type: volume
+        source: directory-private
+        target: /run/roomqc-directory-private
+        read_only: true
+      - type: bind
+        source: ./directory/postgresql.conf
+        target: /etc/roomqc-directory/postgresql.conf
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ./directory/pg_hba.conf
+        target: /etc/roomqc-directory/pg_hba.conf
+        read_only: true
+        bind: {create_host_path: false}
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=16m,uid=70,gid=70,mode=1770
+      - /var/run/postgresql:rw,nosuid,noexec,size=8m,uid=70,gid=70,mode=0770
+    networks:
+      directory:
+        aliases: [roomqc-directory]
+    mem_limit: ${ROOMQC_DIRECTORY_MEMORY_LIMIT:?reviewed directory RAM limit required}
+    memswap_limit: ${ROOMQC_DIRECTORY_MEMORY_LIMIT:?reviewed directory RAM limit required}
+    cpus: ${ROOMQC_DIRECTORY_CPU_LIMIT:?reviewed directory CPU limit required}
+    shm_size: ${ROOMQC_DIRECTORY_SHM_SIZE:?reviewed directory shared memory required}
+    pids_limit: 128
+    restart: unless-stopped
+    stop_grace_period: 60s
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres, -d, roomqc_control]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+    labels:
+      roomqc.component: directory
+      roomqc.deployment: ${ROOMQC_DEPLOYMENT_ID:?owned deployment identity required}
+networks:
+  directory:
+    external: true
+    name: ${ROOMQC_DIRECTORY_NETWORK:?owned internal directory network required}
+volumes:
+  directory-data:
+    external: true
+    name: ${ROOMQC_DIRECTORY_DATA_VOLUME:?owned dedicated directory data volume required}
+  directory-private:
+    external: true
+    name: ${ROOMQC_DIRECTORY_PRIVATE_VOLUME:?owned private directory TLS/password volume required}

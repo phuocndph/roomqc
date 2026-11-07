@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Native WKWebView uses safe-area insets for auth screens and the app shell.
+   Android's native WebView margins already exclude system bars (insets = 0). */
+html.roomqc-native body {
+  padding-top: env(safe-area-inset-top, 0px);
+  overscroll-behavior-y: contain;
+}
+html.roomqc-native .safe-area-top { padding-top: 0; }
+html.roomqc-native .sticky.top-0 { top: env(safe-area-inset-top, 0px); }
+html.roomqc-native input,
+html.roomqc-native select,
+html.roomqc-native textarea { font-size: max(16px, 1em); }
+html.native-keyboard-open nav.fixed.bottom-0 { display: none; }
+.native-offline-banner {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #991b1b;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -48,7 +73,12 @@ All colors MUST be HSL.
     --input: 213 27% 84%;
     --ring: 217 91% 50%;
 
-    --radius: 0.5rem;
+    /* Shape system: square surfaces, subtle controls/overlays, compact badges. */
+    --radius: 4px;
+    --radius-panel: 0px;
+    --radius-control: 4px;
+    --radius-overlay: 4px;
+    --radius-badge: 2px;
 
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;

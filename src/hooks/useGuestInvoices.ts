@@ -11,6 +11,9 @@ export interface GuestInvoice {
   tenant_id: string
   hotel_id: string
   booking_id: string | null
+  checkout_actor_id?: string | null
+  checkout_command_id?: string | null
+  checkout_snapshot?: Json | null
   invoice_number: string
   guest_name: string
   guest_phone: string | null

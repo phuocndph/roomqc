@@ -56,6 +56,7 @@ import { useUser } from '@/hooks/useUser'
 import { formatCurrency } from '@/lib/utils'
 import { canCreateHousekeepingTask } from '@/lib/userAccess'
 import type { RoomStatus, CheckType } from '@/types/rooms.types'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const escHtml = (s: unknown): string =>
   String(s ?? '')
@@ -514,7 +515,7 @@ export function MobileRoomDetailPage() {
                       rel="noopener noreferrer"
                       className="relative aspect-square rounded-lg overflow-hidden border group"
                     >
-                      <img 
+                      <StorageImage 
                         src={photo} 
                         alt={`Photo ${idx + 1}`}
                         className="w-full h-full object-cover"

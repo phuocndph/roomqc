@@ -10,7 +10,7 @@ import {
   Legend,
   CartesianGrid,
 } from 'recharts'
-import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { formatCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -23,29 +23,17 @@ export interface DailyPoint {
 interface Props {
   data: DailyPoint[] | undefined
   loading?: boolean
-  days?: number
+  period: { start: Date; end: Date }
+  error?: unknown
 }
 
 /**
- * Biểu đồ kết hợp: Doanh thu (cột) vs Chi phí (line) N ngày gần nhất.
- * Tự fill ngày trống = 0 để trục thời gian liên tục.
+ * Server returns every calendar day of the selected period, including zeros.
  */
-export function RevenueVsCostChart({ data, loading, days = 30 }: Props) {
-  const filled = useMemo(() => {
-    const end = startOfDay(new Date())
-    const start = subDays(end, days - 1)
-    const map = new Map((data ?? []).map((d) => [d.date, d]))
-    return eachDayOfInterval({ start, end }).map((d) => {
-      const key = format(d, 'yyyy-MM-dd')
-      const found = map.get(key)
-      return {
-        date: key,
-        label: format(d, 'd/M'),
-        revenue: found?.revenue ?? 0,
-        cost: found?.cost ?? 0,
-      }
-    })
-  }, [data, days])
+export function RevenueVsCostChart({ data, loading, period, error }: Props) {
+  const filled = useMemo(() => data?.map(d => ({ ...d, label: format(parseISO(d.date), 'd/M') })), [data])
+
+  if (error) return <div role="alert" className="rounded-lg border p-4 text-sm">Không tải được biểu đồ. Vui lòng tải lại hoặc kiểm tra quyền xem báo cáo.</div>
 
   if (loading) {
     return (
@@ -55,10 +43,15 @@ export function RevenueVsCostChart({ data, loading, days = 30 }: Props) {
     )
   }
 
+  if (!filled) return <p className="text-sm text-muted-foreground">Chưa có dữ liệu biểu đồ.</p>
+
   return (
     <div className="rounded-lg border border-border p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold">Doanh thu vs Chi phí — {days} ngày</h3>
+        <div>
+          <h3 className="text-sm font-semibold">Doanh thu ghi nhận và chi phí trực tiếp</h3>
+          <p className="text-xs text-muted-foreground">{format(period.start, 'dd/MM/yyyy')} – {format(period.end, 'dd/MM/yyyy')}</p>
+        </div>
       </div>
       <div className="h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -84,16 +77,16 @@ export function RevenueVsCostChart({ data, loading, days = 30 }: Props) {
               contentStyle={{
                 background: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',
-                borderRadius: 6,
+                borderRadius: 'var(--radius-overlay)',
                 fontSize: 12,
               }}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="revenue" name="Doanh thu" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+            <Bar dataKey="revenue" name="Doanh thu ghi nhận" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
             <Line
               type="monotone"
               dataKey="cost"
-              name="Chi phí"
+              name="Chi phí trực tiếp"
               stroke="hsl(var(--destructive))"
               strokeWidth={2}
               dot={false}

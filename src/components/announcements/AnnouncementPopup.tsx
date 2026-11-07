@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -15,6 +15,7 @@ import { Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Announcement, AnnouncementHighlightColor } from '@/types/announcement.types';
 import { useDismissAnnouncement } from '@/hooks/announcements/useActiveAnnouncements';
+import { workspacePath } from '@/lib/workspace';
 
 interface Props {
   announcement: Announcement;
@@ -38,26 +39,30 @@ function HighlightIcon({ name, color }: { name?: string; color?: AnnouncementHig
 export function AnnouncementPopup({ announcement: a, open, onOpenChange }: Props) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const dismiss = useDismissAnnouncement();
+  const closing = useRef(false);
 
   const HeaderIcon =
     (a.icon && (Icons as unknown as Record<string, Icons.LucideIcon>)[a.icon]) || Icons.Megaphone;
 
   const handleClose = () => {
-    if (dontShowAgain && a.is_dismissible) {
+    if (closing.current) return;
+    closing.current = true;
+    // Promo acknowledgement is owned by the host, including the native Back path.
+    if (a.kind !== 'promo_popup' && dontShowAgain && a.is_dismissible) {
       dismiss.mutate(a.id);
     }
     onOpenChange(false);
   };
 
   const handleCta = () => {
+    handleClose();
     if (a.cta_url) {
       if (a.cta_url.startsWith('http')) {
         window.open(a.cta_url, '_blank', 'noopener');
       } else {
-        window.location.href = a.cta_url;
+        window.location.href = workspacePath(a.cta_url);
       }
     }
-    handleClose();
   };
 
   const highlights = a.content?.highlights ?? [];
@@ -139,7 +144,7 @@ export function AnnouncementPopup({ announcement: a, open, onOpenChange }: Props
         )}
 
         <div className="flex flex-col gap-3 mt-2">
-          {a.is_dismissible && (
+          {a.is_dismissible && a.kind !== 'promo_popup' && (
             <div className="flex items-center gap-2">
               <Checkbox
                 id={`dont-show-${a.id}`}
@@ -170,7 +175,7 @@ export function AnnouncementPopup({ announcement: a, open, onOpenChange }: Props
           )}
           {a.kind === 'version_update' && (
             <a
-              href="/whats-new"
+              href={workspacePath('/whats-new')}
               className="text-xs text-muted-foreground hover:text-primary text-center underline-offset-2 hover:underline"
               onClick={() => handleClose()}
             >

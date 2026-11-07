@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { getPresenceState, type StaffPresenceState } from '@/lib/staffPresence'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export type StaffStatusType = 'available' | 'busy' | 'break' | 'offline'
 
@@ -180,7 +181,7 @@ export function useStaffStatus() {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`staff-status-${tenantId}`)
+        .channel(instanceChannelName(`staff-status-${tenantId}`))
         .on(
           'postgres_changes',
           {

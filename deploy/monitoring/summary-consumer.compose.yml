@@ -1,0 +1,16 @@
+{
+  "services": {
+    "roomqc-control": {
+      "user": "1000:1000",
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${ROOMQC_SUMMARY_CREDENTIALS_DIR:?dedicated scoped summary output directory required}",
+          "target": "/run/roomqc/summary",
+          "read_only": true,
+          "bind": { "create_host_path": false }
+        }
+      ]
+    }
+  }
+}

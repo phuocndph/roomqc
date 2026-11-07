@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface ConversationListItem {
   id: string
@@ -111,7 +112,7 @@ export function useConversations() {
   useEffect(() => {
     if (!user?.id || !tenantId) return
     const channel = supabase
-      .channel(`chat-list-${user.id}`)
+      .channel(instanceChannelName(`chat-list-${user.id}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'conversations', filter: `tenant_id=eq.${tenantId}` },
@@ -209,7 +210,7 @@ export function useMessages(conversationId: string | undefined) {
   useEffect(() => {
     if (!conversationId || !user?.id) return
     const channel = supabase
-      .channel(`chat-msg-${conversationId}`)
+      .channel(instanceChannelName(`chat-msg-${conversationId}`))
       .on(
         'postgres_changes',
         {

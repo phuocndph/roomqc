@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
-import { useRevenueReport, ReportPeriod } from '@/hooks/useRevenueReport'
+import { useRevenueReport, ReportPeriod, recognizedRevenue, recognizedRevenueGrowth } from '@/hooks/useRevenueReport'
+import { NoShowFinanceSummary } from '@/components/reports/NoShowFinanceSummary'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { MobileRevenueReportPage } from '@/components/reports/MobileRevenueReportPage'
@@ -48,18 +49,23 @@ const formatCompact = (value: number) => {
 interface Props {
   /** Khi render trong Hub: nhận period từ chip. Standalone: undefined → tự quản. */
   period?: PeriodRangeWithPrevious
-  /** Hub đã có PageHeader & Export riêng → ẩn của trang. */
+  /** Hub có PageHeader riêng; vẫn giữ nút xuất trong tab. */
   embedded?: boolean
 }
 
 export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = {}) {
   const { isMobile } = useBreakpoint()
+  if (isMobile && !embedded) return <MobileRevenueReportPage />
+  return <DesktopRevenueReportPage period={embeddedPeriod} embedded={embedded} />
+}
+
+function DesktopRevenueReportPage({ period: embeddedPeriod, embedded }: Props) {
   const [period, setPeriod] = useState<ReportPeriod>('month')
   const [customRange, setCustomRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null })
 
   // Trong Hub: dùng period từ Hub (qua 'custom' + range).
   const customRangeReady = period === 'custom' && customRange.from && customRange.to
-  const { data: report, isLoading } = useRevenueReport(
+  const { data: report, isLoading, isError } = useRevenueReport(
     embeddedPeriod ? 'custom' : period,
     embeddedPeriod
       ? { start: embeddedPeriod.current.start, end: embeddedPeriod.current.end }
@@ -67,9 +73,9 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
         ? { start: customRange.from!, end: customRange.to! }
         : undefined,
   )
-  const { exportExcel, exportPDF } = useRevenueExport()
+  const { exportExcel, exportPDF, canExport, isExporting } = useRevenueExport(JSON.stringify([embeddedPeriod?.current, period, customRange]))
 
-  if (isMobile && !embedded) return <MobileRevenueReportPage />
+  if (isError) return <p role="alert">Không tải được báo cáo. Vui lòng tải lại hoặc kiểm tra quyền xem.</p>
 
   if (isLoading) {
     return (
@@ -91,9 +97,12 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
     )
   }
 
-  const growthPositive = report.revenueGrowth >= 0
+  const growth = recognizedRevenueGrowth(report)
+  const growthPositive = growth >= 0
+  const currentRecognized = recognizedRevenue(report, 'currentPeriod')
+  const previousRecognized = recognizedRevenue(report, 'previousPeriod')
 
-  // Số kỳ truyền cho export — standalone giữ period UI, embedded mặc định 'month'.
+  // Embedded uses the exact dates selected in the hub.
   const exportPeriod: ReportPeriod = embeddedPeriod ? 'custom' : period
 
   return (
@@ -119,7 +128,7 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
+                <Button variant="outline" size="sm" className="h-8" disabled={!canExport || isExporting}>
                   <Download className="h-3.5 w-3.5 mr-1.5" />
                   Xuất
                 </Button>
@@ -139,12 +148,17 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
         </PageHeader>
       )}
 
-      {/* Section: Xu hướng doanh thu */}
+      {embedded && <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" disabled={!canExport || isExporting} onClick={() => exportExcel(report, exportPeriod)}>Xuất Excel</Button>
+        <Button variant="outline" size="sm" disabled={!canExport || isExporting} onClick={() => exportPDF(report, exportPeriod)}>Xuất PDF</Button>
+      </div>}
+      {!embedded && <NoShowFinanceSummary report={report} />}
+      {/* Recognition includes no-show fees; room metrics retain room-only data. */}
       <div className="border rounded-lg p-4">
-        <h3 className="text-sm font-medium mb-3">Xu hướng doanh thu 6 tháng</h3>
+        <h3 className="text-sm font-medium mb-3">Doanh thu ghi nhận 6 tháng · gồm phí khách không đến</h3>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={report.monthlyTrends}>
+            <AreaChart data={report.recognizedMonthlyTrends}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -156,7 +170,7 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
               <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-overlay)' }}
               />
               <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#revenueGrad)" />
             </AreaChart>
@@ -173,18 +187,18 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
           <div className="divide-y">
             <div className="p-3 flex justify-between text-sm">
               <span className="text-muted-foreground">Kỳ trước</span>
-              <span className="font-medium">{formatCurrency(report.previousPeriod.paidRevenue)}</span>
+              <span className="font-medium">{formatCurrency(previousRecognized)}</span>
             </div>
             <div className="p-3 flex justify-between text-sm">
               <span className="text-muted-foreground">Kỳ này</span>
-              <span className="font-medium">{formatCurrency(report.currentPeriod.paidRevenue)}</span>
+              <span className="font-medium">{formatCurrency(currentRecognized)}</span>
             </div>
             <div className="p-3 flex justify-between text-sm">
               <span>Chênh lệch</span>
               <span className={cn('font-semibold flex items-center gap-1', growthPositive ? 'text-green-600' : 'text-red-600')}>
                 {growthPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                {formatCurrency(Math.abs(report.currentPeriod.paidRevenue - report.previousPeriod.paidRevenue))}
-                <span className="text-xs">({Math.abs(report.revenueGrowth).toFixed(1)}%)</span>
+                {formatCurrency(Math.abs(currentRecognized - previousRecognized))}
+                <span className="text-xs">({Math.abs(growth).toFixed(1)}%)</span>
               </span>
             </div>
           </div>
@@ -196,7 +210,7 @@ export function RevenueReportPage({ period: embeddedPeriod, embedded }: Props = 
           </div>
           <div className="divide-y">
             <div className="p-3 flex justify-between text-sm">
-              <span className="text-muted-foreground">Đã thu</span>
+              <span className="text-muted-foreground">Đã thanh toán của lượt trả phòng</span>
               <span className="font-medium text-green-600">{formatCurrency(report.today.paidRevenue)}</span>
             </div>
             <div className="p-3 flex justify-between text-sm">

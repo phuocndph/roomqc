@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 interface NotificationBellProps {
   className?: string;
@@ -44,7 +45,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
     // Subscribe to new notifications with realtime
     const channel = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(instanceChannelName(`notifications-${user.id}`))
       .on(
         'postgres_changes',
         {

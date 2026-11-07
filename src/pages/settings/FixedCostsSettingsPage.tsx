@@ -15,6 +15,7 @@ import { format, startOfMonth } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Save, Target, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
+import { ReportTargetEditor } from '@/components/reports/ReportTargetEditor'
 
 const FIXED_COST_CATEGORIES = [
   { value: 'salary', label: 'Lương nhân viên' },
@@ -27,16 +28,14 @@ const FIXED_COST_CATEGORIES = [
 
 export function FixedCostsSettingsPage() {
   const { tenantId, role } = useUser()
-  const { selectedHotel } = useHotelContext()
-  const hotelId = selectedHotel?.id
+  const { selectedHotel, isAllHotelsMode } = useHotelContext()
+  const hotelId = isAllHotelsMode ? undefined : selectedHotel?.id
   const qc = useQueryClient()
 
   const [selectedMonth, setSelectedMonth] = useState(
     format(startOfMonth(new Date()), 'yyyy-MM-dd')
   )
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const [revenueTarget, setRevenueTarget] = useState('')
-  const [occupancyTarget, setOccupancyTarget] = useState('')
 
   const { data: fixedCosts } = useQuery({
     queryKey: ['fixed-expenses', tenantId, hotelId, selectedMonth],
@@ -61,32 +60,6 @@ export function FixedCostsSettingsPage() {
     setDrafts(d)
   }, [fixedCosts])
 
-  const { data: target } = useQuery({
-    queryKey: ['monthly-target', tenantId, hotelId, selectedMonth],
-    enabled: !!tenantId && !!hotelId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('monthly_targets')
-        .select('*')
-        .eq('tenant_id', tenantId!)
-        .eq('hotel_id', hotelId!)
-        .eq('month', selectedMonth)
-        .maybeSingle()
-      if (error) throw error
-      return data
-    },
-  })
-
-  useEffect(() => {
-    if (target) {
-      setRevenueTarget(target.revenue_target ? String(target.revenue_target) : '')
-      setOccupancyTarget(target.occupancy_target ? String(target.occupancy_target) : '')
-    } else {
-      setRevenueTarget('')
-      setOccupancyTarget('')
-    }
-  }, [target])
-
   const saveCosts = useMutation({
     mutationFn: async () => {
       const rows = FIXED_COST_CATEGORIES
@@ -107,26 +80,6 @@ export function FixedCostsSettingsPage() {
     onSuccess: () => {
       toast.success('Đã lưu chi phí cố định')
       qc.invalidateQueries({ queryKey: ['fixed-expenses'] })
-    },
-    onError: () => toast.error('Lưu thất bại, thử lại'),
-  })
-
-  const saveTarget = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('monthly_targets')
-        .upsert({
-          tenant_id: tenantId!,
-          hotel_id: hotelId!,
-          month: selectedMonth,
-          revenue_target: revenueTarget ? Number(revenueTarget) : null,
-          occupancy_target: occupancyTarget ? Number(occupancyTarget) : null,
-        }, { onConflict: 'hotel_id,month' })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      toast.success('Đã lưu mục tiêu tháng')
-      qc.invalidateQueries({ queryKey: ['monthly-target'] })
     },
     onError: () => toast.error('Lưu thất bại, thử lại'),
   })
@@ -235,46 +188,7 @@ export function FixedCostsSettingsPage() {
             Đặt mục tiêu để theo dõi tiến độ trên trang Tổng quan
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Label className="text-sm flex-1">Doanh thu mục tiêu</Label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              placeholder="0"
-              value={revenueTarget}
-              onChange={e => setRevenueTarget(e.target.value)}
-              className="max-w-[180px] text-right h-9"
-            />
-            <span className="text-xs text-muted-foreground w-10">VND</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Label className="text-sm flex-1">Công suất mục tiêu (%)</Label>
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={100}
-              step="0.01"
-              placeholder="0"
-              value={occupancyTarget}
-              onChange={e => setOccupancyTarget(e.target.value)}
-              className="max-w-[180px] text-right h-9"
-            />
-            <span className="text-xs text-muted-foreground w-10">%</span>
-          </div>
-          <div className="flex items-center justify-end border-t pt-3">
-            <Button
-              type="button"
-              onClick={() => saveTarget.mutate()}
-              disabled={saveTarget.isPending}
-            >
-              <Save className="h-4 w-4 mr-1.5" />
-              {saveTarget.isPending ? 'Đang lưu…' : 'Lưu mục tiêu'}
-            </Button>
-          </div>
-        </CardContent>
+        <CardContent><ReportTargetEditor kind="monthly" month={selectedMonth} /></CardContent>
       </Card>
     </div>
   )

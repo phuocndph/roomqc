@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 /**
  * Trả về Set các user_id đang online (heartbeat <= 5 phút và status != offline).
@@ -13,7 +14,7 @@ export function useOnlinePresence() {
   useEffect(() => {
     if (!tenantId) return
     const channel = supabase
-      .channel(`online-presence-${tenantId}`)
+      .channel(instanceChannelName(`online-presence-${tenantId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'staff_status' },

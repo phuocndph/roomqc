@@ -1,0 +1,38 @@
+{
+  "name":"${ROOMQC_SETUP_ROTATION_PROJECT:?owned setup rotation project required}",
+  "services":{
+    "setup-credential-rotation":{
+      "profiles":["setup-rotation"],
+      "image":"${ROOMQC_SETUP_IMAGE:?reviewed immutable control worker image required}",
+      "command":["node","workers/setup-rotation-runtime.mjs","--config-file","/etc/roomqc/rotation.json"],
+      "user":"1000:1000",
+      "read_only":true,
+      "cap_drop":["ALL"],
+      "security_opt":["no-new-privileges:true"],
+      "init":true,
+      "restart":"unless-stopped",
+      "stop_grace_period":"55s",
+      "environment":{
+        "NODE_ENV":"production",
+        "ROOMQC_RESOURCE_ENVIRONMENT":"${ROOMQC_RESOURCE_ENVIRONMENT:-production}"
+      },
+      "volumes":[
+        {"type":"bind","source":"${ROOMQC_SETUP_ROTATION_CONFIG_FILE:?reviewed rotation policy required}","target":"/etc/roomqc/rotation.json","read_only":true,"bind":{"create_host_path":false}},
+        {"type":"bind","source":"${ROOMQC_SETUP_INSTALLER_PRIVATE_DIR:?dedicated private issuer inputs required}","target":"/etc/roomqc/private","read_only":true,"bind":{"create_host_path":false}},
+        {"type":"bind","source":"${ROOMQC_SETUP_ROTATION_JOURNAL_DIR:?dedicated writable rotation journal required}","target":"/var/lib/roomqc/setup-rotation-journal","read_only":false,"bind":{"create_host_path":false}},
+        {"type":"bind","source":"${ROOMQC_SETUP_CREDENTIALS_DIR:?dedicated scoped credential output directory required}","target":"/run/roomqc/setup","read_only":false,"bind":{"create_host_path":false}}
+      ],
+      "tmpfs":["/tmp:rw,nosuid,noexec,nodev,size=8m"],
+      "networks":["directory","egress"],
+      "mem_limit":"256m",
+      "cpus":"0.5",
+      "pids_limit":64,
+      "labels":{"roomqc.setup-credential-rotation":"${ROOMQC_SETUP_ROTATION_PROJECT:?owned setup rotation project required}"},
+      "logging":{"driver":"json-file","options":{"max-size":"10m","max-file":"3"}}
+    }
+  },
+  "networks":{
+    "directory":{"external":true,"name":"${ROOMQC_SETUP_DIRECTORY_NETWORK:?approved directory network required}"},
+    "egress":{"external":true,"name":"${ROOMQC_SETUP_EGRESS_NETWORK:?approved outbound network required}"}
+  }
+}

@@ -503,7 +503,7 @@ export function RoomsReportPage() {
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
+                          borderRadius: 'var(--radius-overlay)',
                         }}
                       />
                       <Legend />
@@ -630,7 +630,7 @@ export function RoomsReportPage() {
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-overlay)',
                       }}
                     />
                     <Bar dataKey="rate" name="Tỷ lệ sử dụng" fill="#3b82f6" radius={4} />
@@ -652,7 +652,7 @@ export function RoomsReportPage() {
               {isLoading ? (
                 <Skeleton className="h-[200px] w-full" />
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -794,7 +794,7 @@ export function RoomsReportPage() {
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-overlay)',
                       }}
                     />
                     <Bar dataKey="revenue" name="Doanh thu" fill="#10b981" radius={4} />
@@ -817,7 +817,7 @@ export function RoomsReportPage() {
               {isLoading ? (
                 <Skeleton className="h-[250px] w-full" />
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -911,7 +911,7 @@ export function RoomsReportPage() {
               {isLoading ? (
                 <Skeleton className="h-[200px] w-full" />
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -980,7 +980,7 @@ export function RoomsReportPage() {
               {isLoading ? (
                 <Skeleton className="h-[200px] w-full" />
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1093,7 +1093,7 @@ export function RoomsReportPage() {
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-overlay)',
                       }}
                     />
                     <Legend />
@@ -1115,7 +1115,7 @@ export function RoomsReportPage() {
               {isLoading ? (
                 <Skeleton className="h-[200px] w-full" />
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>

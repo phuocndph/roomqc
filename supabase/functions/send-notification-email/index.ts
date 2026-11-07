@@ -1,45 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildCorsHeaders } from '../_shared/cors.ts'
-
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')?.trim()
-
-type ResendSendEmailParams = {
-  from: string
-  to: string[]
-  subject: string
-  html: string
-  text?: string
-  reply_to?: string
-}
-
-async function sendEmailViaResend(params: ResendSendEmailParams): Promise<{ id?: string }> {
-  if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY not configured')
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  })
-
-  const text = await response.text()
-  let json: any = null
-  try {
-    json = JSON.parse(text)
-  } catch {
-    // ignore
-  }
-
-  if (!response.ok) {
-    const message = json?.message || json?.error?.message || text || `Resend error ${response.status}`
-    throw new Error(message)
-  }
-
-  const id = json?.id ?? json?.data?.id
-  return { id }
-}
+import { superAdmin, HttpError } from '../_shared/email/admin.ts'
+import { isInternalRequest } from '../_shared/internalAuth.ts'
+import { readEmailConfig } from '../_shared/email/config.ts'
+import { sendEmail } from '../_shared/email/provider.ts'
+import { escapeHtml } from '../_shared/email/templates.ts'
 
 interface EmailRequest {
   notification_type: string
@@ -311,9 +276,12 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+  if (req.method !== 'POST') return new Response(null, { status: 405, headers: corsHeaders })
 
   try {
     // Get authorization header
+    // Payment/quota notices must originate from trusted services or platform admins.
+    if (!isInternalRequest(req)) await superAdmin(req)
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Missing authorization header')
@@ -342,18 +310,27 @@ Deno.serve(async (req) => {
       error: userError,
     } = await supabaseClient.auth.getUser()
 
-    if (userError || !user) {
+    if (!isInternalRequest(req) && (userError || !user)) {
       throw new Error('Unauthorized')
     }
 
     // Parse request body
-    const { notification_type, to_email, to_name, template_data }: EmailRequest = await req.json()
+    const { notification_type, to_email, template_data: rawTemplate }: EmailRequest = await req.json()
+    const config = readEmailConfig(key => Deno.env.get(key))
+    const template_data = Object.fromEntries(Object.entries(rawTemplate || {}).map(([key, value]) => {
+      if (typeof value === 'string' && key.endsWith('_url')) {
+        const url = new URL(value, config.publicUrl)
+        if (url.origin !== config.publicUrl) throw new HttpError(400, 'Đường dẫn email phải thuộc RoomQC.')
+        return [key, escapeHtml(url.toString())]
+      }
+      return [key, typeof value === 'string' ? escapeHtml(value) : value]
+    }))
 
     // Authorization check: Get calling user's tenant and verify they can send to target email
     const { data: callerData } = await supabaseService
       .from('users')
-      .select('tenant_id, user_level_code')
-      .eq('id', user.id)
+      .select('tenant_id, user_level_code, is_super_admin')
+      .eq('id', user?.id || '00000000-0000-0000-0000-000000000000')
       .single()
 
     if (callerData?.tenant_id) {
@@ -364,9 +341,16 @@ Deno.serve(async (req) => {
         .eq('email', to_email)
         .single()
 
+      const { data: targetHotel } = await supabaseService
+        .from('hotels').select('tenant_id').eq('tenant_id', callerData.tenant_id).ilike('email', to_email).limit(1).maybeSingle()
+      const sameTenantRecipient = targetUser?.tenant_id === callerData.tenant_id || !!targetHotel
+      if (!sameTenantRecipient && !callerData.is_super_admin) {
+        throw new Error('Recipient is not registered in the caller tenant')
+      }
+
       if (targetUser && targetUser.tenant_id !== callerData.tenant_id) {
         console.error('Cross-tenant email attempt blocked:', {
-          callerId: user.id,
+          callerId: user?.id,
           callerTenant: callerData.tenant_id,
           targetEmail: to_email,
           targetTenant: targetUser.tenant_id
@@ -375,7 +359,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('Sending email:', { notification_type, to_email })
 
     // Select the appropriate template
     let emailContent: { subject: string; html: string; text: string }
@@ -398,13 +381,8 @@ Deno.serve(async (req) => {
     }
 
     // Send email via Resend (direct API call to reduce bundle size)
-    const { id: providerMessageId } = await sendEmailViaResend({
-      from: 'RoomQc <notifications@roomqc.com>',
-      to: [to_email],
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
-      reply_to: 'support@roomqc.com',
+    const providerMessageId = await sendEmail(config, {
+      id: crypto.randomUUID(), to: to_email, ...emailContent,
     })
 
     console.log('Email sent successfully:', { providerMessageId })
@@ -413,7 +391,7 @@ Deno.serve(async (req) => {
     const { error: dbError } = await supabaseClient
       .from('email_notifications')
       .insert({
-        user_id: user.id,
+        user_id: user?.id,
         notification_type,
         to_email,
         subject: emailContent.subject,
@@ -441,14 +419,13 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error: any) {
-    console.error('Error in send-notification-email:', error)
 
     return new Response(
       JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: error instanceof HttpError ? error.message : 'Không thể gửi thông báo email.',
       }),
       {
-        status: 500,
+        status: error instanceof HttpError ? error.status : 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,

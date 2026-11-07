@@ -59,17 +59,43 @@ export interface InventoryReportData {
 }
 
 export interface FinancialReportData {
+  version: 2
+  period_start: string
+  period_end: string
+  recognition_timezone: string
   summary: {
     total_cost: number
     purchase_cost: number
     laundry_cost: number
     maintenance_cost: number
   }
+  cost_summary: FinancialReportData['summary']
+  revenue_summary: {
+    gross_revenue: number
+    paid_revenue: number
+    pending_revenue: number
+    ota_commission: number
+    vat_amount: number
+    net_revenue: number
+    no_show_fees: number
+    recognized_revenue: number
+  }
+  no_show: import('@/hooks/useRevenueReport').RevenueReport['noShow']
+  fixed_cost_summary: { allocated_amount: number; method: 'calendar_day_proration'; is_estimate: true }
+  profit_summary: { net_profit: number; after_allocated_fixed_cost: number; profit_margin: number }
   monthly_trend: Array<{
     month: string
+    period_start: string
+    period_end: string
     purchase: number
     laundry: number
     maintenance: number
+    room_revenue: number
+    no_show_fees: number
+    revenue: number
+    refund_due: number
+    fixed_cost_allocation: number
+    profit: number
   }>
   cost_by_category: Array<{
     category: string

@@ -1,170 +1,62 @@
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/integrations/supabase/client'
-import { useUser } from './useUser'
-import { useHotelContext } from '@/contexts/HotelContext'
-import { useRevenueReport } from './useRevenueReport'
-import { useFinancialReport } from './useReports'
-import { useLaborCost } from './useLaborCost'
-import { useFinancialTargets } from './useFinancialTargets'
-import { differenceInDays, subDays, subYears } from 'date-fns'
-import {
-  computeDerivedKpis,
-  runOperationsAdvisor,
-  type KpiSnapshot,
-  type Finding,
-} from '@/lib/operationsAdvisor'
+import { useMemo } from 'react'
+import { useOperationsFinancialReport } from './useOperationsFinancialReport'
+import { useLaborCost, type LaborCostResult } from './useLaborCost'
+import { useFinancialTargets, type TargetMetric } from './useFinancialTargets'
+import { isSameMonth } from 'date-fns'
+import type { OperationsReport } from '@/lib/operations-report'
+import type { DateRange } from '@/types/reports.types'
+import { computeDerivedKpis, runOperationsAdvisor, type KpiSnapshot, type Finding } from '@/lib/operationsAdvisor'
 
 export interface OperationsInsightsData {
   snapshot: KpiSnapshot
   derived: ReturnType<typeof computeDerivedKpis>
   ruleFindings: Finding[]
-  dateRange: { start: Date; end: Date }
+  dateRange: DateRange
+  daily: { date: string; revenue: number; cost: number }[]
+  invalidCheckoutDates: number
+  recognitionTimezone: string
+  monthlyTargetsApplicable: boolean
 }
 
-async function fetchRoomNights(
-  tenantId: string,
-  hotelId: string | null,
-  start: Date,
-  end: Date,
-): Promise<number> {
-  let q = supabase
-    .from('room_bookings')
-    .select('check_in_date, check_out_date, payment_status')
-    .eq('tenant_id', tenantId)
-    .gte('check_out_date', start.toISOString())
-    .lte('check_out_date', end.toISOString())
-    .neq('payment_status', 'refunded')
-    .limit(10000)
-  if (hotelId) q = q.eq('hotel_id', hotelId)
-  const { data, error } = await q
-  if (error) throw error
-  let nights = 0
-  for (const b of data || []) {
-    if (!b.check_in_date || !b.check_out_date) continue
-    const n = Math.max(1, differenceInDays(new Date(b.check_out_date), new Date(b.check_in_date)))
-    nights += n
+export function buildOperationsInsights(report: OperationsReport, labor: LaborCostResult,
+  targets: Partial<Record<TargetMetric, number>>, dateRange: DateRange): OperationsInsightsData {
+  const { current: c, previous: p, year_ago: y } = report
+  const snapshot: KpiSnapshot = {
+    periodDays: c.period_days, totalRooms: report.capacity.total_rooms,
+    netRevenue: c.recognized_revenue, roomNetRevenue: c.room.netRevenue, noShowFees: c.no_show.retainedAmount,
+    grossRevenue: c.room.totalRevenue,
+    extraRevenue: c.room.surcharges.serviceCharges + c.room.surcharges.extraCharges,
+    totalCost: c.cost_summary.total_cost + labor.total_labor_cost,
+    costBreakdown: { purchase: c.cost_summary.purchase_cost, laundry: c.cost_summary.laundry_cost,
+      maintenance: c.cost_summary.maintenance_cost, labor: labor.total_labor_cost },
+    roomNightsSold: c.checkout_room_nights, occupiedRoomDays: c.occupied_room_days, bookingsCount: c.earned_checkout_count,
+    invalidCheckoutDates: c.invalid_checkout_dates_count,
+    prevNetRevenue: p.recognized_revenue, prevBookingsCount: p.earned_checkout_count,
+    prevRoomNightsSold: p.checkout_room_nights, prevOccupiedRoomDays: p.occupied_room_days, prevPeriodDays: p.period_days,
+    yoyNetRevenue: y.recognized_revenue, yoyRoomNightsSold: y.checkout_room_nights,
+    yoyOccupiedRoomDays: y.occupied_room_days, yoyPeriodDays: y.period_days,
+    laborByDepartment: labor.by_department, targets,
   }
-  return nights
+  return { snapshot, derived: computeDerivedKpis(snapshot), ruleFindings: runOperationsAdvisor(snapshot), dateRange,
+    daily: report.daily.map(d => ({ date: d.date, revenue: d.recognized_revenue, cost: d.total_cost })),
+    invalidCheckoutDates: c.invalid_checkout_dates_count, recognitionTimezone: report.recognition_timezone,
+    monthlyTargetsApplicable: dateRange.start.getDate() === 1 && isSameMonth(dateRange.start, dateRange.end) }
 }
 
-async function fetchPeriodNetRevenue(
-  tenantId: string,
-  hotelId: string | null,
-  start: Date,
-  end: Date,
-): Promise<number> {
-  let q = supabase
-    .from('room_bookings')
-    .select('total_amount, payment_status')
-    .eq('tenant_id', tenantId)
-    .gte('check_out_date', start.toISOString())
-    .lte('check_out_date', end.toISOString())
-    .neq('payment_status', 'refunded')
-    .limit(10000)
-  if (hotelId) q = q.eq('hotel_id', hotelId)
-  const { data, error } = await q
-  if (error) throw error
-  let net = 0
-  for (const b of (data || []) as Array<{ total_amount: number | null }>) {
-    net += b.total_amount || 0
-  }
-  return net
-}
-
-/**
- * Hook chính cho tab "Đánh giá vận hành" v2.
- * Gom revenue + cost + labor + targets + YoY → tính KPI + chạy rule engine.
- */
-export function useOperationsInsights(dateRange: { start: Date; end: Date }) {
-  const { tenantId } = useUser()
-  const { selectedHotel, availableHotels, isAllHotelsMode } = useHotelContext()
-
-  const revenue = useRevenueReport('custom', dateRange)
-  const financial = useFinancialReport(dateRange)
+/** Financial current/previous/YoY and room denominators come from one server snapshot. */
+export function useOperationsInsights(dateRange: DateRange) {
+  const operations = useOperationsFinancialReport(dateRange)
   const labor = useLaborCost(dateRange)
-  const targets = useFinancialTargets(dateRange.start)
-
-  const periodDays = Math.max(1, differenceInDays(dateRange.end, dateRange.start) + 1)
-  const prevEnd = subDays(dateRange.start, 1)
-  const prevStart = subDays(prevEnd, periodDays - 1)
-  const yoyStart = subYears(dateRange.start, 1)
-  const yoyEnd = subYears(dateRange.end, 1)
-
-  const hotelId = isAllHotelsMode ? null : selectedHotel?.id ?? null
-  const totalRooms = isAllHotelsMode
-    ? availableHotels.reduce((s, h) => s + (h.total_rooms || 0), 0)
-    : selectedHotel?.total_rooms || 0
-
-  return useQuery({
-    queryKey: [
-      'operations-insights',
-      tenantId,
-      hotelId ?? 'all',
-      dateRange.start.toISOString(),
-      dateRange.end.toISOString(),
-      totalRooms,
-      revenue.data?.currentPeriod.netRevenue,
-      (financial.data as any)?.cost_summary?.total_cost,
-      labor.data?.total_labor_cost,
-      Object.values(targets.data ?? {}).join(','),
-    ],
-    enabled:
-      !!tenantId &&
-      !!revenue.data &&
-      !!(financial.data as any)?.cost_summary &&
-      totalRooms > 0,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<OperationsInsightsData> => {
-      const costSummary = (financial.data as any)?.cost_summary
-      if (!tenantId || !revenue.data || !costSummary) {
-        throw new Error('Thiếu dữ liệu nguồn')
-      }
-
-      const [currentNights, prevNights, yoyNights, yoyNet] = await Promise.all([
-        fetchRoomNights(tenantId, hotelId, dateRange.start, dateRange.end),
-        fetchRoomNights(tenantId, hotelId, prevStart, prevEnd),
-        fetchRoomNights(tenantId, hotelId, yoyStart, yoyEnd).catch(() => 0),
-        fetchPeriodNetRevenue(tenantId, hotelId, yoyStart, yoyEnd).catch(() => 0),
-      ])
-
-      const cur = revenue.data.currentPeriod
-      const prev = revenue.data.previousPeriod
-      const cost = costSummary
-      const laborTotal = labor.data?.total_labor_cost ?? 0
-      const laborByDept = labor.data?.by_department ?? {}
-
-      const baseCost = (cost.total_cost || 0) + laborTotal
-
-      const snapshot: KpiSnapshot = {
-        periodDays,
-        totalRooms,
-        netRevenue: cur.netRevenue,
-        grossRevenue: cur.totalRevenue,
-        extraRevenue: cur.surcharges.serviceCharges + cur.surcharges.extraCharges,
-        totalCost: baseCost,
-        costBreakdown: {
-          purchase: cost.purchase_cost || 0,
-          laundry: cost.laundry_cost || 0,
-          maintenance: cost.maintenance_cost || 0,
-          labor: laborTotal,
-        },
-        roomNightsSold: currentNights,
-        bookingsCount: cur.bookingsCount,
-        prevNetRevenue: prev.netRevenue,
-        prevBookingsCount: prev.bookingsCount,
-        prevRoomNightsSold: prevNights,
-        yoyNetRevenue: yoyNet > 0 ? yoyNet : undefined,
-        yoyRoomNightsSold: yoyNights > 0 ? yoyNights : undefined,
-        laborByDepartment: laborByDept,
-        targets: targets.data,
-      }
-
-      const derived = computeDerivedKpis(snapshot)
-      const ruleFindings = runOperationsAdvisor(snapshot)
-
-      return { snapshot, derived, ruleFindings, dateRange }
-    },
-  })
+  const applicable = dateRange.start.getDate() === 1 && isSameMonth(dateRange.start, dateRange.end)
+  const targets = useFinancialTargets(dateRange.start, applicable)
+  const error = operations.error || labor.error || (applicable ? targets.error : null)
+  const pending = operations.isPending || labor.isPending || (applicable && targets.isPending)
+  const data = useMemo(() => {
+    if (error || pending || !operations.data || !labor.data || (applicable && !targets.data)) return undefined
+    return buildOperationsInsights(operations.data, labor.data, applicable ? targets.data! : {}, dateRange)
+  }, [error, pending, operations.data, labor.data, targets.data, applicable, dateRange])
+  return { data, error, isError: !!error, isLoading: !error && (pending || !data),
+    isFetching: !error && (operations.isFetching || labor.isFetching || (applicable && targets.isFetching)) }
 }
 
 export interface AiAdvice {
@@ -175,32 +67,4 @@ export interface AiAdvice {
   impactVnd?: number
 }
 
-/** Gọi edge function operations-advisor để lấy AI advice. */
-export function useOperationsAdvice(insights: OperationsInsightsData | undefined) {
-  const { tenantId } = useUser()
-  return useQuery({
-    queryKey: [
-      'operations-advice',
-      tenantId,
-      insights?.snapshot.netRevenue,
-      insights?.snapshot.totalCost,
-      insights?.ruleFindings.length,
-    ],
-    enabled: !!insights && !!tenantId,
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-    queryFn: async (): Promise<AiAdvice[]> => {
-      if (!insights) return []
-      const { data, error } = await supabase.functions.invoke('operations-advisor', {
-        body: {
-          snapshot: insights.snapshot,
-          derived: insights.derived,
-          findings: insights.ruleFindings.slice(0, 8),
-        },
-      })
-      if (error) throw error
-      const advice = (data?.advice ?? []) as AiAdvice[]
-      return advice
-    },
-  })
-}
+export { useOperationsAdvice } from './useOperationsAdvice'

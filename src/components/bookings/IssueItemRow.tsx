@@ -13,6 +13,7 @@ import {
   type IssueResolution,
   type RoomCheckItem,
 } from '@/hooks/useBookingIssues'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface IssueItemRowProps {
   roomCheckId: string
@@ -206,7 +207,7 @@ export function IssueItemRow({
 
       <Dialog open={!!photoOpen} onOpenChange={(open) => !open && setPhotoOpen(null)}>
         <DialogContent className="max-w-3xl p-0 overflow-hidden">
-          {photoOpen && <img src={photoOpen} alt="Ảnh sự cố" className="w-full h-auto" />}
+          {photoOpen && <StorageImage src={photoOpen} alt="Ảnh sự cố" className="w-full h-auto" />}
         </DialogContent>
       </Dialog>
     </div>

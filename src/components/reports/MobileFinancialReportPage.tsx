@@ -6,12 +6,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DollarSign, TrendingUp, TrendingDown, Download, RefreshCw, PieChart, BarChart3, Calculator } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFinancialReport } from '@/hooks/useReports'
-import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses'
-import { useReportExport } from '@/hooks/useReportExport'
+import { useFinancialReportExport } from '@/hooks/useFinancialReportExport'
 import { formatCurrency } from '@/lib/utils'
 import { subDays, subMonths, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns'
 import { Progress } from '@/components/ui/progress'
-import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 const PERIODS = [
@@ -58,32 +56,17 @@ function getDateRangeForPeriod(periodId: string) {
 export const MobileFinancialReportPage = () => {
   const [period, setPeriod] = useState('month')
   const dateRange = getDateRangeForPeriod(period)
-  const queryClient = useQueryClient()
-  
-  const { data: reportData, isLoading, refetch } = useFinancialReport(dateRange)
-  const { data: monthlyExpenses } = useMonthlyExpenses(12)
-  const { exportToExcel, isExporting } = useReportExport()
+  const { data: reportData, isPending, isError, refetch } = useFinancialReport(dateRange)
+  const { exportExcel, isExporting, canExport } = useFinancialReportExport(dateRange)
 
   const handleRefresh = async () => {
-    await refetch()
-    queryClient.invalidateQueries({ queryKey: ['monthly-expenses'] })
-    toast.success('Đã cập nhật dữ liệu')
-  }
-
-  const handleExport = () => {
-    if (!reportData) return
-    
-    exportToExcel({
-      title: 'Báo cáo Tài chính',
-      dateRange: `${dateRange.start.toLocaleDateString('vi-VN')} - ${dateRange.end.toLocaleDateString('vi-VN')}`,
-      summary: reportData.summary,
-    }, 'financial')
-    
-    toast.success('Đang xuất báo cáo Excel...')
+    const result = await refetch()
+    if (result.isError) toast.error('Không cập nhật được báo cáo. Vui lòng thử lại.')
+    else if (result.data) toast.success('Đã cập nhật dữ liệu')
   }
 
   // Calculate summary data
-  const summary = reportData?.summary
+  const summary = reportData?.cost_summary
   const totalCost = summary?.total_cost || 0
   const purchaseCost = summary?.purchase_cost || 0
   const laundryCost = summary?.laundry_cost || 0
@@ -102,7 +85,7 @@ export const MobileFinancialReportPage = () => {
   ].sort((a, b) => b.amount - a.amount)
 
   // Monthly trend data for chart
-  const trendData = monthlyExpenses?.slice(0, 7).reverse() || []
+  const trendData = reportData?.monthly_trend || []
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -135,7 +118,12 @@ export const MobileFinancialReportPage = () => {
           ))}
         </div>
 
-        {isLoading ? (
+        {isError ? (
+          <div role="alert" className="space-y-3">
+            <p>Không tải được báo cáo tài chính. Vui lòng thử lại hoặc kiểm tra quyền xem.</p>
+            <Button variant="outline" onClick={handleRefresh}>Thử lại</Button>
+          </div>
+        ) : isPending || !reportData ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Skeleton className="h-28" />
@@ -146,6 +134,15 @@ export const MobileFinancialReportPage = () => {
           </div>
         ) : (
           <>
+            <Card>
+              <CardContent className="p-4 space-y-2 text-sm">
+                <div className="flex justify-between gap-3"><span>Doanh thu ghi nhận</span><strong>{formatCurrency(reportData.revenue_summary.recognized_revenue)}</strong></div>
+                <div className="flex justify-between gap-3"><span>Lợi nhuận vận hành</span><strong>{formatCurrency(reportData.profit_summary.net_profit)}</strong></div>
+                <div className="flex justify-between gap-3"><span>Chi phí cố định phân bổ ước tính</span><strong>{formatCurrency(reportData.fixed_cost_summary.allocated_amount)}</strong></div>
+                <div className="flex justify-between gap-3"><span>Lợi nhuận sau phân bổ ước tính</span><strong>{formatCurrency(reportData.profit_summary.after_allocated_fixed_cost)}</strong></div>
+                <p className="text-xs text-muted-foreground">Doanh thu gồm phí giữ cọc no-show; chi phí cố định phân bổ theo số ngày trong kỳ. Đây không phải dòng tiền thực thu.</p>
+              </CardContent>
+            </Card>
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-3">
               <Card className="border-l-4 border-l-primary">
@@ -253,21 +250,22 @@ export const MobileFinancialReportPage = () => {
               <CardContent className="p-4 pt-0">
                 {trendData.length > 0 ? (
                   <div className="h-48 flex items-end justify-between gap-2">
-                    {trendData.map((data: any, i) => {
-                      const maxValue = Math.max(...trendData.map((d: any) => d.total_expense || 0))
-                      const heightPercent = maxValue > 0 ? ((data.total_expense || 0) / maxValue) * 100 : 0
+                    {trendData.map((data) => {
+                      const total = data.purchase + data.laundry + data.maintenance
+                      const maxValue = Math.max(...trendData.map(d => d.purchase + d.laundry + d.maintenance))
+                      const heightPercent = maxValue > 0 ? total / maxValue * 100 : 0
                       
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <div key={data.month} className="h-full flex-1 flex flex-col justify-end items-center gap-1">
                           <span className="text-xs text-muted-foreground">
-                            {formatCurrency(data.total_expense || 0).replace('₫', '').trim()}
+                            {formatCurrency(total).replace('₫', '').trim()}
                           </span>
                           <div
                             className="w-full bg-primary rounded-t transition-all"
-                            style={{ height: `${Math.max(heightPercent, 5)}%` }}
+                            style={{ height: `${heightPercent * 0.7}%` }}
                           />
                           <span className="text-xs text-muted-foreground font-medium">
-                            T{data.month}
+                            {data.month}
                           </span>
                         </div>
                       )
@@ -317,8 +315,8 @@ export const MobileFinancialReportPage = () => {
             <Button
               className="w-full"
               variant="outline"
-              onClick={handleExport}
-              disabled={isExporting || !reportData}
+              onClick={exportExcel}
+              disabled={isExporting || !reportData || !canExport}
             >
               <Download className="h-4 w-4 mr-2" />
               {isExporting ? 'Đang xuất...' : 'Xuất báo cáo Excel'}

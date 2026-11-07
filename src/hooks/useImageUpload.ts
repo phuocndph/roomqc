@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
+import { ROOM_CHECK_PHOTO_BUCKET } from '@/lib/roomCheckPhotos'
 
 export interface UploadedImage {
   url: string
@@ -10,7 +11,7 @@ export interface UploadedImage {
 export function useImageUpload() {
   const [isUploading, setIsUploading] = useState(false)
 
-  const uploadImage = async (file: File, tenantId: string): Promise<UploadedImage | null> => {
+  const uploadImage = async (file: File, tenantId: string, bucket = 'item-images'): Promise<UploadedImage | null> => {
     try {
       // Tạo tên file unique
       const fileExt = file.name.split('.').pop()
@@ -18,7 +19,7 @@ export function useImageUpload() {
       
       // Upload lên Supabase Storage
       const { data, error } = await supabase.storage
-        .from('item-images')
+        .from(bucket)
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false,
@@ -29,13 +30,13 @@ export function useImageUpload() {
         throw error
       }
 
-      // Lấy public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('item-images')
-        .getPublicUrl(data.path)
+      const urlData = bucket === ROOM_CHECK_PHOTO_BUCKET
+        ? await supabase.storage.from(bucket).createSignedUrl(data.path, 60 * 60)
+        : { data: { signedUrl: supabase.storage.from(bucket).getPublicUrl(data.path).data.publicUrl }, error: null }
+      if (urlData.error || !urlData.data?.signedUrl) throw urlData.error || new Error('Unable to resolve uploaded image URL')
 
       return {
-        url: publicUrl,
+        url: urlData.data.signedUrl,
         path: data.path,
       }
     } catch (error) {
@@ -44,13 +45,13 @@ export function useImageUpload() {
     }
   }
 
-  const uploadImages = async (files: File[], tenantId: string): Promise<UploadedImage[]> => {
+  const uploadImages = async (files: File[], tenantId: string, bucket = 'item-images'): Promise<UploadedImage[]> => {
     setIsUploading(true)
     const uploadedImages: UploadedImage[] = []
 
     try {
       for (const file of files) {
-        const result = await uploadImage(file, tenantId)
+        const result = await uploadImage(file, tenantId, bucket)
         if (result) {
           uploadedImages.push(result)
         }
@@ -69,10 +70,10 @@ export function useImageUpload() {
     return uploadedImages
   }
 
-  const deleteImage = async (path: string): Promise<boolean> => {
+  const deleteImage = async (path: string, bucket = 'item-images'): Promise<boolean> => {
     try {
       const { error } = await supabase.storage
-        .from('item-images')
+        .from(bucket)
         .remove([path])
 
       if (error) {
@@ -92,5 +93,6 @@ export function useImageUpload() {
     uploadImages,
     deleteImage,
     isUploading,
+    roomCheckPhotoBucket: ROOM_CHECK_PHOTO_BUCKET,
   }
 }

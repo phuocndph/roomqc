@@ -13,6 +13,9 @@ import { useHotelPhotoMode } from '@/hooks/useHotelPhotoMode'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from '@/hooks/use-toast'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { isNativeApp } from '@/lib/native/platform'
+import { NativePhotoButton } from '@/components/mobile/NativePhotoButton'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export type IssueAction =
   | { type: 'laundry'; quantity: number; photos?: string[] }
@@ -96,17 +99,20 @@ export function ReportIssueSheet({
     photoMode === 'always' ||
     (photoMode === 'on_issue' && selectedType !== null && PHOTO_REQUIRED_TYPES.has(selectedType))
 
-  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const uploadPhoto = async (file: File) => {
     if (!file || !tenantId) return
     try {
-      const uploaded = await uploadImage(file, tenantId)
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
       if (uploaded?.url) setPhotos(p => [...p, uploaded.url])
     } catch (err: any) {
       toast({ title: 'Tải ảnh thất bại', description: getFriendlyError(err), variant: 'destructive' })
-    } finally {
-      e.target.value = ''
     }
+  }
+
+  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await uploadPhoto(file)
+    e.target.value = ''
   }
 
   const handleConfirm = () => {
@@ -258,7 +264,7 @@ export function ReportIssueSheet({
               <div className="mt-2 flex flex-wrap gap-2">
                 {photos.map((url, i) => (
                   <div key={i} className="relative w-16 h-16">
-                    <img src={url} alt="" className="w-16 h-16 object-cover rounded-md border" />
+                    <StorageImage src={url} alt="" className="w-16 h-16 object-cover rounded-md border" />
                     <button
                       type="button"
                       onClick={() => setPhotos(p => p.filter((_, idx) => idx !== i))}
@@ -268,7 +274,7 @@ export function ReportIssueSheet({
                     </button>
                   </div>
                 ))}
-                <label className="w-16 h-16 border-2 border-dashed rounded-md flex items-center justify-center cursor-pointer hover:bg-muted text-xs font-semibold text-muted-foreground">
+                {isNativeApp() ? <NativePhotoButton onPhoto={uploadPhoto} disabled={isUploading || !tenantId} /> : <label className="w-16 h-16 border-2 border-dashed rounded-md flex items-center justify-center cursor-pointer hover:bg-muted text-xs font-semibold text-muted-foreground">
                   {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : '+ Ảnh'}
                   <input
                     type="file"
@@ -278,7 +284,7 @@ export function ReportIssueSheet({
                     onChange={handlePickPhoto}
                     disabled={isUploading}
                   />
-                </label>
+                </label>}
               </div>
               {isPhotoRequired && photos.length === 0 && (
                 <p className="mt-1.5 text-[11px] text-destructive px-1">

@@ -28,6 +28,19 @@ const required = [
 ]
 
 const errors = []
+const directoryEnabled = (process.env.VITE_ROOMQC_DIRECTORY_ENABLED || 'false').trim()
+if (!['true', 'false'].includes(directoryEnabled)) errors.push('VITE_ROOMQC_DIRECTORY_ENABLED must be true or false')
+const clusterOrigins = (process.env.VITE_ROOMQC_CLUSTER_ORIGINS || '').trim()
+if (directoryEnabled === 'true' && !clusterOrigins) errors.push('Directory builds require explicit VITE_ROOMQC_CLUSTER_ORIGINS')
+if (clusterOrigins) for (const value of clusterOrigins.split(',')) {
+  try {
+    const url = new URL(value.trim())
+    const local = ['localhost','127.0.0.1','[::1]'].includes(url.hostname)
+    if (url.username || url.password || url.search || url.hash || url.pathname !== '/'
+      || (url.protocol !== 'https:' && !(mode === 'local' && local && url.protocol === 'http:'))
+      || (mode === 'vps' && local)) throw new Error()
+  } catch { errors.push('VITE_ROOMQC_CLUSTER_ORIGINS must list trusted HTTPS origins (loopback HTTP only in local mode)') }
+}
 for (const name of required) {
   const value = (process.env[name] || '').trim()
   if (!value) errors.push(`${name} is required`)
@@ -67,6 +80,13 @@ function isServiceRoleKey(value) {
 
 if (isServiceRoleKey(publishableKey)) {
   errors.push('VITE_SUPABASE_PUBLISHABLE_KEY must not be a service-role/secret key')
+}
+let publicKeyValid = /^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey)
+if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(publishableKey)) {
+  try { publicKeyValid = JSON.parse(Buffer.from(publishableKey.split('.')[1], 'base64url')).role === 'anon' } catch {}
+}
+if (publishableKey && !publicKeyValid) {
+  errors.push('VITE_SUPABASE_PUBLISHABLE_KEY must be one publishable key or anon JWT, not a configuration object')
 }
 
 const vapidPublicKey = (process.env.VITE_VAPID_PUBLIC_KEY || '').trim()

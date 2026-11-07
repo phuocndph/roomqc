@@ -9,6 +9,9 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      "dist-mobile/**",
+      "android/**",
+      "ios/**",
       "eslint-rules/**",
       // Vite/Vitest creates these transient config bundles. Ignoring them
       // prevents ENOENT races when lint and tests run at the same time.

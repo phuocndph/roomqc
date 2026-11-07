@@ -16,10 +16,10 @@ interface RoomSubscriptionLimit {
 
 export function useRoomSubscriptionLimit(): RoomSubscriptionLimit {
   const { tenantId } = useUser();
-  const { data: subscription, isLoading: subscriptionLoading } = useTenantSubscription();
+  const { data: subscription, isLoading: subscriptionLoading, error: subscriptionError } = useTenantSubscription();
 
   // Get actual room count from database
-  const { data: actualRooms, isLoading: roomsLoading } = useQuery({
+  const { data: actualRooms, isLoading: roomsLoading, error: roomsError } = useQuery({
     queryKey: ['actual-room-count', tenantId],
     queryFn: async () => {
       if (!tenantId) return 0;
@@ -35,7 +35,9 @@ export function useRoomSubscriptionLimit(): RoomSubscriptionLimit {
     enabled: !!tenantId,
   });
 
-  const registeredRooms = subscription?.registered_rooms || 0;
+  const plan = subscription?.subscription_plan as {max_rooms?:number|null} | null | undefined;
+  const registeredRooms = subscription?.subscription_status === 'trial' && !subscription.registered_rooms
+    ? (plan?.max_rooms ?? 0) : (subscription?.registered_rooms || 0);
   const currentActualRooms = actualRooms || 0;
   const remainingSlots = Math.max(0, registeredRooms - currentActualRooms);
   
@@ -60,7 +62,7 @@ export function useRoomSubscriptionLimit(): RoomSubscriptionLimit {
     registeredRooms,
     actualRooms: currentActualRooms,
     remainingSlots,
-    canCreateRoom: remainingSlots > 0,
+    canCreateRoom: !subscriptionLoading && !roomsLoading && !subscriptionError && !roomsError && remainingSlots > 0,
     isLoading: subscriptionLoading || roomsLoading,
     remainingDays,
     subscriptionEndDate: endDate || null,

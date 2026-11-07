@@ -1,3 +1,5 @@
+import type { WorkspaceBootstrap } from './workspace'
+
 const rawSupabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? '').trim()
 const rawPublishableKey = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '').trim()
 
@@ -18,12 +20,40 @@ export function isServiceRoleKey(value: string): boolean {
   }
 }
 
+/** Accept a single public key, never a serialized configuration object. */
+export function isPublishableKey(value: string): boolean {
+  if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(value)) return true
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value)) return false
+  try {
+    const encoded = value.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(encoded + '='.repeat((4 - encoded.length % 4) % 4))).role === 'anon'
+  } catch { return false }
+}
+
 export const runtimeConfig = {
   supabaseUrl: rawSupabaseUrl,
   supabasePublishableKey: rawPublishableKey,
+  vapidPublicKey: String(import.meta.env.VITE_VAPID_PUBLIC_KEY || ''),
+  workspace: null as WorkspaceBootstrap | null,
   // Require an explicit opt-in even during dev so a local dev server cannot
   // accidentally seed a remote production project.
   demoDataEnabled: String(import.meta.env.VITE_ENABLE_DEMO_DATA ?? '').toLowerCase() === 'true',
+}
+
+/** Called once by main before importing App and its Supabase singleton. */
+export function configureWorkspace(bootstrap: WorkspaceBootstrap | null): void {
+  if (!bootstrap) return
+  if (isServiceRoleKey(bootstrap.cluster.publishableKey)) throw new Error('Không được đưa khóa quản trị vào trình duyệt.')
+  runtimeConfig.supabaseUrl = bootstrap.cluster.url
+  runtimeConfig.supabasePublishableKey = bootstrap.cluster.publishableKey
+  runtimeConfig.vapidPublicKey = bootstrap.cluster.vapidPublicKey
+  runtimeConfig.workspace = bootstrap
+  assertRuntimeConfig()
+}
+
+export function scopedStorageKey(key: string, userId?: string | null): string {
+  const workspace = runtimeConfig.workspace
+  return workspace ? `roomqc:${workspace.cluster.id}:${workspace.workspace.id}:${userId || 'anonymous'}:${key}` : key
 }
 
 /**
@@ -52,5 +82,8 @@ export function assertRuntimeConfig(): void {
 
   if (isServiceRoleKey(runtimeConfig.supabasePublishableKey)) {
     throw new Error('Không được đưa service_role/secret key vào frontend RoomQC.')
+  }
+  if (!isPublishableKey(runtimeConfig.supabasePublishableKey)) {
+    throw new Error('Khóa công khai Supabase không hợp lệ. Chỉ nhập một publishable key hoặc anon JWT.')
   }
 }

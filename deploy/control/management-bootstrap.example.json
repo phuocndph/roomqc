@@ -1,0 +1,11 @@
+{
+  "version":1,
+  "deploymentId":"control-main",
+  "environment":"staging",
+  "expected":{"databaseName":"roomqc_control","databaseOid":"REPLACE_FROM_OWNED_DATABASE","systemIdentifier":"REPLACE_FROM_OWNED_DATABASE"},
+  "budgetFile":"/opt/RoomQC/management/control-main/private/budget.json",
+  "budgetSha256":"REPLACE_WITH_REVIEWED_FILE_SHA256",
+  "adminDsnFile":"/opt/RoomQC/management/control-main/operator/admin.dsn",
+  "credentialsDirectory":"/opt/RoomQC/management/control-main/private/runtime",
+  "registryFile":"/opt/RoomQC/management/control-main/private/initial-registry.json"
+}

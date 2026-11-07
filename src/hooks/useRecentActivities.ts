@@ -5,6 +5,7 @@ import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { useToast } from './use-toast'
 import type { DashboardActivity } from '@/types/dashboard.types'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export function useRecentActivities(limit: number = 10) {
   const { tenantId } = useUser()
@@ -35,7 +36,7 @@ export function useRecentActivities(limit: number = 10) {
     if (!tenantId) return
     
     const channel = supabase
-      .channel(`activity-logs-${tenantId}`)
+      .channel(instanceChannelName(`activity-logs-${tenantId}`))
       .on(
         'postgres_changes',
         {

@@ -1,218 +1,123 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
-
+import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useUser } from '@/hooks/useUser'
-import { supabase } from '@/integrations/supabase/client'
+import { passwordChangeFlow } from '@/lib/password-change-client'
+import { PasswordChangeError, PasswordIdentityChangedError, type PasswordChangeContext, type PasswordChangeResult } from '@/lib/password-change'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
-// Strong password schema
-const changePasswordSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-    .regex(/[A-Z]/, 'Mật khẩu phải có ít nhất 1 chữ hoa')
-    .regex(/[a-z]/, 'Mật khẩu phải có ít nhất 1 chữ thường')
-    .regex(/[0-9]/, 'Mật khẩu phải có ít nhất 1 số')
-    .regex(/[^A-Za-z0-9]/, 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt'),
+const schema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+    .regex(/[A-Z]/, 'Cần ít nhất 1 chữ hoa').regex(/[a-z]/, 'Cần ít nhất 1 chữ thường')
+    .regex(/[0-9]/, 'Cần ít nhất 1 số').regex(/[^A-Za-z0-9]/, 'Cần ít nhất 1 ký tự đặc biệt'),
   confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: 'Mật khẩu xác nhận không khớp',
-  path: ['confirmPassword'],
-})
-
-type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
+}).refine(data => data.newPassword === data.confirmPassword, { message: 'Mật khẩu xác nhận không khớp', path: ['confirmPassword'] })
+type Values = z.infer<typeof schema>
 
 export default function ChangePasswordPage() {
-  const { t } = useTranslation(['auth', 'common'])
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { updatePassword } = useAuth()
-  const { user } = useUser()
+  const { user, session, updatePassword } = useAuth()
+  const queryClient = useQueryClient(), navigate = useNavigate()
+  const identity = useRef(user?.id); identity.current = user?.id
+  const mounted = useRef(true)
+  const [context, setContext] = useState<PasswordChangeContext | null>(null)
+  const [contextError, setContextError] = useState('')
+  const [recheck, setRecheck] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const form = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      newPassword: '',
-      confirmPassword: '',
-    },
-  })
-
-  const password = form.watch('newPassword')
-
-  const onSubmit = async (data: ChangePasswordFormData) => {
-    setIsSubmitting(true)
-
-    try {
-      // Update password using AuthContext
-      const { error } = await updatePassword(data.newPassword)
-
-      if (error) {
-        toast.error(error.message || 'Không thể đổi mật khẩu')
-        return
+  const form = useForm<Values>({ resolver: zodResolver(schema),
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' } })
+  const finish = useCallback(async (saved: PasswordChangeResult) => {
+    await queryClient.invalidateQueries({ queryKey: ['user', saved.id] })
+    if (!mounted.current || identity.current !== saved.id) return
+    toast.success(saved.completion === 'previous'
+      ? 'Lần đổi mật khẩu trước đã được xác nhận hoàn tất.' : 'Đổi mật khẩu thành công!')
+    navigate('/auth/callback', { replace: true })
+  }, [navigate, queryClient])
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  useEffect(() => { form.reset() }, [user?.id, form])
+  useEffect(() => {
+    let cancelled = false
+    setContext(null); setContextError('')
+    if (!user?.id) { setContextError('Vui lòng đăng nhập hoặc mở liên kết khôi phục mật khẩu hợp lệ.'); return }
+    const actorId = user.id
+    void (async () => {
+      try {
+        const value = await passwordChangeFlow.context(actorId)
+        const saved = await passwordChangeFlow.reconcile(actorId, () => !cancelled && identity.current === actorId)
+        if (cancelled || identity.current !== actorId) return
+        if (saved) { await finish(saved); return }
+        setContext(value)
+      } catch (error) {
+        if (cancelled || identity.current !== actorId) return
+        setContextError(error instanceof PasswordChangeError ? error.message : 'Chưa kiểm tra được phiên. Vui lòng kiểm tra lại kết quả.')
       }
-
-      // Update user metadata to remove must_change_password flag
-      await supabase.auth.updateUser({
-        data: { must_change_password: false }
-      })
-
-      // Update database users table
-      if (user?.id) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .update({ must_change_password: false })
-          .eq('id', user.id)
-
-        if (dbError) {
-          console.error('Failed to update must_change_password in database:', dbError)
-        }
-      }
-
-      // Invalidate user cache to get fresh data
-      await queryClient.invalidateQueries({ queryKey: ['user'] })
-      
-      // Small delay to ensure cache is cleared
-      await new Promise(resolve => setTimeout(resolve, 300))
-
-      toast.success('Đổi mật khẩu thành công!')
-      navigate('/auth/callback', { replace: true })
-    } catch (error: any) {
-      console.error('Change password error:', error)
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại.')
-    } finally {
-      setIsSubmitting(false)
+    })()
+    return () => { cancelled = true }
+  }, [user?.id, session?.access_token, recheck, finish])
+  const onSubmit = async (values: Values) => {
+    if (!context || context.actorId !== identity.current) return
+    if (!context.isRecovery && !values.currentPassword) {
+      form.setError('currentPassword', { message: 'Vui lòng nhập mật khẩu hiện tại.' }); return
     }
+    setIsSubmitting(true)
+    try {
+      const { error, data } = await updatePassword(values.newPassword, values.currentPassword || undefined)
+      if (error) throw error
+      if (!data || data.id !== context.actorId) throw new PasswordChangeError('outcome_unknown', 'Chưa xác nhận được kết quả. Hãy kiểm tra trước khi gửi lại.')
+      await finish(data)
+    } catch (error) {
+      if (mounted.current && identity.current === context.actorId && !(error instanceof PasswordIdentityChangedError)) {
+        toast.error(error instanceof PasswordChangeError ? error.message : 'Chưa xác nhận được kết quả. Hãy kiểm tra trước khi gửi lại.')
+      }
+    } finally { if (mounted.current) setIsSubmitting(false) }
   }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4 relative">
-      {/* Language Switcher - Top Right */}
-      <div className="absolute top-4 right-4">
-        <LanguageSwitcher />
-      </div>
-
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Đổi mật khẩu</CardTitle>
-          <CardDescription>
-            Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng hệ thống
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* New Password */}
-              <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mật khẩu mới</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <PasswordStrengthMeter password={password} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Confirm Password */}
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Xác nhận mật khẩu</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Submit Button */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang xử lý...
-                  </>
-                ) : (
-                  'Đổi mật khẩu'
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  return <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+    <div className="absolute top-4 right-4"><LanguageSwitcher /></div>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Đổi mật khẩu</CardTitle>
+        <CardDescription>{context?.isRecovery
+          ? 'Phiên khôi phục đã được server xác nhận. Hãy đặt mật khẩu mới.'
+          : 'Đổi mật khẩu để tiếp tục sử dụng hệ thống.'}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!context && !contextError && <p role="status">Đang kiểm tra phiên và lần đổi mật khẩu trước...</p>}
+        {contextError && <p role="alert" className="mb-4 text-sm text-destructive">{contextError}</p>}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {context && !context.isRecovery && <div className="space-y-2">
+            <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+            <Input id="currentPassword" type="password" autoComplete="current-password" disabled={isSubmitting} {...form.register('currentPassword')} />
+            {form.formState.errors.currentPassword && <p role="alert">{form.formState.errors.currentPassword.message}</p>}
+          </div>}
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">Mật khẩu mới</Label>
+            <Input id="newPassword" type="password" autoComplete="new-password" disabled={!context || isSubmitting} {...form.register('newPassword')} />
+            <PasswordStrengthMeter password={form.watch('newPassword')} />
+            {form.formState.errors.newPassword && <p role="alert">{form.formState.errors.newPassword.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+            <Input id="confirmPassword" type="password" autoComplete="new-password" disabled={!context || isSubmitting} {...form.register('confirmPassword')} />
+            {form.formState.errors.confirmPassword && <p role="alert">{form.formState.errors.confirmPassword.message}</p>}
+          </div>
+          <p className="text-sm text-muted-foreground">Nếu mất kết nối sau khi gửi, kiểm tra kết quả trước khi gửi lại. Không cần nhập lại mật khẩu để kiểm tra.</p>
+          <Button type="button" variant="outline" className="w-full" disabled={isSubmitting}
+            onClick={() => setRecheck(value => value + 1)}>Kiểm tra và tiếp tục</Button>
+          <Button type="submit" className="w-full" disabled={!context || !!contextError || isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Đổi mật khẩu
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
 }

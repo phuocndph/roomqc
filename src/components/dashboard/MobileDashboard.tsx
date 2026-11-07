@@ -354,20 +354,20 @@ export function MobileDashboard({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg border border-l-4 border-l-green-600 bg-background">
+                <div className="flex items-center justify-between p-2 rounded-none border border-l-4 border-l-green-600 bg-background">
                   <span className="text-sm font-medium">Còn trống</span>
                   <Badge variant="outline" className="bg-white dark:bg-background">
                     {roomStats.available}/{roomStats.total}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg border border-l-4 border-l-blue-600 bg-background">
+                <div className="flex items-center justify-between p-2 rounded-none border border-l-4 border-l-blue-600 bg-background">
                   <span className="text-sm font-medium">Đang sử dụng</span>
                   <Badge variant="outline" className="bg-white dark:bg-background">
                     {roomStats.occupied}/{roomStats.total}
                   </Badge>
                 </div>
                 {roomStats.maintenance > 0 && (
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-l-4 border-l-orange-600 bg-background">
+                  <div className="flex items-center justify-between p-2 rounded-none border border-l-4 border-l-orange-600 bg-background">
                     <span className="text-sm font-medium">Đang bảo trì</span>
                     <Badge variant="outline" className="bg-white dark:bg-background">
                       {roomStats.maintenance}
@@ -402,7 +402,7 @@ export function MobileDashboard({
                   className="flex flex-col h-auto py-3 px-2 gap-2"
                   onClick={() => navigate(action.path)}
                 >
-                  <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-secondary">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-none bg-secondary">
                     <action.icon className={`h-5 w-5 ${action.color}`} />
                   </div>
                   <span className="text-xs font-medium text-center leading-tight">
@@ -497,7 +497,7 @@ export function MobileDashboard({
                       key={item.id || index}
                       role="button"
                       tabIndex={0}
-                      className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => navigate(`/items/${item.id}`)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {

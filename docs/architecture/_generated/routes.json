@@ -1,6 +1,12 @@
 {
   "routes": [
     {
+      "path": "/start",
+      "element": "WorkspaceStart",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
       "path": "/landing",
       "element": "LandingPage",
       "guard": null,
@@ -8,6 +14,12 @@
     },
     {
       "path": "/auth/login",
+      "element": "Login",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/admin/login",
       "element": "Login",
       "guard": null,
       "guardAttrs": ""
@@ -21,6 +33,18 @@
     {
       "path": "/auth/forgot-password",
       "element": "ForgotPassword",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/verify-email",
+      "element": "EmailVerification",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "/auth/accept-invite",
+      "element": "EmailVerification",
       "guard": null,
       "guardAttrs": ""
     },
@@ -105,6 +129,18 @@
     {
       "path": "tenants",
       "element": "TenantsPage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "infrastructure",
+      "element": "InfrastructurePage",
+      "guard": null,
+      "guardAttrs": ""
+    },
+    {
+      "path": "registrations",
+      "element": "RegistrationsPage",
       "guard": null,
       "guardAttrs": ""
     },
@@ -329,6 +365,12 @@
       "element": "InventoryHubRedirect",
       "guard": null,
       "guardAttrs": ""
+    },
+    {
+      "path": "setup/rooms",
+      "element": "RoleGuard",
+      "guard": "RoleGuard",
+      "guardAttrs": "allowedRoles={['owner']}"
     },
     {
       "path": "rooms",
@@ -1013,6 +1055,14 @@
     {
       "guard": "PermissionRoute",
       "attrs": "module=\"items\" action=\"update\""
+    },
+    {
+      "guard": "RoleGuard",
+      "attrs": "allowedRoles={['owner']}"
+    },
+    {
+      "guard": "PermissionRoute",
+      "attrs": "module=\"rooms\" action=\"create\""
     },
     {
       "guard": "PermissionRoute",

@@ -1,0 +1,9 @@
+# Merge after docker-compose.control.yml to use an already verified image.
+# No credentials or reviewed resource limits are provided by this override.
+services:
+  roomqc-control:
+    image: ${ROOMQC_CONTROL_IMAGE:?Build and verify the immutable control image first}
+    build: !reset null
+    pull_policy: never
+    working_dir: /app
+    command: ["node", "server.mjs"]

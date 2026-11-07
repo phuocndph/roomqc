@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isNativeApp } from '@/lib/native/platform';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -24,7 +25,7 @@ export const usePWAInstall = () => {
     const checkInstalled = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIOSStandalone = (window.navigator as any).standalone === true;
-      setIsInstalled(isStandalone || isIOSStandalone);
+      setIsInstalled(isNativeApp() || isStandalone || isIOSStandalone);
     };
 
     checkInstalled();

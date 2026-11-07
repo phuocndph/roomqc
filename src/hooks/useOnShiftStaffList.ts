@@ -9,6 +9,7 @@ import {
   PRESENCE_SORT_ORDER,
   type StaffPresenceState,
 } from '@/lib/staffPresence'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface OnShiftStaffMember {
   id: string
@@ -38,7 +39,7 @@ export function useOnShiftStaffList(hotelId: string | undefined) {
   useEffect(() => {
     if (!tenantId || !hotelId) return
     const channel = supabase
-      .channel(`on-shift-staff-list-${hotelId}`)
+      .channel(instanceChannelName(`on-shift-staff-list-${hotelId}`))
       .on(
         'postgres_changes',
         {

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from 'sonner'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface ReorderSuggestion {
   id: string
@@ -46,7 +47,7 @@ export function useReorderSuggestions(status: ReorderSuggestion['status'] = 'pen
   useEffect(() => {
     if (!tenantId) return
     const channel = supabase
-      .channel(`reorder-suggestions-${tenantId}`)
+      .channel(instanceChannelName(`reorder-suggestions-${tenantId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reorder_suggestions', filter: `tenant_id=eq.${tenantId}` },

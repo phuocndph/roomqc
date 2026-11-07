@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { WashingMachine } from 'lucide-react';
+import { ArrowLeft, WashingMachine } from 'lucide-react';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { navigateBack } from '@/lib/navigation';
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +41,6 @@ import { StandardItemsFields } from '@/components/inventory/outbound/StandardIte
 export function OutboundPage() {
   const { t } = useTranslation(['inventory', 'common', 'distribution', 'laundry'])
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
 
   
   const { isMobile } = useBreakpoint();
@@ -93,14 +94,9 @@ export function OutboundPage() {
   const isAnyPending = isLoading || isDistributionLoading || isLaundryLoading;
 
   const goToList = () => {
-    setSearchParams(prev => {
-      const p = new URLSearchParams(prev);
-      p.set('tab', 'operations');
-      p.set('sub', 'outbound');
-      p.set('view', 'list');
-      return p;
-    }, { replace: true });
+    navigate('/inventory?tab=operations&sub=outbound&view=list', { replace: true });
   };
+  const goBack = () => navigateBack(navigate, '/inventory');
 
   const onSubmit = (data: OutboundFormData) => {
     if (data.transaction_category === 'room_assign') {
@@ -155,6 +151,9 @@ export function OutboundPage() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Xuất kho" description="Giao đồ dùng cho phòng hoặc xuất hàng theo mục đích sử dụng." showHelp={false}>
+        <Button type="button" variant="outline" size="sm" onClick={goBack}><ArrowLeft className="h-4 w-4" />Quay lại</Button>
+      </PageHeader>
       <Form {...form}>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -264,7 +263,7 @@ export function OutboundPage() {
                 <span className="text-red-600 font-medium">-{totalQuantity} đơn vị</span>
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={goToList}>{t('common:cancel')}</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={goBack}>{t('common:cancel')}</Button>
                 <Button type="submit" size="sm" disabled={isAnyPending || hasStockError}>{isAnyPending ? t('inventory:outbound.processing') : t('inventory:outbound.confirm')}</Button>
               </div>
 
@@ -280,7 +279,7 @@ export function OutboundPage() {
                 <span className="text-blue-600 font-medium">{distributionForm.summary.totalItems} đơn vị</span>
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={goToList}>{t('common:cancel')}</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={goBack}>{t('common:cancel')}</Button>
                 <Button type="submit" size="sm" disabled={isAnyPending || !distributionForm.isValid}>{isAnyPending ? t('distribution:createOrder.creating') : t('distribution:createOrder.create')}</Button>
               </div>
 
@@ -290,7 +289,7 @@ export function OutboundPage() {
           {/* Summary for laundry */}
           {category === 'laundry' && (
             <div className="flex items-center justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" size="sm" onClick={goToList}>{t('common:cancel')}</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={goBack}>{t('common:cancel')}</Button>
               <Button type="submit" size="sm" disabled={isAnyPending || laundryHasStockError || laundryItems.filter(i => i.item_id).length === 0}>
                 <WashingMachine className="mr-1.5 h-4 w-4" />
                 {isAnyPending ? t('laundry:batch.creating') : t('laundry:batch.createBatch')}

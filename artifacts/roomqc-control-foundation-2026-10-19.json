@@ -1,0 +1,487 @@
+{
+  "format": 1,
+  "observedAtUtc": "2026-10-19 04:12:21 UTC",
+  "scope": {
+    "workPackages": 27,
+    "acceptanceCases": 70,
+    "goalComplete": false
+  },
+  "sourceBase": "6f8511e17edf3d9dbb9022136a92be125bdd2982",
+  "sourceState": "Foundation working tree on base commit; exact normalized source hashes below.",
+  "sourceFiles": [
+    {
+      "file": "docker-compose.control.local.yml",
+      "sha256": "b4f2b3d2d167d6ad974baa5642670aa0df5be82747e12cce0a765a9486c02877"
+    },
+    {
+      "file": "docker-compose.roomqc-control.local.yml",
+      "sha256": "9760524ea203c75e2b15e5c1d930ee7c77722d9198fa1dea31722b2873f7314c"
+    },
+    {
+      "file": "docker/nginx-control.local.conf",
+      "sha256": "97c2b65aa0ad2828afe24398927cf27b9d1656aa38a98246ff36f54ee2e691b3"
+    },
+    {
+      "file": "docker/nginx.conf",
+      "sha256": "2f2680be5e3778699441dd69a1c7ebdec39ac6e0c77709c890227e3344126d0a"
+    },
+    {
+      "file": "scripts/control-local.mjs",
+      "sha256": "c2f1806b4c7ec2ece5f2aab09d16effa340da5c089fb247f609c926635bc7833"
+    },
+    {
+      "file": "scripts/test-control-directory.mjs",
+      "sha256": "2f0f9f0127a9f603488537ba2ffbf285666dcbfcba075f76f7d510bed39c91b3"
+    },
+    {
+      "file": "server/control/Dockerfile",
+      "sha256": "1276ae0e95068e6aa8e0ef3f5f5992afaf9db17ba6ea64ccc226636fffa7d94b"
+    },
+    {
+      "file": "server/control/app.mjs",
+      "sha256": "26b7aa286e4dde953ae05106d2cbedae4e79cf60e6f11546e1fa64959ae48f07"
+    },
+    {
+      "file": "server/control/cluster.mjs",
+      "sha256": "92a3daf37ba5595e2e5cf4f970a7b16bb43ab734ef97ee378cf1f721a1dc15eb"
+    },
+    {
+      "file": "server/control/config.mjs",
+      "sha256": "492101989da77689bcf97167629cd8f83c43110691e7dfe8ce57b803181aa845"
+    },
+    {
+      "file": "server/control/contracts/control-v3.openapi.json",
+      "sha256": "8967a8c75b81a9c5d6aa64ad8c82074a2c83ced6f4e8c3e63d3983167ab746ba"
+    },
+    {
+      "file": "server/control/control.test.mjs",
+      "sha256": "5eb4eca6a51f680fd0c7968abb4785cc725a66061f6318150c873cc0a84b75f9"
+    },
+    {
+      "file": "server/control/directory-db.test.mjs",
+      "sha256": "378b979c06240b6c1faeda0af3866325d13e79485f87586482217ede82b41451"
+    },
+    {
+      "file": "server/control/migrate.mjs",
+      "sha256": "4f7ed55d04ec1921ccff44fcb553bb93aed6253d9f88b1018022e23ee691d783"
+    },
+    {
+      "file": "server/control/migrations/0001-directory-v2.sql",
+      "sha256": "0e8e067ae953c6309bab35e89a7d215ceb36b4f3003ef189073ea7ce9bea6e1d"
+    },
+    {
+      "file": "server/control/migrations/0002-infrastructure-and-recovery.sql",
+      "sha256": "8d6a7b0509f73ce179a26a288c41a12f5a5c90cbe266382bd0c3d5558b9c708c"
+    },
+    {
+      "file": "server/control/migrations/0003-runtime-grants.sql",
+      "sha256": "e4a71b7c8955f467d0c2f37176afcd05470fc411f17dc497edb1deff140b663b"
+    },
+    {
+      "file": "server/control/package-lock.json",
+      "sha256": "6104fb8c8cfe8cb8d625b696fe95fff560a5995c879a0013e4ea28ae8facd6b1"
+    },
+    {
+      "file": "server/control/package.json",
+      "sha256": "be985235bef2739d9e751dd00b62f751d0fa2c0b831a9c6a71e13cea47ce2f97"
+    },
+    {
+      "file": "server/control/runtime.test.mjs",
+      "sha256": "635a0fe86ece25cad9db08796659ee7fcef2ed908ef7a5181c2f9b0e0624f5af"
+    },
+    {
+      "file": "server/control/schema.sql",
+      "sha256": "558d202de72c05bd758626a3eb978c0671aa6f96c4bdc7c2d20e0004a830f90c"
+    },
+    {
+      "file": "server/control/server.mjs",
+      "sha256": "de724b730b1160170517874b9c18527fa15a3fd3e2d5d8660c7ec22380faa44c"
+    },
+    {
+      "file": "server/control/store.mjs",
+      "sha256": "c9bee5a2e29c37bf18c97980374b8a32a4bdd2d0df6e06bebf7c26450166ec2e"
+    },
+    {
+      "file": "server/control/support-cli.mjs",
+      "sha256": "24296283985651b3b666e4e43cc7eac773d6e2bf108a52fbde6621f206e2e6a8"
+    },
+    {
+      "file": "server/control/support.mjs",
+      "sha256": "66cf7c33ecb740fab94076f2a90fb2f11e60942f4c203d625034c39a51d098c4"
+    },
+    {
+      "file": "server/control/support.test.mjs",
+      "sha256": "1f15b8b088e2007893722443d083dc8accabd3687e8664127e5292b886e6057d"
+    }
+  ],
+  "images": {
+    "control": "sha256:0119a172a0c3d2a20591a1f132927b92e46f5c632b3b80a54d70ec3cbbd52f0d",
+    "directory": "sha256:b7587f3cb74f4f4b2a4f9d67f052edbf95eb93f4fec7c5ada3792546caaf7383",
+    "frontend": "sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b"
+  },
+  "schemaVersions": [
+    {
+      "version": "0001-directory-v2.sql",
+      "checksum": "0e8e067ae953c6309bab35e89a7d215ceb36b4f3003ef189073ea7ce9bea6e1d"
+    },
+    {
+      "version": "0002-infrastructure-and-recovery.sql",
+      "checksum": "8d6a7b0509f73ce179a26a288c41a12f5a5c90cbe266382bd0c3d5558b9c708c"
+    },
+    {
+      "version": "0003-runtime-grants.sql",
+      "checksum": "e4a71b7c8955f467d0c2f37176afcd05470fc411f17dc497edb1deff140b663b"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run test:control:db",
+      "status": "passed",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Control unit/HTTP/runtime tests and real isolated directory PostgreSQL; no business Supabase writes."
+    },
+    {
+      "command": "npm run control:local -- restart-check",
+      "status": "passed",
+      "directoryData": "unchanged hash",
+      "databaseDown": {
+        "livez": 200,
+        "readyz": 503
+      },
+      "recovered": {
+        "livez": 200,
+        "readyz": 200,
+        "healthz": 200
+      }
+    },
+    {
+      "command": "HTTP probes through 127.0.0.1:8082",
+      "status": "passed",
+      "paths": {
+        "/api/control/livez": 200,
+        "/api/control/readyz": 200,
+        "/api/control/healthz": 200,
+        "/auth/login": 200
+      },
+      "apiCacheControl": "no-store"
+    },
+    {
+      "command": "Read-only local Auth health through server internal URL",
+      "status": "passed"
+    },
+    {
+      "command": "OpenAPI parse, local reference and operation identity/security validation",
+      "status": "passed",
+      "scope": "Document structure only; planned endpoints are not implemented by this check."
+    }
+  ],
+  "protectedBackend": {
+    "container": "supabase_db_ehjtoajnlnuvuiwkpmbp",
+    "migrationCountBefore": 520,
+    "migrationCountAfter": 520,
+    "tenantCountBefore": 3,
+    "tenantCountAfter": 3,
+    "directoryRequired": false,
+    "fullRowFingerprint": "not-run"
+  },
+  "gates": {
+    "localFoundation": "verified",
+    "publicSignup": "closed",
+    "frontendDirectoryCutover": "not-enabled",
+    "linuxStaging": "not-run",
+    "pilot": "not-run",
+    "paidLaunch": "not-run"
+  },
+  "acceptance": {
+    "A01": {
+      "status": "passed-local",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md"
+    },
+    "A02": {
+      "status": "partial",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md",
+      "remaining": "Full protected-source fingerprints"
+    },
+    "A03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "A04": {
+      "status": "passed-local",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md"
+    },
+    "A05": {
+      "status": "passed-local",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md"
+    },
+    "A06": {
+      "status": "passed-local",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md"
+    },
+    "A07": {
+      "status": "partial",
+      "environment": "docker-desktop",
+      "evidence": "docs/architecture/08-ops/roomqc-vps-signup-progress.md",
+      "remaining": "Worker kill/recovery after P4"
+    },
+    "A08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "A09": {
+      "status": "not-run",
+      "environment": null
+    },
+    "A10": {
+      "status": "not-run",
+      "environment": null
+    },
+    "A11": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "B09": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C09": {
+      "status": "not-run",
+      "environment": null
+    },
+    "C10": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D09": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D10": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D11": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D12": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D13": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D14": {
+      "status": "not-run",
+      "environment": null
+    },
+    "D15": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "E08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F08": {
+      "status": "not-run",
+      "environment": null
+    },
+    "F09": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G01": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G02": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G03": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G04": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G05": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G06": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G07": {
+      "status": "not-run",
+      "environment": null
+    },
+    "G08": {
+      "status": "not-run",
+      "environment": null
+    }
+  }
+}

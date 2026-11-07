@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-09-20T05:40:00.670Z",
+  "generatedAt": "2026-11-03T21:33:39.259Z",
   "counts": {
-    "routes": 160,
+    "routes": 167,
     "rpcs": 369,
-    "rpcsCalledFromFE": 175,
+    "rpcsCalledFromFE": 180,
     "tables": 138,
     "views": 10,
-    "tablesUsedFromFE": 108,
-    "edgeFunctions": 38,
-    "hooks": 225,
-    "pages": 167,
-    "migrations": 491,
+    "tablesUsedFromFE": 106,
+    "edgeFunctions": 42,
+    "hooks": 248,
+    "pages": 194,
+    "migrations": 591,
     "rlsPolicies": 343
   }
 }

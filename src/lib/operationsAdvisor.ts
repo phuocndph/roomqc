@@ -17,8 +17,11 @@ export interface KpiSnapshot {
   periodDays: number
   /** Tổng phòng (capacity) */
   totalRooms: number
-  /** Doanh thu thuần (đã trừ commission) */
+  /** Doanh thu ghi nhận: checkout net + retained no-show fees. */
   netRevenue: number
+  /** Checkout net only; numerator for room ADR/RevPAR. */
+  roomNetRevenue: number
+  noShowFees: number
   /** Tổng doanh thu gộp */
   grossRevenue: number
   /** Doanh thu dịch vụ thêm (service + extra) */
@@ -34,15 +37,22 @@ export interface KpiSnapshot {
   }
   /** Số đêm phòng đã bán */
   roomNightsSold: number
+  /** Unique occupied room days clipped to the period, distinct from ADR nights. */
+  occupiedRoomDays: number
+  invalidCheckoutDates: number
   /** Số booking trong kỳ (non-refunded) */
   bookingsCount: number
   /** Doanh thu kỳ trước (để so sánh delta %) */
   prevNetRevenue: number
   prevBookingsCount: number
   prevRoomNightsSold: number
+  prevOccupiedRoomDays: number
+  prevPeriodDays: number
   /** YoY: cùng kỳ năm trước (optional, undefined nếu chưa đủ data) */
   yoyNetRevenue?: number
   yoyRoomNightsSold?: number
+  yoyOccupiedRoomDays?: number
+  yoyPeriodDays?: number
   /** Labor cost chi tiết theo bộ phận */
   laborByDepartment?: Record<string, number>
   /** Targets/budget tháng (optional) */
@@ -70,6 +80,7 @@ export interface DerivedKpis {
   revpar: number
   trevpar: number
   adr: number
+  adrAvailable: boolean
   extraRevenueShare: number
   costPerRoomDay: number
   costPor: number
@@ -107,24 +118,26 @@ export function computeDerivedKpis(s: KpiSnapshot): DerivedKpis {
   const gop = s.netRevenue - departmentalCost
   const gopMargin = safe(gop, s.netRevenue) * 100
   const goppar = safe(gop, totalRoomDays)
-  const occupancy = safe(s.roomNightsSold, totalRoomDays) * 100
-  const revpar = safe(s.netRevenue, totalRoomDays)
-  const trevpar = safe(s.grossRevenue, totalRoomDays)
-  const adr = safe(s.netRevenue, s.roomNightsSold)
+  const occupancy = safe(s.occupiedRoomDays, totalRoomDays) * 100
+  const revpar = safe(s.roomNetRevenue, totalRoomDays)
+  const trevpar = safe(s.netRevenue, totalRoomDays)
+  const adrAvailable = s.invalidCheckoutDates === 0 && s.roomNightsSold > 0
+  const adr = adrAvailable ? safe(s.roomNetRevenue, s.roomNightsSold) : 0
   const extraRevenueShare = safe(s.extraRevenue, s.grossRevenue) * 100
   const costPerRoomDay = safe(s.totalCost, totalRoomDays)
-  const costPor = safe(s.totalCost, s.roomNightsSold)
+  const costPor = adrAvailable ? safe(s.totalCost, s.roomNightsSold) : 0
   const laundryCostPerRoom = safe(s.costBreakdown.laundry, s.totalRooms) * (30 / Math.max(1, s.periodDays))
   const laborRatio = safe(s.costBreakdown.labor, s.netRevenue) * 100
   const revenueGrowth = safe(s.netRevenue - s.prevNetRevenue, s.prevNetRevenue) * 100
-  const prevOcc = safe(s.prevRoomNightsSold, s.totalRooms * s.periodDays) * 100
-  const occupancyGrowth = prevOcc > 0 ? occupancy - prevOcc : 0
+  const prevOcc = safe(s.prevOccupiedRoomDays, s.totalRooms * s.prevPeriodDays) * 100
+  const occupancyGrowth = occupancy - prevOcc
   const yoyRevenueGrowth =
     s.yoyNetRevenue !== undefined && s.yoyNetRevenue > 0
       ? ((s.netRevenue - s.yoyNetRevenue) / s.yoyNetRevenue) * 100
       : undefined
   const yoyOccupancy =
-    s.yoyRoomNightsSold !== undefined ? safe(s.yoyRoomNightsSold, totalRoomDays) * 100 : undefined
+    s.yoyOccupiedRoomDays !== undefined && s.yoyPeriodDays !== undefined
+      ? safe(s.yoyOccupiedRoomDays, s.totalRooms * s.yoyPeriodDays) * 100 : undefined
   const yoyOccupancyGrowth = yoyOccupancy !== undefined ? occupancy - yoyOccupancy : undefined
 
   return {
@@ -137,6 +150,7 @@ export function computeDerivedKpis(s: KpiSnapshot): DerivedKpis {
     revpar,
     trevpar,
     adr,
+    adrAvailable,
     extraRevenueShare,
     costPerRoomDay,
     costPor,
@@ -274,7 +288,7 @@ export function runOperationsAdvisor(snapshot: KpiSnapshot): Finding[] {
   }
 
   // R10 — ADR thấp
-  if (classifyBenchmark('adr', k.adr) === 'poor' && k.adr > 0) {
+  if (k.adrAvailable && classifyBenchmark('adr', k.adr) === 'poor' && k.adr > 0) {
     findings.push({
       id: 'low-adr',
       severity: 'medium',
@@ -362,7 +376,7 @@ export function runOperationsAdvisor(snapshot: KpiSnapshot): Finding[] {
   }
 
   // R16 — CostPOR cao bất thường
-  if (classifyBenchmark('costPor', k.costPor) === 'poor' && k.costPor > 0) {
+  if (k.adrAvailable && classifyBenchmark('costPor', k.costPor) === 'poor' && k.costPor > 0) {
     findings.push({
       id: 'high-cost-por',
       severity: 'medium',

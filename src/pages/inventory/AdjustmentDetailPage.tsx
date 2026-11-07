@@ -52,6 +52,7 @@ import { formatCurrency, cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { InvestigationDialog } from '@/components/inventory/adjustments/InvestigationDialog'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export function AdjustmentDetailPage() {
   const { isMobile } = useBreakpoint()
@@ -520,7 +521,7 @@ function ItemsTable({
   
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-none border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -553,7 +554,7 @@ function ItemsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {item.item?.item_images?.[0] && (
-                          <img
+                          <StorageImage
                             src={item.item.item_images[0].url}
                             alt={item.item.name}
                             className="h-8 w-8 rounded object-cover"

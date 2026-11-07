@@ -17,10 +17,12 @@ export function RequireShiftRouteGate({
   children: ReactNode
   fallback?: string
 }) {
-  const { requiresShift, isOnShift, openDialog } = useRequireShift()
+  const { requiresShift, isOnShift, isShiftStatusLoading, openDialog } = useRequireShift()
   const navigate = useNavigate()
 
-  const blocked = requiresShift && !isOnShift
+  // Do not decide before the shift status has loaded: an on-shift staff member
+  // opening a deep link or reloading a check page was bounced to the dashboard.
+  const blocked = requiresShift && !isShiftStatusLoading && !isOnShift
 
   useEffect(() => {
     if (!blocked) return
@@ -28,6 +30,6 @@ export function RequireShiftRouteGate({
     navigate(fallback, { replace: true })
   }, [blocked, openDialog, navigate, fallback])
 
-  if (blocked) return null
+  if (isShiftStatusLoading || blocked) return null
   return <>{children}</>
 }

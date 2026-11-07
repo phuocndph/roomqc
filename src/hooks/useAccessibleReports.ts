@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useUser } from './useUser'
+import { useHasPermission } from './usePermission'
 import {
   REPORTS_CATALOG,
   filterReportsForUser,
@@ -15,16 +16,19 @@ import {
  */
 export function useAccessibleReports() {
   const { user, role } = useUser()
+  const view = useHasPermission('reports', 'view')
+  const exportPermission = useHasPermission('reports', 'export')
   const department = (user?.position?.department ?? null) as DepartmentCode | null
 
   const accessible = useMemo(
-    () => filterReportsForUser(REPORTS_CATALOG, { role, department }),
-    [role, department],
+    () => filterReportsForUser(REPORTS_CATALOG, { role, department, canViewReports: view.hasPermission === true }),
+    [role, department, view.hasPermission],
   )
 
   const sections = useMemo(() => groupReportsBySection(accessible), [accessible])
 
-  const canExport = (report: ReportDefinition) => canExportReport(report, { role, department })
+  const canExport = (report: ReportDefinition) => canExportReport(report, { role, department,
+    canViewReports: view.hasPermission === true, canExportReports: exportPermission.hasPermission === true })
 
   return {
     role,

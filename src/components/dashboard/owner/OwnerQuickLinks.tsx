@@ -42,14 +42,14 @@ const quickLinks = [
 
 export function OwnerQuickLinks() {
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="border border-border rounded-none p-4">
       <h3 className="text-sm font-medium text-foreground mb-3">Truy cập nhanh</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {quickLinks.map((link) => (
           <Link
             key={link.href}
             to={link.href}
-            className="flex flex-col items-center gap-2 p-3 rounded-lg border border-border bg-background hover:bg-muted/30 transition-colors text-center group"
+            className="flex flex-col items-center gap-2 p-3 rounded-none border border-border bg-background hover:bg-muted/30 transition-colors text-center group"
           >
             <div className="p-2 rounded-full bg-background border border-border group-hover:border-primary/50 transition-colors">
               <link.icon className={cn('h-5 w-5', link.color)} />

@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/integrations/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@/hooks/useUser'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Chờ duyệt', color: 'text-amber-600', icon: Clock },
@@ -85,7 +86,7 @@ export function SupplementsPage() {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`supplement-requests-${tenantId}`)
+        .channel(instanceChannelName(`supplement-requests-${tenantId}`))
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'supplement_requests', filter: `tenant_id=eq.${tenantId}` },
           () => {

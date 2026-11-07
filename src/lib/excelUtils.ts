@@ -63,6 +63,7 @@ function toExcelCell(value: unknown): ExcelCell {
 export async function downloadWorkbook(
   sheets: readonly ExcelSheetInput[],
   filename: string,
+  beforeSave?: () => void | Promise<void>,
 ): Promise<void> {
   if (sheets.length === 0) throw new Error('Không có worksheet để xuất')
 
@@ -80,6 +81,7 @@ export async function downloadWorkbook(
   })
 
   const buffer = await workbook.xlsx.writeBuffer()
+  await beforeSave?.()
   saveAs(new Blob([buffer], { type: XLSX_MIME }), normalizeFilename(filename, '.xlsx'))
 }
 

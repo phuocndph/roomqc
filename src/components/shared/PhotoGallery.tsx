@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface PhotoGalleryProps {
   photos: string[]
@@ -38,7 +39,7 @@ export function PhotoGallery({ photos, className }: PhotoGalleryProps) {
             onClick={() => setSelectedIndex(index)}
             className="relative aspect-square overflow-hidden rounded-lg border hover:opacity-80 transition-opacity"
           >
-            <img
+            <StorageImage
               src={photo}
               alt={`Photo ${index + 1}`}
               className="h-full w-full object-cover"
@@ -64,7 +65,7 @@ export function PhotoGallery({ photos, className }: PhotoGalleryProps) {
             
             {selectedIndex !== null && (
               <>
-                <img
+                <StorageImage
                   src={photos[selectedIndex]}
                   alt={`Photo ${selectedIndex + 1}`}
                   className="w-full h-auto max-h-[80vh] object-contain"

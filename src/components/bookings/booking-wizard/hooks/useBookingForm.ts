@@ -20,6 +20,7 @@ import {
 } from '../types'
 import { AvailableRoom } from '@/hooks/useAvailableRooms'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { resolveBookingUnitPrice } from '@/lib/roomPriceSource'
 
 // ===== Draft autosave (localStorage, 24h TTL) =====
 const DRAFT_KEY = 'booking_wizard_draft_v1'
@@ -334,21 +335,16 @@ export function useBookingForm() {
       if (exists) {
         return { ...prev, selectedRooms: prev.selectedRooms.filter(r => r.id !== room.id) }
       }
-      // Lấy giá từ room_type_rates theo đúng loại đặt — KHÔNG fallback giá legacy
-      let customPrice = 0
-      if (prev.bookingType === 'daily') {
-        customPrice = room.rate_daily ?? 0
-      } else if (prev.bookingType === 'hourly') {
-        // Nếu có block giờ đầu thì lấy giá block (cho 1 giờ tham chiếu); người dùng có thể bấm "Áp dụng giá theo bảng" để tính chính xác theo số giờ
-        customPrice = room.rate_hourly ?? 0
-      } else if (prev.bookingType === 'monthly') {
-        customPrice = room.rate_monthly ?? 0
-      }
-      if (!room.pricing_configured || customPrice <= 0) {
+      // W1-D1: bảng giá loại phòng theo đúng loại đặt trước; chưa có thì dùng
+      // giá của chính phòng cho cùng loại đặt. Giờ: giá block đầu là tham chiếu,
+      // người dùng bấm "Áp dụng giá theo bảng" để tính chính xác theo số giờ.
+      const unit = prev.bookingType === 'hourly' ? 'hourly' : prev.bookingType === 'monthly' ? 'monthly' : 'daily'
+      const { price: customPrice } = resolveBookingUnitPrice(room, unit)
+      if (customPrice <= 0) {
         toast({
           variant: 'destructive',
-          title: `Phòng ${room.room_number} chưa cấu hình giá`,
-          description: 'Vào Cài đặt → Bảng giá để cấu hình giá đêm/giờ/tháng cho loại phòng này.',
+          title: `Phòng ${room.room_number} chưa có giá`,
+          description: 'Loại phòng chưa có bảng giá và phòng chưa nhập giá cơ bản. Vào Cài đặt → Bảng giá hoặc sửa giá cơ bản của phòng.',
         })
         return prev
       }

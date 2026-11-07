@@ -1,292 +1,206 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 import { navigateBack } from '@/lib/navigation'
-import { ArrowLeft, Brain, Loader2, RotateCcw, Save, Sparkles, TestTube, Zap } from 'lucide-react'
+import { ArrowLeft, Brain, Loader2, RotateCcw, Save, TestTube } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { useTenant } from '@/hooks/useTenant'
+import { getFriendlyError } from '@/lib/errorMessage'
 import { toast } from 'sonner'
 
-interface BeeknoeeModel {
-  id: string
-  owned_by: string
-  context_window: number | null
-  vision: boolean
-}
-
-const FALLBACK_MODELS: BeeknoeeModel[] = [
-  { id: 'gemini-2.5-flash', owned_by: 'google', context_window: 1000000, vision: true },
-  { id: 'gemini-3-flash', owned_by: 'google', context_window: 1000000, vision: true },
-  { id: 'gemini-2.5-flash-lite', owned_by: 'google', context_window: 1000000, vision: false },
-  { id: 'glm-4.7-flash', owned_by: 'z-ai', context_window: 128000, vision: false },
-  { id: 'glm-4.5-flash', owned_by: 'z-ai', context_window: 128000, vision: false },
-  { id: 'openai/gpt-oss-120b', owned_by: 'openai', context_window: 128000, vision: false },
-]
-
+interface AIModel { id: string; vision: boolean }
 const DEFAULT_MODEL = 'gemini-2.5-flash'
-const FALLBACK_CHAIN = ['gemini-2.5-flash', 'gemini-3-flash', 'glm-4.7-flash', 'glm-4.5-flash', 'openai/gpt-oss-120b']
+const FALLBACK_MODELS: AIModel[] = [
+  { id: DEFAULT_MODEL, vision: true },
+  { id: 'gemini-3-flash', vision: true },
+]
+const FALLBACK_CHAIN = [DEFAULT_MODEL, 'gemini-3-flash', 'glm-4.7-flash', 'glm-4.5-flash', 'openai/gpt-oss-120b']
+const TEST_IMAGE = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKpgB//Z'
 
 export default function AISettingsPage() {
   const navigate = useNavigate()
-  const { user, role } = useUser()
-  const { tenant } = useTenant()
+  const { user, role, isLoading: userLoading } = useUser()
+  const { tenant, isLoading: tenantLoading, error: tenantError } = useTenant()
+  const isAdmin = role === 'super_admin' || role === 'owner' || user?.user_level_code === 'tenant_owner' || user?.is_super_admin
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-6">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" aria-label="Quay lại" onClick={() => navigateBack(navigate, '/settings/general')}><ArrowLeft className="h-4 w-4" /></Button>
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-semibold"><Brain className="h-5 w-5" />Cài đặt AI</h1>
+          <p className="text-sm text-muted-foreground">Chọn AI để đọc ảnh giấy tờ của khách</p>
+        </div>
+      </div>
+      {userLoading || tenantLoading ? (
+        <p role="status" className="py-6 text-sm">Đang tải thông tin doanh nghiệp…</p>
+      ) : !isAdmin ? (
+        <Alert variant="destructive"><AlertTitle>Không có quyền truy cập</AlertTitle><AlertDescription>Trang này chỉ dành cho chủ doanh nghiệp và quản trị viên hệ thống.</AlertDescription></Alert>
+      ) : tenantError || !tenant?.id || !user?.id ? (
+        <Alert variant="destructive"><AlertTitle>Chưa tải được thông tin doanh nghiệp</AlertTitle><AlertDescription>Vui lòng tải lại trang. Nếu vẫn gặp lỗi, hãy kiểm tra tài khoản đang đăng nhập.</AlertDescription></Alert>
+      ) : <AISettingsEditor key={tenant.id} tenantId={tenant.id} userId={user.id} />}
+    </div>
+  )
+}
 
-  const isAdmin = role === 'super_admin' || role === 'owner' || (user as any)?.user_level_code === 'tenant_owner' || (user as any)?.is_super_admin
-
-  const [models, setModels] = useState<BeeknoeeModel[]>(FALLBACK_MODELS)
-  const [modelsLoading, setModelsLoading] = useState(false)
-  const [modelsError, setModelsError] = useState<string | null>(null)
-
-  const [ocrModel, setOcrModel] = useState<string>(DEFAULT_MODEL)
-  const [loading, setLoading] = useState(true)
+function AISettingsEditor({ tenantId, userId }: { tenantId: string; userId: string }) {
+  const queryClient = useQueryClient()
+  const settingsKey = useMemo(() => ['ai-settings', tenantId], [tenantId])
+  const settings = useQuery({
+    queryKey: settingsKey,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('ai_settings').select('config_key, config_value').eq('tenant_id', tenantId)
+      if (error) throw error
+      return data || []
+    },
+    retry: 1,
+    refetchOnWindowFocus: false,
+  })
+  const modelList = useQuery({
+    queryKey: ['ai-models', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('beeknoee-models', { body: {} })
+      if (error) throw error
+      const models = (data?.data as AIModel[] | undefined)?.filter(model => typeof model.id === 'string' && model.vision === true)
+      if (!models?.length) throw new Error('Không có model hỗ trợ ảnh')
+      return models
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+  const [draftModel, setDraftModel] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<string | null>(null)
-
-  // Load saved settings from DB
-  useEffect(() => {
-    if (!tenant?.id) return
-    let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      const { data } = await (supabase as any)
-        .from('ai_settings')
-        .select('config_key, config_value')
-        .eq('tenant_id', tenant.id)
-      if (cancelled) return
-      const map: Record<string, string> = {}
-      for (const row of data || []) map[row.config_key] = row.config_value
-      setOcrModel(map.ocr_model || DEFAULT_MODEL)
-      setLoading(false)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [tenant?.id])
-
-  // Fetch live model list
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      setModelsLoading(true)
-      setModelsError(null)
-      try {
-        const { data, error } = await supabase.functions.invoke('beeknoee-models', { body: {} })
-        if (cancelled) return
-        if (error) {
-          setModelsError(error.message || 'Không lấy được danh sách model')
-        } else if (data?.data?.length) {
-          setModels(data.data as BeeknoeeModel[])
-        }
-      } catch (e: any) {
-        if (!cancelled) setModelsError(e?.message || 'Lỗi tải model')
-      } finally {
-        if (!cancelled) setModelsLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const visionModels = useMemo(() => models.filter((m) => m.vision), [models])
+  const [testResult, setTestResult] = useState<{ error: boolean; message: string } | null>(null)
+  const savedModel = settings.data?.find(row => row.config_key === 'ocr_model')?.config_value || DEFAULT_MODEL
+  const ocrModel = draftModel ?? savedModel
+  const isDirty = ocrModel !== savedModel
+  const ready = settings.isSuccess && !settings.isFetching
+  const models = modelList.data || FALLBACK_MODELS
+  const currentModelAvailable = models.some(model => model.id === ocrModel)
+  const chain = [ocrModel, ...FALLBACK_CHAIN.filter(model => model !== ocrModel)]
+  const busy = saving || testing
+  const changeModel = (value: string) => { setDraftModel(value); setTestResult(null) }
 
   const handleSave = async () => {
-    if (!tenant?.id || !user?.id) return
+    if (!ready || busy || !isDirty || !currentModelAvailable) return
+    const selectedModel = ocrModel
     setSaving(true)
+    setTestResult(null)
     try {
-      const { error } = await (supabase as any)
-        .from('ai_settings')
-        .upsert(
-          { tenant_id: tenant.id, config_key: 'ocr_model', config_value: ocrModel, updated_by: user.id },
-          { onConflict: 'tenant_id,config_key' },
-        )
+      const { data, error } = await supabase.from('ai_settings')
+        .upsert({ tenant_id: tenantId, config_key: 'ocr_model', config_value: selectedModel, updated_by: userId }, { onConflict: 'tenant_id,config_key' })
+        .select('config_key, config_value').single()
       if (error) throw error
+      if (!data || data.config_value !== selectedModel) throw new Error('Chưa xác nhận cấu hình đã lưu')
+      queryClient.setQueryData(settingsKey, [
+        ...(settings.data || []).filter(row => row.config_key !== data.config_key),
+        { config_key: data.config_key, config_value: data.config_value },
+      ])
+      setDraftModel(null)
       toast.success('Đã lưu cấu hình AI')
-    } catch (e: any) {
-      console.error(e)
-      toast.error(e?.message || 'Lỗi khi lưu cấu hình')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleReset = () => {
-    setOcrModel(DEFAULT_MODEL)
+    } catch (error) {
+      toast.error('Chưa lưu được cấu hình AI', { description: getFriendlyError(error) })
+    } finally { setSaving(false) }
   }
 
   const handleTest = async () => {
+    if (!ready || busy || isDirty) return
     setTesting(true)
     setTestResult(null)
     try {
-      // Tiny 1x1 jpeg to validate API path quickly (no real OCR result expected)
-      // Use a small fake CCCD test - pass a base64 of a simple white pixel; AI sẽ trả is_valid_document=false
-      const testBase64 =
-        '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKpgB//Z'
-      const { data, error } = await supabase.functions.invoke('scan-guest-document', {
-        body: {
-          imageBase64: testBase64,
-          documentType: 'cccd',
-          tenantId: tenant?.id,
-        },
-      })
+      const { data, error } = await supabase.functions.invoke('scan-guest-document', { body: { imageBase64: TEST_IMAGE, documentType: 'cccd' } })
       if (error) {
-        setTestResult(`❌ Lỗi: ${error.message}`)
-      } else if (data?.error) {
-        // Lỗi 422 (không phải giấy tờ) là OK - chứng tỏ AI hoạt động
-        setTestResult(`✅ AI phản hồi (model: ${data.model || 'N/A'}). AI nói: "${data.error}"`)
-      } else {
-        setTestResult(`✅ Thành công với model ${data?.model || 'N/A'}`)
+        if (error instanceof FunctionsHttpError) {
+          const response = error.context as Response
+          const body = await response.clone().json().catch(() => null)
+          if (response.status === 422 && typeof body?.error === 'string' && (
+            body.error.startsWith('Ảnh không phải giấy tờ tùy thân') || body.error.startsWith('Không thể trích xuất thông tin từ ảnh')
+          )) {
+            setTestResult({ error: false, message: 'AI đã phản hồi ảnh thử và không nhận diện được giấy tờ. Để kiểm tra độ chính xác, hãy thử quét giấy tờ ở mục Khách lưu trú.' })
+            return
+          }
+          const message = response.status === 401 || response.status === 403
+            ? 'Chưa xác thực được yêu cầu. Hãy kiểm tra phiên đăng nhập và cấu hình AI trên máy chủ.'
+            : response.status === 429 ? 'Dịch vụ AI đang giới hạn lượt gọi. Vui lòng thử lại sau.'
+              : 'Dịch vụ AI chưa xử lý được yêu cầu. Hãy kiểm tra cấu hình trên máy chủ rồi thử lại.'
+          setTestResult({ error: true, message })
+          return
+        }
+        throw error
       }
-    } catch (e: any) {
-      setTestResult(`❌ Lỗi: ${e?.message || 'Unknown'}`)
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="container max-w-3xl py-8">
-        <Alert variant="destructive">
-          <AlertTitle>Không có quyền truy cập</AlertTitle>
-          <AlertDescription>Trang này chỉ dành cho Owner và Super Admin.</AlertDescription>
-        </Alert>
-      </div>
-    )
+      if (data?.error || !data?.data || typeof data?.model !== 'string') {
+        setTestResult({ error: true, message: 'Phản hồi chưa hợp lệ; chưa thể xác nhận AI hoạt động. Vui lòng thử lại.' })
+        return
+      }
+      setTestResult({ error: false, message: `Máy chủ đã trả kết quả qua ${data.model}. Đây là ảnh thử, cần quét giấy tờ thật để kiểm tra độ chính xác.` })
+    } catch (error) {
+      setTestResult({ error: true, message: getFriendlyError(error) })
+    } finally { setTesting(false) }
   }
 
   return (
-    <div className="container max-w-3xl py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigateBack(navigate, '/settings/general')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-semibold flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            Cài đặt AI
-          </h1>
-          <p className="text-xs text-muted-foreground">Quản lý nhà cung cấp AI cho phân tích ảnh giấy tờ</p>
-        </div>
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4">
+        <p className="text-sm">Nhà cung cấp <strong>Beeknoee</strong></p><Badge variant="outline">Đọc giấy tờ từ ảnh</Badge>
       </div>
-
-      <Separator />
-
-      {/* Provider info */}
-      <div className="border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Nhà cung cấp AI</span>
-          </div>
-          <Badge variant="secondary" className="font-mono text-xs">Beeknoee</Badge>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Tất cả các yêu cầu phân tích ảnh (OCR giấy tờ tùy thân) sẽ được gửi qua Beeknoee. Khi model chính
-          không phản hồi, hệ thống tự động chuyển sang model dự phòng.
-        </p>
-      </div>
-
-      {/* OCR Model */}
-      <div className="border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-amber-600" />
-            <Label className="text-sm font-medium">Model OCR chính</Label>
-          </div>
-          {modelsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Dùng để đọc và trích xuất thông tin từ ảnh CCCD, hộ chiếu, visa. Nên chọn model có vision.
-        </p>
-        {loading ? (
-          <div className="h-9 bg-muted animate-pulse rounded" />
-        ) : (
-          <Select value={ocrModel} onValueChange={setOcrModel}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Chọn model" />
-            </SelectTrigger>
+      {settings.isPending ? <p role="status" className="py-6 text-sm">Đang tải cấu hình AI…</p> : settings.isError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Không tải được cấu hình AI đã lưu</AlertTitle>
+          <AlertDescription>Chưa thể chỉnh sửa cấu hình. Vui lòng kiểm tra kết nối rồi thử lại.</AlertDescription>
+          <Button variant="outline" className="mt-3" onClick={() => settings.refetch()} disabled={settings.isFetching}>{settings.isFetching ? 'Đang tải lại…' : 'Thử lại'}</Button>
+        </Alert>
+      ) : (
+        <section className="space-y-3 rounded-lg border p-4">
+          <Label htmlFor="ocr-model" className="text-base font-semibold">AI đọc giấy tờ</Label>
+          <p className="text-sm text-muted-foreground">Chọn model hỗ trợ ảnh. Nếu model chính gặp lỗi, hệ thống sẽ thử model dự phòng.</p>
+          <Select value={ocrModel} onValueChange={changeModel} disabled={!ready || busy}>
+            <SelectTrigger id="ocr-model"><SelectValue placeholder="Chọn model" /></SelectTrigger>
             <SelectContent>
-              {visionModels.length > 0 ? (
-                visionModels.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">{m.id}</span>
-                      <span className="text-[10px] text-muted-foreground">— {m.owned_by}</span>
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                models.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    <span className="font-mono text-xs">{m.id}</span>
-                  </SelectItem>
-                ))
-              )}
+              {!currentModelAvailable && <SelectItem value={ocrModel}>{ocrModel} (đã lưu, chưa có trong danh sách)</SelectItem>}
+              {models.map(model => <SelectItem key={model.id} value={model.id}>{model.id}</SelectItem>)}
             </SelectContent>
           </Select>
-        )}
-        {modelsError && (
-          <Alert className="border-amber-300 bg-amber-50 text-amber-950">
-            <AlertTitle className="text-sm">Đang dùng danh sách model mặc định</AlertTitle>
-            <AlertDescription className="text-xs text-amber-900">
-              Không tải được danh sách model mới từ máy chủ. Bạn vẫn có thể tiếp tục với các model đang hiển thị;
-              hãy thử lại sau nếu cần cập nhật danh sách.
-            </AlertDescription>
+          <p className="text-sm" role="status">{isDirty ? 'Có thay đổi chưa lưu.' : `Đang dùng: ${savedModel}`}</p>
+          {modelList.isPending && <p role="status" className="text-sm text-muted-foreground">Đang cập nhật danh sách model…</p>}
+          {modelList.isError && (
+            <Alert className="border-amber-700">
+              <AlertTitle>Chưa cập nhật được danh sách model</AlertTitle><AlertDescription>Đang dùng danh sách dự phòng. Cấu hình đã lưu vẫn được giữ nguyên.</AlertDescription>
+              <Button variant="outline" className="mt-3" onClick={() => modelList.refetch()} disabled={modelList.isFetching}>{modelList.isFetching ? 'Đang cập nhật…' : 'Tải lại danh sách'}</Button>
+            </Alert>
+          )}
+          <details className="border-t pt-3">
+            <summary className="cursor-pointer text-sm font-medium">Thứ tự thử các model</summary>
+            <ol className="mt-2 list-inside list-decimal space-y-1 break-all text-sm text-muted-foreground">{chain.map(model => <li key={model}>{model}</li>)}</ol>
+          </details>
+        </section>
+      )}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h2 className="flex items-center gap-2 font-semibold"><TestTube className="h-4 w-4" />Kiểm tra kết nối</h2>
+        <p className="text-sm text-muted-foreground">Gửi một ảnh thử trống bằng cấu hình đã lưu. Kết quả này chỉ kiểm tra phản hồi AI, chưa đánh giá khả năng đọc giấy tờ.</p>
+        {isDirty && <p className="text-sm font-medium">Lưu thay đổi trước khi chạy thử.</p>}
+        <Button variant="outline" onClick={handleTest} disabled={!ready || busy || isDirty}>
+          {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{testing ? 'Đang kiểm tra…' : 'Chạy thử'}
+        </Button>
+        {testResult && (
+          <Alert variant={testResult.error ? 'destructive' : 'default'} role="status">
+            <AlertTitle>{testResult.error ? 'Chưa kiểm tra thành công' : 'Đã nhận phản hồi'}</AlertTitle><AlertDescription>{testResult.message}</AlertDescription>
           </Alert>
         )}
-      </div>
-
-      {/* Fallback chain */}
-      <div className="border rounded-lg p-4 space-y-2">
-        <Label className="text-sm font-medium">Chuỗi model dự phòng</Label>
-        <p className="text-xs text-muted-foreground">
-          Nếu model chính fail, hệ thống thử lần lượt các model sau (cố định, không cấu hình được):
-        </p>
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {FALLBACK_CHAIN.map((m, i) => (
-            <Badge key={m} variant={m === ocrModel ? 'default' : 'outline'} className="font-mono text-[10px]">
-              {i + 1}. {m}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Test */}
-      <div className="border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <TestTube className="h-4 w-4 text-primary" />
-            Kiểm tra kết nối
-          </Label>
-          <Button size="sm" variant="outline" onClick={handleTest} disabled={testing}>
-            {testing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-            Chạy thử
-          </Button>
-        </div>
-        {testResult && (
-          <div className="text-xs font-mono p-2 rounded bg-muted whitespace-pre-wrap">{testResult}</div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="sticky bottom-4 z-20 flex items-center justify-end gap-2 rounded-lg border bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="outline" size="sm" onClick={handleReset} disabled={saving}>
-          <RotateCcw className="h-4 w-4 mr-1" />
-          Đặt lại mặc định
-        </Button>
-        <Button size="sm" onClick={handleSave} disabled={saving || loading}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-          Lưu cấu hình
+      </section>
+      <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+        <Button variant="outline" onClick={() => changeModel(DEFAULT_MODEL)} disabled={!ready || busy || ocrModel === DEFAULT_MODEL}><RotateCcw className="mr-2 h-4 w-4" />Đặt lại mặc định</Button>
+        <Button onClick={handleSave} disabled={!ready || busy || !isDirty || !currentModelAvailable}>
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{saving ? 'Đang lưu…' : 'Lưu cấu hình'}
         </Button>
       </div>
-    </div>
+    </>
   )
 }

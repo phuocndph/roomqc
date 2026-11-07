@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,6 +32,21 @@ import { RoomLimitWarning } from '@/components/rooms/RoomLimitWarning'
 const createRoomSchema = (t: (key: string) => string) =>
   buildRoomFormSchema((k) => t(`rooms:form.validation.${k}`))
 
+const EMPTY_ROOM_FORM: RoomFormData = {
+  room_number: '',
+  room_type: 'standard',
+  floor: 1,
+  area_sqm: undefined,
+  max_guests: 2,
+  base_price: 0,
+  bed_type: undefined,
+  view_type: undefined,
+  has_window: true,
+  has_balcony: false,
+  smoking_allowed: false,
+  notes: '',
+}
+
 export function RoomFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -41,6 +56,7 @@ export function RoomFormPage() {
 
   const { tenantId } = useUser()
   const { selectedHotel, isAllHotelsMode } = useHotelContext()
+  const createHotelIdRef = useRef<string | null>(selectedHotel?.id ?? null)
   const { data: roomData, isLoading: roomLoading } = useRoom(id)
   const createRoom = useCreateRoom()
   const updateRoom = useUpdateRoom()
@@ -59,7 +75,7 @@ export function RoomFormPage() {
     watch,
     reset,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<RoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
@@ -71,6 +87,25 @@ export function RoomFormPage() {
     },
   })
 
+  // A room-create draft must never silently move to another hotel. Reset the
+  // draft when the global hotel context changes, and verify again on submit
+  // because the context may change between render and the mutation.
+  useEffect(() => {
+    if (isEdit || !selectedHotel?.id) return
+    const previousHotelId = createHotelIdRef.current
+    if (!previousHotelId) {
+      createHotelIdRef.current = selectedHotel.id
+      return
+    }
+    if (previousHotelId !== selectedHotel.id) {
+      if (isDirty) {
+        reset(EMPTY_ROOM_FORM)
+        toast.info(`Đã đổi sang ${selectedHotel.name}. Bản nháp phòng cũ đã được xóa để tránh lưu nhầm khách sạn.`)
+      }
+      createHotelIdRef.current = selectedHotel.id
+    }
+  }, [isEdit, isDirty, reset, selectedHotel?.id, selectedHotel?.name])
+
   // Reset form when room data loads (for edit mode)
   useEffect(() => {
     if (room && isEdit) {
@@ -78,7 +113,7 @@ export function RoomFormPage() {
         room_number: room.room_number || '',
         room_type: room.room_type || 'standard',
         floor: room.floor || 1,
-        area_sqm: room.area_sqm || undefined,
+        area_sqm: room.area_sqm ?? undefined,
         max_guests: room.max_guests || 2,
         base_price: room.base_price || 0,
         bed_type: room.bed_type || undefined,
@@ -109,6 +144,13 @@ export function RoomFormPage() {
       return
     }
 
+    if (!isEdit && createHotelIdRef.current && createHotelIdRef.current !== selectedHotel.id) {
+      reset(EMPTY_ROOM_FORM)
+      createHotelIdRef.current = selectedHotel.id
+      toast.error('Khách sạn đã thay đổi. Bản nháp đã được xóa; hãy nhập lại phòng cho khách sạn hiện tại.')
+      return
+    }
+
     // Check room subscription limit for new rooms
     if (!isEdit && !canCreateRoom) {
       toast.error('Đã đạt giới hạn phòng đăng ký. Vui lòng mua thêm phòng để tiếp tục.')
@@ -116,7 +158,7 @@ export function RoomFormPage() {
     }
 
     // Check quota for new rooms
-    if (!isEdit && !quotaCheck.checkQuota()) {
+    if (!isEdit && !(await quotaCheck.checkQuota())) {
       return
     }
 
@@ -148,21 +190,26 @@ export function RoomFormPage() {
           id: id!,
           data: {
             ...data,
+            area_sqm: data.area_sqm ?? null,
             updated_at: new Date().toISOString(),
           },
         })
         // Navigate back to detail page after editing
-        navigate(`/rooms/${id}`)
+        // Replace the form entry so Back from the detail page returns to the
+        // room list instead of reopening the just-submitted form.
+        navigate(`/rooms/${id}`, { replace: true })
       } else {
         const newRoom = await createRoom.mutateAsync({
           ...data,
+          area_sqm: data.area_sqm ?? null,
           tenant_id: tenantId,
           hotel_id: selectedHotel.id,
           status: 'vacant_clean',
           amenities: [],
         })
         // Navigate to new room detail page after creating
-        navigate(`/rooms/${newRoom.id}`)
+        // Do not leave /rooms/new in history after a successful create.
+        navigate(`/rooms/${newRoom.id}`, { replace: true })
       }
     } catch (error) {
       // Error handled by mutation
@@ -288,8 +335,15 @@ export function RoomFormPage() {
                   id="area_sqm"
                   type="number" min={0}
                   step="0.01"
-                  {...register('area_sqm', { valueAsNumber: true })}
+                  {...register('area_sqm', {
+                    setValueAs: value => value === '' ? undefined : Number(value),
+                  })}
+                  aria-invalid={!!errors.area_sqm}
+                  aria-describedby={errors.area_sqm ? 'area_sqm-error' : undefined}
                 />
+                {errors.area_sqm && (
+                  <p id="area_sqm-error" role="alert" className="text-sm text-destructive">{errors.area_sqm.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -312,6 +366,7 @@ export function RoomFormPage() {
                   step="0.01"
                   {...register('base_price', { valueAsNumber: true })}
                 />
+                <p className="text-xs text-muted-foreground">Chỉ dùng khi loại phòng chưa có bảng giá. Có bảng giá (mặc định, theo mùa, theo ngày) thì bán theo bảng giá.</p>
                 {errors.base_price && (
                   <p className="text-sm text-destructive">{errors.base_price.message}</p>
                 )}

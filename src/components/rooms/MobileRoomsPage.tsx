@@ -24,13 +24,14 @@ const RoomFloorMapView = lazy(() =>
   import('./RoomFloorMapView').then((module) => ({ default: module.RoomFloorMapView })),
 )
 import { MobileRoomFilters } from './MobileRoomFilters'
+import { BulkImportRoomsDialog } from './BulkImportRoomsDialog'
 import { MobileRoomBulkActionsBar } from './MobileRoomBulkActionsBar'
 import { StaffTasksTab } from '@/components/housekeeping/StaffTasksTab'
 import { CreateTaskDialog } from '@/components/housekeeping/CreateTaskDialog'
 import { MobileRoomCard } from './mobile/MobileRoomCard'
 import { MobileRoomStatsBar } from './mobile/MobileRoomStatsBar'
 import { MobileRoomStatusFilterBar, type FilterStatus } from './mobile/MobileRoomStatusFilterBar'
-import { Bed, Plus, Search, ClipboardList, LayoutGrid } from 'lucide-react'
+import { Bed, Plus, Search, ClipboardList, LayoutGrid, FileSpreadsheet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { calcRoomPriority, isOccupiedStatus } from '@/lib/roomPriority'
 import type { RoomFilters as IRoomFilters, RoomType, RoomWithStats } from '@/types/rooms.types'
@@ -60,6 +61,7 @@ export const MobileRoomsPage = () => {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectionMode, setSelectionMode] = useState(false)
+  const [showBulkImport, setShowBulkImport] = useState(false)
 
   const [quickViewEntry, setQuickViewEntry] = useState<QuickViewEntry | null>(null)
   const [taskRoom, setTaskRoom] = useState<{ id: string; number: string; hotelId: string } | null>(null)
@@ -185,6 +187,7 @@ export const MobileRoomsPage = () => {
       </div>
 
       {activeTab === 'tasks' && <StaffTasksTab />}
+      {role === 'owner' && selectedHotel && <div className="px-4 pb-3"><Button className="w-full" variant="outline" onClick={() => setShowBulkImport(true)}><FileSpreadsheet className="mr-2 h-4 w-4" />Nhập phòng từ Excel</Button></div>}
 
       {activeTab === 'map' && (
         <div className="px-3 pb-3">
@@ -309,6 +312,17 @@ export const MobileRoomsPage = () => {
             rooms={filteredRooms.map((r: any) => ({ id: r.id, room_number: r.room_number, hotel_id: r.hotel_id }))}
           />
         </>
+      )}
+
+      {selectedHotel && (
+        <BulkImportRoomsDialog
+          key={selectedHotel.id}
+          open={showBulkImport}
+          onOpenChange={setShowBulkImport}
+          hotelId={selectedHotel.id}
+          hotelName={selectedHotel.name}
+          hotelDetails={selectedHotel}
+        />
       )}
 
       <RoomQuickViewDialog

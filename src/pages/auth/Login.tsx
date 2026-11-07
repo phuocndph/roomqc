@@ -8,14 +8,18 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { AutoLoginGate } from '@/components/auth/AutoLoginGate'
+import { runtimeConfig, scopedStorageKey } from '@/lib/runtime-config'
+import { loginNextPath } from '@/lib/login-navigation'
 
 // Storage key for remember me functionality
-const REMEMBERED_EMAIL_KEY = 'remembered_email';
+const REMEMBERED_EMAIL_KEY = scopedStorageKey('remembered_email');
 
-const Login = () => {
+const Login = ({ operator = false }: { operator?: boolean }) => {
   const { t } = useTranslation('auth')
   const { isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
+  const next = loginNextPath()
+  const callbackPath = '/auth/callback' + (next ? `?next=${encodeURIComponent(next)}` : '')
   
   // Check if there's a remembered email for quick re-login
   const [rememberedEmail, setRememberedEmail] = useState<string | null>(null)
@@ -31,9 +35,9 @@ const Login = () => {
   useEffect(() => {
     // Chỉ redirect khi auth đã load xong và user đã authenticated
     if (!loading && isAuthenticated) {
-      navigate('/auth/callback' + window.location.search, { replace: true })
+      navigate(callbackPath, { replace: true })
     }
-  }, [isAuthenticated, loading, navigate])
+  }, [isAuthenticated, loading, navigate, callbackPath])
 
   // Show loading while auth is initializing
   if (loading) {
@@ -50,7 +54,7 @@ const Login = () => {
   }
 
   const handleLoginSuccess = () => {
-    navigate('/auth/callback' + window.location.search, { replace: true })
+    navigate(callbackPath, { replace: true })
   }
 
   // Show quick re-login if there's a remembered email and user hasn't clicked "switch account"
@@ -67,16 +71,17 @@ const Login = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">
-              {showQuickLogin ? t('quickLogin.title', 'Đăng nhập nhanh') : t('login.title')}
+              {operator ? 'Đăng nhập quản trị RoomQC' : runtimeConfig.workspace?.workspace.displayName || (showQuickLogin ? t('quickLogin.title', 'Đăng nhập nhanh') : t('login.title'))}
             </CardTitle>
             <CardDescription className="text-center">
-              {showQuickLogin 
+              {operator ? 'Dành cho quản trị hệ thống RoomQC.' : showQuickLogin
                 ? t('quickLogin.subtitle', 'Nhập mật khẩu để tiếp tục') 
                 : t('login.subtitle')
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {runtimeConfig.workspace && <a className="mb-4 block text-center text-sm text-blue-700 underline" href="/start?mode=login">Chọn doanh nghiệp khác</a>}
             {showQuickLogin ? (
               <QuickReLogin 
                 email={rememberedEmail}

@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { computeRevenueData, emptyRevenueData, type RevenueBookingRow } from './useRevenueReport'
+import { describe, it, expect, vi } from 'vitest'
+import { computeRevenueData, emptyRevenueData, recognizedRevenue, recognizedRevenueGrowth, type RevenueBookingRow } from './useRevenueReport'
+import { reportFixture } from './revenue-report.test-fixture'
+
+// These tests exercise pure calculations, not the network-backed report hook.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))
 
 function makeBooking(overrides: Partial<RevenueBookingRow> = {}): RevenueBookingRow {
   return {
@@ -63,6 +67,7 @@ describe('computeRevenueData', () => {
     expect(r.refundedRevenue).toBe(500_000)
     expect(r.paidRevenue).toBe(800_000)
     expect(r.pendingRevenue).toBe(0)
+    expect(r.netRevenue).toBe(800_000)
   })
 
   it('netRevenue ưu tiên DB net_revenue khi có; fallback total - commission', () => {
@@ -99,5 +104,37 @@ describe('computeRevenueData', () => {
     ])
     expect(r.bookingsCount).toBe(2)
     expect(r.averageBookingValue).toBe(400_000)
+  })
+})
+
+describe('no-show recognition stays separate from room metrics and cash', () => {
+  it('adds only retained fees to recognized revenue without modifying room totals', () => {
+    const report = reportFixture()
+    report.currentPeriod = computeRevenueData([makeBooking({ total_amount: 200000, amount_paid: 200000 })])
+    report.noShow.currentPeriod = { retainedAmount: 100000, refundDueAmount: 50000, resolutionsCount: 2, cashMovement: 0 }
+    report.noShow.review.unallocatedPrepaymentAmount = 40000
+    expect(recognizedRevenue(report, 'currentPeriod')).toBe(300000)
+    expect(report.currentPeriod.paidRevenue).toBe(200000)
+    expect(report.currentPeriod.bookingsCount).toBe(1)
+    expect(report.currentPeriod.averageBookingValue).toBe(200000)
+    expect(report.noShow.currentPeriod.cashMovement).toBe(0)
+  })
+  it('compares recognition periods including fees without treating refund obligations as income', () => {
+    const report = reportFixture()
+    report.previousPeriod.netRevenue = 200000
+    report.noShow.previousPeriod.retainedAmount = 100000
+    report.currentPeriod.netRevenue = 300000
+    report.noShow.currentPeriod.retainedAmount = 150000
+    report.noShow.currentPeriod.refundDueAmount = 900000
+    expect(recognizedRevenueGrowth(report)).toBe(50)
+  })
+  it('removes refunded revenue, VAT, commission and surcharges from earned room totals', () => {
+    const r = computeRevenueData([makeBooking({ total_amount: 500000, payment_status: 'refunded',
+      net_revenue: 450000, vat_amount: 40000, ota_commission_amount: 50000, service_charges: 10000 })])
+    expect(r.netRevenue).toBe(0)
+    expect(r.vatAmount).toBe(0)
+    expect(r.otaCommission).toBe(0)
+    expect(r.surcharges.total).toBe(0)
+    expect(r.refundedRevenue).toBe(500000)
   })
 })

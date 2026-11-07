@@ -45,6 +45,7 @@ import {
   ChevronDown,
   ExternalLink,
 } from 'lucide-react'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface Props {
   booking: TapeChartBooking | null
@@ -277,7 +278,7 @@ export function TapeChartBookingSheet({
                 </div>
 
                 {/* 3 số tài chính cốt lõi */}
-                <div className="mt-3 space-y-1.5 rounded-md border bg-muted/30 px-3 py-2.5">
+                <div className="mt-3 space-y-1.5 rounded-none border bg-muted/30 px-3 py-2.5">
                   <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">Tổng</span>
                     <span className="font-semibold tabular-nums">
@@ -559,7 +560,7 @@ export function TapeChartBookingSheet({
                             rel="noreferrer"
                             className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted"
                           >
-                            <img
+                            <StorageImage
                               src={details.guest_id_image_url}
                               alt="Giấy tờ"
                               className="h-full w-full object-cover"

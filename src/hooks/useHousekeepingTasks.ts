@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { mapDbError } from '@/lib/dbErrors'
 import { triggerWorkflow, WorkflowTriggerTypes } from '@/lib/triggerWorkflow'
 import { triggerHousekeepingTaskAssignedNotification } from '@/hooks/useNotificationTriggers'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 import { 
   TASK_TYPE_LABELS,
   PRIORITY_LABELS
@@ -18,6 +19,7 @@ import type {
   TaskStatus,
   TaskType
 } from '@/types/housekeeping.types'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 // Fetch a single task by ID
 export function useTaskById(taskId: string | null) {
@@ -89,7 +91,7 @@ export function useMyTasks() {
     if (!userId || !tenantId) return
 
     const channel = supabase
-      .channel(`my-tasks-${userId}`)
+      .channel(instanceChannelName(`my-tasks-${userId}`))
       .on(
         'postgres_changes',
         {
@@ -147,7 +149,7 @@ export function useHotelTasks(hotelId?: string) {
     if (!hotelId || !tenantId) return
 
     const channel = supabase
-      .channel(`hotel-tasks-${hotelId}`)
+      .channel(instanceChannelName(`hotel-tasks-${hotelId}`))
       .on(
         'postgres_changes',
         {
@@ -319,27 +321,34 @@ export function useUpdateTaskStatus() {
         }
       }
 
-      const updates: Partial<HousekeepingTask> = { status }
-      if (status === 'in_progress') {
-        updates.started_at = new Date().toISOString()
-      } else if (status === 'cancelled') {
-        updates.cancelled_at = new Date().toISOString()
-      }
-      if (notes) updates.notes = notes
-
-      const { data, error } = await supabase
-        .from('housekeeping_tasks')
-        .update(updates)
-        .eq('id', taskId)
-        .select(`
-          *,
-          room:rooms(id, room_number, floor, room_type),
-          assigned_user:users!housekeeping_tasks_assigned_to_fkey(id, full_name)
-        `)
-        .single()
+      // Every status transition must use the audited state-machine RPC. A
+      // direct UPDATE works in permissive environments but is intentionally
+      // denied by the current RLS/policy contract for staff users.
+      const { data, error } = await supabase.rpc('transition_task_status', {
+        _task_id: taskId,
+        _to_status: status,
+        _reason: notes ?? null,
+        _force: false,
+      })
 
       if (error) throw error
-      return data as HousekeepingTask & {
+      // The RPC is the committed operation. Enrich its row for existing
+      // workflow/toast consumers, but never turn a successful transition into
+      // a failure when this best-effort read is unavailable.
+      let enriched = data as HousekeepingTask
+      try {
+        const readback = await supabase
+          .from('housekeeping_tasks')
+          .select(`
+            *,
+            room:rooms(id, room_number, floor, room_type),
+            assigned_user:users!housekeeping_tasks_assigned_to_fkey(id, full_name)
+          `)
+          .eq('id', taskId)
+          .single()
+        if (!readback.error && readback.data) enriched = readback.data as unknown as HousekeepingTask
+      } catch { /* transition already committed */ }
+      return enriched as HousekeepingTask & {
         room?: { room_number: string; floor: number }
         assigned_user?: { full_name: string }
       }
@@ -448,25 +457,16 @@ export function usePendingTaskCount() {
   useEffect(() => {
     if (!userId) return
 
-    const channel = supabase
-      .channel(`task-count-${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'housekeeping_tasks',
-          filter: `assigned_to=eq.${userId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['pending-task-count'] })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return subscribeSharedPostgresChanges(
+      `task-count-${userId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'housekeeping_tasks',
+        filter: `assigned_to=eq.${userId}`,
+      },
+      () => queryClient.invalidateQueries({ queryKey: ['pending-task-count'] }),
+    )
   }, [userId, queryClient])
 
   return query
@@ -551,7 +551,7 @@ export function useUnassignedTasks() {
     if (!tenantId) return
 
     const channel = supabase
-      .channel(`unassigned-tasks-${tenantId}`)
+      .channel(instanceChannelName(`unassigned-tasks-${tenantId}`))
       .on(
         'postgres_changes',
         {
@@ -754,7 +754,7 @@ export function useTaskStats(hotelId?: string) {
     if (!tenantId) return
 
     const channel = supabase
-      .channel(`task-stats-${tenantId}`)
+      .channel(instanceChannelName(`task-stats-${tenantId}`))
       .on(
         'postgres_changes',
         {
@@ -826,7 +826,7 @@ export function useAllHotelTasks(hotelId?: string, statusFilter?: TaskStatus | '
     const filterStr = hotelId ? `hotel_id=eq.${hotelId}` : undefined
 
     const channel = supabase
-      .channel(`all-hotel-tasks-${hotelId || 'all'}`)
+      .channel(instanceChannelName(`all-hotel-tasks-${hotelId || 'all'}`))
       .on(
         'postgres_changes',
         {

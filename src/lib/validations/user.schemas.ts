@@ -1,14 +1,5 @@
 import { z } from 'zod'
 
-// Password validation for user creation
-const passwordSchema = z
-  .string()
-  .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-  .regex(/[A-Z]/, 'Mật khẩu phải có ít nhất 1 chữ hoa')
-  .regex(/[a-z]/, 'Mật khẩu phải có ít nhất 1 chữ thường')
-  .regex(/[0-9]/, 'Mật khẩu phải có ít nhất 1 số')
-  .regex(/[^A-Za-z0-9]/, 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt')
-
 // Phone schema for profile form
 const phoneSchema = z
   .string()
@@ -19,7 +10,6 @@ const phoneSchema = z
 export const userFormSchema = z.object({
   fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
   email: z.string().email('Email không hợp lệ'),
-  password: passwordSchema,
   userLevelCode: z.enum(['tenant_owner', 'manager', 'department_manager', 'staff'], {
     required_error: 'Vui lòng chọn cấp độ người dùng',
   }),

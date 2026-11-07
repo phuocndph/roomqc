@@ -1,0 +1,14 @@
+# Merge after the pinned self-hosted/v0.8.3 upstream Compose file.
+# ROOMQC_REALTIME_IMAGE must be a verified immutable built image ID or digest.
+services:
+  realtime:
+    image: ${ROOMQC_REALTIME_IMAGE:?Build and verify the RoomQC Realtime image first}
+    environment:
+      SEED_SELF_HOST: "true"
+      # Tenant connections require peer verification when DB_SSL is enabled.
+      # Keep the CA path inside the container and mount it read-only in the
+      # complete deployment bundle; an empty value fails closed at startup.
+      DB_SSL: ${DB_SSL:-false}
+      DB_SSL_CA_CERT: ${DB_SSL_CA_CERT:-}
+      ROOMQC_REALTIME_CONNECT_POOL: ${ROOMQC_REALTIME_CONNECT_POOL:-1}
+      ROOMQC_REALTIME_SUBSCRIBER_POOL: ${ROOMQC_REALTIME_SUBSCRIBER_POOL:-4}

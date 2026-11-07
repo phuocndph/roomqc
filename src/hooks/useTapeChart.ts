@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useHotelContext } from '@/contexts/HotelContext'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface TapeChartRoom {
   id: string
@@ -66,7 +67,7 @@ export function useTapeChart(startDate: string, days: number) {
   useEffect(() => {
     if (!hotelId) return
     const channel = supabase
-      .channel(`tape-chart-${hotelId}`)
+      .channel(instanceChannelName(`tape-chart-${hotelId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'room_bookings', filter: `hotel_id=eq.${hotelId}` },

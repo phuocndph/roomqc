@@ -8,7 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { supabase } from '@/integrations/supabase/client'
+import { useRoomCommandExecutor } from '@/hooks/useRoomCommandExecutor'
 import { formatCurrency } from '@/lib/utils'
 import { format, parseISO, differenceInMinutes, differenceInCalendarDays } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -50,6 +50,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 
 export function ReceptionQuickDialog({ open, onOpenChange, room, onBookRoom, onOpenBookingDetail }: Props) {
+  const executeRoomCommand = useRoomCommandExecutor()
   const navigate = useNavigate()
   const { toast } = useToast()
   const qc = useQueryClient()
@@ -65,14 +66,9 @@ export function ReceptionQuickDialog({ open, onOpenChange, room, onBookRoom, onO
   const transitionMut = useMutation({
     mutationFn: async (params: { to: string; reason?: string; until?: string }) => {
       if (!room) throw new Error('no room')
-      const { error } = await supabase.rpc('transition_room_status', {
-        _room_id: room.id,
-        _to_status: params.to,
-        _reason: params.reason || null,
-        _dnd_until: params.to === 'dnd' ? (params.until || null) : null,
-        _oos_until: params.to === 'out_of_service' ? (params.until || null) : null,
-      } as any)
-      if (error) throw error
+      return executeRoomCommand({ roomId: room.id, toStatus: params.to, reason: params.reason || null,
+        dndUntil: params.to === 'dnd' ? (params.until || null) : null,
+        oosUntil: params.to === 'out_of_service' ? (params.until || null) : null })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['floor-plan-live'] })

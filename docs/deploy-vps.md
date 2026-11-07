@@ -1,5 +1,13 @@
 # RoomQC deployment on a VPS
 
+> Scope of this older guide: frontend on a VPS with a managed Supabase backend.
+> For the current RoomQC-managed clusters and automatic signup target, use the
+> [deployment blueprint](architecture/08-ops/roomqc-vps-signup-deployment-blueprint-2026-10-28.md)
+> and [current delivery status](architecture/08-ops/roomqc-vps-signup-status-2026-10-29.md).
+> The reviewed self-hosted Realtime bootstrap has its own
+> [runbook](architecture/08-ops/roomqc-realtime-bootstrap-runbook.md).
+> This frontend-only guide does not install the complete managed platform.
+
 ## Recommended architecture
 
 Run the Vite build as a small Nginx container on the VPS and keep PostgreSQL,

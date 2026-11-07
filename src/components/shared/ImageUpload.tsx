@@ -4,6 +4,9 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { useUser } from '@/hooks/useUser';
+import { isNativeApp } from '@/lib/native/platform';
+import { NativePhotoButton } from '@/components/mobile/NativePhotoButton';
+import { StorageImage } from '@/components/shared/StorageImage'
 interface ImageUploadProps {
   images: string[];
   onChange: (images: string[]) => void;
@@ -72,11 +75,14 @@ export function ImageUpload({
   };
   return (
     <div className={cn('space-y-4', className)}>
+      {isNativeApp() && images.length < maxImages && (
+        <NativePhotoButton disabled={isUploading || !tenantId} onPhoto={async file => { await handleFiles([file]); }} />
+      )}
       {images.length > 0 && (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5">
           {images.map((image, index) => (
             <div key={index} className="relative aspect-square">
-              <img 
+              <StorageImage 
                 src={image} 
                 alt={`Upload ${index + 1}`} 
                 className="h-full w-full rounded-lg object-cover" 

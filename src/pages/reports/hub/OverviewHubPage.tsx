@@ -6,7 +6,7 @@ import { PeriodPresetChips } from '@/components/reports/PeriodPresetChips'
 import { OverviewKpiStrip } from '@/components/reports/OverviewKpiStrip'
 import { RevenueVsCostChart } from '@/components/reports/RevenueVsCostChart'
 import { AlertList } from '@/components/reports/AlertList'
-import { useOverviewChart, useOverviewKpiStrip } from '@/hooks/useOverviewKpiStrip'
+import { useOverviewKpiStrip } from '@/hooks/useOverviewKpiStrip'
 import { useOverviewAlerts } from '@/hooks/useOverviewAlerts'
 import { useAccessibleReports } from '@/hooks/useAccessibleReports'
 import { useMonthlyTarget } from '@/hooks/useFixedExpenses'
@@ -18,7 +18,6 @@ import { useHotelContext } from '@/contexts/HotelContext'
 export function OverviewHubPage() {
   const [periodId, setPeriodId] = useState<PeriodPresetId>('this_month')
   const period = resolvePeriod(periodId)
-  const chartQ = useOverviewChart(30)
   const alertsQ = useOverviewAlerts()
   const { reports } = useAccessibleReports()
   const { isMobile } = useBreakpoint()
@@ -39,7 +38,7 @@ export function OverviewHubPage() {
 
       <Link
         to="/reports/daily"
-        className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
+        className="flex items-center justify-between rounded-panel border border-primary/30 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
       >
         <div>
           <div className="text-sm font-semibold">Báo cáo ngày</div>
@@ -54,30 +53,34 @@ export function OverviewHubPage() {
 
       <PeriodPresetChips value={periodId} onChange={setPeriodId} />
 
-      <OverviewKpiStrip period={period} />
+      <OverviewKpiStrip kpis={kpi} />
+      {kpi.data && <p className="text-xs text-muted-foreground">Công suất ước tính theo ngày lưu trú đã ghi và số phòng hiện có; chưa tái dựng lịch sử phòng ngừng bán hoặc chuyển phòng. Doanh thu ghi nhận khác tiền thực thu.</p>}
+      {!!kpi.data?.invalidCheckoutDates && <p role="alert" className="text-sm text-amber-800">Có {kpi.data.invalidCheckoutDates} lượt trả phòng sai ngày lưu trú cần đối soát; các lượt này không được tính đêm phòng.</p>}
 
-      {isAllHotelsMode ? null : hasTarget ? (
-        <div className="rounded-lg border p-4 space-y-4">
+      {isAllHotelsMode || periodId !== 'this_month' || !kpi.data ? null : targetQ.error ? (
+        <p role="alert" className="text-sm">Không tải được mục tiêu tháng.</p>
+      ) : targetQ.isPending ? null : hasTarget ? (
+        <div className="rounded-panel border p-4 space-y-4">
           <h3 className="text-sm font-semibold">Tiến độ mục tiêu tháng</h3>
           {target!.revenue_target ? (
             <TargetProgressBar
-              label="Doanh thu"
-              current={kpi.netRevenue.value}
+              label="Doanh thu ghi nhận"
+              current={kpi.data.netRevenue.value}
               target={Number(target!.revenue_target)}
               format="currency"
             />
           ) : null}
           {target!.occupancy_target ? (
             <TargetProgressBar
-              label="Công suất"
-              current={kpi.occupancy.value}
+              label="Công suất ước tính"
+              current={kpi.data.occupancy.value}
               target={Number(target!.occupancy_target)}
               format="percent"
             />
           ) : null}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed p-4 flex items-center justify-between">
+        <div className="rounded-panel border border-dashed p-4 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Chưa đặt mục tiêu tháng này</span>
           <Link
             to="/settings/fixed-costs"
@@ -91,7 +94,7 @@ export function OverviewHubPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <RevenueVsCostChart data={chartQ.data} loading={chartQ.isLoading} days={30} />
+          <RevenueVsCostChart data={kpi.chart} loading={kpi.loading} error={kpi.error} period={period.current} />
         </div>
         <div className="space-y-2">
           <h3 className="text-sm font-semibold px-1">Cần chú ý</h3>
@@ -110,7 +113,7 @@ export function OverviewHubPage() {
               <Link
                 key={r.id}
                 to={r.path}
-                className="rounded-lg border border-border p-3 hover:bg-muted/40 transition-colors group"
+                className="rounded-panel border border-border p-3 hover:bg-muted/40 transition-colors group"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">

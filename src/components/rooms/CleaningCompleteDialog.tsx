@@ -40,9 +40,11 @@ export function CleaningCompleteDialog({
       navigate(`/rooms/${roomId}/check?type=daily`)
     } else {
       // Mark room as ready directly
-      await markRoomReady.mutateAsync({ roomId, skipCheck: true })
-      onComplete?.() // Call callback after marking ready
-      onOpenChange(false)
+      try {
+        await markRoomReady.mutateAsync({ roomId, skipCheck: true })
+        onComplete?.()
+        onOpenChange(false)
+      } catch { /* The mutation reports a current-scope error; keep the dialog open. */ }
     }
   }
 

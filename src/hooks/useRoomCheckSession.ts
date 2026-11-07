@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { subscribeSharedPostgresChanges } from '@/lib/realtime/sharedSubscription'
 
 export type RoomCheckType = 'daily' | 'periodic' | 'checkin' | 'checkout' | 'maintenance' | 'delivery' | 'replenish'
 
@@ -67,34 +68,27 @@ export function useRoomCheckSession(roomId: string | undefined) {
 
     // Subscribe to realtime updates — filter by tenant_id (Postgres realtime
     // supports a single filter); narrow to this room in the handler.
-    const channel = supabase
-      .channel(`room-check-session-${tenantId}-${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_check_sessions',
-          filter: `tenant_id=eq.${tenantId}`
-        },
-        (payload) => {
-          const next = payload.new as any
-          const prev = payload.old as any
-          const affectedRoom = next?.room_id ?? prev?.room_id
-          if (affectedRoom !== roomId) return
+    return subscribeSharedPostgresChanges(
+      `room-check-session-${tenantId}-${roomId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'room_check_sessions',
+        filter: `tenant_id=eq.${tenantId}`,
+      },
+      (payload) => {
+        const next = payload.new as any
+        const prev = payload.old as any
+        const affectedRoom = next?.room_id ?? prev?.room_id
+        if (affectedRoom !== roomId) return
 
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setSession(next as RoomCheckSession)
-          } else if (payload.eventType === 'DELETE') {
-            setSession(null)
-          }
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          setSession(next as RoomCheckSession)
+        } else if (payload.eventType === 'DELETE') {
+          setSession(null)
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      },
+    )
   }, [roomId, tenantId])
 
   const createSession = async (
@@ -158,31 +152,17 @@ export function useRoomCheckSession(roomId: string | undefined) {
     tenantId: string
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      void tenantId // the server derives the tenant from the room
+      // RLS only lets a user delete their own session, so a client-side
+      // delete-then-insert silently removed nothing and the insert conflicted
+      // (W1, 2026-11-06). The RPC replaces the session atomically after
+      // checking the actor is a live manager of this room's hotel.
+      const { data, error: takeOverError } = await supabase.rpc(
+        'take_over_room_check_session' as any,
+        { p_room_id: roomId, p_check_type: checkType, p_user_name: userName },
+      )
 
-      // 1. Xóa session cũ (của bất kỳ ai)
-      const { error: deleteError } = await supabase
-        .from('room_check_sessions')
-        .delete()
-        .eq('room_id', roomId)
-
-      if (deleteError) throw deleteError
-
-      // 2. Tạo session mới cho manager
-      const { data, error: createError } = await supabase
-        .from('room_check_sessions')
-        .insert({
-          room_id: roomId,
-          user_id: user.id,
-          user_name: userName,
-          check_type: checkType,
-          tenant_id: tenantId,
-        })
-        .select()
-        .single()
-
-      if (createError) throw createError
+      if (takeOverError) throw takeOverError
 
       toast({
         title: 'Đã tiếp quản',
@@ -258,45 +238,38 @@ export function useAllRoomCheckSessions(tenantId?: string) {
     fetchSessions()
 
     // Subscribe to all sessions
-    const channel = supabase
-      .channel(`room-check-sessions-${tenantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_check_sessions',
-          filter: `tenant_id=eq.${tenantId}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const newSession = payload.new as any
-            setSessions(prev => ({
-              ...prev,
-              [newSession.room_id]: {
-                id: newSession.id,
-                room_id: newSession.room_id,
-                user_id: newSession.user_id,
-                user_name: newSession.user_name,
-                check_type: newSession.check_type as RoomCheckType,
-                started_at: newSession.started_at
-              }
-            }))
-          } else if (payload.eventType === 'DELETE') {
-            const oldSession = payload.old as any
-            setSessions(prev => {
-              const newSessions = { ...prev }
-              delete newSessions[oldSession.room_id]
-              return newSessions
-            })
-          }
+    return subscribeSharedPostgresChanges(
+      `room-check-sessions-${tenantId}`,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'room_check_sessions',
+        filter: `tenant_id=eq.${tenantId}`,
+      },
+      (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const newSession = payload.new as any
+          setSessions(prev => ({
+            ...prev,
+            [newSession.room_id]: {
+              id: newSession.id,
+              room_id: newSession.room_id,
+              user_id: newSession.user_id,
+              user_name: newSession.user_name,
+              check_type: newSession.check_type as RoomCheckType,
+              started_at: newSession.started_at,
+            },
+          }))
+        } else if (payload.eventType === 'DELETE') {
+          const oldSession = payload.old as any
+          setSessions(prev => {
+            const next = { ...prev }
+            delete next[oldSession.room_id]
+            return next
+          })
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      },
+    )
   }, [tenantId])
 
   return sessions

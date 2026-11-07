@@ -21,7 +21,7 @@ export function useDistributionOrders(filters: DistributionFilters = {}, page = 
       if (!tenant?.id) throw new Error('No tenant')
       if (!isAllHotelsMode && !selectedHotel?.id) throw new Error('No hotel selected')
 
-      const { data, error } = await supabase.rpc('get_distribution_orders_filtered', {
+      const query = {
         p_tenant_id: tenant.id,
         p_hotel_id: isAllHotelsMode ? null : selectedHotel?.id,
         p_status: filters.status || null,
@@ -29,14 +29,18 @@ export function useDistributionOrders(filters: DistributionFilters = {}, page = 
         p_floor: null,
         p_shift_date: null,
         p_shift_code: null,
-        p_limit: pageSize,
-        p_offset: (page - 1) * pageSize,
-      })
+      }
+      const [{ data, error }, { data: totalCount, error: countError }] = await Promise.all([
+        supabase.rpc('get_distribution_orders_filtered', { ...query, p_limit: pageSize, p_offset: (page - 1) * pageSize }),
+        supabase.rpc('get_distribution_orders_count', query),
+      ])
 
       if (error) throw error
+      if (countError) throw countError
+      if (typeof totalCount !== 'number' || !Number.isSafeInteger(totalCount) || totalCount < 0) throw new Error('Số lượng phiếu giao hàng không hợp lệ')
       return {
         data: data as DistributionOrder[],
-        totalCount: (data as DistributionOrder[])?.[0]?.total_count || 0,
+        totalCount,
       }
     },
     enabled: !!tenant?.id && (isAllHotelsMode || !!selectedHotel?.id),

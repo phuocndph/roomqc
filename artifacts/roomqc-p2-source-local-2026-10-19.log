@@ -1,0 +1,73 @@
+> vite_react_shadcn_ts@0.0.0 test:control:db
+> node scripts/test-control-directory.mjs
+
+✔ admin command identity is canonical and binds target, version, reason and strict server-owned payload (2.8112ms)
+✔ capabilities require a verified actor from the configured authority; pagination rejects unknown or duplicated filters (0.935ms)
+✔ OpenAPI references and operations are unique, admin routes require bearer capability and declared commands parse (6.0605ms)
+✔ multi-mount health DTO matches declared safe fields, labels scope and preserves stale values without leaking device or path (3.0145ms)
+✔ registry validates origins, public keys, cluster IDs, production TLS and shared push key (4.2053ms)
+✔ slug validation rejects ambiguous, reserved and non-ASCII slugs (0.4154ms)
+✔ gateway uses the selected cluster, validates Auth remotely, and never sends server credentials on user requests (4.8828ms)
+{"requestId":"f658f4d8-0046-456e-a020-8b0ee76fa944","code":"CONTROL_UNAVAILABLE"}
+{"requestId":"a29f686a-8ac3-419f-8440-e75af49f266d","code":"CONTROL_UNAVAILABLE"}
+✔ HTTP boundary rejects origin spoofing, unauthenticated provisioning and strips privileged body fields (50.0161ms)
+✔ empty directory: concurrent migrators apply once and repeated imports preserve operator limits (1619.3661ms)
+✔ legacy v2 upgrade preserves bindings/audit/limits and records conflicting email history without guessing (239.3825ms)
+✔ unknown legacy schema and tenant backends are rejected before recording migration history (218.5774ms)
+✔ checksum mismatch stops; a failed new migration rolls back both DDL and history (278.7183ms)
+✔ runtime grants allow signup and readiness but reject DDL, audit deletion and migration history changes (408.4789ms)
+{"requestId":"4ee87bf4-7a13-4bcd-87cc-16f778757361","code":"CONTROL_UNAVAILABLE"}
+✔ HTTP liveness remains available with an unmigrated database; readiness changes after an explicit migration (280.5882ms)
+✔ admin commands: 20 overlapping replays commit one mutation, event and stable receipt (317.6894ms)
+✔ admin commands: competing versions have one winner and audit failure rolls back mutation and receipt (314.7889ms)
+✔ admin opening rechecks health, backups and policy; draining/serving never silently reopen admission (351.9314ms)
+✔ registry registration is draft, inventory-only, idempotent and rejects duplicate host/cluster (266.701ms)
+✔ admission: 20 competing new registrations can reserve only the final slot; retry does not extend expiry (522.8657ms)
+✔ admission: durable email affinity survives expiry; first provision rechecks gate while started work stays recoverable (343.7705ms)
+✔ allocation and admin close serialize on one lock; no new reservation after close has committed (286.1183ms)
+✔ admin pagination preserves microseconds, filter scope and redaction across 1,005 workspaces and a long timeline (341.9106ms)
+✔ admin HTTP checks authority on every attempt and retry after a lost committed response returns the original receipt (283.0526ms)
+✔ health snapshot: runtime metrics role persists warmup across process restarts and cannot approve reopening (353.8564ms)
+✔ health snapshot: duplicate/older samples cannot overwrite newer state or generations, including concurrent collectors (287.0913ms)
+✔ health snapshot: stale transition is durable and idempotent; a fresh sample needs warmup again (268.2707ms)
+✔ health snapshot: failed transition audit rolls back snapshot and operator latch atomically (260.349ms)
+✔ multi-mount health: metrics role persists v2 identity/disks through restarts; storage critical blocks only new allocation (391.5952ms)
+✔ multi-mount health: rejected samples do not advance generation and target changes reset persisted warmup/recovery (308.3229ms)
+✔ telemetry contract rejects invalid units, missing/nonfinite values, incomplete probes and invalid timestamps (3.5232ms)
+✔ resource policy validates bounded thresholds and nonoverlapping warning/critical limits (0.4194ms)
+✔ multi-mount samples reject missing, duplicate, contradictory disks, unknown versions and missing target identity (1.4956ms)
+✔ every actual disk and inode is evaluated independently; critical storage cannot be hidden by a healthy database disk (7.5799ms)
+✔ target/schema/scope/mount identity changes restart warmup and recovery instead of inheriting old healthy windows (2.1307ms)
+✔ healthy telemetry requires five continuous minutes; gaps and policy changes restart warmup (0.901ms)
+✔ CPU and memory use sustained windows at their boundaries rather than a single spike (1.2265ms)
+✔ disk bytes, disk percentage and inode independently block immediately; critical state survives restart until recovery (1.5203ms)
+✔ database connection saturation and probe failures require their own sustained intervals (0.4754ms)
+✔ admission fails closed for every required gate and opening cannot ignore metrics, backup or capacity (0.8871ms)
+✔ liveness survives database failures; readiness and legacy health alias fail closed (49.0631ms)
+✔ graceful shutdown waits for an accepted request before closing the database (8.5767ms)
+✔ a stalled request cannot hold shutdown past its deadline (119.844ms)
+✔ destination policy normalizes mapped IPv6 and rejects metadata, link-local, multicast, transition and reserved addresses (6.1326ms)
+✔ DNS policy checks every answer, exact inventory origin and explicitly approved private destinations (1.5551ms)
+✔ real HTTP connection pins verified DNS once, preserves hostname, rejects redirects and bounds response size (26.0178ms)
+✔ DNS resolution observes the request deadline before any network connection (29.6084ms)
+✔ receipt validation checks all binding fields and never serializes secrets (1.4002ms)
+✔ support authorization always uses the configured canonical cluster with user credentials (3.869ms)
+✔ support never probes or mutates without durable started audit and expected identity (0.6085ms)
+✔ support CLI uses explicit intent and private environment token, with safe origin and errors (1.8815ms)
+✔ real Prometheus engine: every required source timestamp participates despite colliding labels; CPU rate and disk templates evaluate (1096.4816ms)
+✔ telemetry inventory binds host/cluster/scope and real mounts, rejecting ambiguous or unsupported mappings (13.9065ms)
+✔ query templates select fixed inventory and retain every source timestamp using distinct union labels (0.5917ms)
+✔ collection produces one coherent v2 sample from separate disks and never hides a failing service (7.0127ms)
+✔ scalar rejects empty/ambiguous/malformed/stale evaluation results instead of coercing them to zero (9.6597ms)
+✔ collection rejects stale/future/invalid source time, incomplete probes and readonly or invalid inode counters (12.6505ms)
+✔ all queries use the same evaluation instant with at most four concurrent requests (29.2111ms)
+✔ internal deadline cannot be disabled by caller signal; cancellation stops further fanout (62.4421ms)
+✔ real loopback HTTP transport enforces origin/response bounds, rejects redirects and never leaks raw payloads (71.5665ms)
+ℹ tests 59
+ℹ suites 0
+ℹ pass 59
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9875.1839

@@ -7,6 +7,49 @@
     ]
   },
   {
+    "rpc": "admin_manage_tenant",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
+      "src\\hooks\\super-admin\\useTenants.ts"
+    ]
+  },
+  {
+    "rpc": "admin_mutate_subscription_reconciliation_case",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\SubscriptionReconciliationCase.tsx"
+    ]
+  },
+  {
+    "rpc": "admin_recover_subscription_status_run",
+    "callers": [
+      "src\\components\\super-admin\\SubscriptionJobMonitor.tsx"
+    ]
+  },
+  {
+    "rpc": "admin_subscription_job_monitor",
+    "callers": [
+      "src\\components\\super-admin\\SubscriptionJobMonitor.tsx"
+    ]
+  },
+  {
+    "rpc": "admin_subscription_reconciliation",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\SubscriptionReconciliationPanel.tsx"
+    ]
+  },
+  {
+    "rpc": "admin_subscription_reconciliation_case",
+    "callers": [
+      "src\\components\\super-admin\\tenants\\SubscriptionReconciliationCase.tsx"
+    ]
+  },
+  {
+    "rpc": "admin_tenant_directory_page",
+    "callers": [
+      "src\\hooks\\super-admin\\useTenants.ts"
+    ]
+  },
+  {
     "rpc": "apply_promo_code",
     "callers": [
       "src\\hooks\\super-admin\\usePromoCodes.ts"
@@ -124,12 +167,6 @@
     ]
   },
   {
-    "rpc": "clear_tenant_read_only",
-    "callers": [
-      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx"
-    ]
-  },
-  {
     "rpc": "close_route_if_complete",
     "callers": [
       "src\\hooks\\useRouteBatch.ts"
@@ -138,8 +175,7 @@
   {
     "rpc": "complete_registration",
     "callers": [
-      "src\\pages\\auth\\Onboarding.tsx",
-      "src\\pages\\items\\CategoriesPage.tsx"
+      "src\\pages\\auth\\Onboarding.tsx"
     ]
   },
   {
@@ -210,7 +246,8 @@
     "callers": [
       "src\\hooks\\useCreateDistributionFromSupplement.ts",
       "src\\hooks\\useCreateDistributionFromSupplements.ts",
-      "src\\hooks\\useDistributionOrders.ts"
+      "src\\hooks\\useDistributionOrders.ts",
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -277,6 +314,18 @@
     ]
   },
   {
+    "rpc": "create_subscription_checkout_draft",
+    "callers": [
+      "src\\components\\payment\\BankTransferPaymentDialog.tsx"
+    ]
+  },
+  {
+    "rpc": "create_subscription_quote",
+    "callers": [
+      "src\\components\\payment\\BankTransferPaymentDialog.tsx"
+    ]
+  },
+  {
     "rpc": "create_warehouse_transfer",
     "callers": [
       "src\\hooks\\useWarehouseTransfer.ts"
@@ -307,6 +356,12 @@
     ]
   },
   {
+    "rpc": "edit_employee_profile",
+    "callers": [
+      "src\\hooks\\useUsers.ts"
+    ]
+  },
+  {
     "rpc": "enqueue_stay_registration",
     "callers": [
       "src\\hooks\\useStayRegistrations.ts"
@@ -325,10 +380,15 @@
     ]
   },
   {
+    "rpc": "export_revenue_report",
+    "callers": [
+      "src\\components\\reports\\useRevenueExport.ts"
+    ]
+  },
+  {
     "rpc": "generate_guest_invoice_number",
     "callers": [
-      "src\\hooks\\useGuestInvoices.ts",
-      "src\\lib\\invoiceHelpers.ts"
+      "src\\hooks\\useGuestInvoices.ts"
     ]
   },
   {
@@ -367,6 +427,12 @@
     "rpc": "get_booking_chargeable_total",
     "callers": [
       "src\\hooks\\useChargeableConsumptions.ts"
+    ]
+  },
+  {
+    "rpc": "get_booking_no_show_resolution",
+    "callers": [
+      "src\\hooks\\useBookingNoShowResolution.ts"
     ]
   },
   {
@@ -415,6 +481,7 @@
   {
     "rpc": "get_distribution_orders_count",
     "callers": [
+      "src\\hooks\\useDistributionOrders.ts",
       "src\\hooks\\useRouteFilters.ts",
       "src\\lib\\route-data-prefetch.ts"
     ]
@@ -434,9 +501,9 @@
     ]
   },
   {
-    "rpc": "get_financial_report",
+    "rpc": "get_financial_report_scoped",
     "callers": [
-      "src\\hooks\\useReports.ts"
+      "src\\lib\\financial-report.ts"
     ]
   },
   {
@@ -502,7 +569,7 @@
     ]
   },
   {
-    "rpc": "get_labor_cost",
+    "rpc": "get_labor_cost_scoped",
     "callers": [
       "src\\hooks\\useLaborCost.ts"
     ]
@@ -576,15 +643,15 @@
     ]
   },
   {
-    "rpc": "get_monthly_expenses",
-    "callers": [
-      "src\\hooks\\useMonthlyExpenses.ts"
-    ]
-  },
-  {
     "rpc": "get_monthly_laundry_expenses",
     "callers": [
       "src\\hooks\\useLaundryDashboard.ts"
+    ]
+  },
+  {
+    "rpc": "get_operations_report_scoped",
+    "callers": [
+      "src\\lib\\operations-report.ts"
     ]
   },
   {
@@ -603,6 +670,12 @@
     "rpc": "get_recent_activities",
     "callers": [
       "src\\hooks\\useRecentActivities.ts"
+    ]
+  },
+  {
+    "rpc": "get_revenue_report",
+    "callers": [
+      "src\\hooks\\useRevenueReport.ts"
     ]
   },
   {
@@ -699,7 +772,6 @@
     "rpc": "get_user_permissions_summary",
     "callers": [
       "src\\hooks\\useUserModulePermissions.ts",
-      "src\\hooks\\useUserPermissionConfiguration.ts",
       "src\\hooks\\useUserPermissions.ts"
     ]
   },
@@ -760,6 +832,12 @@
     ]
   },
   {
+    "rpc": "log_activity",
+    "callers": [
+      "src\\lib\\seedDemoData.ts"
+    ]
+  },
+  {
     "rpc": "manager_override_charge",
     "callers": [
       "src\\pages\\reception\\PendingChargesPage.tsx"
@@ -769,12 +847,6 @@
     "rpc": "mark_batch_partially_received",
     "callers": [
       "src\\hooks\\useLaundryCompensation.ts"
-    ]
-  },
-  {
-    "rpc": "mark_booking_no_show",
-    "callers": [
-      "src\\hooks\\useMarkBookingNoShow.ts"
     ]
   },
   {
@@ -793,32 +865,6 @@
     "rpc": "move_booking",
     "callers": [
       "src\\hooks\\useTapeChartMutations.ts"
-    ]
-  },
-  {
-    "rpc": "perform_checkin",
-    "callers": [
-      "src\\components\\rooms\\RoomBookingDialog.tsx",
-      "src\\pages\\bookings\\BookingsPage.tsx"
-    ]
-  },
-  {
-    "rpc": "perform_checkout",
-    "callers": [
-      "src\\components\\rooms\\RoomBookingDialog.tsx",
-      "src\\pages\\bookings\\BookingsPage.tsx"
-    ]
-  },
-  {
-    "rpc": "perform_group_checkout",
-    "callers": [
-      "src\\components\\bookings\\GroupCheckoutDialog.tsx"
-    ]
-  },
-  {
-    "rpc": "perform_quick_room_check",
-    "callers": [
-      "src\\hooks\\useQuickRoomCheck.ts"
     ]
   },
   {
@@ -843,6 +889,12 @@
     "rpc": "receive_batch",
     "callers": [
       "src\\hooks\\useRouteBatch.ts"
+    ]
+  },
+  {
+    "rpc": "record_booking_payment",
+    "callers": [
+      "src\\lib\\seedDemoData.ts"
     ]
   },
   {
@@ -997,28 +1049,6 @@
     ]
   },
   {
-    "rpc": "transfer_booking_room",
-    "callers": [
-      "src\\components\\bookings\\RoomTransferDialog.tsx"
-    ]
-  },
-  {
-    "rpc": "transition_booking_status",
-    "callers": [
-      "src\\hooks\\useBookingFlagTransition.ts"
-    ]
-  },
-  {
-    "rpc": "transition_room_status",
-    "callers": [
-      "src\\components\\rooms\\ReceptionQuickDialog.tsx",
-      "src\\hooks\\useBulkRoomActions.ts",
-      "src\\hooks\\useRoomChecks.ts",
-      "src\\hooks\\useRoomTransition.ts",
-      "src\\hooks\\useRooms.ts"
-    ]
-  },
-  {
     "rpc": "transition_task_status",
     "callers": [
       "src\\hooks\\useCheckoutInspection.ts",
@@ -1026,12 +1056,6 @@
       "src\\hooks\\useRooms.ts",
       "src\\hooks\\useTaskTransition.ts",
       "src\\pages\\rooms\\RoomCheckPage.tsx"
-    ]
-  },
-  {
-    "rpc": "undo_quick_room_check",
-    "callers": [
-      "src\\hooks\\useUndoQuickRoomCheck.ts"
     ]
   },
   {
@@ -1055,8 +1079,6 @@
   {
     "rpc": "update_tenant_usage",
     "callers": [
-      "src\\components\\super-admin\\tenants\\ChangePlanDialog.tsx",
-      "src\\hooks\\useSubscription.ts",
       "src\\hooks\\useTenantUsage.ts"
     ]
   },

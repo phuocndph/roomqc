@@ -4,6 +4,7 @@ import { vi } from 'date-fns/locale'
 import { useLastRoomCheck } from '@/hooks/useQuickRoomCheck'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const TYPE_LABEL: Record<string, string> = {
   daily: 'Kiểm hằng ngày',
@@ -48,7 +49,7 @@ export function LastCheckContextCard({ roomId }: Props) {
     <div className="border rounded-lg p-3 bg-muted/20">
       <div className="flex items-start gap-3">
         {firstPhoto ? (
-          <img
+          <StorageImage
             src={firstPhoto}
             alt="Ảnh lần kiểm gần nhất"
             className="w-14 h-14 rounded-md object-cover flex-shrink-0"

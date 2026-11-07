@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "instanceId": "rotation-a",
+  "installerConfigFile": "/etc/roomqc/private/setup-installer.json",
+  "journalDirectory": "/var/lib/roomqc/setup-rotation-journal",
+  "ttlSeconds": 300,
+  "overlapSeconds": 20,
+  "rotateBeforeSeconds": 120,
+  "intervalMs": 10000
+}

@@ -1,0 +1,12 @@
+{
+  "services": {
+    "booking-external-worker": {"secrets": [
+      {"source": "booking-vapid-public", "target": "booking-vapid-public", "uid": "1000", "gid": "1000", "mode": 256},
+      {"source": "booking-vapid-private", "target": "booking-vapid-private", "uid": "1000", "gid": "1000", "mode": 256}
+    ]}
+  },
+  "secrets": {
+    "booking-vapid-public": {"file": "${ROOMQC_BOOKING_VAPID_PUBLIC_FILE:?public VAPID file required}"},
+    "booking-vapid-private": {"file": "${ROOMQC_BOOKING_VAPID_PRIVATE_FILE:?private VAPID file required}"}
+  }
+}

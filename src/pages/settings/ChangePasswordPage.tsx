@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { changePasswordSchema, ChangePasswordData } from '@/lib/validations/auth.schemas'
-import { supabase } from '@/integrations/supabase/client'
-import { useUser } from '@/hooks/useUser'
+import { useProfile } from '@/hooks/useProfile'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,10 +10,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Lock, Shield, CheckCircle2 } from 'lucide-react'
-import { toast } from 'sonner'
 
 export default function ChangePasswordPage() {
-  const { user } = useUser()
+  const { changePasswordAsync, checkPasswordChangeAsync, isChangingPassword } = useProfile()
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,32 +30,10 @@ export default function ChangePasswordPage() {
   const onSubmit = async (data: ChangePasswordData) => {
     setIsSubmitting(true)
     try {
-      // First verify current password by trying to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: data.currentPassword,
-      })
-
-      if (signInError) {
-        toast.error('Mật khẩu hiện tại không đúng')
-        setIsSubmitting(false)
-        return
-      }
-
-      // Update password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      })
-
-      if (updateError) {
-        throw updateError
-      }
-
-      toast.success('Đổi mật khẩu thành công')
+      await changePasswordAsync({ currentPassword: data.currentPassword, newPassword: data.newPassword })
       reset()
-    } catch (error: any) {
-      console.error('Change password error:', error)
-      toast.error(error.message || 'Có lỗi xảy ra khi đổi mật khẩu')
+    } catch {
+      // Keep entered values; the shared mutation presents a safe error.
     } finally {
       setIsSubmitting(false)
     }
@@ -92,6 +68,10 @@ export default function ChangePasswordPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <Button type="button" variant="outline" disabled={isSubmitting || isChangingPassword}
+                  onClick={() => { void checkPasswordChangeAsync().catch(() => {}) }}>
+                  Kiểm tra lần đổi trước
+                </Button>
                 {/* Current Password */}
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>

@@ -1,33 +1,42 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useToast } from './use-toast'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import html2canvas from 'html2canvas'
 import { downloadWorkbook, objectRecordsToRows, type ExcelRow } from '@/lib/excelUtils'
 
+export interface ReportExportData {
+  title: string
+  dateRange: string
+  summary?: Record<string, any>
+  tables?: Array<{ title: string; headers: string[]; rows: any[][]; footer?: any[] }>
+  notes?: string[]
+  chartData?: any[]
+}
+
+/** Sensitive reports supply fresh authorized data and recheck before download. */
+export interface ReportExportSource {
+  load: () => Promise<ReportExportData>
+  beforeSave: () => Promise<void>
+}
+
 export function useReportExport() {
   const [isExporting, setIsExporting] = useState(false)
+  const busy = useRef(false)
   const { toast } = useToast()
   
   const exportToPDF = async (
-    reportData: {
-      title: string
-      dateRange: string
-      summary?: Record<string, any>
-      tables?: Array<{
-        title: string
-        headers: string[]
-        rows: any[][]
-        footer?: any[]
-      }>
-      notes?: string[]
-    },
+    input: ReportExportData | ReportExportSource,
     reportType: string,
     chartElements?: HTMLElement[]
   ) => {
+    if (busy.current) return false
+    busy.current = true
     setIsExporting(true)
     
     try {
+      const source = 'load' in input ? input : undefined
+      const reportData = source ? await source.load() : input as ReportExportData
       const doc = new jsPDF('l', 'mm', 'a4')
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
@@ -183,7 +192,7 @@ export function useReportExport() {
           pageHeight - 10
         )
         doc.text(
-          'HotelPro System',
+          'RoomQC',
           pageWidth - 20,
           pageHeight - 10,
           { align: 'right' }
@@ -191,42 +200,38 @@ export function useReportExport() {
       }
       
       const filename = `${reportType}_${formatDate(new Date())}.pdf`
+      await source?.beforeSave()
       doc.save(filename)
       
       toast({
         title: 'Thành công',
         description: `Đã xuất báo cáo PDF: ${filename}`,
       })
-    } catch (error) {
-      console.error('PDF export error:', error)
+      return true
+    } catch {
       toast({
         title: 'Lỗi',
         description: 'Không thể xuất PDF. Vui lòng thử lại.',
         variant: 'destructive',
       })
+      return false
     } finally {
+      busy.current = false
       setIsExporting(false)
     }
   }
   
   const exportToExcel = async (
-    reportData: {
-      title: string
-      dateRange: string
-      summary?: Record<string, any>
-      tables?: Array<{
-        title: string
-        headers: string[]
-        rows: any[][]
-        footer?: any[]
-      }>
-      chartData?: any[]
-    },
+    input: ReportExportData | ReportExportSource,
     reportType: string
   ) => {
+    if (busy.current) return false
+    busy.current = true
     setIsExporting(true)
     
     try {
+      const source = 'load' in input ? input : undefined
+      const reportData = source ? await source.load() : input as ReportExportData
       const sheets: { name: string; rows: readonly ExcelRow[]; columnWidths?: number[] }[] = []
       
       // Info sheet
@@ -245,6 +250,9 @@ export function useReportExport() {
         })
       }
       
+      if (reportData.notes?.length) {
+        infoData.push([], ['GHI CHÚ'], ...reportData.notes.map(note => [note]))
+      }
       sheets.push({ name: 'Thông tin', rows: infoData, columnWidths: [30, 20] })
       
       // Detail sheets
@@ -280,20 +288,22 @@ export function useReportExport() {
       }
       
       const filename = `${reportType}_${formatDate(new Date())}.xlsx`
-      await downloadWorkbook(sheets, filename)
+      await downloadWorkbook(sheets, filename, source?.beforeSave)
       
       toast({
         title: 'Thành công',
         description: `Đã xuất báo cáo Excel: ${filename}`,
       })
-    } catch (error) {
-      console.error('Excel export error:', error)
+      return true
+    } catch {
       toast({
         title: 'Lỗi',
         description: 'Không thể xuất Excel. Vui lòng thử lại.',
         variant: 'destructive',
       })
+      return false
     } finally {
+      busy.current = false
       setIsExporting(false)
     }
   }

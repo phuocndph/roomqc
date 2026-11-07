@@ -7,6 +7,7 @@ import { useBreakpoint } from '@/lib/breakpoints'
 import { useChatPopups } from './ChatPopupContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Users } from 'lucide-react'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type ToastPosition = 'top-center' | 'bottom-right'
 
@@ -46,7 +47,7 @@ export function ChatNotificationListener() {
     if (!user?.id || !tenantId) return
 
     const channel = supabase
-      .channel(`chat-notify-${user.id}`)
+      .channel(instanceChannelName(`chat-notify-${user.id}`))
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenantId}` },

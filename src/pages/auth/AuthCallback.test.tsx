@@ -3,6 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AccountSetupProfile } from '@/lib/account-setup'
 import AuthCallback from './AuthCallback'
+import { AccountProfileError } from '@/lib/account-profile-error'
 
 const state = vi.hoisted(() => ({
   authenticated: true,
@@ -13,6 +14,7 @@ const state = vi.hoisted(() => ({
   firstRoute: '/' as string | null,
   refetch: vi.fn(),
   signOut: vi.fn(),
+  invitation: { data: null as null | { passwordReady: boolean; expired: boolean }, isLoading: false, isError: false, refetch: vi.fn() },
 }))
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -24,6 +26,8 @@ vi.mock('@/hooks/useUser', () => ({
 vi.mock('@/hooks/useFirstAccessibleRoute', () => ({
   useFirstAccessibleRoute: () => ({ firstAccessibleRoute: state.firstRoute, isLoading: state.permissionsLoading }),
 }))
+vi.mock('@/hooks/useMyStaffInvitation', () => ({ useMyStaffInvitation: () => state.invitation }))
+vi.mock('@/components/auth/ResumeStaffInvitation', () => ({ ResumeStaffInvitation: () => <div>Resume invitation</div> }))
 
 function openCallback(path = '/auth/callback') {
   const router = createMemoryRouter([
@@ -43,6 +47,7 @@ beforeEach(() => {
   state.permissionsLoading = false
   state.firstRoute = '/'
   state.refetch.mockReset()
+  state.invitation = { data: null, isLoading: false, isError: false, refetch: vi.fn() }
 })
 
 afterEach(() => {
@@ -51,6 +56,29 @@ afterEach(() => {
 })
 
 describe('AuthCallback registration routing', () => {
+  it('waits for invitation lookup before treating a missing profile as a new owner', () => {
+    state.profile = null
+    state.invitation.isLoading = true
+    const router = openCallback()
+    act(() => vi.advanceTimersByTime(10000))
+    expect(router.state.location.pathname).toBe('/auth/callback')
+  })
+
+  it('resumes pending staff setup instead of opening owner onboarding', () => {
+    state.profile = null
+    state.invitation.data = { passwordReady: true, expired: false }
+    expect(openCallback().state.location.pathname).toBe('/auth/callback')
+    expect(screen.getByText('Resume invitation')).toBeInTheDocument()
+  })
+
+  it('fails closed when invitation lookup is unavailable', () => {
+    state.profile = null
+    state.invitation.isError = true
+    expect(openCallback().state.location.pathname).toBe('/auth/callback')
+    fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
+    expect(state.invitation.refetch).toHaveBeenCalledOnce()
+  })
+
   it('sends a new owner to onboarding without waiting for permissions', () => {
     state.profile = null
     state.permissionsLoading = true
@@ -91,6 +119,28 @@ describe('AuthCallback registration routing', () => {
     act(() => vi.advanceTimersByTime(10000))
     expect(router.state.location.pathname).toBe('/auth/callback')
     expect(screen.getByText('Chưa tải được thông tin tài khoản')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
+    expect(state.refetch).toHaveBeenCalledOnce()
+  })
+
+  it.each([false, true])('explains a workspace mismatch even if invitation lookup fails (%s)', invitationFailure => {
+    state.profile = null
+    state.profileError = new AccountProfileError('workspace_mismatch')
+    state.invitation.isError = invitationFailure
+    const router = openCallback()
+    act(() => vi.advanceTimersByTime(10000))
+    expect(router.state.location.pathname).toBe('/auth/callback')
+    expect(screen.getByText('Tài khoản không thuộc doanh nghiệp này')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chọn doanh nghiệp khác' })).toHaveAttribute('href', '/start?mode=login')
+    expect(screen.queryByRole('button', { name: 'Tải lại' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Vui lòng kiểm tra kết nối và thử tải lại để tiếp tục.')).not.toBeInTheDocument()
+  })
+
+  it('asks an unconfirmed workspace to reload its setup result', () => {
+    state.profile = null
+    state.profileError = new AccountProfileError('workspace_unconfirmed')
+    openCallback()
+    expect(screen.getByText('Doanh nghiệp chưa xác nhận thiết lập')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }))
     expect(state.refetch).toHaveBeenCalledOnce()
   })

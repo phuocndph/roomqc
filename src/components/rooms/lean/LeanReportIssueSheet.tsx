@@ -20,6 +20,9 @@ import {
   type BucketResolution,
 } from '@/lib/issueBucketMapping'
 import { SubReasonPicker } from './SubReasonPicker'
+import { isNativeApp } from '@/lib/native/platform'
+import { NativePhotoButton } from '@/components/mobile/NativePhotoButton'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 /**
  * LeanReportIssueSheet — Phase B1.
@@ -228,18 +231,21 @@ export function LeanReportIssueSheet({
     return showChargeToggleFor(resolution, assetGroup)
   }, [resolution, useAssetMode, level1, assetGroup])
 
-  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const uploadPhoto = async (file: File) => {
     if (!file || !tenantId) return
     setUploadError(null)
     try {
-      const uploaded = await uploadImage(file, tenantId)
+      const uploaded = await uploadImage(file, tenantId, 'room-check-photos')
       if (uploaded?.url) setPhotos((p) => [...p, uploaded.url])
     } catch {
       setUploadError('Ảnh chưa gửi lên được. Bạn có thể thử lại hoặc chụp ảnh khác.')
-    } finally {
-      e.target.value = ''
     }
+  }
+
+  const handlePickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await uploadPhoto(file)
+    e.target.value = ''
   }
 
   const handleSubmit = () => {
@@ -423,7 +429,7 @@ export function LeanReportIssueSheet({
                 <div className="mt-2 flex flex-wrap gap-2">
                   {photos.map((url, i) => (
                     <div key={i} className="relative w-20 h-20">
-                      <img
+                      <StorageImage
                         src={url}
                         alt=""
                         className="w-20 h-20 object-cover rounded-md border"
@@ -444,6 +450,7 @@ export function LeanReportIssueSheet({
               )}
 
               <div className="mt-3 grid grid-cols-2 gap-2">
+                {isNativeApp() ? <NativePhotoButton onPhoto={uploadPhoto} disabled={isUploading || !tenantId} /> : (
                 <label
                   className={cn(
                     'rounded-xl border-2 flex items-center justify-center font-semibold text-[15px] cursor-pointer active:bg-muted/50',
@@ -468,6 +475,7 @@ export function LeanReportIssueSheet({
                     disabled={isUploading}
                   />
                 </label>
+                )}
                 <label
                   className={cn(
                     'rounded-xl border-2 flex items-center justify-center font-semibold text-[15px] cursor-pointer active:bg-muted/50',

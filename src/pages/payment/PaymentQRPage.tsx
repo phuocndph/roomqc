@@ -25,7 +25,7 @@ export default function PaymentQRPage() {
   const { isOnAuthBridge, targetUrl } = useMemo(() => {
     const currentOrigin = window.location.origin;
     const publicBaseUrl = getPublicBaseUrl();
-    const isOnAuthBridge = publicBaseUrl !== currentOrigin;
+    const isOnAuthBridge = new URL(publicBaseUrl).origin !== currentOrigin;
     const targetUrl = paymentId ? `${publicBaseUrl}/payment-qr/${paymentId}` : '';
     return { isOnAuthBridge, targetUrl, publicBaseUrl };
   }, [paymentId]);

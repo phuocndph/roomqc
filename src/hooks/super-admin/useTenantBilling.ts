@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 /**
  * Get payment transactions for a specific tenant
  */
-export function useTenantPayments(tenantId: string | null) {
+export function useTenantPayments(tenantId: string | null, enabled = true) {
   return useQuery({
     queryKey: ['tenant-payments', tenantId],
     queryFn: async () => {
@@ -22,14 +22,14 @@ export function useTenantPayments(tenantId: string | null) {
       if (error) throw error;
       return data;
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && enabled,
   });
 }
 
 /**
  * Get invoices for a specific tenant
  */
-export function useTenantInvoices(tenantId: string | null) {
+export function useTenantInvoices(tenantId: string | null, enabled = true) {
   return useQuery({
     queryKey: ['tenant-invoices', tenantId],
     queryFn: async () => {
@@ -52,7 +52,7 @@ export function useTenantInvoices(tenantId: string | null) {
       if (error) throw error;
       return data;
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && enabled,
   });
 }
 
@@ -80,7 +80,7 @@ export function useTenantBillingSummary(tenantId: string | null) {
 /**
  * Get payment statistics for a tenant
  */
-export function useTenantPaymentStats(tenantId: string | null) {
+export function useTenantPaymentStats(tenantId: string | null, enabled = true) {
   return useQuery({
     queryKey: ['tenant-payment-stats', tenantId],
     queryFn: async () => {
@@ -133,6 +133,6 @@ export function useTenantPaymentStats(tenantId: string | null) {
         lastPaymentDate: lastPayment?.payment_date || null,
       };
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && enabled,
   });
 }

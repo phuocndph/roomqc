@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,11 +12,12 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
   Shield,
   ClipboardCheck,
   BookOpen,
   Megaphone,
+  Server,
+  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,15 +25,27 @@ import { cn } from '@/lib/utils';
 import { useSuperAdminAuth } from '@/hooks/useSuperAdminAuth';
 import { NotificationBell } from './shared/NotificationBell';
 import { ThemeToggle } from './shared/ThemeToggle';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useBreakpoint } from '@/lib/breakpoints';
 
 export function SuperAdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { user, isLoading, signOut } = useSuperAdminAuth();
+  const { user, isLoading, isSuperAdmin, signOut } = useSuperAdminAuth();
+  const main = useRef<HTMLElement>(null);
   const { t } = useTranslation('superAdmin');
+  const { isMobile } = useBreakpoint();
+  useEffect(() => {
+    if (!isMobile) setSidebarOpen(false);
+  }, [isMobile]);
+  useLayoutEffect(() => {
+    if (main.current) main.current.scrollTop = 0;
+  }, [location.pathname]);
 
   const navigation = [
     { name: t('navigation.overview'), href: '/super-admin', icon: LayoutDashboard },
+    { name: 'Hạ tầng', href: '/super-admin/infrastructure', icon: Server },
+    { name: 'Đăng ký mới', href: '/super-admin/registrations', icon: UserPlus },
     { name: t('navigation.tenants'), href: '/super-admin/tenants', icon: Users },
     { name: t('navigation.approval'), href: '/super-admin/approval', icon: ClipboardCheck },
     { name: t('navigation.promoCodes'), href: '/super-admin/promo-codes', icon: Tag },
@@ -47,6 +60,8 @@ export function SuperAdminLayout() {
 
   const navigationTitles: Record<string, string> = {
     '/super-admin': t('titles.overview'),
+    '/super-admin/infrastructure': 'Hạ tầng',
+    '/super-admin/registrations': 'Đăng ký mới',
     '/super-admin/tenants': t('titles.tenantManagement'),
     '/super-admin/approval': t('titles.approval'),
     '/super-admin/promo-codes': t('titles.promoCodes'),
@@ -58,34 +73,7 @@ export function SuperAdminLayout() {
     '/super-admin/announcements': 'Thông báo & Banner',
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">{t('layout.loading')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-60 transform bg-card border-r transition-transform duration-300 ease-in-out lg:static lg:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        )}
-      >
+  const sidebarContent = (
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-14 items-center justify-between px-3 border-b">
@@ -95,27 +83,20 @@ export function SuperAdminLayout() {
               </div>
               <h1 className="text-lg font-semibold text-foreground">{t('layout.title')}</h1>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-8 w-8"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Navigation */}
           <ScrollArea className="flex-1 px-2 py-3">
-            <nav className="space-y-0.5">
+            <nav aria-label="Điều hướng quản trị RoomQC" className="space-y-0.5">
               {navigation.map((item) => {
                 const isActive = item.href === '/super-admin' 
                   ? location.pathname === '/super-admin'
-                  : location.pathname.startsWith(item.href);
+                  : location.pathname === item.href || location.pathname.startsWith(item.href + '/');
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                       isActive
@@ -156,20 +137,45 @@ export function SuperAdminLayout() {
             </Button>
           </div>
         </div>
-      </aside>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-muted/30">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">{t('layout.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Do not mount child routes or dispatch their effects before the redirect.
+  if (!user || !isSuperAdmin) return <p role="status" className="p-6">Đang kiểm tra quyền truy cập…</p>;
+
+  return (
+    <Sheet open={isMobile && sidebarOpen} onOpenChange={setSidebarOpen}>
+    <div className="flex h-screen overflow-hidden bg-background">
+      {!isMobile && <aside className="w-60 shrink-0 bg-card border-r">{sidebarContent}</aside>}
+      {isMobile && (
+        <SheetContent side="left" className="w-60 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Menu quản trị RoomQC</SheetTitle>
+          {sidebarContent}
+        </SheetContent>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
         <header className="h-14 border-b bg-card px-4 flex items-center justify-between lg:px-6">
-          <Button
+          {isMobile && <SheetTrigger asChild><Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-8 w-8"
-            onClick={() => setSidebarOpen(true)}
+            aria-label="Mở menu quản trị"
+            className="h-10 w-10 shrink-0"
           >
             <Menu className="h-5 w-5" />
-          </Button>
+          </Button></SheetTrigger>}
           
           <div className="flex-1 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">
@@ -184,10 +190,11 @@ export function SuperAdminLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main ref={main} className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
     </div>
+    </Sheet>
   );
 }

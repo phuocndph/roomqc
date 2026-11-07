@@ -22,9 +22,7 @@ import {
 } from 'recharts'
 import { Progress } from '@/components/ui/progress'
 import { useFinancialReport } from '@/hooks/useReports'
-import { useRevenueReport } from '@/hooks/useRevenueReport'
-import { useFixedExpenses } from '@/hooks/useFixedExpenses'
-import { useReportExport } from '@/hooks/useReportExport'
+import { useFinancialReportExport } from '@/hooks/useFinancialReportExport'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { MobileFinancialReportPage } from '@/components/reports/MobileFinancialReportPage'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -35,12 +33,17 @@ import type { PeriodRangeWithPrevious } from '@/lib/reportPeriods'
 interface Props {
   /** Khi render trong Hub: nhận period từ chip. Standalone: undefined → tự quản. */
   period?: PeriodRangeWithPrevious
-  /** Hub đã có PageHeader & Export riêng → ẩn của trang. */
+  /** Hub có PageHeader riêng; vẫn giữ nút xuất trong tab. */
   embedded?: boolean
 }
 
 export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props = {}) {
   const { isMobile } = useBreakpoint()
+  if (isMobile && !embedded) return <MobileFinancialReportPage />
+  return <DesktopFinancialReportPage period={embeddedPeriod} embedded={embedded} />
+}
+
+function DesktopFinancialReportPage({ period: embeddedPeriod, embedded }: Props) {
   const navigate = useNavigate()
 
   const [standaloneRange, setStandaloneRange] = useState({
@@ -51,14 +54,15 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
     ? { start: embeddedPeriod.current.start, end: embeddedPeriod.current.end }
     : standaloneRange
 
-  const { data: reportData, isLoading } = useFinancialReport(dateRange)
-  const { data: revenueData } = useRevenueReport('custom', { start: dateRange.start, end: dateRange.end })
-  const { exportToPDF, exportToExcel, isExporting } = useReportExport()
-  const fixedQ = useFixedExpenses(dateRange.start)
+  const { data: reportData, isPending, isError, refetch } = useFinancialReport(dateRange)
+  const { exportPDF, exportExcel, isExporting, canExport } = useFinancialReportExport(dateRange)
 
-  if (isMobile && !embedded) return <MobileFinancialReportPage />
+  if (isError) return <div className="space-y-3" role="alert">
+    <p>Không tải được báo cáo tài chính. Vui lòng thử lại hoặc kiểm tra quyền xem.</p>
+    <Button variant="outline" onClick={() => refetch()}>Thử lại</Button>
+  </div>
 
-  if (isLoading || !reportData) {
+  if (isPending || !reportData) {
     return (
       <div className="space-y-4">
         {!embedded && <PageHeader title="Báo cáo Tài chính" description="Phân tích chi phí và hiệu quả tài chính" />}
@@ -71,25 +75,20 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
     )
   }
 
-  const summary = (reportData as any).cost_summary || (reportData as any).summary || {
-    total_cost: 0,
-    purchase_cost: 0,
-    laundry_cost: 0,
-    maintenance_cost: 0,
-  }
-  const monthly_trend = reportData.monthly_trend || []
+  const summary = reportData.cost_summary
+  const monthly_trend = reportData.monthly_trend
 
   const totalCost = summary.total_cost || 0
   const purchasePercent = totalCost > 0 ? (summary.purchase_cost / totalCost) * 100 : 0
   const laundryPercent = totalCost > 0 ? (summary.laundry_cost / totalCost) * 100 : 0
   const maintenancePercent = totalCost > 0 ? (summary.maintenance_cost / totalCost) * 100 : 0
 
-  const totalRevenue = revenueData?.currentPeriod?.totalRevenue ?? 0
-  const grossProfit = totalRevenue - totalCost
-  const grossMarginPct = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
+  const totalRevenue = reportData.revenue_summary.recognized_revenue
+  const grossProfit = reportData.profit_summary.net_profit
+  const grossMarginPct = reportData.profit_summary.profit_margin
 
-  const totalFixed = (fixedQ.data || []).reduce((s, r) => s + Number(r.amount || 0), 0)
-  const netProfit = grossProfit - totalFixed
+  const totalFixed = reportData.fixed_cost_summary.allocated_amount
+  const netProfit = reportData.profit_summary.after_allocated_fixed_cost
   const netMarginPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
   const hasFixedCosts = totalFixed > 0
 
@@ -106,17 +105,8 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                exportToPDF(
-                  {
-                    title: 'Báo cáo Tài chính',
-                    dateRange: `${dateRange.start.toLocaleDateString('vi-VN')} - ${dateRange.end.toLocaleDateString('vi-VN')}`,
-                    summary,
-                  },
-                  'financial',
-                )
-              }
-              disabled={isExporting}
+              onClick={exportPDF}
+              disabled={isExporting || !canExport}
             >
               <FileText className="mr-2 h-4 w-4" />
               Xuất PDF
@@ -124,17 +114,8 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                exportToExcel(
-                  {
-                    title: 'Báo cáo Tài chính',
-                    dateRange: `${dateRange.start.toLocaleDateString('vi-VN')} - ${dateRange.end.toLocaleDateString('vi-VN')}`,
-                    summary,
-                  },
-                  'financial',
-                )
-              }
-              disabled={isExporting}
+              onClick={exportExcel}
+              disabled={isExporting || !canExport}
             >
               <Download className="mr-2 h-4 w-4" />
               Xuất Excel
@@ -143,6 +124,10 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
         </PageHeader>
       )}
 
+      {embedded && <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" disabled={isExporting || !canExport} onClick={exportExcel}>Xuất Excel</Button>
+        <Button variant="outline" size="sm" disabled={isExporting || !canExport} onClick={exportPDF}>Xuất PDF</Button>
+      </div>}
       {!embedded && (
         <>
           <HotelFilterCard />
@@ -195,11 +180,11 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
           <div className="border rounded-lg">
             <div className="p-3 border-b">
               <h3 className="text-sm font-medium">Lợi nhuận vận hành</h3>
-              <p className="text-xs text-muted-foreground/80 mt-0.5">Doanh thu phòng trừ chi phí vận hành trực tiếp. Chưa bao gồm: lương nhân viên, tiền thuê mặt bằng, điện nước.</p>
+              <p className="text-xs text-muted-foreground/80 mt-0.5">Doanh thu phòng sau hoa hồng cộng phí giữ cọc no-show, trừ chi phí trực tiếp. Chưa trừ chi phí cố định; không phải dòng tiền trong kỳ.</p>
             </div>
             <div className="divide-y">
               <div className="p-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Doanh thu</span>
+                <span className="text-sm text-muted-foreground">Doanh thu ghi nhận</span>
                 <span className="text-sm font-mono tabular-nums">{formatCurrency(totalRevenue)}</span>
               </div>
               <div className="p-3 flex items-center justify-between">
@@ -207,7 +192,7 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
                 <span className="text-sm font-mono tabular-nums">{formatCurrency(totalCost)}</span>
               </div>
               <div className="p-3 flex items-center justify-between bg-muted/30">
-                <span className="text-sm font-medium">Lợi nhuận gộp</span>
+                <span className="text-sm font-medium">Lợi nhuận vận hành</span>
                 <div className="text-right">
                   <span className={cn("text-sm font-semibold font-mono tabular-nums", grossProfit >= 0 ? "text-green-600" : "text-red-600")}>
                     {formatCurrency(grossProfit)}
@@ -230,11 +215,11 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
           {hasFixedCosts ? (
             <div className="border rounded-lg divide-y">
               <div className="p-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Chi phí cố định tháng (lương, thuê, điện…)</span>
+                <span className="text-sm text-muted-foreground">Chi phí cố định ước tính theo số ngày trong kỳ</span>
                 <span className="text-sm font-mono tabular-nums text-red-600">−{formatCurrency(totalFixed)}</span>
               </div>
               <div className="p-3 flex items-center justify-between bg-muted/30">
-                <span className="text-sm font-medium">Lợi nhuận thực ước tính</span>
+                <span className="text-sm font-medium">Lợi nhuận sau phân bổ ước tính</span>
                 <div className="text-right">
                   <span className={cn("text-sm font-semibold font-mono tabular-nums", netProfit >= 0 ? "text-green-600" : "text-red-600")}>
                     {formatCurrency(netProfit)}
@@ -251,7 +236,7 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
               <span>
                 Nhập chi phí cố định (lương, thuê, điện) trong{' '}
                 <Link to="/settings/fixed-costs" className="underline text-primary">Cài đặt → Chi phí & Mục tiêu</Link>{' '}
-                để xem lợi nhuận thực.
+                để xem lợi nhuận sau phân bổ ước tính.
               </span>
             </p>
           )}
@@ -274,7 +259,7 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-overlay)',
                   }}
                 />
                 <Legend />
@@ -302,7 +287,7 @@ export function FinancialReportPage({ period: embeddedPeriod, embedded }: Props 
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-overlay)',
                   }}
                 />
                 <Legend />

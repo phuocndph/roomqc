@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useUpdateRoomItemQuantity } from '@/hooks/useRoomItems'
 import { CustomerUsedDialog } from './CustomerUsedDialog'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface RoomItem {
   item_id: string
@@ -298,7 +299,7 @@ export function RoomItemsList({ items, roomId, onRequestSupplement }: RoomItemsL
                           <div key={item.item_id} className="flex items-center gap-2 p-2 border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                             {/* Thumbnail */}
                             {item.item_thumbnail ? (
-                              <img
+                              <StorageImage
                                 src={item.item_thumbnail}
                                 alt={item.item_name}
                                 className="h-8 w-8 rounded object-cover flex-shrink-0"
@@ -378,7 +379,7 @@ export function RoomItemsList({ items, roomId, onRequestSupplement }: RoomItemsL
                   <div key={item.item_id} className="flex items-center gap-2 p-2 border-b last:border-b-0">
                     {/* Thumbnail */}
                     {item.item_thumbnail ? (
-                      <img
+                      <StorageImage
                         src={item.item_thumbnail}
                         alt={item.item_name}
                         className="h-10 w-10 rounded object-cover flex-shrink-0"
@@ -438,7 +439,7 @@ export function RoomItemsList({ items, roomId, onRequestSupplement }: RoomItemsL
                   <div key={item.item_id} className="flex items-center gap-2 p-2 border-b last:border-b-0">
                     {/* Thumbnail */}
                     {item.item_thumbnail ? (
-                      <img
+                      <StorageImage
                         src={item.item_thumbnail}
                         alt={item.item_name}
                         className="h-8 w-8 rounded object-cover flex-shrink-0"

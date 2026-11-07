@@ -7,16 +7,20 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { AccountSetupNotice } from '@/components/auth/AccountSetupNotice'
 import { getAccountSetupState } from '@/lib/account-setup'
+import { workspaceNext } from '@/lib/workspace'
+import { useMyStaffInvitation } from '@/hooks/useMyStaffInvitation'
+import { ResumeStaffInvitation } from '@/components/auth/ResumeStaffInvitation'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   // Đường dẫn nội bộ cần quay lại sau khi đăng nhập (vd: màn hình đồng ý OAuth)
   const rawNext = searchParams.get('next')
-  const nextPath = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null
+  const nextPath = workspaceNext(rawNext)
   const { user: authUser, loading: authLoading, signOut } = useAuth()
   const { user, isLoading: isUserLoading, error: profileError, refetch } = useUser()
   const { firstAccessibleRoute, isLoading: isPermissionsLoading } = useFirstAccessibleRoute()
+  const invitation = useMyStaffInvitation(!isUserLoading && (!user || !!profileError))
 
   const [showEscape, setShowEscape] = useState(false)
   const [forceFallback, setForceFallback] = useState(false)
@@ -37,7 +41,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     // A slow or failed profile request must never be treated as a new account.
-    if (authLoading || isUserLoading || profileError) return
+    if (authLoading || isUserLoading || profileError || invitation.isLoading || invitation.isError || invitation.data) return
 
     if (!authUser) {
       navigate('/auth/login', { replace: true })
@@ -75,10 +79,13 @@ export default function AuthCallback() {
     }
 
     navigate(firstAccessibleRoute, { replace: true })
-  }, [authUser, user, authLoading, isUserLoading, profileError, setupState, isPermissionsLoading, firstAccessibleRoute, forceFallback, navigate, nextPath])
+  }, [authUser, user, authLoading, isUserLoading, profileError, setupState, isPermissionsLoading, firstAccessibleRoute, forceFallback, navigate, nextPath, invitation.isLoading, invitation.isError, invitation.data])
+
+  if (!authLoading && !isUserLoading && invitation.data) return <ResumeStaffInvitation invitation={invitation.data} />
+  if (invitation.isError) return <AccountSetupNotice error={profileError} onRetry={() => { void invitation.refetch() }} />
 
   if (!authLoading && !isUserLoading && (profileError || setupState === 'assignment-required')) {
-    return <AccountSetupNotice assignmentRequired={!profileError && setupState === 'assignment-required'} onRetry={() => { void refetch() }} />
+    return <AccountSetupNotice error={profileError} assignmentRequired={!profileError && setupState === 'assignment-required'} onRetry={() => { void refetch() }} />
   }
 
   return (

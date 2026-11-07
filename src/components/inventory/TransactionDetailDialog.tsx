@@ -42,6 +42,7 @@ import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useBreakpoint } from '@/lib/breakpoints'
+import { StorageImage, StorageLink } from '@/components/shared/StorageImage'
 
 interface TransactionDetailDialogProps {
   transactionId: string | null
@@ -143,7 +144,7 @@ export function TransactionDetailDialog({
                   {transaction.photos!.map((photo, index) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                        <img 
+                        <StorageImage 
                           src={photo} 
                           alt={`Ảnh ${index + 1}`}
                           className="w-full h-full object-cover"
@@ -165,7 +166,7 @@ export function TransactionDetailDialog({
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
                   {transaction.item?.item_images?.[0]?.url ? (
-                    <img
+                    <StorageImage
                       src={transaction.item.item_images[0].url}
                       alt={transaction.item.name}
                       className="w-full h-full object-cover rounded-lg"
@@ -272,10 +273,10 @@ export function TransactionDetailDialog({
                 <div className="flex flex-wrap gap-2">
                   {transaction.documents!.map((doc, index) => (
                     <Button key={index} variant="outline" size="sm" asChild>
-                      <a href={doc} target="_blank" rel="noopener noreferrer">
+                      <StorageLink href={doc} target="_blank" rel="noopener noreferrer">
                         <FileText className="mr-2 h-4 w-4" />
                         Tài liệu {index + 1}
-                      </a>
+                      </StorageLink>
                     </Button>
                   ))}
                 </div>
@@ -380,7 +381,7 @@ export function TransactionDetailDialog({
               <div className="rounded-lg border p-4">
                 <div className="flex items-start gap-4">
                   {transaction.item?.item_images?.[0]?.url && (
-                    <img
+                    <StorageImage
                       src={transaction.item.item_images[0].url}
                       alt={transaction.item.name}
                       className="h-20 w-20 rounded-lg object-cover"
@@ -470,10 +471,10 @@ export function TransactionDetailDialog({
                   <div className="flex flex-wrap gap-2">
                     {transaction.documents.map((doc, index) => (
                       <Button key={index} variant="outline" size="sm" asChild>
-                        <a href={doc} target="_blank" rel="noopener noreferrer">
+                        <StorageLink href={doc} target="_blank" rel="noopener noreferrer">
                           <FileText className="mr-2 h-4 w-4" />
                           Tài liệu {index + 1}
-                        </a>
+                        </StorageLink>
                       </Button>
                     ))}
                   </div>
@@ -495,7 +496,7 @@ export function TransactionDetailDialog({
                         rel="noopener noreferrer"
                         className="group relative aspect-square overflow-hidden rounded-lg border"
                       >
-                        <img
+                        <StorageImage
                           src={photo}
                           alt={`Photo ${index + 1}`}
                           className="h-full w-full object-cover transition-transform group-hover:scale-110"

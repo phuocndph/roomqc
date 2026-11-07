@@ -1,26 +1,18 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useUser } from '@/hooks/useUser'
 import { useProfile } from '@/hooks/useProfile'
 import { UserAvatar } from '@/components/users/UserAvatar'
-import { profileFormSchema, ProfileFormData } from '@/lib/validations/user.schemas'
+import { ProfileFormData } from '@/lib/validations/user.schemas'
+import { useSelfProfileForm } from '@/hooks/useSelfProfileForm'
 import { Loader2 } from 'lucide-react'
 
 export function ProfileForm() {
   const { user } = useUser()
   const { updateProfile, isUpdating } = useProfile()
 
-  const form = useForm<ProfileFormData>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      fullName: user?.full_name || '',
-      phone: user?.phone || '',
-      avatarUrl: user?.avatar_url || '',
-    },
-  })
+  const form = useSelfProfileForm(user)
 
   const onSubmit = (data: ProfileFormData) => {
     updateProfile({

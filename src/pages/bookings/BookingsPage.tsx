@@ -2,9 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { useBreakpoint } from '@/lib/breakpoints'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, isBefore, isAfter, subDays, addDays } from 'date-fns'
+import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, isBefore, isAfter } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
+import { useBookingList } from '@/hooks/useBookingList'
+import { ListPagination } from '@/components/shared/ListPagination'
+import { usePagedList } from '@/hooks/usePagedList'
 import {
   Calendar,
   Search,
@@ -86,8 +89,6 @@ import {
 import { calculateServiceChargesFromConsumables } from '@/hooks/usePricingRules'
 import { fetchServiceChargeSummary, type ServiceChargeDetail } from '@/hooks/useBookingServiceCharges'
 import { MobileBookingsPage } from './MobileBookingsPage'
-import { triggerRoomCheckoutNotification } from '@/hooks/useNotificationTriggers'
-import { createInvoiceAfterCheckout } from '@/lib/invoiceHelpers'
 import { PrintReceiptDialog } from '@/components/invoices/PrintReceiptDialog'
 import { useOverdueCheckins } from '@/hooks/useOverdueCheckins'
 import { MarkNoShowDialog } from '@/components/bookings/MarkNoShowDialog'
@@ -103,6 +104,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreVertical, PhoneCall, CalendarClock, UserX } from 'lucide-react'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
+import type { RoomOperationResult } from '@/lib/room-operation-command'
+import { runBookingOperationFollowUps, bookingOperationDescription, bookingAdjustmentNotes } from '@/lib/booking-operation-followups'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 type BookingStatus = 'all' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show' | 'conflict' | 'overdue' | 'overdue_checkin'
 
@@ -216,6 +222,9 @@ export function BookingsPage() {
   // Track if checkout was restored from widget (to skip duplicate toast)
   const [restoredFromWidget, setRestoredFromWidget] = useState(false)
   const { toast } = useToast()
+  const operationView = JSON.stringify([selectedHotelId, isAllHotelsMode, actionBooking?.id])
+  const executeOperation = useRoomOperationExecutor(operationView)
+  useEffect(() => { setIsActionLoading(false) }, [operationView])
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   
@@ -325,7 +334,7 @@ export function BookingsPage() {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`bookings-realtime-${tId}`)
+        .channel(instanceChannelName(`bookings-realtime-${tId}`))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'room_bookings', filter: `tenant_id=eq.${tId}` }, () => {
           queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
           queryClient.invalidateQueries({ queryKey: ['available-rooms'] })
@@ -380,91 +389,7 @@ export function BookingsPage() {
     isError: isBookingsError,
     error: bookingsError,
     refetch: refetchBookings,
-  } = useQuery({
-    queryKey: ['all-bookings', isAllHotelsMode ? 'all' : selectedHotelId, statusFilter, dateRangeFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from('room_bookings')
-        .select(`
-          *,
-          room:rooms(room_number, room_type, floor, status),
-          booking_type,
-          hourly_rate,
-          hourly_start_time,
-          hourly_end_time,
-          booking_hours,
-          monthly_rate,
-          booking_months,
-          booking_group_id
-        `)
-        .order('check_in_date', { ascending: false })
-      
-      if (!isAllHotelsMode && selectedHotelId) {
-        query = query.eq('hotel_id', selectedHotelId)
-      }
-      
-      // Handle special filters
-      if (statusFilter !== 'all' && statusFilter !== 'conflict' && statusFilter !== 'overdue' && statusFilter !== 'overdue_checkin') {
-        query = query.eq('status', statusFilter)
-      }
-      
-      // For conflict and overdue (checked_in), we fetch checked_in only
-      if (statusFilter === 'conflict' || statusFilter === 'overdue') {
-        query = query.eq('status', 'checked_in')
-      }
-
-      // overdue_checkin: filter ở client dựa vào overdueCheckinMap
-      if (statusFilter === 'overdue_checkin') {
-        query = query.eq('status', 'confirmed')
-      }
-
-      // Apply date range filter (except for active statuses that need all-time data)
-      const activeStatuses = ['checked_in', 'conflict', 'overdue', 'overdue_checkin']
-      const isActiveFilter = activeStatuses.includes(statusFilter)
-
-      if (!isActiveFilter && dateRangeFilter !== 'all') {
-        const daysBack = dateRangeFilter === '7d' ? 7 : dateRangeFilter === '30d' ? 30 : 90
-        const fromDate = format(subDays(new Date(), daysBack), 'yyyy-MM-dd')
-        const toDate = format(addDays(new Date(), 30), 'yyyy-MM-dd') // include upcoming bookings
-        if (statusFilter === 'all') {
-          // Keep long-running stays visible in the default list even when their
-          // check-in date is outside the selected reporting window.
-          query = query.or(
-            `and(check_in_date.gte.${fromDate},check_in_date.lte.${toDate}),status.eq.checked_in`,
-          )
-        } else {
-          query = query
-            .gte('check_in_date', fromDate)
-            .lte('check_in_date', toDate)
-        }
-      }
-
-      // For checked_in/active: no date limit (must show ALL active bookings)
-      // but cap at 500 to prevent timeout
-      query = query.limit(isActiveFilter ? 1000 : 500)
-      
-      const { data, error } = await query
-      
-      if (error) {
-        console.error('Error fetching bookings:', error)
-        throw error
-      }
-      
-      return data as BookingWithRoom[]
-    },
-    enabled: !!tenantId,
-    placeholderData: (prev) => prev,
-    staleTime: 30_000,
-  })
-
-  const isAtQueryLimit = (bookings?.length ?? 0) >= (
-    statusFilter === 'checked_in' ||
-    statusFilter === 'conflict' ||
-    statusFilter === 'overdue' ||
-    statusFilter === 'overdue_checkin'
-      ? 1000
-      : 500
-  )
+  } = useBookingList({ tenantId, hotelId: selectedHotelId, allHotels: isAllHotelsMode, status: statusFilter, dateRange: dateRangeFilter })
   
   // Get group booking counts for badge display
   const groupIds = useMemo(() => 
@@ -551,6 +476,11 @@ export function BookingsPage() {
     return 0
   })
   
+  const { page: listPage, rows: visibleBookings, setPage: setListPage } = usePagedList(
+    filteredBookings,
+    JSON.stringify([tenantId, selectedHotelId, isAllHotelsMode, statusFilter, dateRangeFilter, searchQuery]),
+  )
+
   // Stats follow the same filtered list shown in the table so KPI cards do not
   // disagree with an active search or status filter.
   const stats = {
@@ -693,62 +623,41 @@ export function BookingsPage() {
 
   // Perform check-in with optional adjusted charge
   const performCheckIn = async (booking: BookingWithRoom, finalEarlyCharge: number, adjustmentNote?: string) => {
+    if (isActionLoading) return
     setIsActionLoading(true)
     setShowCheckinConfirm(false)
-
     try {
-      // Use atomic RPC for check-in (updates booking + room in single transaction)
-      const { error } = await supabase.rpc('perform_checkin', {
-        p_booking_id: booking.id,
-        p_room_id: booking.room_id,
-        p_early_checkin_charge: finalEarlyCharge,
+      const { data, error } = await executeOperation('perform_checkin', {
+        p_booking_id: booking.id, p_room_id: booking.room_id, p_early_checkin_charge: finalEarlyCharge,
+        p_adjustment_notes: bookingAdjustmentNotes('checkin', adjustmentNote),
       })
-
-      if (error) {
-        if (error.message?.includes('ROOM_OCCUPIED')) {
-          const gName = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang có khách "${gName}". Vui lòng checkout trước.`)
-        }
-        if (error.message?.includes('INVALID_ROOM_STATUS')) {
-          const roomStatus = error.message.split(':')[1] || 'unknown'
-          throw new Error(`Phòng đang ở trạng thái "${roomStatus}", không thể check-in.`)
-        }
-        throw error
-      }
-
-      // Update adjustment note separately if provided
-      if (adjustmentNote) {
-        const existingNotes = (booking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-          : `[Điều chỉnh phụ thu check-in sớm: ${adjustmentNote}]`
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', booking.id)
-      }
-
-      toast({
-        title: 'Check-in thành công',
-        description: finalEarlyCharge > 0
-          ? `Phụ thu check-in sớm: ${formatCurrency(finalEarlyCharge)}`
-          : undefined,
-      })
-
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-      queryClient.invalidateQueries({ queryKey: ['booking-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['today-checkins'] })
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi check-in',
-        description: getFriendlyError(error),
-      })
+      if (!executeOperation.isCurrent()) return
+      if (error) throw error
+      const tasks: Array<() => PromiseLike<unknown>> = []
+      const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+      if (!executeOperation.isCurrent()) return
+      toast({ title: data.replayed ? 'Đã xác nhận lần nhận phòng trước đó' : 'Check-in thành công',
+        description: bookingOperationDescription(followUps) ?? (finalEarlyCharge > 0 ? `Phụ thu check-in sớm: ${formatCurrency(finalEarlyCharge)}` : undefined) })
+      for (const key of ['all-bookings', 'rooms', 'booking-stats', 'today-checkins']) void queryClient.invalidateQueries({ queryKey: [key] })
+    } catch (error) {
+      if (!executeOperation.isCurrent()) return
+      toast({ variant: 'destructive', title: 'Lỗi check-in', description: roomOperationErrorMessage(error) })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
+      if (executeOperation.isCurrent()) { setIsActionLoading(false); setActionBooking(null) }
     }
+  }
+
+  const finishCheckout = async (data: RoomOperationResult) => {
+    if (!actionBooking || !executeOperation.isCurrent()) return
+    const tasks: Array<() => PromiseLike<unknown>> = []
+    const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+    if (!executeOperation.isCurrent()) return
+    setPrintReceiptBookingId(actionBooking.id)
+    setPrintReceiptSubtotal(Number(data.subtotal))
+    setPrintReceiptMeta({ guestName: actionBooking.guest_name || '', roomNumber: actionBooking.room?.room_number || '', hotelId: actionBooking.hotel_id })
+    setShowPrintReceiptDialog(true)
+    toast({ title: data.replayed ? 'Đã xác nhận lần trả phòng trước đó' : 'Check-out thành công', description: bookingOperationDescription(followUps, true) })
+    for (const key of ['all-bookings', 'rooms', 'booking-stats', 'today-checkouts']) void queryClient.invalidateQueries({ queryKey: [key] })
   }
 
   const computeAndOpenCheckoutSummary = async (
@@ -893,7 +802,7 @@ export function BookingsPage() {
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!actionBooking || !checkoutCostBreakdown) return
+    if (!actionBooking || !checkoutCostBreakdown || isActionLoading) return
 
     setIsActionLoading(true)
     setShowCheckoutSummary(false)
@@ -931,7 +840,7 @@ export function BookingsPage() {
 
       // Use RPC for atomic checkout with damage params
       // Pass p_check_out_date for overdue bookings to update atomically
-      const { error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: actionBooking.id,
         p_room_id: actionBooking.room_id,
         p_late_checkout_charge: adjustedLateCharge,
@@ -940,69 +849,30 @@ export function BookingsPage() {
         // VAT, phí dịch vụ và tổng tiền được server tính lại từ vat_rate/service_fee_rate của booking
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_new_amount_paid: null,
         p_check_out_date: overdueCheckoutDate,
       })
 
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      if (tenantId) {
-        createInvoiceAfterCheckout({ bookingId: actionBooking.id, tenantId, hotelId: actionBooking.hotel_id, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      }
-      setPrintReceiptBookingId(actionBooking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setPrintReceiptMeta({
-        guestName: (actionBooking as any).guest_name || '',
-        roomNumber: actionBooking.room?.room_number || '',
-        hotelId: actionBooking.hotel_id,
-      })
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if adjusted
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const existingNotes = (actionBooking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n${allNotes.join('\n')}`
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', actionBooking.id)
-      }
-
-      toast({ title: 'Check-out thành công' })
-      
-      // Send checkout notification realtime
-      if (tenantId && actionBooking.hotel_id) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId: actionBooking.hotel_id,
-          roomId: actionBooking.room_id,
-          roomNumber: actionBooking.room?.room_number || '',
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: 'Lỗi check-out',
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
-      setCheckoutCostBreakdown(null)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsActionLoading(false)
+        setActionBooking(null)
+        setCheckoutCostBreakdown(null)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 
@@ -1014,7 +884,7 @@ export function BookingsPage() {
     damageAdjustmentNote?: string,
     adjustedDamageItems?: DamageChargeItem[]
   ) => {
-    if (!actionBooking || !checkoutCostBreakdown) return
+    if (!actionBooking || !checkoutCostBreakdown || isActionLoading) return
 
     setIsActionLoading(true)
     setShowCheckoutSummary(false)
@@ -1052,7 +922,7 @@ export function BookingsPage() {
 
       // BookingPaymentDialog already updated amount_paid via update_booking_amount_paid RPC (ADD operation)
       // Pass null to perform_checkout to preserve the DB value and avoid overwriting partial payments
-      const { error } = await supabase.rpc('perform_checkout', {
+      const { data, error } = await executeOperation('perform_checkout', {
         p_booking_id: actionBooking.id,
         p_room_id: actionBooking.room_id,
         p_late_checkout_charge: adjustedLateCharge,
@@ -1061,69 +931,30 @@ export function BookingsPage() {
         // VAT, phí dịch vụ và tổng tiền được server tính lại từ rate gốc trong booking
         p_damage_charges: damageCharges || 0,
         p_damage_notes: damageAdjustmentNote || null,
-        p_damage_items: adjustedDamageItems ? JSON.stringify(adjustedDamageItems) : '[]',
+        p_adjustment_notes: bookingAdjustmentNotes('checkout', adjustmentNote, damageAdjustmentNote),
+        p_damage_items: adjustedDamageItems ?? [],
         p_new_amount_paid: null,
         p_check_out_date: overdueCheckoutDate,
       })
 
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Fire-and-forget: create invoice
-      if (tenantId) {
-        createInvoiceAfterCheckout({ bookingId: actionBooking.id, tenantId, hotelId: actionBooking.hotel_id, userId: null }).catch(err => console.error('Failed to create invoice', err))
-      }
-      setPrintReceiptBookingId(actionBooking.id)
-      setPrintReceiptSubtotal(adjustedCostBreakdown.subtotal)
-      setPrintReceiptMeta({
-        guestName: (actionBooking as any).guest_name || '',
-        roomNumber: actionBooking.room?.room_number || '',
-        hotelId: actionBooking.hotel_id,
-      })
-      setShowPrintReceiptDialog(true)
-
-
-      // Update notes if adjusted
-      const allNotes: string[] = []
-      if (adjustmentNote) allNotes.push(`[Điều chỉnh phụ thu checkout: ${adjustmentNote}]`)
-      if (damageAdjustmentNote) allNotes.push(`[Điều chỉnh phí đền bù: ${damageAdjustmentNote}]`)
-      
-      if (allNotes.length > 0) {
-        const existingNotes = (actionBooking as any).notes || ''
-        const updateNotes = existingNotes
-          ? `${existingNotes}\n${allNotes.join('\n')}`
-          : allNotes.join('\n')
-        await supabase
-          .from('room_bookings')
-          .update({ notes: updateNotes })
-          .eq('id', actionBooking.id)
-      }
-
-      toast({ title: 'Đã thanh toán và check-out thành công' })
-      
-      // Send checkout notification realtime
-      if (tenantId && actionBooking.hotel_id) {
-        triggerRoomCheckoutNotification({
-          tenantId,
-          hotelId: actionBooking.hotel_id,
-          roomId: actionBooking.room_id,
-          roomNumber: actionBooking.room?.room_number || '',
-        }).catch(err => console.error('Failed to send checkout notification:', err))
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-    } catch (error: any) {
+      await finishCheckout(data)
+    } catch (error: unknown) {
+      if (!executeOperation.isCurrent()) return
       toast({
         variant: 'destructive',
         title: 'Lỗi',
-        description: getFriendlyError(error),
+        description: roomOperationErrorMessage(error),
       })
     } finally {
-      setIsActionLoading(false)
-      setActionBooking(null)
-      setCheckoutCostBreakdown(null)
-      setCheckoutDamageItems([])
-      setOverdueCheckoutDate(null)
+      if (executeOperation.isCurrent()) {
+        setIsActionLoading(false)
+        setActionBooking(null)
+        setCheckoutCostBreakdown(null)
+        setCheckoutDamageItems([])
+        setOverdueCheckoutDate(null)
+      }
     }
   }
 
@@ -1363,6 +1194,9 @@ export function BookingsPage() {
           isError={isBookingsError}
           errorMessage={getFriendlyError(bookingsError)}
           onRetry={() => { void refetchBookings() }}
+          page={listPage}
+          onPageChange={setListPage}
+          visibleBookings={visibleBookings}
         />
         
         {/* Dialogs - shared between mobile and desktop */}
@@ -1517,7 +1351,7 @@ export function BookingsPage() {
       />
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {!isBookingsError && !isLoading && <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Card className="border-l-4 border-l-primary">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -1570,7 +1404,7 @@ export function BookingsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
       
       {/* Filters */}
       <div className="space-y-3 rounded-lg border bg-card p-3">
@@ -1637,7 +1471,7 @@ export function BookingsPage() {
                   : 'border-border bg-background text-muted-foreground hover:border-primary/60 hover:text-foreground'
               }`}
             >
-              {label} <span className="ml-1 tabular-nums">{count}</span>
+              {label} {!isBookingsError && !isLoading && <span className="ml-1 tabular-nums">{count}</span>}
             </button>
           ))}
           {hasActiveFilters && (
@@ -1659,15 +1493,6 @@ export function BookingsPage() {
         </div>
       </div>
       
-      {isAtQueryLimit && !isBookingsError && (
-        <Alert variant="destructive" className="mb-3 mx-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Đang hiển thị tối đa {bookings?.length} booking. Vui lòng dùng bộ lọc ngày để thu hẹp kết quả và xem đầy đủ.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Bookings Table */}
       <Card>
         <CardContent className="p-0">
@@ -1722,7 +1547,7 @@ export function BookingsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBookings.map((booking) => {
+                  {visibleBookings.map((booking) => {
                     return (
                       <TableRow 
                         key={booking.id}
@@ -2013,6 +1838,9 @@ export function BookingsPage() {
                 </TableBody>
               </Table>
             </div>
+            <div className="px-4 pb-4">
+              <ListPagination total={filteredBookings.length} page={listPage} onPageChange={setListPage} />
+            </div>
             </>
           )}
         </CardContent>
@@ -2046,6 +1874,7 @@ export function BookingsPage() {
           open={!!noShowBooking}
           onOpenChange={(o) => !o && setNoShowBooking(null)}
           bookingId={noShowBooking.id}
+          roomId={noShowBooking.room_id}
           guestName={noShowBooking.guest_name}
           roomNumber={noShowBooking.room?.room_number || ''}
           depositAmount={noShowBooking.deposit_amount || 0}

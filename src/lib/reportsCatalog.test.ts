@@ -7,6 +7,18 @@ import {
 } from './reportsCatalog'
 
 describe('reportsCatalog (consolidated hubs)', () => {
+  it('staff granted reports.view can discover finance while export stays separate', () => {
+    const ctx = { role: 'staff' as const, canViewReports: true, canExportReports: false }
+    const reports = filterReportsForUser(REPORTS_CATALOG, ctx)
+    const finance = reports.find(r => r.id === 'finance')!
+    expect(finance.path).toBe('/reports/finance')
+    expect(canExportReport(finance, ctx)).toBe(false)
+    expect(canExportReport(finance, { ...ctx, canExportReports: true })).toBe(true)
+  })
+  it('effective denial hides report links even for a legacy manager role', () => {
+    expect(filterReportsForUser(REPORTS_CATALOG, { role: 'hotel_manager', canViewReports: false })).toEqual([])
+    expect(canExportReport(REPORTS_CATALOG[0], { role: 'hotel_manager', canViewReports: false, canExportReports: true })).toBe(false)
+  })
   describe('filterReportsForUser', () => {
     it('owner thấy toàn bộ 4 hub', () => {
       const r = filterReportsForUser(REPORTS_CATALOG, { role: 'owner' })

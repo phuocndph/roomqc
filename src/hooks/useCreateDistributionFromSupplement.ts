@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
-import { useHotelContext } from '@/contexts/HotelContext'
 import { useTenant } from './useTenant'
 import { toast } from 'sonner'
 import type { SupplementRequestItem } from './useSupplementRequests'
 import { getFriendlyError } from '@/lib/errorMessage'
+import { workspacePath } from '@/lib/workspace'
 
 interface CreateDistributionFromSupplementParams {
   supplementRequestId: string
@@ -16,7 +16,6 @@ export function useCreateDistributionFromSupplement() {
   const queryClient = useQueryClient()
   const { user } = useUser()
   const { tenant } = useTenant()
-  const { selectedHotel } = useHotelContext()
 
   return useMutation({
     mutationFn: async ({ supplementRequestId, assignedTo }: CreateDistributionFromSupplementParams) => {
@@ -61,23 +60,10 @@ export function useCreateDistributionFromSupplement() {
 
       const orderResult = result as { success: boolean; order_id: string; order_code: string }
 
-      // NOTE: RPC create_distribution_order (v3) đã tự cập nhật
-      //   supplement_requests.status = 'approved' + distribution_order_id
-      // khi truyền p_supplement_request_ids. KHÔNG update lại ở client để tránh
-      // race condition và double-write.
-
-      // Bidirectional link: gắn supplement_request_id vào distribution_orders
-      // (RPC chưa làm chiều này — giữ lại bước này).
-      const { error: linkError } = await supabase
-        .from('distribution_orders')
-        .update({
-          supplement_request_id: supplementRequestId,
-        })
-        .eq('id', orderResult.order_id)
-        .eq('tenant_id', tenant.id)
-
-      if (linkError) {
-        console.error('Failed to link distribution order back to supplement request:', linkError)
+      // The RPC commits both supplement -> order and the single-request reverse
+      // link atomically. Never follow it with a second client-side row write.
+      if (!orderResult?.success || !orderResult.order_id || !orderResult.order_code) {
+        throw new Error('Không thể xác nhận kết quả tạo phiếu giao hàng')
       }
 
       return {
@@ -99,7 +85,7 @@ export function useCreateDistributionFromSupplement() {
         action: {
           label: 'Mở phiếu',
           onClick: () => {
-            window.location.href = `/inventory/distributions/${result.orderId}`
+            window.location.href = workspacePath(`/inventory/distributions/${result.orderId}`)
           },
         },
       })

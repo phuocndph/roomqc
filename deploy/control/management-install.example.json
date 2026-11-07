@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "target": {"host":"203.0.113.10","user":"root","identityFile":"/home/operator/.ssh/roomqc"},
+  "bundleFile":"/home/operator/roomqc-private/management.json",
+  "files":[
+    {"source":"/home/operator/roomqc-private/budget.json","target":"/opt/RoomQC/management/control-main/private/budget.json"},
+    {"source":"/home/operator/roomqc-private/api.env","target":"/opt/RoomQC/management/control-main/private/api.env"},
+    {"source":"/home/operator/roomqc-private/postgresql.conf","target":"/opt/RoomQC/management/control-main/metadata/postgresql.conf"},
+    {"source":"/home/operator/roomqc-private/pg_hba.conf","target":"/opt/RoomQC/management/control-main/metadata/pg_hba.conf"},
+    {"source":"/home/operator/roomqc-private/nginx.conf","target":"/opt/RoomQC/management/control-main/metadata/nginx.conf"}
+  ],
+  "registryFile":"/home/operator/roomqc-private/registry.json",
+  "requiredDiskBytes":1073741824,
+  "backendSourceSha256":"REPLACE_WITH_CONTROL_IMAGE_BACKEND_SOURCE_SHA256"
+}

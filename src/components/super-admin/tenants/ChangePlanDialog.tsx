@@ -41,7 +41,9 @@ export function ChangePlanDialog({
   const [rooms, setRooms] = useState(50);
   const [selectedDuration, setSelectedDuration] = useState(365);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [reason, setReason] = useState('');
   const [actualRoomCount, setActualRoomCount] = useState<number | null>(null);
+  const [roomCountError, setRoomCountError] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -50,37 +52,26 @@ export function ChangePlanDialog({
   useEffect(() => {
     if (!tenant?.id || !open) return;
 
+    let cancelled = false;
+    setActualRoomCount(null);
+    setRoomCountError(false);
     const fetchRoomCount = async () => {
-      const { count } = await supabase
-        .from('rooms')
-        .select('id', { count: 'exact', head: true })
-        .eq('hotel_id', tenant.id);
-      
-      // This won't work directly, we need to count rooms via hotels
-      const { data: hotels } = await supabase
-        .from('hotels')
-        .select('id')
-        .eq('tenant_id', tenant.id)
-        .eq('status', 'active');
-
-      if (hotels && hotels.length > 0) {
-        const hotelIds = hotels.map((h) => h.id);
-        const { count: roomCount } = await supabase
-          .from('rooms')
-          .select('id', { count: 'exact', head: true })
-          .in('hotel_id', hotelIds);
-        
-        setActualRoomCount(roomCount || 0);
-      } else {
-        setActualRoomCount(0);
+      try {
+        const { count, error } = await supabase.from('rooms')
+          .select('id', { count: 'exact', head: true }).eq('tenant_id', tenant.id);
+        if (error || count === null) throw error || new Error('Room count unavailable');
+        if (!cancelled) setActualRoomCount(count);
+      } catch {
+        if (!cancelled) setRoomCountError(true);
       }
     };
-
-    fetchRoomCount();
+    void fetchRoomCount();
     
+    setReason('');
     // Set initial values from tenant
     setRooms(tenant.registered_rooms || 50);
     setSelectedDuration(tenant.subscription_duration_days || 365);
+    return () => { cancelled = true; };
   }, [tenant?.id, tenant?.registered_rooms, tenant?.subscription_duration_days, open]);
 
   const pricing = useMemo(
@@ -91,64 +82,20 @@ export function ChangePlanDialog({
   const endDate = calculateEndDate(new Date(), selectedDuration);
 
   const handleChangePlan = async () => {
-    if (!tenant) return;
+    if (!tenant || isUpdating || actualRoomCount === null || reason.trim().length < 5) return;
 
     setIsUpdating(true);
     try {
-      const now = new Date();
-
-      // Get standard plan ID
-      const { data: standardPlan } = await supabase
-        .from('subscription_plans')
-        .select('id')
-        .eq('code', 'standard')
-        .eq('is_active', true)
-        .single();
-
-      if (!standardPlan) {
-        throw new Error('Không tìm thấy gói tiêu chuẩn');
-      }
-
-      // Update tenant subscription
-      const { error } = await supabase
-        .from('tenants')
-        .update({
-          subscription_plan_id: standardPlan.id,
-          registered_rooms: rooms,
-          subscription_duration_days: selectedDuration,
-          subscription_start_date: now.toISOString().split('T')[0],
-          subscription_end_date: endDate.toISOString().split('T')[0],
-          subscription_current_period_start: now.toISOString(),
-          subscription_current_period_end: endDate.toISOString(),
-          subscription_status: 'active',
-          updated_at: now.toISOString(),
-        })
-        .eq('id', tenant.id);
-
+      const { data, error } = await supabase.rpc('admin_manage_tenant', {
+        p_tenant_id: tenant.id,
+        p_action: 'change_plan',
+        p_reason: reason.trim(),
+        p_rooms: rooms,
+        p_duration_days: selectedDuration,
+      });
       if (error) throw error;
-
-      // Bỏ chế độ chỉ-đọc nếu trước đó đã bị bật do hết hạn
-      const { error: clearRoErr } = await supabase.rpc('clear_tenant_read_only', {
-        p_tenant_id: tenant.id,
-        p_reason: 'super_admin_manual_extend',
-      });
-      if (clearRoErr) {
-        console.warn('clear_tenant_read_only failed:', clearRoErr.message);
-      }
-
-      // Reset grace period vì subscription đã được gia hạn
-      await supabase
-        .from('tenants')
-        .update({ grace_period_ends_at: null })
-        .eq('id', tenant.id);
-
-      // Recalculate tenant usage
-      const { error: usageError } = await supabase.rpc('update_tenant_usage', {
-        p_tenant_id: tenant.id,
-      });
-
-      if (usageError) {
-        console.error('Failed to update tenant usage:', usageError);
+      if (!data || typeof data !== 'object' || Array.isArray(data) || data.id !== tenant.id) {
+        throw new Error('Máy chủ chưa xác nhận thay đổi. Vui lòng tải lại trước khi thử lại.');
       }
 
       toast({
@@ -177,7 +124,7 @@ export function ChangePlanDialog({
   const currentRooms = tenant.registered_rooms || 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(value) => { if (!isUpdating) onOpenChange(value); }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Điều chỉnh đăng ký</DialogTitle>
@@ -210,6 +157,17 @@ export function ChangePlanDialog({
             </AlertDescription>
           </Alert>
 
+          <div className="space-y-2">
+            <Label htmlFor="sa-plan-reason">Lý do điều chỉnh (bắt buộc)</Label>
+            <Input id="sa-plan-reason" value={reason} maxLength={1000}
+              onChange={(event) => setReason(event.target.value)} disabled={isUpdating} />
+            <p className="text-xs text-muted-foreground">
+              Đây là cấp gói thủ công, không xác nhận đã thu tiền. Thay đổi được ghi nhật ký.
+            </p>
+          </div>
+          {roomCountError && <Alert variant="destructive"><AlertDescription>
+            Không tải được số phòng thực tế. Hãy đóng và mở lại để thử lại; chưa thể điều chỉnh gói.
+          </AlertDescription></Alert>}
           {/* Room Input */}
           <div className="space-y-2">
             <Label htmlFor="sa-rooms">Số phòng đăng ký</Label>
@@ -296,10 +254,10 @@ export function ChangePlanDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" disabled={isUpdating} onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button onClick={handleChangePlan} disabled={isUpdating}>
+          <Button onClick={handleChangePlan} disabled={isUpdating || actualRoomCount === null || reason.trim().length < 5 || (actualRoomCount !== null && rooms < actualRoomCount)}>
             {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Cập nhật đăng ký
           </Button>

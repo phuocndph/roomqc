@@ -101,12 +101,10 @@ export function RoomsPage() {
     ))
   }, [searchParams])
 
-  // Staff (HK) không cần thấy toàn bộ danh sách phòng — chuyển sang "Việc của tôi".
-  useEffect(() => {
-    if (role === 'staff') {
-      navigate('/my-tasks', { replace: true })
-    }
-  }, [role, navigate])
+  // W1-D2: quyền xem phòng quyết định, không phải vai trò. Route /rooms đã bọc
+  // PermissionRoute(rooms:view); người không có quyền được chuyển sang
+  // "Công việc của tôi" ở App.tsx. Danh sách phòng chỉ gồm khách sạn được gán
+  // (useRooms đọc theo HotelContext và RLS).
 
   // Persist tab to URL + localStorage
   useEffect(() => {
@@ -268,10 +266,12 @@ export function RoomsPage() {
       {/* Bulk Import Dialog */}
       {selectedHotel && (
         <BulkImportRoomsDialog
+          key={selectedHotel.id}
           open={showBulkImport}
           onOpenChange={setShowBulkImport}
           hotelId={selectedHotel.id}
           hotelName={selectedHotel.name}
+          hotelDetails={selectedHotel}
         />
       )}
     </div>

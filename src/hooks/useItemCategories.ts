@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { toast } from 'sonner'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface ItemCategory {
   id: string
@@ -50,7 +51,7 @@ export const useItemCategories = () => {
     const subscribe = () => {
       if (channel) return
       channel = supabase
-        .channel(`item-categories-${tenantId}`)
+        .channel(instanceChannelName(`item-categories-${tenantId}`))
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'item_categories', filter: `tenant_id=eq.${tenantId}` },
           () => queryClient.invalidateQueries({ queryKey: ['item-categories'] })

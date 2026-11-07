@@ -27,7 +27,6 @@ import { useGroupBooking, GroupBookingRoom, GroupBookingData } from '@/hooks/use
 import { useOnShiftStaffList, OnShiftStaffMember } from '@/hooks/useOnShiftStaffList'
 import { supabase } from '@/integrations/supabase/client'
 import { cn } from '@/lib/utils'
-import { createInvoiceAfterCheckout } from '@/lib/invoiceHelpers'
 import { PrintReceiptDialog } from '@/components/invoices/PrintReceiptDialog'
 import { GroupPaymentDialog } from './GroupPaymentDialog'
 import { useUser } from '@/hooks/useUser'
@@ -35,7 +34,6 @@ import { useGroupCheckoutCalculations, GroupBookingCostData } from '@/hooks/useG
 import { isEarlyCheckout } from '@/lib/bookingCalculations'
 import { DamageReportDocument } from './DamageReportDocument'
 import { 
-  triggerRoomCheckoutNotification,
   sendPushNotification,
   createInAppNotification,
   sendTelegramNotification 
@@ -43,10 +41,14 @@ import {
 import { StaffDetailSheet } from '@/components/staff/StaffDetailSheet'
 import type { StaffWithStatus } from '@/hooks/useStaffStatus'
 import type { Json } from '@/integrations/supabase/types'
+import { useRoomOperationExecutor } from '@/hooks/useRoomOperationExecutor'
+import { roomOperationErrorMessage } from '@/lib/room-operation-client'
+import { runBookingOperationFollowUps, bookingOperationDescription, bookingAdjustmentNotes } from '@/lib/booking-operation-followups'
 
 import { GroupCheckoutRoomCard } from './group-checkout/GroupCheckoutRoomCard'
 import { GroupCheckoutSummary } from './group-checkout/GroupCheckoutSummary'
 import { GroupCheckoutStickyFooter } from './group-checkout/GroupCheckoutStickyFooter'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface GroupCheckoutDialogProps {
   open: boolean
@@ -87,6 +89,8 @@ export function GroupCheckoutDialog({
   onCheckoutComplete,
   onMinimize,
 }: GroupCheckoutDialogProps) {
+  const operationView = JSON.stringify([open, bookingGroupId, tenantId, hotelId])
+  const executeOperation = useRoomOperationExecutor(operationView)
   const queryClient = useQueryClient()
   const { user } = useUser()
   const { data: groupData, isLoading: isLoadingGroup } = useGroupBooking(bookingGroupId)
@@ -103,6 +107,7 @@ export function GroupCheckoutDialog({
   } = useGroupCheckoutCalculations()
   
   const [isProcessing, setIsProcessing] = useState(false)
+  useEffect(() => { setIsProcessing(false) }, [operationView])
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set())
   
@@ -282,7 +287,7 @@ export function GroupCheckoutDialog({
     const roomIds = groupData.bookings.map(b => b.room_id)
     
     const channel = supabase
-      .channel(`group-inspections-realtime-${bookingGroupId}`)
+      .channel(instanceChannelName(`group-inspections-realtime-${bookingGroupId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_inspection_requests', filter: `booking_id=in.(${bookingIds.join(',')})` }, () => {
         refetchInspections()
         queryClient.invalidateQueries({ queryKey: ['group-inspections', bookingGroupId] })
@@ -290,7 +295,7 @@ export function GroupCheckoutDialog({
       .subscribe()
     
     const roomChecksChannel = supabase
-      .channel(`group-roomchecks-realtime-${bookingGroupId}`)
+      .channel(instanceChannelName(`group-roomchecks-realtime-${bookingGroupId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'room_checks', filter: `room_id=in.(${roomIds.join(',')})` }, () => refetchInspections())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_checks', filter: `room_id=in.(${roomIds.join(',')})` }, () => refetchInspections())
       .subscribe()
@@ -561,6 +566,7 @@ export function GroupCheckoutDialog({
         subtotal: cost.costBreakdown.subtotal,
         damage_charges: damageCharges,
         damage_notes: allNotes.join(' | ') || null,
+        adjustment_notes: bookingAdjustmentNotes('checkout', cost.lateAdjustmentNote, cost.damageAdjustmentNote),
         damage_items: cost.adjustedDamageItems as unknown as Json,
         check_out_date: overdueDate,
       }
@@ -613,75 +619,26 @@ export function GroupCheckoutDialog({
   // Actual checkout logic using RPC
   const performCheckout = async (bookingIds: string[]) => {
     if (!groupData || isProcessing) return
-    
     setIsProcessing(true)
     try {
       const checkoutItems = buildCheckoutItems(bookingIds, true)
-      const { error } = await supabase.rpc('perform_group_checkout', {
-        p_checkouts: checkoutItems as unknown as Json,
-      })
+      const { data, error } = await executeOperation('perform_group_checkout', { p_checkouts: checkoutItems })
+      if (!executeOperation.isCurrent()) return
       if (error) throw error
-
-      // Core booking/room changes above are atomic.  Notifications, inspection
-      // completion and descriptive notes remain best-effort side effects.
-      for (const bookingId of bookingIds) {
-        const booking = groupData.bookings.find(b => b.id === bookingId)
-        const cost = roomCosts.get(bookingId)
-        if (!booking || !cost) continue
-
-        const allNotes: string[] = []
-        if (cost.lateAdjustmentNote) allNotes.push(`[Phụ thu: ${cost.lateAdjustmentNote}]`)
-        if (cost.damageAdjustmentNote) allNotes.push(`[Đền bù: ${cost.damageAdjustmentNote}]`)
-        if (allNotes.length > 0) {
-          const existingNotes = booking.notes || ''
-          const updateNotes = existingNotes ? `${existingNotes}\n${allNotes.join('\n')}` : allNotes.join('\n')
-          await supabase.from('room_bookings').update({ notes: updateNotes }).eq('id', bookingId)
-        }
-          
-        const inspection = inspectionMap.get(bookingId)
-        if (inspection?.inspectionId) {
-          await supabase.from('checkout_inspection_requests').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', inspection.inspectionId)
-        }
-        
-        if (tenantId && hotelId) {
-          triggerRoomCheckoutNotification({ tenantId, hotelId, roomId: booking.room_id, roomNumber: booking.room?.room_number || '' }).catch(console.error)
-        }
-      }
-
-      for (const bookingId of bookingIds) {
-        createInvoiceAfterCheckout({
-          bookingId,
-          tenantId,
-          hotelId,
-          userId: user?.id,
-        }).catch(err => console.error('Failed to create invoice for booking', bookingId, err))
-      }
-      
-      toast.success(`Đã checkout ${bookingIds.length} phòng thành công!`)
-
-      // Show receipt for the first checked-out booking
-      if (bookingIds.length > 0) {
-        // Wait for invoices to be created (createInvoiceAfterCheckout uses setTimeout 500ms)
-        setTimeout(() => {
-          setReceiptBookingId(bookingIds[0])
-          setShowReceiptDialog(true)
-        }, 800)
-      }
-
+      const tasks: Array<() => PromiseLike<unknown>> = []
+      const followUps = await runBookingOperationFollowUps(data, executeOperation.isCurrent, tasks)
+      if (!executeOperation.isCurrent()) return
+      toast.success(data.replayed ? 'Đã xác nhận lần trả phòng nhóm trước đó' : `Đã checkout ${bookingIds.length} phòng thành công!`, { description: bookingOperationDescription(followUps, true) })
+      // A fixed delay cannot prove invoices exist. The receipt view reads its own data.
+      if (bookingIds.length) { setReceiptBookingId(bookingIds[0]); setShowReceiptDialog(true) }
+      for (const key of ['all-bookings', 'rooms', 'group-booking']) void queryClient.invalidateQueries({ queryKey: [key] })
       const allRoomsNowDone = groupData.bookings.every(b => b.status === 'checked_out' || bookingIds.includes(b.id))
-      if (allRoomsNowDone) {
-        onOpenChange(false)
-        onCheckoutComplete?.()
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['all-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-      queryClient.invalidateQueries({ queryKey: ['group-booking', bookingGroupId] })
+      if (allRoomsNowDone) { onOpenChange(false); onCheckoutComplete?.() }
     } catch (error) {
-      console.error('Error performing checkout:', error)
-      toast.error('Lỗi checkout')
+      if (!executeOperation.isCurrent()) return
+      toast.error(roomOperationErrorMessage(error))
     } finally {
-      setIsProcessing(false)
+      if (executeOperation.isCurrent()) setIsProcessing(false)
     }
   }
 

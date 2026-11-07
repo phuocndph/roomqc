@@ -5284,5 +5284,1169 @@
     "functionsCreated": [],
     "policies": [],
     "lines": 41
+  },
+  {
+    "file": "20260921014544_fix_laundry_policy_snapshot.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "trg_laundry_batch_snapshot_policy"
+    ],
+    "policies": [],
+    "lines": 46
+  },
+  {
+    "file": "20260922101230_add_department_manager_role.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 53
+  },
+  {
+    "file": "20260923120000_tighten_staff_rls.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "has_operational_manager_role"
+    ],
+    "policies": [
+      "Guests are visible to tenant members",
+      "Guests can be created with booking permission",
+      "Guests can be updated with booking permission",
+      "Guests can be deleted with booking permission",
+      "Guest invoices are visible to tenant members",
+      "Guest invoices can be created with report permission",
+      "Guest invoices can be updated with report permission",
+      "Guest invoices can be deleted with report permission",
+      "Lost and found is visible to tenant members",
+      "Lost and found can be created with inventory permission",
+      "Lost and found can be updated with inventory permission",
+      "Lost and found can be deleted with inventory permission",
+      "VAT claims remain visible to tenant members",
+      "VAT claims can be created with report permission",
+      "VAT claims can be updated with report permission",
+      "VAT claims can be deleted with report permission",
+      "Room items can be created with room permission",
+      "Room items can be updated with room permission",
+      "Room items can be deleted with room permission",
+      "Laundry batch items can be created with laundry permission",
+      "Laundry batch items can be updated with laundry permission",
+      "Laundry batch items can be deleted with laundry permission",
+      "Room type availability can be modified with room permission",
+      "Room type availability can be updated with room permission",
+      "Room type availability can be deleted with room permission"
+    ],
+    "lines": 395
+  },
+  {
+    "file": "20260923133000_enable_department_manager_user_level.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "is_manager",
+      "can_create_user",
+      "check_created_by_required"
+    ],
+    "policies": [],
+    "lines": 112
+  },
+  {
+    "file": "20260923135342_harden_rls_initplan_and_search_path.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Room items can be created with room permission",
+      "Room items can be deleted with room permission",
+      "Room items can be updated with room permission",
+      "Laundry batch items can be created with laundry permission",
+      "Laundry batch items can be deleted with laundry permission",
+      "Laundry batch items can be updated with laundry permission",
+      "Lost and found is visible to tenant members",
+      "Lost and found can be created with inventory permission",
+      "Lost and found can be deleted with inventory permission",
+      "Lost and found can be updated with inventory permission",
+      "VAT claims remain visible to tenant members",
+      "VAT claims can be created with report permission",
+      "VAT claims can be deleted with report permission",
+      "VAT claims can be updated with report permission",
+      "Guest invoices are visible to tenant members",
+      "Guest invoices can be created with report permission",
+      "Guest invoices can be deleted with report permission",
+      "Guest invoices can be updated with report permission",
+      "Guests are visible to tenant members",
+      "Guests can be created with booking permission",
+      "Guests can be deleted with booking permission",
+      "Guests can be updated with booking permission",
+      "Room type availability can be deleted with room permission",
+      "Room type availability can be modified with room permission",
+      "Room type availability can be updated with room permission"
+    ],
+    "lines": 359
+  },
+  {
+    "file": "20260924083926_fix_front_desk_permissions.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "grant_front_desk_booking_permissions"
+    ],
+    "policies": [
+      "Users with booking create permission can insert room bookings",
+      "Users with booking update permission can update room bookings",
+      "Users with booking delete permission can delete room bookings"
+    ],
+    "lines": 117
+  },
+  {
+    "file": "20260924094647_optimize_room_booking_rls_auth_calls.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [
+      "Users with booking create permission can insert room bookings",
+      "Users with booking update permission can update room bookings",
+      "Users with booking delete permission can delete room bookings"
+    ],
+    "lines": 39
+  },
+  {
+    "file": "20261010075312_serialize_registration_provisioning.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 62
+  },
+  {
+    "file": "20261015022602_workspace_directory_provisioning.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "complete_registration",
+      "get_workspace_provisioning",
+      "provision_workspace_registration"
+    ],
+    "policies": [],
+    "lines": 113
+  },
+  {
+    "file": "20261015133049_hotel_setup_rooms.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_hotel_room_setup",
+      "save_hotel_room_setup",
+      "complete_hotel_room_setup"
+    ],
+    "policies": [],
+    "lines": 197
+  },
+  {
+    "file": "20261016072409_email_delivery_and_staff_invitations.sql",
+    "tablesCreated": [
+      "email_deliveries",
+      "email_provider_events",
+      "staff_invitations"
+    ],
+    "functionsCreated": [
+      "enqueue_roomqc_email",
+      "acquire_email_worker",
+      "release_email_worker",
+      "claim_email_delivery",
+      "finish_email_delivery",
+      "record_email_provider_event",
+      "validate_staff_inviter",
+      "prepare_staff_invitation",
+      "accept_staff_invitation",
+      "private",
+      "provision_workspace_registration",
+      "complete_registration"
+    ],
+    "policies": [],
+    "lines": 391
+  },
+  {
+    "file": "20261016080658_email_admin_retry.sql",
+    "tablesCreated": [
+      "email_admin_actions"
+    ],
+    "functionsCreated": [
+      "retry_roomqc_email"
+    ],
+    "policies": [],
+    "lines": 31
+  },
+  {
+    "file": "20261017032842_tenant_entitlement_permissions.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "admin_manage_tenant",
+      "rpc_request_is_trusted",
+      "settle_subscription_payment",
+      "private"
+    ],
+    "policies": [],
+    "lines": 150
+  },
+  {
+    "file": "20261017034307_tenant_readonly_admin_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "set_tenant_read_only",
+      "clear_tenant_read_only"
+    ],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20261017035237_platform_support_actor.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "platform_support_actor"
+    ],
+    "policies": [],
+    "lines": 21
+  },
+  {
+    "file": "20261017043645_subscription_quotes_foundation.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "create_subscription_quote",
+      "get_subscription_quote"
+    ],
+    "policies": [],
+    "lines": 163
+  },
+  {
+    "file": "20261017061421_subscription_checkout_drafts.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "create_subscription_checkout_draft",
+      "get_subscription_checkout_draft",
+      "cancel_subscription_payment"
+    ],
+    "policies": [],
+    "lines": 212
+  },
+  {
+    "file": "20261017061902_atomic_pending_subscription_expiry.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "expire_pending_subscription_payments"
+    ],
+    "policies": [],
+    "lines": 73
+  },
+  {
+    "file": "20261017063536_subscription_checkout_client_cutover.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_subscription_payment",
+      "settle_subscription_payment",
+      "handle_successful_payment"
+    ],
+    "policies": [],
+    "lines": 93
+  },
+  {
+    "file": "20261017065205_subscription_reconciliation_readonly.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "admin_subscription_reconciliation"
+    ],
+    "policies": [],
+    "lines": 103
+  },
+  {
+    "file": "20261017072020_legacy_anomalies_readonly.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 8
+  },
+  {
+    "file": "20261017073549_legacy_anomaly_live_read_scope.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 29
+  },
+  {
+    "file": "20261017145741_subscription_reconciliation_cases_foundation.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "admin_subscription_reconciliation_case",
+      "admin_mutate_subscription_reconciliation_case"
+    ],
+    "policies": [],
+    "lines": 225
+  },
+  {
+    "file": "20261017155727_subscription_status_job_history.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "begin_subscription_status_run",
+      "finish_subscription_status_run",
+      "admin_subscription_job_monitor"
+    ],
+    "policies": [],
+    "lines": 175
+  },
+  {
+    "file": "20261018010625_subscription_lifecycle_atomic_outbox.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "admin_subscription_job_monitor"
+    ],
+    "policies": [],
+    "lines": 230
+  },
+  {
+    "file": "20261018012844_subscription_lifecycle_worker_batches.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "begin_atomic_subscription_status_run",
+      "process_subscription_lifecycle_batch",
+      "finish_atomic_subscription_status_run",
+      "process_expired_subscriptions"
+    ],
+    "policies": [],
+    "lines": 235
+  },
+  {
+    "file": "20261018012852_admin_tenant_directory_page.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "admin_tenant_directory_page"
+    ],
+    "policies": [],
+    "lines": 75
+  },
+  {
+    "file": "20261018012924_subscription_job_recovery_monitor.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "admin_recover_subscription_status_run",
+      "admin_subscription_job_monitor"
+    ],
+    "policies": [],
+    "lines": 144
+  },
+  {
+    "file": "20261018014615_subscription_scope_validator_volatility.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 4
+  },
+  {
+    "file": "20261019114214_control_cluster_release_manifest.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "control_cluster_manifest"
+    ],
+    "policies": [],
+    "lines": 197
+  },
+  {
+    "file": "20261019123517_control_service_canaries.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 34
+  },
+  {
+    "file": "20261019142205_control_realtime_partition_attestation.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "control_cluster_manifest"
+    ],
+    "policies": [],
+    "lines": 322
+  },
+  {
+    "file": "20261019161809_access_actor_and_distribution_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "platform_support_actor",
+      "get_distribution_orders_filtered",
+      "get_distribution_orders_count",
+      "create_distribution_order",
+      "cancel_distribution_order",
+      "update_distribution_order",
+      "confirm_warehouse_delivery",
+      "email_admin_actor"
+    ],
+    "policies": [],
+    "lines": 244
+  },
+  {
+    "file": "20261020031717_distribution_direct_write_boundaries.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "create_distribution_order"
+    ],
+    "policies": [],
+    "lines": 59
+  },
+  {
+    "file": "20261020041251_registration_owner_live_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "registration_actor",
+      "complete_registration",
+      "provision_workspace_registration"
+    ],
+    "policies": [],
+    "lines": 105
+  },
+  {
+    "file": "20261020082007_active_auth_soft_delete_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "platform_support_actor",
+      "email_admin_actor"
+    ],
+    "policies": [],
+    "lines": 96
+  },
+  {
+    "file": "20261020085628_workspace_ready_email_live_owner_guards.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 44
+  },
+  {
+    "file": "20261020090231_users_update_policy_nonrecursive_lookup.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 28
+  },
+  {
+    "file": "20261020093925_platform_mutation_live_session_fencing.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "save_hotel_room_setup",
+      "complete_hotel_room_setup",
+      "create_subscription_quote",
+      "create_subscription_checkout_draft",
+      "admin_manage_tenant",
+      "settle_subscription_payment",
+      "cancel_subscription_payment",
+      "admin_mutate_subscription_reconciliation_case",
+      "admin_recover_subscription_status_run"
+    ],
+    "policies": [],
+    "lines": 658
+  },
+  {
+    "file": "20261021012120_email_admin_atomic_action_context.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "execute_email_admin_action"
+    ],
+    "policies": [],
+    "lines": 68
+  },
+  {
+    "file": "20261021032705_email_provider_immutable_event_identity.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "record_email_provider_event",
+      "finish_email_delivery"
+    ],
+    "policies": [],
+    "lines": 83
+  },
+  {
+    "file": "20261021045309_protect_workspace_receipt_hotel_delete.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 30
+  },
+  {
+    "file": "20261021112018_hotel_bound_business_scope.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 56
+  },
+  {
+    "file": "20261021122115_business_live_actor_boundary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 71
+  },
+  {
+    "file": "20261021133739_employee_profile_atomic_edit.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "edit_employee_profile"
+    ],
+    "policies": [],
+    "lines": 225
+  },
+  {
+    "file": "20261021143251_employee_profile_audit_action.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 199
+  },
+  {
+    "file": "20261021153825_self_profile_live_update_boundary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 72
+  },
+  {
+    "file": "20261021170824_auth_password_change_transaction_boundary.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "password_change_status"
+    ],
+    "policies": [],
+    "lines": 159
+  },
+  {
+    "file": "20261021174812_password_change_verified_context.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "password_change_status"
+    ],
+    "policies": [],
+    "lines": 43
+  },
+  {
+    "file": "20261021194814_staff_invitation_live_acceptance.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "staff_invitation_action"
+    ],
+    "policies": [],
+    "lines": 149
+  },
+  {
+    "file": "20261021204555_staff_invitation_live_management.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "staff_invitation_manage"
+    ],
+    "policies": [],
+    "lines": 182
+  },
+  {
+    "file": "20261021213202_staff_invitation_native_recipient_binding.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 179
+  },
+  {
+    "file": "20261021215113_staff_invitation_management_context_receipts.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 187
+  },
+  {
+    "file": "20261021221928_staff_invitation_keyset_pages.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 225
+  },
+  {
+    "file": "20261021225012_staff_invitation_acceptance_current_assignment.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 142
+  },
+  {
+    "file": "20261026141917_employee_authority_scope_live_boundary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 204
+  },
+  {
+    "file": "20261026145640_employee_authority_atomic_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_employee_authority_configuration",
+      "replace_employee_authority",
+      "get_employee_authority_command_result"
+    ],
+    "policies": [],
+    "lines": 372
+  },
+  {
+    "file": "20261026153321_employee_authority_editor_catalog.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 51
+  },
+  {
+    "file": "20261026163926_employee_permission_readback_scope.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "get_user_permissions",
+      "get_user_permissions_summary"
+    ],
+    "policies": [],
+    "lines": 108
+  },
+  {
+    "file": "20261026170604_employee_authority_command_only_writes.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 32
+  },
+  {
+    "file": "20261026172330_employee_authority_pending_terminal_outcomes.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "replace_employee_authority",
+      "cancel_employee_authority_command"
+    ],
+    "policies": [],
+    "lines": 191
+  },
+  {
+    "file": "20261026175715_employee_profile_wall_clock_session_fences.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 226
+  },
+  {
+    "file": "20261026181954_employee_hotel_delete_cascade_boundary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 115
+  },
+  {
+    "file": "20261026193705_workflow_delivery_source_and_atomic_result.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "deliver_stop",
+      "complete_delivery_workflow"
+    ],
+    "policies": [],
+    "lines": 268
+  },
+  {
+    "file": "20261026200830_room_workflow_source_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "transition_room_status",
+      "get_room_transition_result"
+    ],
+    "policies": [],
+    "lines": 208
+  },
+  {
+    "file": "20261026203748_room_transition_command_cancellation.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_room_transition_command"
+    ],
+    "policies": [],
+    "lines": 67
+  },
+  {
+    "file": "20261026213809_room_quick_check_live_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "perform_quick_room_check",
+      "undo_quick_room_check",
+      "get_room_check_command_result"
+    ],
+    "policies": [],
+    "lines": 190
+  },
+  {
+    "file": "20261026220605_booking_room_live_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "transfer_booking_room",
+      "perform_checkin",
+      "perform_checkout",
+      "perform_group_checkout",
+      "get_booking_room_command_result"
+    ],
+    "policies": [],
+    "lines": 340
+  },
+  {
+    "file": "20261026224150_room_operation_terminal_cancellation.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "cancel_room_check_command",
+      "cancel_booking_room_command"
+    ],
+    "policies": [],
+    "lines": 150
+  },
+  {
+    "file": "20261026235327_checkout_invoice_atomic_receipt.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 134
+  },
+  {
+    "file": "20261027002802_booking_adjustment_notes_atomic.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "perform_checkin",
+      "perform_checkout",
+      "perform_group_checkout",
+      "cancel_booking_room_command"
+    ],
+    "policies": [],
+    "lines": 301
+  },
+  {
+    "file": "20261027005109_booking_notification_atomic_outbox.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_booking_notification_status"
+    ],
+    "policies": [],
+    "lines": 238
+  },
+  {
+    "file": "20261027013052_booking_external_notification_targets.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_booking_notification_status"
+    ],
+    "policies": [],
+    "lines": 450
+  },
+  {
+    "file": "20261027034303_booking_flags_live_authority_and_room_source.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "fn_sync_room_status_on_booking_flag",
+      "transition_booking_flag",
+      "transition_booking_status",
+      "cancel_booking",
+      "mark_booking_no_show",
+      "perform_checkin",
+      "perform_checkout",
+      "transfer_booking_room",
+      "cancel_booking_room_command"
+    ],
+    "policies": [],
+    "lines": 435
+  },
+  {
+    "file": "20261027042128_booking_no_show_deposit_resolution_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "resolve_booking_no_show",
+      "mark_booking_no_show",
+      "transition_booking_status",
+      "cancel_booking_room_command",
+      "get_booking_no_show_resolution"
+    ],
+    "policies": [],
+    "lines": 232
+  },
+  {
+    "file": "20261027051801_booking_finance_report_live_read.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "get_revenue_report",
+      "get_booking_no_show_resolution"
+    ],
+    "policies": [],
+    "lines": 221
+  },
+  {
+    "file": "20261027060731_financial_report_live_scope_and_export.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "get_financial_report",
+      "get_financial_report_scoped",
+      "export_revenue_report"
+    ],
+    "policies": [],
+    "lines": 176
+  },
+  {
+    "file": "20261027070034_monthly_and_labor_report_live_scope.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "get_monthly_expenses",
+      "get_labor_cost",
+      "get_labor_cost_scoped"
+    ],
+    "policies": [],
+    "lines": 78
+  },
+  {
+    "file": "20261027074647_operations_report_scoped_aggregates.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "get_operations_report_scoped"
+    ],
+    "policies": [],
+    "lines": 147
+  },
+  {
+    "file": "20261027085249_report_targets_live_scope_and_atomic_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_report_targets",
+      "replace_report_targets",
+      "get_report_target_command"
+    ],
+    "policies": [],
+    "lines": 260
+  },
+  {
+    "file": "20261027094448_report_target_terminal_cancellation.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "cancel_report_target_command"
+    ],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20261027104602_operations_advice_authoritative_journal.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "configure_operations_advice_policy",
+      "prepare_operations_advice",
+      "get_operations_advice_command",
+      "cancel_operations_advice",
+      "dispatch_operations_advice",
+      "finish_operations_advice"
+    ],
+    "policies": [],
+    "lines": 365
+  },
+  {
+    "file": "20261027131041_operations_advice_release_entitlement_clock_fences.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "dispatch_operations_advice",
+      "finish_operations_advice"
+    ],
+    "policies": [],
+    "lines": 230
+  },
+  {
+    "file": "20261027140057_operations_advice_unknown_closure_receipts.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "close_operations_advice",
+      "finish_operations_advice"
+    ],
+    "policies": [],
+    "lines": 184
+  },
+  {
+    "file": "20261027144833_operations_advice_quota_day_commit_fence.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 114
+  },
+  {
+    "file": "20261027153807_operations_advice_policy_live_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "get_operations_advice_policy",
+      "set_operations_advice_policy",
+      "get_operations_advice_policy_command",
+      "cancel_operations_advice_policy_command",
+      "finish_operations_advice",
+      "configure_operations_advice_policy"
+    ],
+    "policies": [],
+    "lines": 231
+  },
+  {
+    "file": "20261027234130_workspace_setup_dispatch_fences.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "provision_workspace_registration",
+      "provision_workspace_setup_dispatch",
+      "close_workspace_setup_dispatch"
+    ],
+    "policies": [],
+    "lines": 206
+  },
+  {
+    "file": "20261028010321_setup_recovery_net_privilege_boundary.sql",
+    "tablesCreated": [],
+    "functionsCreated": [],
+    "policies": [],
+    "lines": 128
+  },
+  {
+    "file": "20261028012429_setup_recovery_scoped_credentials.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "roomqc_setup"
+    ],
+    "policies": [],
+    "lines": 120
+  },
+  {
+    "file": "20261028082314_setup_recovery_credential_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "roomqc_setup_admin"
+    ],
+    "policies": [],
+    "lines": 295
+  },
+  {
+    "file": "20261028092339_setup_credential_live_status.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "roomqc_setup_admin"
+    ],
+    "policies": [],
+    "lines": 47
+  },
+  {
+    "file": "20261028092341_release_schema_fingerprint_v3.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private",
+      "control_cluster_manifest"
+    ],
+    "policies": [],
+    "lines": 161
+  },
+  {
+    "file": "20261028101638_setup_credential_target_preflight.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "roomqc_setup_admin"
+    ],
+    "policies": [],
+    "lines": 55
+  },
+  {
+    "file": "20261029005352_setup_credential_rotation_ready_fence.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "roomqc_setup_admin"
+    ],
+    "policies": [],
+    "lines": 59
+  },
+  {
+    "file": "20261029055817_platform_support_command_acceptance.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "roomqc_support",
+      "accept_platform_support_command"
+    ],
+    "policies": [],
+    "lines": 97
+  },
+  {
+    "file": "20261029063829_platform_support_acceptance_handoff_clock.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "accept_platform_support_command"
+    ],
+    "policies": [],
+    "lines": 16
+  },
+  {
+    "file": "20261029135816_tenant_summary_scoped_read.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "roomqc_summary"
+    ],
+    "policies": [],
+    "lines": 113
+  },
+  {
+    "file": "20261029140847_tenant_summary_attestation_scope.sql",
+    "tablesCreated": [],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 125
+  },
+  {
+    "file": "20261029144213_tenant_summary_credential_commands.sql",
+    "tablesCreated": [
+      "private"
+    ],
+    "functionsCreated": [
+      "private",
+      "roomqc_summary_admin"
+    ],
+    "policies": [],
+    "lines": 592
+  },
+  {
+    "file": "20261030055444_realtime_restored_primary_constraint_attestation.sql",
+    "tablesCreated": [
+      "PARTITION"
+    ],
+    "functionsCreated": [
+      "private"
+    ],
+    "policies": [],
+    "lines": 132
   }
 ]

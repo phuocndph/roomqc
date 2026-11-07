@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useUser } from './useUser'
+import { liveAuthorityRefreshOptions } from '@/lib/live-authority-query'
 
 export const useTenant = () => {
   const { tenantId } = useUser()
@@ -22,7 +23,9 @@ export const useTenant = () => {
     enabled: !!tenantId,
     staleTime: 5 * 60 * 1000,      // 5 minutes - tenant info rarely changes
     gcTime: 10 * 60 * 1000,         // 10 minutes
-    refetchOnWindowFocus: false,
+    // usage_mode gates navigation; an open session must pick up a change on
+    // focus/reconnect instead of keeping hidden modules visible.
+    ...liveAuthorityRefreshOptions,
   })
 
   return {

@@ -38,6 +38,7 @@ import { navigateBack } from '@/lib/navigation'
 import { TransactionListSkeleton } from '@/components/inventory/TransactionCardSkeleton'
 import { EmptyTransactions } from '@/components/inventory/EmptyTransactions'
 import { useInView } from 'react-intersection-observer'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 export function TransactionListPage() {
   const navigate = useNavigate()
@@ -349,7 +350,7 @@ export function TransactionListPage() {
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         {transaction.item_images?.[0] && (
-                          <img 
+                          <StorageImage 
                             src={transaction.item_images[0]} 
                             alt={transaction.item_name}
                             className="h-6 w-6 rounded object-cover"

@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useUser } from '@/hooks/useUser'
 import { canCreateHousekeepingTask } from '@/lib/userAccess'
 import type { PresenceFilterKey } from '@/components/staff/StaffStatsCards'
+import { QueryErrorPanel } from '@/components/shared/QueryErrorPanel'
 
 export default function StaffManagementPage() {
   const [selectedStatus, setSelectedStatus] = useState<PresenceFilterKey | null>(null)
@@ -20,8 +21,10 @@ export default function StaffManagementPage() {
   const [detailOpen, setDetailOpen] = useState(false)
 
   const { user } = useUser()
-  const { data: staffList, isLoading } = useStaffStatus()
-  const { data: recentActivities, isLoading: loadingActivities } = useRecentStaffActivities(50)
+  const staffQuery = useStaffStatus()
+  const activityQuery = useRecentStaffActivities(50)
+  const { data: staffList, isLoading } = staffQuery
+  const { data: recentActivities, isLoading: loadingActivities } = activityQuery
   const stats = useStaffStatusStats(staffList)
 
   // Check if user is manager or admin
@@ -40,23 +43,23 @@ export default function StaffManagementPage() {
           <Users className="h-5 w-5" />
           <h1 className="text-lg font-semibold">Quản lý Nhân sự</h1>
         </div>
-        <span className="text-sm text-muted-foreground">
+        {!isLoading && !staffQuery.isError && <span className="text-sm text-muted-foreground">
           {stats.total} nhân viên
-        </span>
+        </span>}
       </div>
 
       {/* Stats */}
-      <div className="p-4 border-b">
+      {!staffQuery.isError && !isLoading && <div className="p-4 border-b">
         <StaffStatsCards 
           stats={stats} 
           selectedStatus={selectedStatus}
           onStatusClick={(status) => setSelectedStatus(status)}
         />
-      </div>
+      </div>}
 
       {/* Tabs */}
       <Tabs defaultValue="list" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 mt-2 w-fit">
+        <TabsList className="mx-4 mt-2 grid h-auto shrink-0 grid-cols-2 gap-1 sm:flex sm:w-fit">
           <TabsTrigger value="list" className="gap-1.5 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:rounded-b-none">
             <Users className="h-4 w-4" />
             Danh sách
@@ -81,12 +84,14 @@ export default function StaffManagementPage() {
 
         <TabsContent value="list" className="flex-1 m-0 mt-2 min-h-0">
           <div className="h-full border-t">
-            <StaffList 
+            {staffQuery.isError ? (
+              <div className="p-4"><QueryErrorPanel title="Không tải được danh sách nhân sự" onRetry={() => { void staffQuery.refetch() }} retrying={staffQuery.isFetching} /></div>
+            ) : <StaffList
               staff={staffList}
               isLoading={isLoading}
               filterStatus={selectedStatus}
               onViewDetail={handleViewDetail}
-            />
+            />}
           </div>
         </TabsContent>
 
@@ -98,7 +103,9 @@ export default function StaffManagementPage() {
                   <Activity className="h-4 w-4" />
                   Hoạt động gần đây
                 </h3>
-                {loadingActivities ? (
+                {activityQuery.isError ? (
+                  <QueryErrorPanel title="Không tải được hoạt động nhân sự" onRetry={() => { void activityQuery.refetch() }} retrying={activityQuery.isFetching} />
+                ) : loadingActivities ? (
                   <div className="text-sm text-muted-foreground">Đang tải...</div>
                 ) : (
                   <StaffActivityTimeline 

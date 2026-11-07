@@ -112,7 +112,7 @@ export default function RoomCheckSettingsPage() {
               </div>
 
               {!useLean && (
-                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex gap-2">
+                <div className="rounded-none border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex gap-2">
                   <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
                     Khách sạn này sẽ dùng wizard cũ. Một số tính năng mới (Quick Path, Resume Draft 24h)

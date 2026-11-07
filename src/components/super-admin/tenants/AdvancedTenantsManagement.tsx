@@ -15,8 +15,9 @@ import {
 import { TenantsTable } from './TenantsTable';
 import { TenantAnalytics } from './TenantAnalytics';
 import { BulkActions } from './BulkActions';
-import { Plus, Download, Search } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
+import { defaultTenantDirectoryRequest, type TenantDirectoryRequest } from '@/lib/admin-tenant-directory';
 
 export function AdvancedTenantsManagement() {
   const { t } = useTranslation('superAdmin');
@@ -25,21 +26,35 @@ export function AdvancedTenantsManagement() {
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [sort, setSort] = useState<TenantDirectoryRequest['sort']>('created_at');
+  const [descending, setDescending] = useState(true);
 
-  const { data: tenants } = useTenants();
+  const request = { ...defaultTenantDirectoryRequest, statusFilter, planFilter, approvalFilter, searchQuery, page, sort, descending };
+  const directory = useTenants(request);
+  const { data, isError, isLoading, isFetching } = directory;
+  const filteredTenants = isError ? [] : data?.items || [];
+  const visibleSelectedTenants = selectedTenants.filter(id => filteredTenants.some(tenant => tenant.id === id));
+  const planOptions = isError ? [] : data?.plans || [];
+  const changePage = (value: number) => { setPage(value); setSelectedTenants([]); };
+  const changeFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setPage(0);
+    setSelectedTenants([]);
+  };
 
   const handleExport = () => {
-    if (tenants && tenants.length > 0) {
-      const exportData = tenants.map((t: any) => ({
+    if (!isError && !isLoading && !isFetching && filteredTenants.length > 0) {
+      const exportData = filteredTenants.map((t) => ({
         'Tên': t.name,
-        'Email': t.primary_contact_email || '',
-        'Gói': t.subscription_tier || '',
-        'Trạng thái': t.subscription_status || '',
+        'Email': t.email || '',
+        'Gói': t.subscription_plan?.name || '',
+        'Trạng thái': t.actual_status,
         'Số phòng': t.registered_rooms || 0,
         'Ngày tạo': t.created_at,
         'Hết hạn': t.subscription_end_date || '',
       }));
-      exportToExcel(exportData, `tenants-${new Date().toISOString().slice(0, 10)}`, 'Khách hàng');
+      exportToExcel(exportData, `tenants-page-${(data?.page || 0) + 1}-${new Date().toISOString().slice(0, 10)}`, 'Khách hàng');
     }
   };
 
@@ -49,12 +64,6 @@ export function AdvancedTenantsManagement() {
       <PageHeader
         title={t('tenants.title')}
         description={t('tenants.subtitle')}
-        actions={
-          <Button size="sm">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            {t('tenants.addTenant')}
-          </Button>
-        }
       />
 
       {/* Filters */}
@@ -62,15 +71,17 @@ export function AdvancedTenantsManagement() {
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
+            aria-label={t('tenants.searchPlaceholder')}
             placeholder={t('tenants.searchPlaceholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            maxLength={200}
+            onChange={(e) => changeFilter(setSearchQuery)(e.target.value)}
             className="pl-8 h-8 text-sm"
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={statusFilter} onValueChange={changeFilter(setStatusFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByStatus')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByStatus')} />
           </SelectTrigger>
           <SelectContent>
@@ -86,20 +97,18 @@ export function AdvancedTenantsManagement() {
           </SelectContent>
         </Select>
 
-        <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={planFilter} onValueChange={changeFilter(setPlanFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByPlan')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByPlan')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('tenants.allPlans')}</SelectItem>
-            <SelectItem value="basic">{t('tenants.plans.basic')}</SelectItem>
-            <SelectItem value="premium">{t('tenants.plans.premium')}</SelectItem>
-            <SelectItem value="enterprise">{t('tenants.plans.enterprise')}</SelectItem>
+            {planOptions.map(plan => <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>)}
           </SelectContent>
         </Select>
 
-        <Select value={approvalFilter} onValueChange={setApprovalFilter}>
-          <SelectTrigger className="w-[160px] h-8 text-sm">
+        <Select value={approvalFilter} onValueChange={changeFilter(setApprovalFilter)}>
+          <SelectTrigger aria-label={t('tenants.filterByApproval')} className="w-[160px] h-8 text-sm">
             <SelectValue placeholder={t('tenants.filterByApproval')} />
           </SelectTrigger>
           <SelectContent>
@@ -110,16 +119,21 @@ export function AdvancedTenantsManagement() {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="sm" onClick={handleExport} className="h-8">
+        <Button variant="outline" size="sm" onClick={handleExport} className="h-8" disabled={isError || isLoading || isFetching || !filteredTenants.length}>
           <Download className="h-3.5 w-3.5 mr-1.5" />
-          {t('tenants.exportData')}
+          Xuất trang hiện tại
         </Button>
       </div>
 
+      <p className="text-sm text-muted-foreground">
+        Bộ lọc và số kết quả áp dụng toàn bộ khách hàng. File xuất chỉ gồm trang hiện tại.
+        Tab phân tích dùng nguồn thống kê riêng, không thay đổi theo bộ lọc này.
+      </p>
+
       {/* Bulk Actions */}
-      {selectedTenants.length > 0 && (
+      {!isError && !isFetching && visibleSelectedTenants.length > 0 && (
         <BulkActions
-          selectedTenants={selectedTenants}
+          selectedTenants={visibleSelectedTenants}
           onClearSelection={() => setSelectedTenants([])}
         />
       )}
@@ -133,11 +147,12 @@ export function AdvancedTenantsManagement() {
 
         <TabsContent value="list">
           <TenantsTable
-            statusFilter={statusFilter}
-            planFilter={planFilter}
-            approvalFilter={approvalFilter}
-            searchQuery={searchQuery}
-            selectedTenants={selectedTenants}
+            directory={directory}
+            onPageChange={changePage}
+            sort={sort}
+            descending={descending}
+            onSortChange={(value, desc) => { setSort(value); setDescending(desc); changePage(0); }}
+            selectedTenants={visibleSelectedTenants}
             onSelectionChange={setSelectedTenants}
           />
         </TabsContent>

@@ -11,7 +11,7 @@ export function QuickViewGroupSiblings({ siblings, onNavigate }: Props) {
   const navigate = useNavigate()
   if (!siblings.length) return null
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2 space-y-1.5">
+    <div className="rounded-none border bg-muted/30 px-3 py-2 space-y-1.5">
       <div className="text-xs text-muted-foreground font-medium">
         Cùng đoàn ({siblings.length + 1} phòng)
       </div>

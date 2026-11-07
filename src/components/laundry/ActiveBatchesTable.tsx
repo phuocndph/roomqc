@@ -1,6 +1,5 @@
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { Eye, CheckCircle, Package, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Package } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -11,172 +10,203 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BatchStatusBadge } from './BatchStatusBadge'
-import { formatCurrency } from '@/lib/utils'
-import type { LaundryBatchWithVendor, BatchStatus } from '@/types/laundry.types'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import type { LaundryBatchWithVendor } from '@/types/laundry.types'
 
 interface ActiveBatchesTableProps {
   batches: LaundryBatchWithVendor[]
   isLoading: boolean
+  totalCount?: number
 }
 
-export function ActiveBatchesTable({ batches, isLoading }: ActiveBatchesTableProps) {
-  const { t, i18n } = useTranslation(['laundry'])
-  const navigate = useNavigate()
-  
-  if (isLoading) {
+export function ActiveBatchesTable({
+  batches,
+  isLoading,
+  totalCount,
+}: ActiveBatchesTableProps) {
+  if (isLoading)
     return (
       <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
+        <CardContent className="space-y-3 pt-6">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
         </CardContent>
       </Card>
     )
-  }
-  
+  const renderAction = (batch: LaundryBatchWithVendor) =>
+    batch.status === 'ready' ? (
+      <PermissionGate
+        module="laundry"
+        action="update"
+        fallback={
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/laundry/batches/${batch.id}`}>Chi tiết</Link>
+          </Button>
+        }
+      >
+        <Button
+          asChild
+          size="sm"
+          className="bg-green-700 text-white hover:bg-green-800"
+        >
+          <Link to={`/laundry/batches/${batch.id}/receive`}>Nhận đồ</Link>
+        </Button>
+      </PermissionGate>
+    ) : (
+      <Button asChild size="sm" variant="outline">
+        <Link to={`/laundry/batches/${batch.id}`}>Chi tiết</Link>
+      </Button>
+    )
+  const isLate = (batch: LaundryBatchWithVendor) =>
+    Boolean(
+      batch.expected_return_date &&
+        batch.expected_return_date.slice(0, 10) <
+          new Date().toLocaleDateString('en-CA'),
+    )
+
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{t('activeBatches.title')}</CardTitle>
-          <Button onClick={() => navigate('/laundry/batches')}>
-            {t('activeBatches.viewAll')}
-          </Button>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 pb-4">
+        <div>
+          <CardTitle className="text-base">Lô cần theo dõi</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ưu tiên lô sẵn sàng nhận và ngày hẹn trả gần nhất.
+            {totalCount != null && totalCount > batches.length
+              ? ` Hiển thị ${batches.length}/${totalCount} lô.`
+              : ''}
+          </p>
         </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/laundry/batches">Xem tất cả</Link>
+        </Button>
       </CardHeader>
       <CardContent>
-        {batches.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Package className="h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t('activeBatches.noActiveBatches')}
+        {!batches.length ? (
+          <div className="py-10 text-center">
+            <Package className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="font-medium">Không có lô đang giặt</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Gom yêu cầu từ phòng hoặc tạo lô gửi giặt mới.
             </p>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <div className="overflow-x-auto">
+          <>
+            <div className="divide-y rounded-lg border md:hidden">
+              {batches.map((batch) => (
+                <div key={batch.id} className="space-y-3 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <Link
+                        to={`/laundry/batches/${batch.id}`}
+                        className="font-semibold underline-offset-4 hover:underline"
+                      >
+                        {batch.batch_code}
+                      </Link>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {batch.vendor_name || 'Chưa có nhà cung cấp'}
+                      </p>
+                    </div>
+                    <BatchStatusBadge status={batch.status as any} />
+                  </div>
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="text-sm">
+                      <p>
+                        {batch.total_items} món · {batch.total_weight_kg || 0}{' '}
+                        kg
+                      </p>
+                      <p
+                        className={
+                          isLate(batch)
+                            ? 'mt-1 font-medium text-red-700 dark:text-red-400'
+                            : 'mt-1 text-muted-foreground'
+                        }
+                      >
+                        Hẹn trả:{' '}
+                        {batch.expected_return_date
+                          ? formatDate(batch.expected_return_date)
+                          : 'Chưa hẹn'}
+                        {isLate(batch) ? ' · Quá hạn' : ''}
+                      </p>
+                    </div>
+                    {renderAction(batch)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-hidden rounded-lg border md:block">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('activeBatches.table.batchCode')}</TableHead>
-                    <TableHead>{t('activeBatches.table.vendor')}</TableHead>
-                    <TableHead>{t('activeBatches.table.deliveryDate')}</TableHead>
-                    <TableHead>{t('activeBatches.table.expectedReturn')}</TableHead>
-                    <TableHead className="text-right">{t('activeBatches.table.items')}</TableHead>
-                    <TableHead className="text-right">{t('activeBatches.table.weight')}</TableHead>
-                    <TableHead className="text-right">{t('activeBatches.table.cost')}</TableHead>
-                    <TableHead>{t('activeBatches.table.status')}</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                  <TableRow className="bg-slate-50 hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-900">
+                    <TableHead>Lô gửi giặt</TableHead>
+                    <TableHead>Hẹn trả</TableHead>
+                    <TableHead className="text-right">Số lượng</TableHead>
+                    <TableHead className="text-right">Chi phí</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {batches.map((batch) => {
-                    const isOverdue = batch.expected_return_date && 
-                      new Date(batch.expected_return_date) < new Date() &&
-                      batch.status !== 'received'
-                    
-                    return (
-                      <TableRow
-                        key={batch.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/laundry/batches/${batch.id}`)}
-                      >
-                        <TableCell className="font-medium">
+                  {batches.map((batch) => (
+                    <TableRow
+                      key={batch.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    >
+                      <TableCell>
+                        <Link
+                          className="font-semibold underline-offset-4 hover:underline"
+                          to={`/laundry/batches/${batch.id}`}
+                        >
                           {batch.batch_code}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={batch.vendor_logo || undefined} />
-                              <AvatarFallback>
-                                {batch.vendor_name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">{batch.vendor_name}</p>
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs text-muted-foreground">
-                                  {batch.vendor_rating.toFixed(1)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(batch.delivery_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(batch.delivery_date).toLocaleTimeString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {batch.expected_return_date ? (
-                            <>
-                              {new Date(batch.expected_return_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
-                              {isOverdue && (
-                                <Badge variant="destructive" className="ml-2 text-xs">
-                                  {t('activeBatches.overdue')}
-                                </Badge>
-                              )}
-                            </>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {batch.total_items}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {batch.total_weight_kg} kg
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {(batch.actual_cost || batch.estimated_cost) > 0
-                            ? formatCurrency(batch.actual_cost || batch.estimated_cost)
-                            : <span className="text-muted-foreground italic">{t('activeBatches.costNotUpdated')}</span>
-                          }
-                        </TableCell>
-                        <TableCell>
-                          <BatchStatusBadge status={batch.status as BatchStatus} />
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          {batch.status === 'ready' ? (
-                            <Button
-                              size="sm"
-                              onClick={() => navigate(`/laundry/batches/${batch.id}/receive`)}
-                            >
-                              <CheckCircle className="mr-1 h-3 w-3" />
-                              {t('activeBatches.receive')}
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/laundry/batches/${batch.id}`)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                        </Link>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {batch.vendor_name || 'Chưa có nhà cung cấp'}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="whitespace-nowrap">
+                          {batch.expected_return_date
+                            ? formatDate(batch.expected_return_date)
+                            : 'Chưa hẹn ngày'}
+                        </p>
+                        {isLate(batch) && (
+                          <p className="mt-1 text-xs font-semibold text-red-700 dark:text-red-400">
+                            Quá hạn trả
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <p>{batch.total_items} món</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {batch.total_weight_kg || 0} kg
+                        </p>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right font-medium">
+                        {(batch.actual_cost ?? batch.estimated_cost) > 0 ? (
+                          formatCurrency(
+                            batch.actual_cost ?? batch.estimated_cost,
+                          )
+                        ) : (
+                          <span className="text-sm font-normal text-muted-foreground">
+                            Chưa cập nhật
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <BatchStatusBadge status={batch.status as any} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {renderAction(batch)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </>
         )}
       </CardContent>
     </Card>

@@ -17,6 +17,8 @@ jobs:
       VITE_SUPABASE_PROJECT_ID: roomqc-ci
       VITE_VAPID_PUBLIC_KEY: BIb2-YMJYspRhZ2J_Xpb3DQuWydfRqjeSvzHhJwWDE19G9WqTcX_l6HJM9PlmWZYIqaEQKyJ4SG-WwztLK6Pqx8
       VITE_ENABLE_DEMO_DATA: "false"
+      # The MCP edge entrypoint is RoomQC-owned; skip the plugin sync that would overwrite it.
+      ROOMQC_SKIP_MCP_SYNC: "true"
     steps:
       - uses: actions/checkout@v4
 
@@ -29,12 +31,20 @@ jobs:
       - name: Install deps
         run: npm ci --no-audit --no-fund
 
+      - name: Install and test directory service
+        run: |
+          npm ci --prefix server/control --no-audit --no-fund
+          npm run test:control
+
+      - name: Customer journey guard regressions (no Supabase required)
+        run: npm run test:customer-journey
+
       - name: ESLint (gồm rule FSM `no-direct-room-status-update`)
         # Existing legacy warnings are reported but do not hide blocking errors.
         run: npm run lint
 
       - name: TypeScript
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit -p tsconfig.app.json
 
       - name: Vitest — RPC signature drift + suite
         run: npm test -- --run

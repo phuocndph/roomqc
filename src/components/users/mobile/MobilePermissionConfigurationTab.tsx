@@ -58,7 +58,7 @@ export function MobilePermissionConfigurationTab({
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['users'] })
-    queryClient.invalidateQueries({ queryKey: ['user-permission-configuration'] })
+    queryClient.invalidateQueries({ queryKey: ['employee-authority'] })
     toast.success('Đã làm mới dữ liệu')
   }
 

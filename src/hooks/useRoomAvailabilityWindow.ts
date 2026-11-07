@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDays, format, parseISO, differenceInDays } from 'date-fns'
 import { supabase } from '@/integrations/supabase/client'
 import { useTenant } from './useTenant'
+import { instanceChannelName } from '@/lib/realtime/channelName'
 
 export interface BookedRange {
   bookingId: string
@@ -68,7 +69,7 @@ export function useRoomAvailabilityWindow({
   useEffect(() => {
     if (!roomId || !tenantId) return
     const channel = supabase
-      .channel(`room-avail-${roomId}`)
+      .channel(instanceChannelName(`room-avail-${roomId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'room_bookings', filter: `room_id=eq.${roomId}` },

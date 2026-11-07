@@ -4,9 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRoomQcMutationCache, nativeMutationDefaults } from './lib/native/mutations';
 import { createBrowserRouter, RouterProvider, Navigate, useLocation } from "react-router-dom";
+import { NativeAppBridge } from './components/mobile/NativeAppBridge';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { directoryEnabled, workspaceBase } from '@/lib/workspace';
+import { runtimeConfig } from '@/lib/runtime-config';
 
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -45,6 +49,7 @@ const CacheBuster = lazy(() =>
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ChatPage = lazy(() => import("./pages/ChatPage"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const WorkspaceStart = lazy(() => import('./pages/auth/WorkspaceStart'));
 const RootRoute = lazy(() => import("./components/layout/RootRoute"));
 const DocsLayout = lazy(() => import("./pages/docs/DocsLayout"));
 const DocsIndex = lazy(() => import("./pages/docs/DocsIndex"));
@@ -179,6 +184,7 @@ const POFormPage = lazy(() => import("./pages/purchase-orders/POFormPage"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
 const AuthChangePasswordPage = lazy(() => import("./pages/auth/ChangePasswordPage"));
 const AuthCallback = lazy(() => import("./pages/auth/AuthCallback"));
 const OAuthConsent = lazy(() => import("./pages/auth/OAuthConsent"));
@@ -193,6 +199,8 @@ const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"));
 // Super Admin
 const SuperAdminDashboard = lazyNamed(() => import("./pages/admin/SuperAdminDashboard"), "SuperAdminDashboard");
 const TenantsPage = lazyNamed(() => import("./pages/admin/TenantsPage"), "TenantsPage");
+const InfrastructurePage = lazyNamed(() => import("./pages/admin/InfrastructurePage"), "InfrastructurePage");
+const RegistrationsPage = lazyNamed(() => import("./pages/admin/RegistrationsPage"), "RegistrationsPage");
 const AnalyticsPage = lazyNamed(() => import("./pages/admin/AnalyticsPage"), "AnalyticsPage");
 const PromoCodesPage = lazyNamed(() => import("./pages/admin/PromoCodesPage"), "PromoCodesPage");
 const MarketingCampaignsPage = lazyNamed(() => import("./pages/admin/MarketingCampaignsPage"), "MarketingCampaignsPage");
@@ -220,7 +228,10 @@ const HousekeepingDashboardPage = lazy(() => import("./pages/housekeeping/Housek
 const IssuesReviewPage = lazy(() => import("./pages/housekeeping/IssuesReviewPage"));
 
 const queryClient = new QueryClient({
+  mutationCache: createRoomQcMutationCache(),
   defaultOptions: {
+    // No deferred business writes in the first native release.
+    mutations: nativeMutationDefaults(),
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 30 * 60 * 1000, // 30 minutes — keep cache longer to reduce refetches
@@ -238,13 +249,17 @@ const RouteFallback = () => (
 );
 
 const router = createBrowserRouter([
+  { path: '/start', element: directoryEnabled && !runtimeConfig.workspace ? <WorkspaceStart /> : <Navigate to="/auth/login" replace />, errorElement: <RouteErrorBoundary /> },
   // Landing page - public
   { path: "/landing", element: <LandingPage />, errorElement: <RouteErrorBoundary /> },
 
   // Public routes
-  { path: "/auth/login", element: <Login />, errorElement: <RouteErrorBoundary /> },
-  { path: "/auth/register", element: <Register />, errorElement: <RouteErrorBoundary /> },
+  { path: "/auth/login", element: directoryEnabled && !runtimeConfig.workspace ? <Navigate to="/start?mode=login" replace /> : <Login />, errorElement: <RouteErrorBoundary /> },
+  { path: "/admin/login", element: runtimeConfig.workspace ? <Navigate to="/auth/login" replace /> : <Login operator />, errorElement: <RouteErrorBoundary /> },
+  { path: "/auth/register", element: directoryEnabled && !runtimeConfig.workspace ? <Navigate to="/start" replace /> : <Register />, errorElement: <RouteErrorBoundary /> },
   { path: "/auth/forgot-password", element: <ForgotPassword />, errorElement: <RouteErrorBoundary /> },
+  { path: "/auth/verify-email", element: <EmailVerification />, errorElement: <RouteErrorBoundary /> },
+  { path: "/auth/accept-invite", element: <EmailVerification invite />, errorElement: <RouteErrorBoundary /> },
   {
     path: "/auth/change-password",
     element: (
@@ -331,6 +346,8 @@ const router = createBrowserRouter([
       { index: true, element: <SuperAdminDashboard /> },
       { path: "dashboard", element: <Navigate to="/super-admin" replace /> },
       { path: "tenants", element: <TenantsPage /> },
+      { path: "infrastructure", element: <InfrastructurePage /> },
+      { path: "registrations", element: <RegistrationsPage /> },
       { path: "approval", element: <TenantApprovalPage /> },
       { path: "promo-codes", element: <PromoCodesPage /> },
       { path: "campaigns", element: <MarketingCampaignsPage /> },
@@ -392,17 +409,18 @@ const router = createBrowserRouter([
       { path: "items/categories", element: <InventoryHubRedirect tab="assets" sub="categories" /> },
 
       // Rooms
-      { path: "rooms", element: <PermissionRoute module="rooms"><RoomsPage /></PermissionRoute> },
+      { path: "setup/rooms", element: <RoleGuard allowedRoles={['owner']}><PermissionRoute module="rooms" action="create"><Navigate to="/rooms" replace /></PermissionRoute></RoleGuard> },
+      { path: "rooms", element: <PermissionRoute module="rooms" fallback={<Navigate to="/my-tasks" replace />}><RoomsPage /></PermissionRoute> },
       { path: "rooms/new", element: <PermissionRoute module="rooms" action="create"><RoomFormPage /></PermissionRoute> },
       { path: "rooms/:id", element: <PermissionRoute module="rooms"><RoomDetailPage /></PermissionRoute> },
       { path: "rooms/:id/edit", element: <PermissionRoute module="rooms" action="update"><RoomFormPage /></PermissionRoute> },
-      { path: "rooms/:id/check", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomCheckRouter /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomCheckOverviewPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/inspection", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanInspectionPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/review", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanReviewPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-lean/success", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><LeanSuccessPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-replenish", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomReplenishLeanPage /></RequireShiftRouteGate></PermissionRoute> },
-      { path: "rooms/:id/check-delivery", element: <PermissionRoute module="rooms" action="update"><RequireShiftRouteGate><RoomDeliveryLeanPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomCheckRouter /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomCheckOverviewPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/inspection", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanInspectionPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/review", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanReviewPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-lean/success", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><LeanSuccessPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-replenish", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomReplenishLeanPage /></RequireShiftRouteGate></PermissionRoute> },
+      { path: "rooms/:id/check-delivery", element: <PermissionRoute module="room_checks" action="create"><RequireShiftRouteGate><RoomDeliveryLeanPage /></RequireShiftRouteGate></PermissionRoute> },
 
       { path: "rooms/standards", element: <PermissionRoute module="rooms"><RoomStandardsPage /></PermissionRoute> },
 
@@ -541,7 +559,7 @@ const router = createBrowserRouter([
   // Catch all
   { path: "/dashboard", element: <Navigate to="/" replace />, errorElement: <RouteErrorBoundary /> },
   { path: "*", element: <NotFound />, errorElement: <RouteErrorBoundary /> },
-]);
+], { basename: workspaceBase() || '/' });
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -551,6 +569,7 @@ const App = () => (
           <CacheBuster />
           <Toaster />
           <Sonner />
+          <NativeAppBridge router={router} />
           <ChunkErrorBoundary>
             <Suspense fallback={<RouteFallback />}>
               <RouterProvider router={router} />

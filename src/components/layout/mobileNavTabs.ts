@@ -37,10 +37,10 @@ export interface NavTabDef {
 
 // Pool đầy đủ — Home (pinned start) + module + More (pinned end).
 export const NAV_TABS_POOL: NavTabDef[] = [
-  { id: 'home', label: 'Home', icon: Home, path: '/', alwaysShow: true, pinned: 'start' },
+  { id: 'home', label: 'Tổng quan', icon: Home, path: '/', alwaysShow: true, pinned: 'start' },
   {
     id: 'tasks',
-    label: 'Tasks',
+    label: 'Công việc',
     icon: ClipboardList,
     path: '/my-tasks',
     badgeKey: 'tasks',

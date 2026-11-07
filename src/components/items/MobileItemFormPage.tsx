@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import { compressImage } from '@/lib/imageCompression'
 import type { ItemType } from '@/types/items.types'
 import { ITEM_TYPE_OPTIONS } from '@/types/items.types'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 type ItemFormData = {
   code: string
@@ -382,7 +383,7 @@ export const MobileItemFormPage = () => {
                   <div className="grid grid-cols-3 gap-2">
                     {uploadedImages.map((img, index) => (
                       <div key={index} className="relative aspect-square">
-                        <img
+                        <StorageImage
                           src={img}
                           alt={`Preview ${index + 1}`}
                           className="w-full h-full object-cover rounded-lg"

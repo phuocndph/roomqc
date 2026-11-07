@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "date": "2026-10-19",
+  "environment": "local",
+  "measurementScope": "docker-desktop-vm",
+  "sourceBase": "a34f3b614f3693aa571956bd18bf911303046c8d",
+  "sourceHashes": {
+    "deploy/monitoring/health-worker.compose.yml": "21ac72ad80024e7f6ffb015ff45fbce53c14f7855b95c6774ef5dc889065d54b",
+    "scripts/test-health-process.mjs": "f0d4da14f9dd9592223fa1c39cda2d6a75f68c754eca49fce6416e74a9680171",
+    "server/control/Dockerfile": "4effc85ac95368e17912014090346fd658d90a3f55b99eaf9e6381d14a476d3c",
+    "server/control/admin-contract.test.mjs": "afe31ae36929b36dec9cb52af1e70cd85639829db63483155d9971d1c3624bef",
+    "server/control/admin.mjs": "d734d42bcbb6a7cd908e68ed1c1df5ea3ad858f604b8aaf9d6d1bed3ae9307c7",
+    "server/control/contracts/control-v3.openapi.json": "01ef0413696a8d07a45856edbbdd6a57592a808af9e51e1ddc9aa7d72f22839f",
+    "server/control/directory-db.test.mjs": "06edd710c40a34d99877e6d10158dd09a367e2effbe372288040286c1fad4a6f",
+    "server/control/health-policy.mjs": "6868949f50e0356583a482a1b88349b4e5b84c39717f8504a2953a8a3da9e67e",
+    "server/control/health-policy.test.mjs": "a7c3377fca2a652fc36be189dcae15f288487ba03e64059912df5789275b30e9",
+    "server/control/health-runtime.test.mjs": "491245f3c38b8f588b2aeee99df5cf3f4aae476c7335c6f5edb50d6388f91f2d",
+    "server/control/health-worker.test.mjs": "479f1c05072a83ebd2d5e8478cb4e1b25b26199f5a17f20a594a2483990e96a5",
+    "server/control/migrations/0006-telemetry-target-binding.sql": "2a326a670f79229170e15821748aaef56e9bdab2c676af23b9ffd08dfa642341",
+    "server/control/registry.mjs": "d518c65596719606fb3279f9236815e1e922d130175a205671a4bf7b8dec9da7",
+    "server/control/telemetry-binding-cases.mjs": "e21102c2d50f644a81f875fdd401734237b16266fb341974d22d3af0e74ebdb8",
+    "server/control/telemetry-cases.mjs": "8a5836b3182140483d0690aa067664a02b30b6413b7134b1f88a8c854592c75d",
+    "server/control/telemetry.mjs": "a594dcd7694d973c669e7bda6b2cb367c04f55b47475269a9ea6d69f24433d75",
+    "server/control/test-fixtures.mjs": "e6be9ae24727118eedfaa571dda5db818ce911254040e980513779bb25afb59d",
+    "server/control/workers/health-config.mjs": "de111065cac95e9bce6573d345514e9b3a9a5e1f48695174d698c32aa90d4c7c",
+    "server/control/workers/health-runtime.mjs": "28cff7e5ede37844d77d19130f168d1f82d91eb349fb10c6c55b263956f1df58",
+    "server/control/workers/health-worker.mjs": "dc7f59e606323e805f8992bcf5b980b10c9e62dc0d649582b30bf7b1a0efd999"
+  },
+  "commands": {
+    "fullSuite": "ROOMQC_CONTROL_DB_TEST=true node --test --test-reporter=spec --test-reporter-destination=artifacts/roomqc-p2-health-worker-local-2026-10-19.log <all server/control/*.test.mjs>",
+    "normalRunner": "npm run test:control:db",
+    "processTest": "node scripts/test-health-process.mjs --image sha256:966620a461b39e99f971e97302a0a1fc6ba3a9901eaecfc9241e654a3e3c2895"
+  },
+  "result": {
+    "exitCode": 0,
+    "tests": 87,
+    "passed": 87,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 128587.9654
+  },
+  "log": {
+    "path": "artifacts/roomqc-p2-health-worker-local-2026-10-19.log",
+    "scope": "Full spec reporter output from final complete suite; not an excerpt.",
+    "sha256": "80ccf1dbe112a9f169e568f87ee1a7e2094a3c98e1e38ba439d094e48d8f63fd",
+    "bytes": 11793
+  },
+  "processTest": {
+    "exitCode": 0,
+    "image": "sha256:966620a461b39e99f971e97302a0a1fc6ba3a9901eaecfc9241e654a3e3c2895",
+    "sourceHashesVerified": true,
+    "network": "none",
+    "user": "1000:1000",
+    "readOnlyRoot": true,
+    "publishedPorts": false,
+    "liveStatus": 200,
+    "readyStatus": 503,
+    "sigtermExit": 0,
+    "restartReadyStatus": 503,
+    "fixtureDatabaseExists": false
+  },
+  "monitoringComparison": {
+    "event": "monitoring_fixture_comparison",
+    "scope": "docker-desktop-vm",
+    "cpuPercent": {
+      "exporter": 8.240521865624562,
+      "os": 7.655305388740485,
+      "tolerancePoints": 5
+    },
+    "memoryBytes": {
+      "exporterTotal": 16131489792,
+      "osTotal": 16131489792,
+      "exporterAvailable": 12815302656,
+      "osAvailable": 12821917696,
+      "tolerancePercentOfTotal": 5
+    },
+    "filesystem": {
+      "id": "database",
+      "exporterTotal": 1081101176832,
+      "osTotal": 1081101176832,
+      "exporterAvailable": 918461104128,
+      "osAvailable": 918461095936,
+      "toleranceBytes": 134217728
+    },
+    "connections": {
+      "exporter": 1,
+      "osExcludingObserver": 1,
+      "tolerance": 1
+    },
+    "fiveServiceProbesVerified": false,
+    "admissionOpened": false
+  },
+  "directorySourceVersion": "0006-telemetry-target-binding.sql",
+  "deployedDirectoryVersion": "0005-health-snapshot-guard.sql",
+  "unchangedRuntime": {
+    "controlImage": "sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1",
+    "frontendImage": "sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b",
+    "controlReadyStatus": 200,
+    "proxyReadyStatus": 200,
+    "signupEnabled": false,
+    "directoryPublishedPorts": false
+  },
+  "verified": [
+    "approved target identity and full definition persisted; scope/mount/budget verified at record",
+    "changed approved target invalidates snapshot and closes admission atomically with command/receipt/audit",
+    "old in-flight worker rejected after approval; new worker restarts warmup",
+    "idempotent replay, actor/version/inventory checks, audit rollback and trigger privilege boundary",
+    "metrics transaction timeout closes real blocked connection; no late write after lock release",
+    "stale sweep persists despite hung source; dedicated credential outage/recovery remains fail-closed",
+    "private loopback heartbeat, aggregate configured pool budget, redacted bounded file configuration",
+    "offline container SIGTERM/restart smoke with exact source hashes",
+    "regression: owned real exporter/Prometheus stack, permission loss, DB outage, credential rotation"
+  ],
+  "cleanup": {
+    "directoryFixtureContainersRemaining": 0,
+    "monitorFixtureContainersRemaining": 0,
+    "monitorFixtureNetworksRemaining": 0,
+    "monitorFixtureVolumesRemaining": 0,
+    "healthProcessContainersRemaining": 0,
+    "ownershipCheckedBeforeRemoval": true
+  },
+  "handoff": {
+    "syncedFiles": 28,
+    "sourceHashesVerified": 20,
+    "primaryIndexUnchanged": true,
+    "primaryIndexSha256": "72cad3ba4118de5b36523b9c9f57fae0f7166feaae37a225c8481419e001f79f",
+    "localLinksVerified": 41,
+    "executionSteps": 25,
+    "workPackages": 27,
+    "logChecksumVerified": true,
+    "primaryRegression": {
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "runtimeDeployed": false
+  },
+  "status": {
+    "M05": "partial_verified_local",
+    "M06": "not_implemented",
+    "M07_M10": "not_complete",
+    "fullPlanComplete": false,
+    "fullAcceptanceCasesPassed": false,
+    "publicSignupOpened": false
+  },
+  "notProven": [
+    "five meaningful Supabase service probes and server-only release manifest T08",
+    "actual worker pipeline against full disposable backend; real worker DB stop/start and hard kill",
+    "10-minute source collection/recovery drill and complete P2 alert lifecycle/delivery",
+    "Linux VPS metric/TLS/private networking, external heartbeat, offsite backup/restore",
+    "browser signup/admin console, two backend E2E, capacity, release and 7-day pilot",
+    "full business/other-project data fingerprint; no business write was performed"
+  ],
+  "deferredExternal": [
+    "VPS Linux staging and deployment authority",
+    "roomqc.com DNS/TLS and approved origins",
+    "email/anti-bot/offsite/independent alert/heartbeat provider configuration",
+    "operator MFA and selected pilot clients"
+  ]
+}

@@ -1,0 +1,583 @@
+{
+  "formatVersion": 1,
+  "scope": "RoomQC control admin/admission/health local implementation; not full VPS/signup acceptance",
+  "generatedAt": "2026-10-19 05:06:22 UTC",
+  "source": {
+    "baseCommit": "8d0628e5583ef17bec626d8d2101ce618f005792",
+    "state": "uncommitted batch at verification; exact per-file SHA256 below",
+    "files": [
+      {
+        "path": ".env.control.example",
+        "sha256": "5b0ae3133402d19b0c45e61417430380aeaa88e9d44089e301dc9e55eef26346"
+      },
+      {
+        "path": "scripts/control-local.mjs",
+        "sha256": "073c64f696310414d3422fcbdf7f9a8356b3f33c72c4c265c0b8c90cf3828cb3"
+      },
+      {
+        "path": "server/control/admin-cases.mjs",
+        "sha256": "9ca4a4f678b84ea458c86c532ce0246a47d57c918734137117c52cc230c904b8"
+      },
+      {
+        "path": "server/control/admin-contract.test.mjs",
+        "sha256": "ed49c8a945b534070f4da73ab9fbbde271c9f881a368c03faa8e7b99b53e54e9"
+      },
+      {
+        "path": "server/control/admin-read.mjs",
+        "sha256": "0af9c2c15f126e42edeadff049e1a45e1acdf7dcb641e411439a1056c23c5b6a"
+      },
+      {
+        "path": "server/control/admin.mjs",
+        "sha256": "07bb6ab6aaf0f6bb450cb8cba016cf8d6855ab9f090163e20eeeab65df853ac8"
+      },
+      {
+        "path": "server/control/app.mjs",
+        "sha256": "b5440fa19a91e19d8760bba31872e6cc05bbaf75531ae94840271989cea2a4e4"
+      },
+      {
+        "path": "server/control/cluster.mjs",
+        "sha256": "39b509467c902c64c0c15b7165f79a78f9979e073324efcf1752e721586aa38a"
+      },
+      {
+        "path": "server/control/config.mjs",
+        "sha256": "f5bf7e006a50d2e797cf4c7ef976b55eee0914090adf0c09a5f1416aa5d20f34"
+      },
+      {
+        "path": "server/control/contracts/control-v3.openapi.json",
+        "sha256": "7a3e8a1229a97e12c019da11c12e3762a1c1320d79a24443d080efddd4a8bee5"
+      },
+      {
+        "path": "server/control/control.test.mjs",
+        "sha256": "a611443b0f0ee459ed06397370f15a29eb10ea48a30dcb9cad26b0bb47f132df"
+      },
+      {
+        "path": "server/control/directory-db.test.mjs",
+        "sha256": "0ea33f3c33d78e8811f902b0def8f4ea1199339149dbb1760a617a760ec1df06"
+      },
+      {
+        "path": "server/control/errors.mjs",
+        "sha256": "8a345ef40f740cf422377e040f36117580b30126b777f657426be57d1cfc1d29"
+      },
+      {
+        "path": "server/control/health-policy.mjs",
+        "sha256": "c16458b30a41e31da3ab9924660a546719bd5e57db872eb051b1a6dc7d9191ac"
+      },
+      {
+        "path": "server/control/health-policy.test.mjs",
+        "sha256": "f008e58fb339d5084484aff44aca63cbd94bb53d77d9c4cfa44ac1d82ec3069f"
+      },
+      {
+        "path": "server/control/migrate.mjs",
+        "sha256": "4f7ed55d04ec1921ccff44fcb553bb93aed6253d9f88b1018022e23ee691d783"
+      },
+      {
+        "path": "server/control/migrations/0001-directory-v2.sql",
+        "sha256": "0e8e067ae953c6309bab35e89a7d215ceb36b4f3003ef189073ea7ce9bea6e1d"
+      },
+      {
+        "path": "server/control/migrations/0002-infrastructure-and-recovery.sql",
+        "sha256": "8d6a7b0509f73ce179a26a288c41a12f5a5c90cbe266382bd0c3d5558b9c708c"
+      },
+      {
+        "path": "server/control/migrations/0003-runtime-grants.sql",
+        "sha256": "e4a71b7c8955f467d0c2f37176afcd05470fc411f17dc497edb1deff140b663b"
+      },
+      {
+        "path": "server/control/migrations/0004-admin-policy-guards.sql",
+        "sha256": "5d9fba99fd469176b89e5f4de647c60da7c00975bf3c9d5357f8f226821c179d"
+      },
+      {
+        "path": "server/control/migrations/0005-health-snapshot-guard.sql",
+        "sha256": "85d37d7c0bdf0b07841c85493df7eb15b8069664be51ea2facd2212559fd01e5"
+      },
+      {
+        "path": "server/control/package-lock.json",
+        "sha256": "4cd118e99d9633b1a5308f5410625d630992a59dfe66060748f317dd55891781"
+      },
+      {
+        "path": "server/control/package.json",
+        "sha256": "8960a4787c927bfca43a19356e85c6f70c321f9e3eafbe3b9e087cfa2e5c4ff4"
+      },
+      {
+        "path": "server/control/registry.mjs",
+        "sha256": "985d8cc162e91de3dddb19baabebef08232a2d2b63b7705151b802aa7d014b69"
+      },
+      {
+        "path": "server/control/runtime.test.mjs",
+        "sha256": "635a0fe86ece25cad9db08796659ee7fcef2ed908ef7a5181c2f9b0e0624f5af"
+      },
+      {
+        "path": "server/control/safe-http.mjs",
+        "sha256": "4daea4a42dd6e40e2372bae3a33e0e533a0e553dde2f01982346846a767c5474"
+      },
+      {
+        "path": "server/control/safe-http.test.mjs",
+        "sha256": "77d349f56a5995846965d85c58eeb5cfa86af77d36c621e9593d899f745e7dfd"
+      },
+      {
+        "path": "server/control/schema.sql",
+        "sha256": "a1711f4e97a0323ad0d3884170547b6e4ca2a46cb3d2fd6c780baafe8bf7a31e"
+      },
+      {
+        "path": "server/control/server.mjs",
+        "sha256": "9b3c3d9d7971f6fb9b0b98de0646bdf5d17e61c4f0e742da3ab6c48db23e6cf1"
+      },
+      {
+        "path": "server/control/store.mjs",
+        "sha256": "a550273217b211695ccc638ba1913c7c91b9fb46bdcb0d2b82389e13a6bc2f5d"
+      },
+      {
+        "path": "server/control/support-cli.mjs",
+        "sha256": "5d196ac700c9baab4e592f662c5c55ab50db5b37db69308c820c710662fc70ff"
+      },
+      {
+        "path": "server/control/support.mjs",
+        "sha256": "2e365ae5c9ad1ea2dfbd140e8e83de711e96f98a68e1d6ece48ff81fc5c459ad"
+      },
+      {
+        "path": "server/control/support.test.mjs",
+        "sha256": "6b816ffd486dd88b8bea189430b549de3cb1907a9220f1a1cbad8b4e011a6297"
+      },
+      {
+        "path": "server/control/telemetry-cases.mjs",
+        "sha256": "301ab5633e688d972f0055eb091dcdc4fd900a88ec78e7a5e239b9aa6754631f"
+      },
+      {
+        "path": "server/control/telemetry.mjs",
+        "sha256": "922f8a218852650ca9391882f221d2eee4aeffb034e8e6f050b095ef0c14911f"
+      },
+      {
+        "path": "server/control/test-fixtures.mjs",
+        "sha256": "f60134e669d94ab8c66a35a51e484644564e5030b184f913562483c96a38dd69"
+      }
+    ]
+  },
+  "environment": "owned disposable PostgreSQL tests and persistent loopback local control; no production deployment",
+  "tests": {
+    "command": "npm run test:control:db",
+    "startedAt": "2026-10-19 05:04:39 UTC",
+    "exitCode": 0,
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "rawLog": "roomqc-control-admin-health-2026-10-19.log"
+  },
+  "deployment": {
+    "apiImage": "sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1",
+    "frontendImage": "sha256:cac1a629507d67000c60d2eeb809fed2245dce3a3c1becd388bffcf1722a8d2b",
+    "directoryMigrations": [
+      "0001-directory-v2.sql",
+      "0002-infrastructure-and-recovery.sql",
+      "0003-runtime-grants.sql",
+      "0004-admin-policy-guards.sql",
+      "0005-health-snapshot-guard.sql"
+    ],
+    "proxyStatus": 200,
+    "proxyBody": "{\"status\":\"ok\"}",
+    "testContainersRemaining": 0,
+    "verification": {
+      "livez": {
+        "status": "alive"
+      },
+      "readyz": {
+        "status": "ready",
+        "schemaVersion": "0005-health-snapshot-guard.sql"
+      },
+      "healthz": {
+        "status": "ok"
+      },
+      "signup": "closed",
+      "database": "private-persistent",
+      "runtime": "least-privilege"
+    },
+    "restart": {
+      "restart": "passed",
+      "directoryData": "unchanged",
+      "verifiedTables": 16,
+      "dbDown": {
+        "livez": 200,
+        "readyz": 503
+      },
+      "livez": {
+        "status": "alive"
+      },
+      "readyz": {
+        "status": "ready",
+        "schemaVersion": "0005-health-snapshot-guard.sql"
+      },
+      "healthz": {
+        "status": "ok"
+      },
+      "signup": "closed",
+      "database": "private-persistent",
+      "runtime": "least-privilege"
+    },
+    "gatewayAuthReadOnly": {
+      "authHealthy": true,
+      "transport": "pinned-dns",
+      "operation": "read-only-health"
+    },
+    "runtimeSourceVerification": {
+      "matchingFiles": 33,
+      "mismatchCount": 0,
+      "imageId": "sha256:a65408e99b5cc9f012c582be7e0c46b211d089e605c44335e194e38dc73136e1"
+    }
+  },
+  "protectedBusinessSource": {
+    "container": "supabase_db_ehjtoajnlnuvuiwkpmbp",
+    "before": {
+      "rooms": {
+        "hash": "b01eaa0a83ae3c66712194ccf7adaef9",
+        "count": 20
+      },
+      "hotels": {
+        "hash": "dc4a2075b0d7b9b50158987a83a085cc",
+        "count": 2
+      },
+      "tenants": {
+        "hash": "8597e5948716c45b2d4849ed3eb3b638",
+        "count": 3
+      },
+      "authUsers": {
+        "hash": "e6a8b5959e561c5714c13dcd4477fd91",
+        "count": 9
+      },
+      "roomBookings": {
+        "hash": "eaaf78d70665aabe7605757218ac2cd2",
+        "count": 8
+      },
+      "migrationCount": 520,
+      "staffInvitations": {
+        "hash": "d751713988987e9331980363e24189ce",
+        "count": 0
+      },
+      "directoryRequired": false
+    },
+    "after": {
+      "rooms": {
+        "hash": "b01eaa0a83ae3c66712194ccf7adaef9",
+        "count": 20
+      },
+      "hotels": {
+        "hash": "dc4a2075b0d7b9b50158987a83a085cc",
+        "count": 2
+      },
+      "tenants": {
+        "hash": "8597e5948716c45b2d4849ed3eb3b638",
+        "count": 3
+      },
+      "authUsers": {
+        "hash": "e6a8b5959e561c5714c13dcd4477fd91",
+        "count": 9
+      },
+      "roomBookings": {
+        "hash": "eaaf78d70665aabe7605757218ac2cd2",
+        "count": 8
+      },
+      "migrationCount": 520,
+      "staffInvitations": {
+        "hash": "d751713988987e9331980363e24189ce",
+        "count": 0
+      },
+      "directoryRequired": false
+    },
+    "unchanged": true,
+    "scope": "tenants,hotels,rooms,room_bookings,auth.users,staff_invitations,migration count and directory_required flag; not a full database fingerprint"
+  },
+  "controls": {
+    "publicSignup": "closed",
+    "tenantDatabaseMigrationsApplied": 0,
+    "externalEmailsSent": 0,
+    "frontendDirectoryCutover": false,
+    "primaryIndexPreserved": true
+  },
+  "acceptanceCases": {
+    "A01": {
+      "status": "passed_local",
+      "evidence": "Runtime inventory, private directory, proxy, schema0005 and fixed owned ports observed"
+    },
+    "A02": {
+      "status": "partial_local",
+      "evidence": "Before/after fingerprints match six scoped business tables, migration count520 and directory_required=false; not all unrelated services/tables fingerprinted"
+    },
+    "A03": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "A04": {
+      "status": "passed_directory_sandbox",
+      "evidence": "Actual migrations/grants in owned disposable Postgres; preserved legacy fields; final44-test runner"
+    },
+    "A05": {
+      "status": "passed_directory_sandbox",
+      "evidence": "Actual migrations/grants in owned disposable Postgres; preserved legacy fields; final44-test runner"
+    },
+    "A06": {
+      "status": "passed_directory_sandbox",
+      "evidence": "Actual migrations/grants in owned disposable Postgres; preserved legacy fields; final44-test runner"
+    },
+    "A07": {
+      "status": "partial_local",
+      "evidence": "API/DB restart and 16 directory table fingerprints; provisioning worker is not implemented"
+    },
+    "A08": {
+      "status": "partial_local",
+      "evidence": "HTTP auth boundary denies anon/owner/staff and adapter-revoked actor; actual Supabase revoke/lock/session not exercised"
+    },
+    "A09": {
+      "status": "partial_local",
+      "evidence": "HTTP auth boundary denies anon/owner/staff and adapter-revoked actor; actual Supabase revoke/lock/session not exercised"
+    },
+    "A10": {
+      "status": "passed_directory_sandbox",
+      "evidence": "20 genuinely overlapping commands, competing expectedVersion, audit rollback and response destroyed after committed receipt; retry stable"
+    },
+    "A11": {
+      "status": "passed_directory_sandbox",
+      "evidence": "20 genuinely overlapping commands, competing expectedVersion, audit rollback and response destroyed after committed receipt; retry stable"
+    },
+    "B01": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "B02": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "B03": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "B04": {
+      "status": "partial_local",
+      "evidence": "Pure evaluator validation/threshold windows/recovery tested; no real collector/exporter path yet"
+    },
+    "B05": {
+      "status": "passed_directory_sandbox",
+      "evidence": "Two metrics writers actually wait on shared lock; older/duplicate samples rejected; restored generation ahead of sequence stays monotonic"
+    },
+    "B06": {
+      "status": "partial_local",
+      "evidence": "Persisted evaluator restart/gap, explicit stale transition, DTO unknown and admission stale checks; collector runtime and active client behavior not fully exercised"
+    },
+    "B07": {
+      "status": "partial_local",
+      "evidence": "Pure evaluator validation/threshold windows/recovery tested; no real collector/exporter path yet"
+    },
+    "B08": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "B09": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "C01": {
+      "status": "partial_local",
+      "evidence": "Draft register/inventory/DBlimit rerun tests; HTTP pinnedDNS/rebinding/redirect destination tests; fullmanifest/productionTLS/rotation checks missing"
+    },
+    "C02": {
+      "status": "partial_local",
+      "evidence": "Draft register/inventory/DBlimit rerun tests; HTTP pinnedDNS/rebinding/redirect destination tests; fullmanifest/productionTLS/rotation checks missing"
+    },
+    "C03": {
+      "status": "partial_local",
+      "evidence": "Draft register/inventory/DBlimit rerun tests; HTTP pinnedDNS/rebinding/redirect destination tests; fullmanifest/productionTLS/rotation checks missing"
+    },
+    "C04": {
+      "status": "partial_local",
+      "evidence": "Draft register/inventory/DBlimit rerun tests; HTTP pinnedDNS/rebinding/redirect destination tests; fullmanifest/productionTLS/rotation checks missing"
+    },
+    "C05": {
+      "status": "passed_directory_sandbox",
+      "evidence": "20 genuinely overlapping different registrations for final slot yield exactly one workspace"
+    },
+    "C06": {
+      "status": "partial_local",
+      "evidence": "Directory retry/expiry/affinity/gate/first-provision semantics tested on synthetic fixtures; actualAuth/backend/bootstrap E2E still pending"
+    },
+    "C07": {
+      "status": "partial_local",
+      "evidence": "Directory retry/expiry/affinity/gate/first-provision semantics tested on synthetic fixtures; actualAuth/backend/bootstrap E2E still pending"
+    },
+    "C08": {
+      "status": "passed_directory_sandbox",
+      "evidence": "Admin close and reserve share actual contested advisory lock; any request after committed close is refused"
+    },
+    "C09": {
+      "status": "partial_local",
+      "evidence": "Directory retry/expiry/affinity/gate/first-provision semantics tested on synthetic fixtures; actualAuth/backend/bootstrap E2E still pending"
+    },
+    "C10": {
+      "status": "partial_local",
+      "evidence": "Directory retry/expiry/affinity/gate/first-provision semantics tested on synthetic fixtures; actualAuth/backend/bootstrap E2E still pending"
+    },
+    "D01": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D02": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D03": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D04": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D05": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D06": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D07": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D08": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D09": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D10": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D11": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D12": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D13": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D14": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "D15": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "E01": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "E02": {
+      "status": "partial_local",
+      "evidence": "Read API1005 records/microsecond cursors/63timeline events/staleDTO/atomiccommands/lostHTTPresponse tested; browser UI absent"
+    },
+    "E03": {
+      "status": "partial_local",
+      "evidence": "Read API1005 records/microsecond cursors/63timeline events/staleDTO/atomiccommands/lostHTTPresponse tested; browser UI absent"
+    },
+    "E04": {
+      "status": "partial_local",
+      "evidence": "Read API1005 records/microsecond cursors/63timeline events/staleDTO/atomiccommands/lostHTTPresponse tested; browser UI absent"
+    },
+    "E05": {
+      "status": "partial_local",
+      "evidence": "Read API1005 records/microsecond cursors/63timeline events/staleDTO/atomiccommands/lostHTTPresponse tested; browser UI absent"
+    },
+    "E06": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "E07": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "E08": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F01": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F02": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F03": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F04": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F05": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F06": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F07": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F08": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "F09": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G01": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G02": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G03": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G04": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G05": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G06": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G07": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    },
+    "G08": {
+      "status": "not_run",
+      "reason": "No evidence for the complete release case in this implementation batch"
+    }
+  },
+  "remaining": [
+    "Real exporters/Prometheus/probes/collector/multiple data mounts/alert lifecycle",
+    "Server-only backend manifest RPC and full validation",
+    "Actual Supabase authority revoke/lock/session tests and MFA readiness",
+    "Private setup-status/resume/reconcile worker/proxy-abuse/mobile",
+    "Admin UI, VPS packaging/offsite DR, two-backend browser E2E/load/pilot"
+  ]
+}

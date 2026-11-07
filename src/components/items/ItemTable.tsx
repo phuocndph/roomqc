@@ -61,6 +61,7 @@ import { cn, formatCurrency } from '@/lib/utils'
 import type { ItemWithCategory } from '@/types/items.types'
 import { getFriendlyError } from '@/lib/errorMessage'
 import { generateQRDataURL } from '@/lib/qrCode'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 interface ItemTableProps {
   items: ItemWithCategory[]
@@ -185,7 +186,7 @@ export function ItemTable({
                 </TableCell>
                 <TableCell className="py-2">
                   {item.item_images?.[0]?.url ? (
-                    <img
+                    <StorageImage
                       src={item.item_images[0].url}
                       alt={item.name}
                       className="h-9 w-9 rounded object-cover"

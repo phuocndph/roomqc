@@ -92,7 +92,7 @@ export function GeneralSettingsPage() {
         settings: tenant.settings,
       }
 
-      await supabase
+      const { error } = await supabase
         .from('tenants')
         .update({
           name: data.name,
@@ -101,6 +101,8 @@ export function GeneralSettingsPage() {
           settings: data.settings,
         })
         .eq('id', tenant.id)
+
+      if (error) throw error
 
       // Log the activity
       await logUpdate('tenant_settings', tenant.id, 'Cài đặt chung', oldValues, data)

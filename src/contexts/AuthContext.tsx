@@ -11,6 +11,10 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { getAuthErrorKey } from '@/lib/auth-error-messages'
 import { useQueryClient } from '@tanstack/react-query'
+import { workspacePath } from '@/lib/workspace'
+import { authRedirectUrl } from '@/lib/native/auth-links'
+import { passwordChangeFlow } from '@/lib/password-change-client'
+import { PasswordChangeError, PasswordIdentityChangedError, type PasswordChangeResult } from '@/lib/password-change'
 
 // Silent refresh interval: 30 minutes
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000
@@ -32,7 +36,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<SignUpResult>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
-  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>
+  updatePassword: (newPassword: string, currentPassword?: string) => Promise<{ error: Error | null; data?: PasswordChangeResult }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -177,7 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // authenticated profile and sends an unprovisioned owner to onboarding.
       // Redirecting to `/` works only incidentally and can expose a landing
       // page while the profile query is still pending.
-      const redirectUrl = `${window.location.origin}/auth/callback`
+      const redirectUrl = authRedirectUrl('/auth/callback')
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -213,7 +217,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = useCallback(async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: authRedirectUrl('/auth/change-password'),
       })
 
       if (error) throw error
@@ -236,32 +240,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast, t])
 
-  const updatePassword = useCallback(async (newPassword: string) => {
+  const updatePassword = useCallback(async (newPassword: string, currentPassword?: string) => {
+    const actorId = previousSessionRef.current?.user.id
+    if (!actorId) return { error: new PasswordChangeError('session_required', 'Vui lòng đăng nhập lại để đổi mật khẩu.') }
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-
-      if (error) throw error
-
-      toast({
-        title: t('resetPassword.success', 'Cập nhật thành công'),
-        description: t('resetPassword.successDescription', 'Mật khẩu của bạn đã được thay đổi.'),
-      })
-
-      return { error: null }
-    } catch (error: any) {
-      const errorKey = getAuthErrorKey(error)
-      
-      toast({
-        title: t('common:messages.error', 'Lỗi'),
-        description: t(errorKey),
-        variant: 'destructive',
-      })
-      return { error }
+      const data = await passwordChangeFlow.change({ actorId, newPassword, currentPassword,
+        isCurrent: () => previousSessionRef.current?.user.id === actorId })
+      if (previousSessionRef.current?.user.id !== actorId) throw new PasswordIdentityChangedError()
+      if (!data || data.id !== actorId) throw new PasswordChangeError('outcome_unknown', 'Chưa xác nhận được kết quả đổi mật khẩu.')
+      return { error: null, data }
+    } catch (error) {
+      if (previousSessionRef.current?.user.id !== actorId) return { error: new PasswordIdentityChangedError() }
+      return { error: error instanceof PasswordChangeError ? error
+        : new PasswordChangeError('outcome_unknown', 'Chưa xác nhận được kết quả. Hãy kiểm tra trước khi thử lại.') }
     }
-  }, [toast, t])
-
+  }, [])
   const signOut = useCallback(async () => {
     try {
       // Mark as manual logout to prevent "session expired" toast

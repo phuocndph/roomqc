@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserWithRelations, AppRole } from '@/types/database.types'
+import { runtimeConfig } from '@/lib/runtime-config'
+import { AccountProfileError } from '@/lib/account-profile-error'
 
 export const useUser = () => {
   const { user: authUser } = useAuth()
 
   const { data: userData, isLoading, error, refetch } = useQuery({
-    queryKey: ['user', authUser?.id],
+    queryKey: ['user', authUser?.id, runtimeConfig.workspace?.workspace.id],
     queryFn: async () => {
       if (!authUser?.id) return null
 
@@ -26,6 +28,13 @@ export const useUser = () => {
 
       // If user doesn't exist in users table, return null (needs onboarding)
       if (userError) throw userError
+      const workspace = runtimeConfig.workspace?.workspace
+      if (workspace?.tenantId && user?.tenant_id !== workspace.tenantId) {
+        throw new AccountProfileError('workspace_mismatch')
+      }
+      if (workspace && !workspace.tenantId && user?.tenant_id) {
+        throw new AccountProfileError('workspace_unconfirmed')
+      }
       if (!user) return null
 
       // Fetch user roles
@@ -50,7 +59,7 @@ export const useUser = () => {
     },
     enabled: !!authUser?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once if query fails
+    retry: (failures, failure) => !(failure instanceof AccountProfileError) && failures < 1,
     refetchOnWindowFocus: false, // Don't refetch on window focus
   })
 

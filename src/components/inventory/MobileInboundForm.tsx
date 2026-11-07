@@ -42,6 +42,7 @@ import {
   buildInboundDefaults,
   type InboundFormData,
 } from '@/lib/inventory/inboundFormSchema'
+import { StorageImage } from '@/components/shared/StorageImage'
 
 const DRAFT_KEY = 'inbound_form_draft_v2'
 
@@ -340,7 +341,7 @@ export function MobileInboundForm() {
                   <Card key={field.id} className="p-3">
                     <div className="flex items-start gap-2.5">
                       {img ? (
-                        <img
+                        <StorageImage
                           src={img}
                           alt={item?.name}
                           className="w-12 h-12 rounded-md object-cover shrink-0"
@@ -530,7 +531,7 @@ export function MobileInboundForm() {
                     >
                       <div className="flex gap-3">
                         {img ? (
-                          <img
+                          <StorageImage
                             src={img}
                             alt={item.name}
                             className="w-12 h-12 rounded object-cover"

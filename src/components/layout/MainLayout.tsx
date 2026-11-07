@@ -14,7 +14,6 @@ import { ShiftStatusBanner } from '@/components/staff/ShiftStatusBanner'
 import { GracePeriodBanner } from './GracePeriodBanner'
 import { SuspendedOverlay } from './SuspendedOverlay'
 import { ReadOnlyBanner } from './ReadOnlyBanner'
-import { FreeTrialPopup } from '@/components/promotions/FreeTrialPopup'
 import { AnnouncementHost } from '@/components/announcements/AnnouncementHost'
 import { ChatLauncher } from '@/components/chat/ChatLauncher'
 import { ChatPopupProvider } from '@/components/chat/ChatPopupContext'
@@ -30,11 +29,15 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useHotelContext } from '@/contexts/HotelContext'
 import { setPrefetchContext } from '@/lib/route-data-prefetch'
+import { RoomCommandRecovery } from '@/components/rooms/RoomCommandRecovery'
+import { RoomOperationRecovery } from '@/components/rooms/RoomOperationRecovery'
+import { UsageModeRouteGuard } from './UsageModeRouteGuard'
 
 const MainLayoutContent = () => {
   const { isMobile } = useBreakpoint()
   const { user } = useUser()
   const location = useLocation()
+  const isDashboard = ['/', '/housekeeping', '/inventory'].includes(location.pathname)
   const mainRef = useRef<HTMLElement>(null)
   const { isGracePeriodExpired } = useGracePeriod()
   const isStaffUser = isStaff(user)
@@ -67,6 +70,8 @@ const MainLayoutContent = () => {
 
   const priorityBanner = (
     <>
+      <RoomCommandRecovery />
+      <RoomOperationRecovery />
       {(activeBanner === 'suspended' || activeBanner === 'grace_expired') && (
         <GracePeriodBanner onDismiss={() => dismissBanner(activeBanner)} />
       )}
@@ -77,11 +82,11 @@ const MainLayoutContent = () => {
 
   if (isMobile) {
     return (
-      <div className="min-h-dvh flex flex-col bg-background overflow-x-hidden safe-area-x">
+      <div className={`${isDashboard ? 'h-dvh overflow-hidden' : 'min-h-dvh'} flex flex-col bg-background overflow-x-hidden safe-area-x`}>
         {priorityBanner}
         <MobileHeader />
         {isStaffUser && <ShiftStatusBanner />}
-        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-safe">
+        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-safe">
           {isSuspended ? (
             <SuspendedOverlay />
           ) : (
@@ -91,7 +96,7 @@ const MainLayoutContent = () => {
                   <QuotaWarningBanner onDismiss={() => dismissBanner('quota_warning')} />
                 </div>
               )}
-              <Outlet />
+              <UsageModeRouteGuard><Outlet /></UsageModeRouteGuard>
             </>
           )}
         </main>
@@ -102,13 +107,13 @@ const MainLayoutContent = () => {
   }
 
   return (
-    <div className="min-h-dvh flex bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar />
       <div className="min-w-0 flex-1 flex flex-col">
         {priorityBanner}
-        <Header onMenuClick={() => {}} />
+        <div className="shrink-0"><Header onMenuClick={() => {}} /></div>
         {isStaffUser && <ShiftStatusBanner />}
-        <main ref={mainRef} className="min-w-0 flex-1 overflow-auto">
+        <main ref={mainRef} className="min-h-0 min-w-0 flex-1 overflow-auto">
           {isSuspended ? (
             <SuspendedOverlay />
           ) : (
@@ -118,7 +123,7 @@ const MainLayoutContent = () => {
                   <QuotaWarningBanner onDismiss={() => dismissBanner('quota_warning')} />
                 </div>
               )}
-              <Outlet />
+              <UsageModeRouteGuard><Outlet /></UsageModeRouteGuard>
             </div>
           )}
         </main>
@@ -153,7 +158,6 @@ export const MainLayout = () => {
           <ChatLauncher />
           <ChatNotificationListener />
           <AnnouncementHost slot="popup" />
-          <FreeTrialPopup />
         </ChatPopupProvider>
       </RequireShiftProvider>
     </HotelProvider>

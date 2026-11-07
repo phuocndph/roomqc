@@ -6,6 +6,7 @@ import { OnboardingGuard } from '@/components/auth/OnboardingGuard'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
+import { workspacePath } from '@/lib/workspace'
 
 const LandingPage = lazy(() => import('@/pages/LandingPage'))
 
@@ -17,7 +18,7 @@ const LandingFallback = () => (
         Trang giới thiệu đang tải lại. Vui lòng đăng nhập để tiếp tục.
       </p>
       <a
-        href="/auth/login"
+        href={workspacePath('/auth/login')}
         className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
       >
         Đăng nhập

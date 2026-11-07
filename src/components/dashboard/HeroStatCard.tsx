@@ -20,7 +20,7 @@ export function HeroStatCard({
 }: HeroStatCardProps) {
   if (isLoading) {
     return (
-      <div className="p-4 border rounded-lg bg-primary/5">
+      <div className="p-4 border rounded-none bg-primary/5">
         <Skeleton className="h-3 w-24 mb-2" />
         <Skeleton className="h-8 w-40" />
       </div>
@@ -31,7 +31,7 @@ export function HeroStatCard({
   const isPositive = (change?.value || 0) > 0
 
   return (
-    <div className="p-4 border rounded-lg bg-primary/5">
+    <div className="p-4 border rounded-none bg-primary/5">
       <p className="text-xs text-muted-foreground mb-1">{title}</p>
       <p className="text-2xl font-bold text-primary">{value}</p>
       
